@@ -1,0 +1,11 @@
+numpydoc
+ipython
+nbsphinx
+scipy
+netCDF4
+pandas
+sklearn
+multiprocessing
+xarray
+matplotlib
+git+https://github.com/JiaweiZhuang/xESMF
