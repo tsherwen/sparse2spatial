@@ -648,7 +648,9 @@ def add_LWI2ds_2x25_4x5(ds, var2template='Chance2014_STTxx2_I',
 
 
 def v10_ClBrI_TRA_XX_2_name(TRA_XX):
-    """ Convert version 3.0 output to actual name """
+    """
+    Convert version 3.0 GEOS-Chem output to actual name
+    """
     d = {
         1: 'NO', 2: 'O3', 3: 'PAN', 4: 'CO', 5: 'ALK4', 6: 'ISOP', 7: 'HNO3', 8: 'H2O2', 9: 'ACET', 10: 'MEK', 11: 'ALD2', 12: 'RCHO', 13: 'MVK', 14: 'MACR', 15: 'PMN', 16: 'PPN', 17: 'R4N2', 18: 'PRPE', 19: 'C3H8', 20: 'CH2O', 21: 'C2H6', 22: 'N2O5', 23: 'HNO4', 24: 'MP', 25: 'DMS', 26: 'SO2', 27: 'SO4', 28: 'SO4s', 29: 'MSA', 30: 'NH3', 31: 'NH4', 32: 'NIT', 33: 'NITs', 34: 'BCPI', 35: 'OCPI', 36: 'BCPO', 37: 'OCPO', 38: 'DST1', 39: 'DST2', 40: 'DST3', 41: 'DST4', 42: 'SALA', 43: 'SALC', 44: 'Br2', 45: 'Br', 46: 'BrO', 47: 'HOBr', 48: 'HBr', 49: 'BrNO2', 50: 'BrNO3', 51: 'CHBr3', 52: 'CH2Br2', 53: 'CH3Br', 54: 'MPN', 55: 'ISOPN', 56: 'MOBA', 57: 'PROPNN', 58: 'HAC', 59: 'GLYC', 60: 'MMN', 61: 'RIP', 62: 'IEPOX', 63: 'MAP', 64: 'NO2', 65: 'NO3', 66: 'HNO2', 67: 'BrCl', 68: 'Cl2', 69: 'Cl', 70: 'ClO', 71: 'HOCl', 72: 'HCl', 73: 'ClNO2', 74: 'ClNO3', 75: 'ClOO', 76: 'OClO', 77: 'Cl2O2', 78: 'CH3Cl', 79: 'CH2Cl2', 80: 'CHCl3', 81: 'BrSALA', 82: 'BrSALC', 83: 'CH3IT', 84: 'CH2I2', 85: 'CH2ICl', 86: 'CH2IBr', 87: 'HOI', 88: 'I2', 89: 'IBr', 90: 'ICl', 91: 'I', 92: 'IO', 93: 'HI', 94: 'OIO', 95: 'INO', 96: 'IONO', 97: 'IONO2', 98: 'I2O2', 99: 'I2O3', 100: 'I2O4', 101: 'ISALA', 102: 'ISALC', 103: 'AERI'
     }
@@ -659,7 +661,7 @@ def calc_iodide_MacDonald2014(TEMP):
     """
     Temp. (C) to Macdonald2014 parameterised [iodide] in nmol/dm^-3 (nM)
     """
-    # parameterisation is Arrhenius expression
+    # Parameterisation is Arrhenius expression
     # y= 1.46E6 * exp(-9134.0/TEMP(K)) * 1E9
     # NOTE: temp. is converted from degC to DegK
     return (1.46E6 * np.exp((-9134.0 / (TEMP+273.15))))*1E9
@@ -669,13 +671,15 @@ def calc_iodide_chance2014_STTxx2_I(TEMP):
     """
     Temp. (C) to Chance2014 parameterised [iodide] in nmol/dm^-3 (nM)
     """
-    # parameterisation is a linear regression
+    # Parameterisation is a linear regression
     # y= 0.225(x**2) + 19
     return (0.225*(TEMP**2)) + 19.0
 
 
 def is_number(s):
-    """ check if a input is a number. input converted to string """
+    """
+    check if input is a number (check via conversion to string)
+    """
     try:
         float(str(s))
         return True
@@ -685,51 +689,20 @@ def is_number(s):
 
 def get_Oi_file_locations(input_var):
     """ Dictionary store of data locations """
-    # Make directories portable between York HPC / MBPs...
+    # Get the user and platform in use
     import getpass
     import platform
-    host = platform.node()
-    user = getpass.getuser()
-    YARCC_login_nodes = ['login{}.york.ac.uk'.format(i) for i in range(1, 4)]
-    if (host in YARCC_login_nodes):
-        earth0_home_dir = '/shared/earth_home/ts551/'
-        home_dir = '/scratch/ts551/'
-        root_data_dir = '/shared/earthfs/'
-        iodide_data = home_dir+'data/iodide/'
-    elif (host == 'earth0'):
-        home_dir = '/work/home/ts551/'
-        earth0_home_dir = home_dir
-        root_data_dir = '/work/data/'
-        iodide_data = home_dir+'data/iodide/'
-    elif (user == 'tomassherwen'):
-        home_dir = '/Users/tomassherwen/Google_Drive/'
-        root_data_dir = '/Users/tomassherwen/Google_Drive/'
-        earth0_home_dir = None
-        iodide_data = home_dir+'data/iodide_Oi_project/'
-    else:
-        print('User/platform not known!')
-        sys.exit()
-    # dictionary of key file locations
-    d = {
-        #    'YARCC_iodide_data' : home_dir
-        'iodide_data': iodide_data,
-        'submitted_data': home_dir+'data/iodide/submitted_data/',
-        'digitised_data': home_dir+'data/iodide/digitised_data/',
-        'new_data': home_dir+'data/iodide/iodide_data_recieved_post_Chance2014/',
-        'DOC': home_dir+'data/iodide/DOC/',
-        'Martin_Wadley': home_dir+'data/iodide/Martin_Wadley/',
-        'GFDL': home_dir+'data/iodide/GFDL/',
-        'WOA_2013': home_dir+'data/iodide/WOA13/',
-        'WOA_2001': home_dir+'data/iodide/WOA13/',
-        'WOA_1994': home_dir+'data/iodide/WOA94/',
-        'SeaWIFS': home_dir+'data/iodide/SeaWIFS/',
-        'BODC': home_dir+'data/iodide/BODC/',
-        'NASA_data_dir': root_data_dir+'/NASA/nature_run/',
-        'root_data_dir': root_data_dir,
-        'home_dir': home_dir,
-        'earth0_home_dir': earth0_home_dir,
-        'AC_tools': home_dir + '/labbook/Python_progs/AC_tools/',
-    }
+
+    # Get a dictionary of paths
+    d = read_settings_rc_file2dict()
+    # Try to add the user name and and platform to dictionary
+    try:
+        host = platform.node()
+        d['host'] = host
+        user = getpass.getuser()
+        d['user'] = user
+    except:
+        print('Failed to add user and host to dictionary')
     return d[input_var]
 
 
@@ -767,6 +740,27 @@ def convert_fullname_to_shortname(input=None, rtn_dict=False, invert=False):
         return name_dict
     else:
         return name_dict[input]
+
+
+def read_settings_rc_file2dict( file_and_path ):
+    """
+    Read the settings file (e.g. 'sparse2spatial.rc')
+    """
+    # Setup dictionary to store lines that have been read-in
+    d = {}
+    # Loop lines in file and read lines
+    with open( file_and_path, 'r') as file:
+        for line in file:
+            if line.startswith("#"):
+                pass
+            else:
+                try:
+                    key, value = line.split (' : ')
+                    d[key.strip()] = value.strip()
+                except:
+                    print( 'failed to read line in *.rc file:{}'.format(line) )
+    # Return the resultant dictionary
+    return d
 
 
 def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
