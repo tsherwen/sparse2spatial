@@ -38,7 +38,7 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
     #  location of data
-    wrk_dir = get_Oi_file_locations('iodide_data')+'/models/'+'/LIVE/'
+    wrk_dir = get_file_locations('iodide_data')+'/models/'+'/LIVE/'
 
     # --- predict multiple models and save these
     dfs = {}
@@ -101,7 +101,7 @@ def get_stats_on_multiple_global_predictions(model_name=None,
     else:
         extr_str = ''
     # location of data
-    iodide_data = get_Oi_file_locations('iodide_data') + '/models/'+'/LIVE/'
+    iodide_data = get_file_locations('iodide_data') + '/models/'+'/LIVE/'
 #    iodide_data = './' # KLUDGE: use current dir whilst testing
    # Get the folder and filename to use
     loc2use = '{}/ENSEMBLE_REPEAT_BUILD{}/'
@@ -169,7 +169,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
     #  location of data
-    wrk_dir = get_Oi_file_locations('iodide_data')+'/models/'+'/LIVE/'
+    wrk_dir = get_file_locations('iodide_data')+'/models/'+'/LIVE/'
 
     # --- build multiple models and save these
     # get random state to use
@@ -534,7 +534,7 @@ def make_table_of_point_for_point_performance(RFR_dict=None,
     stats.rename(index=rename_titles, inplace=True)
     # Set filename and save detail on models
     csv_name = 'Oi_prj_point_for_point_comp4tabale.csv'
-    earth0_iodide_data = get_Oi_file_locations(
+    earth0_iodide_data = get_file_locations(
         'earth0_home_dir')+'data/iodide/'
 #    stats.round(2).to_csv( earth0_iodide_data+csv_name )
     stats.round(1).to_csv(csv_name)
@@ -579,7 +579,7 @@ def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
     stats.rename(index=rename_titles, inplace=True)
     # Set filename and save detail on models
     csv_name = 'Oi_prj_point_for_point_comp4tabale_TESTSET.csv'
-    earth0_iodide_data = get_Oi_file_locations(
+    earth0_iodide_data = get_file_locations(
         'earth0_home_dir')+'data/iodide/'
 #    stats.round(2).to_csv( earth0_iodide_data+csv_name )
     stats.round(1).to_csv(csv_name)
@@ -618,7 +618,7 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
     stats.rename(index=rename_titles, inplace=True)
     # Set filename and save detail on models
     csv_name = 'Oi_prj_point_for_point_comp4tabale_ALL.csv'
-    earth0_iodide_data = get_Oi_file_locations(
+    earth0_iodide_data = get_file_locations(
         'earth0_home_dir')+'data/iodide/'
 #    stats.round(2).to_csv( earth0_iodide_data+csv_name )
     stats.round(1).to_csv(csv_name)
@@ -774,7 +774,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     df.rename(columns={'50%': 'median', 'std': 'std. dev.'})
     # Set filename and save detail on models
     csv_name = 'Oi_prj_models_built_stats_on_models_at_obs_points.csv'
-    earth0_iodide_data = get_Oi_file_locations(
+    earth0_iodide_data = get_file_locations(
         'earth0_home_dir')+'data/iodide/'
 #    stats.round(2).to_csv( earth0_iodide_data+csv_name )
     stats.round(2).to_csv(csv_name)
@@ -973,7 +973,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
 
     # --- Get local variables
     # Location to save models
-    iodide_data_dir = get_Oi_file_locations('iodide_data')
+    iodide_data_dir = get_file_locations('iodide_data')
     wrk_dir = iodide_data_dir+'/models/'+'/LIVE/'
     if rm_Skagerrak_data:
         temp_model_dir = wrk_dir+'/TEMP_MODELS_No_Skagerrak/'
@@ -1085,7 +1085,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
     if isinstance(filename, type(None)):
         filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
     if isinstance(folder, type(None)):
-        folder = get_Oi_file_locations('iodide_data')
+        folder = get_file_locations('iodide_data')
     ds = xr.open_dataset(folder + filename)
 #    ds = xr.open_dataset( filename )
     # variables to consider
@@ -1140,7 +1140,7 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
         if isinstance(filename, type(None)):
             filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
         if isinstance(folder, type(None)):
-            folder = get_Oi_file_locations('iodide_data')
+            folder = get_file_locations('iodide_data')
         ds = xr.open_dataset(folder + filename)
 #    ds = xr.open_dataset( filename )
     # variables to consider
@@ -1266,7 +1266,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
             extr_file_str = ''
         filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_file_str)
     if isinstance(folder, type(None)):
-        folder = get_Oi_file_locations('iodide_data')
+        folder = get_file_locations('iodide_data')
     ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
@@ -1399,7 +1399,7 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None,
     # get existing dataset from NetCDF if ds not provided
     filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
     if isinstance(ds, type(None)):
-        folder = get_Oi_file_locations('iodide_data')
+        folder = get_file_locations('iodide_data')
         ds = xr.open_dataset(folder + filename)
     # Just use top 10 models are included
     # ( with derivative variables )
@@ -1655,7 +1655,7 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7,
     # Get the top model names
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
     # Set the folder
-    folder = get_Oi_file_locations('iodide_data')
+    folder = get_file_locations('iodide_data')
     folder += '/models/LIVE/TEMP_MODELS/'
     # Get the file names for these
     modelnames = glob.glob(folder+'*.pkl')
@@ -1689,7 +1689,7 @@ def extract_trees_to_dot_files(folder=None, model_filename=None,
     import os
     # Get the location of the saved model.
     if isinstance(folder, type(None)):
-        folder = get_Oi_file_locations('iodide_data')+'/models/'
+        folder = get_file_locations('iodide_data')+'/models/'
     # Create a file name for model if not provided
     if isinstance(model_filename, type(None)):
         model_filename = "my_model_{}.pkl".format(extr_str)

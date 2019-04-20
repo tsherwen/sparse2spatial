@@ -54,7 +54,7 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
     # Just use 4x5 as an example
     if isinstance(ds, type(None)):
         filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-        folder = get_Oi_file_locations('iodide_data')
+        folder = get_file_locations('iodide_data')
         ds = xr.open_dataset(folder + filename)
     # get dictionary of province numbers
     Rnum2prov = RosieLonghurstProvinceFileNum2Province(

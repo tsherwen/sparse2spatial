@@ -35,7 +35,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
     target_name = target
     # Get feature values for resolution
     if isinstance(dsA, type(None)):
-        iodide_dir = get_Oi_file_locations('iodide_data')
+        iodide_dir = get_file_locations('iodide_data')
         filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
         dsA = xr.open_dataset(iodide_dir + filename)
     # take coordinate variables from dsA
@@ -586,7 +586,7 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
     """ Add LWI + core vars to ds """
 #    folderLWI = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
 #    filenameLWI = 'nature_run_lev_72_res_0.125_spec_LWI_monthly_ctm.nc'
-    folderLWI = get_Oi_file_locations(
+    folderLWI = get_file_locations(
         'AC_tools')+'/data/LM/TEMP_NASA_Nature_run/'
     filenameLWI = 'ctm.nc'
     LWI = xr.open_dataset(folderLWI+filenameLWI)
@@ -687,7 +687,7 @@ def is_number(s):
         return False
 
 
-def get_Oi_file_locations(input_var):
+def get_file_locations(input_var):
     """ Dictionary store of data locations """
     # Get the user and platform in use
     import getpass
@@ -767,7 +767,7 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
     """ Get the upper outlier value for a given variable in a DataFrame"""
     # Check to make sure that the full observations are used to calc the outlier
     if check_full_df_used:
-        folder = get_Oi_file_locations('iodide_data')
+        folder = get_file_locations('iodide_data')
         filename = 'Iodide_data_above_20m.csv'
         dfA = pd.read_csv(folder+filename)
         dfA = dfA.loc[np.isfinite(dfA[var2use]), :]

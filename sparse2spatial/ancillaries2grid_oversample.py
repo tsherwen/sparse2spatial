@@ -8,7 +8,7 @@ def extract_4_nearest_points_in_NetCDF(lons=None, lats=None,
                                        debug=False):
     """ Extract requested variable for nearest point and time from NetCDF """
     # --- Get data from NetCDF as a xarray dataset
-    dir_ = get_Oi_file_locations('iodide_data')
+    dir_ = get_file_locations('iodide_data')
     filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
     if rm_Skagerrak_data:
         filename = filename.format('_No_Skagerrak')
@@ -472,7 +472,7 @@ def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
     # get details of parameterisations
 #    filename='Chance_2014_Table2_PROCESSED_17_04_19.csv'
     filename = 'Chance_2014_Table2_PROCESSED.csv'
-    dir_ = get_Oi_file_locations('iodide_data')
+    dir_ = get_file_locations('iodide_data')
     param_df = pd.read_csv(dir_+filename)
     # map input variables
     input_dict = {
@@ -539,7 +539,7 @@ def extract_ancillary_obs_from_COMPILED_file(obs_data_df=None,
     # file ancillary data as a xarray Dataset
 #    res= '4x5' # use 4x5 for testing
     res = '0.125x0.125'  # Use Nature res. run for analysis
-    iodide_dir = get_Oi_file_locations('iodide_data')
+    iodide_dir = get_file_locations('iodide_data')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     dsA = xr.open_dataset(iodide_dir + filename)
     # Get list of site IDs...
@@ -677,7 +677,7 @@ def get_WOA_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     """ Get the indices for given lats and lons in 1x1 WAO files """
     #
     # Set directory files are in (using nitrate arrays)
-    dir = get_Oi_file_locations('WOA_2013')+'Nitrate_1x1/'
+    dir = get_file_locations('WOA_2013')+'Nitrate_1x1/'
     # Select the correct file (abituaryily using September )
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
@@ -721,7 +721,7 @@ def get_GEBCO_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     """
     # var2use='elevation'; buffer_CORDS=2; rtn_flag=True; debug=True
     # Directory?
-    file_dir = get_Oi_file_locations('BODC')
+    file_dir = get_file_locations('BODC')
     # file str
     filename = 'GRIDONE_2D.nc'
     # --- Extract data
@@ -753,7 +753,7 @@ def get_GEBCO_array_1min_indices(lons=None, lats=None, month=9, debug=False):
 def get_WOA_array_025x025_indices(lons=None, lats=None, month=9, debug=False):
     """ Get the indices for given lats and lons in 1x1 WAO files """
     # Set directory files are in (using temperatures arrays)
-    dir = get_Oi_file_locations('WOA_2013')+'Temperature_025x025/'
+    dir = get_file_locations('WOA_2013')+'Temperature_025x025/'
     # Select the correct file (abituaryily using September )
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -805,7 +805,7 @@ def get_RAD_array_1_9x1_9_indices(lons=None, lats=None, month=9, debug=False):
     (array)
     """
     # Directory?
-    file_dir = get_Oi_file_locations('GFDL')
+    file_dir = get_file_locations('GFDL')
     # file str
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # --- Open file
@@ -883,7 +883,7 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
     else:
         month_ = month
     # Directory?
-    file_dir = get_Oi_file_locations('SeaWIFS')
+    file_dir = get_file_locations('SeaWIFS')
     # file str
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
@@ -953,7 +953,7 @@ def get_DOC_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     -----
     """
     # Directory?
-    file_dir = get_Oi_file_locations('DOC')
+    file_dir = get_file_locations('DOC')
     # file str
 #    file_str = 'DOCmodelSR.nc'
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
@@ -1013,7 +1013,7 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    file_dir = get_Oi_file_locations('Martin_Wadley')
+    file_dir = get_file_locations('Martin_Wadley')
     # file str
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # --- Extract data
@@ -1073,7 +1073,7 @@ def get_WOA_MLD_array_1x1_indices(var2use='pt', lons=None, lats=None, month=9,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    file_dir = get_Oi_file_locations('WOA_1994')
+    file_dir = get_file_locations('WOA_1994')
     # file str
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
 #    print file_dir+file_str
@@ -1137,7 +1137,7 @@ def get_DOC_accum_1x1_indices(var2use='DOCaccum_avg', lons=None, lats=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    file_dir = get_Oi_file_locations('DOC')
+    file_dir = get_file_locations('DOC')
     # file str
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
     if debug:
@@ -1388,7 +1388,7 @@ def get_Prod4indices(lat_idx=None, lon_idx=None, month=None,
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    file_dir = get_Oi_file_locations('Martin_Wadley')
+    file_dir = get_file_locations('Martin_Wadley')
     # file str
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # --- Extract data
@@ -1435,7 +1435,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    file_dir = get_Oi_file_locations('Martin_Wadley')
+    file_dir = get_file_locations('Martin_Wadley')
     # file str
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # --- Extract data
@@ -1527,7 +1527,7 @@ def get_DOC4indices(lat_idx=None, lon_idx=None, month=None,
      - The time resolution for depth NetCDF is annual.
     """
     # Directory?
-    file_dir = get_Oi_file_locations('DOC')
+    file_dir = get_file_locations('DOC')
     # file str
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
     if debug:
@@ -1568,7 +1568,7 @@ def get_DOC_4_loc(var2use='DOCmdl_avg', lat=None, lon=None, month=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    file_dir = get_Oi_file_locations('DOC')
+    file_dir = get_file_locations('DOC')
     # file str
 #    file_str = 'DOCmodelSR.nc'
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
@@ -1661,7 +1661,7 @@ def get_DOC_accum4indices(lat_idx=None, lon_idx=None, month=None,
     -----
     """
     # Directory?
-    file_dir = get_Oi_file_locations('DOC')
+    file_dir = get_file_locations('DOC')
     # File str
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
     if debug:
@@ -1702,7 +1702,7 @@ def get_DOC_accum_4_loc(var2use='DOCaccum_avg', lat=None, lon=None, month=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    file_dir = get_Oi_file_locations('DOC')
+    file_dir = get_file_locations('DOC')
     # file str
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
 #    print file_dir+file_str
@@ -1805,7 +1805,7 @@ def get_RAD4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Directory?
-    file_dir = get_Oi_file_locations('GFDL')
+    file_dir = get_file_locations('GFDL')
     # File str
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # Open file
@@ -1841,7 +1841,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    file_dir = get_Oi_file_locations('GFDL')
+    file_dir = get_file_locations('GFDL')
     # file str
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # --- which month to use?
@@ -2007,7 +2007,7 @@ def extract_MLD_file4indices(var2use='pt', lat_idx=None, lon_idx=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    file_dir = get_Oi_file_locations('WOA_1994')
+    file_dir = get_file_locations('WOA_1994')
     # file str
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     if debug:
@@ -2046,7 +2046,7 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    file_dir = get_Oi_file_locations('WOA_1994')
+    file_dir = get_file_locations('WOA_1994')
     # file str
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
 #    print file_dir+file_str
@@ -2193,7 +2193,7 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
     else:
         month_ = month
     # Directory?
-    file_dir = get_Oi_file_locations('SeaWIFS')
+    file_dir = get_file_locations('SeaWIFS')
     # file str
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
@@ -2277,7 +2277,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     else:
         month_ = month
     # Directory?
-    file_dir = get_Oi_file_locations('SeaWIFS')
+    file_dir = get_file_locations('SeaWIFS')
     # file str
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
@@ -2422,7 +2422,7 @@ def get_Depth_GEBCO4indices(lat_idx=None, lon_idx=None, month=None,
      - The time resolution for depth NetCDF is annual.
     """
     # Directory?
-    file_dir = get_Oi_file_locations('BODC')
+    file_dir = get_file_locations('BODC')
     # file str
     filename = 'GRIDONE_2D.nc'
     # Open file and extract data
@@ -2464,7 +2464,7 @@ def get_GEBCO_depth_4_loc(lat=None, lon=None, month=None,
     """
     # var2use='elevation'; buffer_CORDS=2; rtn_flag=True; debug=True
     # Directory?
-    file_dir = get_Oi_file_locations('BODC')
+    file_dir = get_file_locations('BODC')
     # file str
     filename = 'GRIDONE_2D.nc'
     # --- Extract data
@@ -2605,7 +2605,7 @@ def get_WOA_TEMP4indices(lat_idx=None, lon_idx=None, month=None,
        contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Temperature_025x025/'
+    dir = get_file_locations('WOA_2013')+'Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2659,7 +2659,7 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
     if debug:
         print(locals())
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Temperature_025x025/'
+    dir = get_file_locations('WOA_2013')+'Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2762,7 +2762,7 @@ def get_WOA_Nitrate4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Nitrate_1x1/'
+    dir = get_file_locations('WOA_2013')+'Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -2814,7 +2814,7 @@ def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Nitrate_1x1/'
+    dir = get_file_locations('WOA_2013')+'Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
@@ -2900,7 +2900,7 @@ def get_WOA_Salinity4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Salinity_025x025/'
+    dir = get_file_locations('WOA_2013')+'Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Fix depth = 0 for now...
@@ -2949,7 +2949,7 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
     """
 #    debug=True
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Salinity_025x025/'
+    dir = get_file_locations('WOA_2013')+'Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Open file
@@ -3046,7 +3046,7 @@ def get_WOA_Silicate4indices(lat_idx=None, lon_idx=None, month=None,
      contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Silicate_1x1/'
+    dir = get_file_locations('WOA_2013')+'Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3096,7 +3096,7 @@ def get_WOA_Silicate_4_loc(lat=None, lon=None, month=None, var2use='i_an',
     """
 #    debug=True
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Silicate_1x1/'
+    dir = get_file_locations('WOA_2013')+'Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Open file
@@ -3179,7 +3179,7 @@ def get_WOA_Phosphate4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Phosphate_1x1/'
+    dir = get_file_locations('WOA_2013')+'Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3229,7 +3229,7 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
     in each grid-square which contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Phosphate_1x1/'
+    dir = get_file_locations('WOA_2013')+'Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Open file
@@ -3321,7 +3321,7 @@ def get_WOA_Dissolved_O24indices(lat_idx=None, lon_idx=None, month=None,
     grid-square which contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Dissolved_O2_1x1/'
+    dir = get_file_locations('WOA_2013')+'Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3369,7 +3369,7 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
     grid-square which contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_Oi_file_locations('WOA_2013')+'Dissolved_O2_1x1/'
+    dir = get_file_locations('WOA_2013')+'Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Open file
@@ -3451,7 +3451,7 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
     url_str = root_url+'12.5km/{}_deg/tavg/tavg1_2d_chm_Nx'.format(res)
     # Where should i save the data?
 #    if isinstance(save_dir, type(None)):
-#        save_dir = get_Oi_file_locations('NASA_data_dir') +'/{}/'.format( spec )
+#        save_dir = get_file_locations('NASA_data_dir') +'/{}/'.format( spec )
     save_dir = '/work/home/ts551/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'
 #    save_dir = '/shared/earth_home/ts551/'
 #    save_dir += '/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'

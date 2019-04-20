@@ -55,7 +55,7 @@ def get_choosen_model_from_features_selection(rtn_features=True):
     from sklearn.externals import joblib
     import glob
     # load best estimator model
-    iodide_data_dir = get_Oi_file_locations('iodide_data')
+    iodide_data_dir = get_file_locations('iodide_data')
     wrk_dir = iodide_data_dir + '/models/LIVE/CHOOSEN_MODEL/'
     prefix = 'my_model_'
     model_savename = glob.glob(wrk_dir+prefix+"*.pkl")
@@ -110,7 +110,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
                                        RFR_dict=RFR_dict,
                                        testing_features=testing_features, cv=cv)
         # Save
-#        iodide_data_dir = get_Oi_file_locations('iodide_data')
+#        iodide_data_dir = get_file_locations('iodide_data')
 #        wrk_dir = iodide_data_dir+'/models/'+'/LIVE//BEST_ESTIMATORS/'
 #
 #        joblib.dump(BEST_ESTIMATOR, wrk_dir + model_savename)
@@ -127,7 +127,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
         # also sub select all vectors for input data
 
         #
-        iodide_data_dir = get_Oi_file_locations('iodide_data')
+        iodide_data_dir = get_file_locations('iodide_data')
         wrk_dir = iodide_data_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
 
         # Test the improvements in the optimised models?
@@ -168,7 +168,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
         train_set = df.loc[df[testset] == False, :]
         # also sub select all vectors for input data
         # locations of the optimised models
-        iodide_data_dir = get_Oi_file_locations('iodide_data')
+        iodide_data_dir = get_file_locations('iodide_data')
         wrk_dir = iodide_data_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
 
         # Test the improvements in the optimised models?
@@ -274,7 +274,7 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
 
     # Save the best estimator now for future use
     if save_best_estimator:
-        iodide_data_dir = get_Oi_file_locations('iodide_data')
+        iodide_data_dir = get_file_locations('iodide_data')
         wrk_dir = iodide_data_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
         model_savename = "my_model_{}.pkl".format(model_name)
         joblib.dump(BEST_ESTIMATOR, wrk_dir + model_savename)
@@ -544,11 +544,11 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     else:
         extr_str = ''
     # Get location to save file and set filename
-    iodide_dir = get_Oi_file_locations('iodide_data')
+    iodide_dir = get_file_locations('iodide_data')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     dsA = xr.open_dataset(iodide_dir + filename)
     #  location of data
-    wrk_dir = get_Oi_file_locations('iodide_data')+'/models/'+'/LIVE/'
+    wrk_dir = get_file_locations('iodide_data')+'/models/'+'/LIVE/'
     # --- Make a da for each model
     ds_l = []
     # Get list of twenty models built
@@ -787,7 +787,7 @@ def get_current_model(dir=None,
     from sklearn.externals import joblib
     # Get the location of the saved model and load it
     if isinstance(dir, type(None)):
-        dir = get_Oi_file_locations('iodide_data')+'/models/'
+        dir = get_file_locations('iodide_data')+'/models/'
     model_savename = "my_model_{}.pkl".format(extr_str)
     return joblib.load(dir+model_savename)
 
@@ -801,7 +801,7 @@ def get_predict_lat_lon_array(res='4x5', testing_features=None, month=9):
     if res == '4x5':
         filename += '_TEST'
     filename += '.csv'
-    dir = get_Oi_file_locations('iodide_data')
+    dir = get_file_locations('iodide_data')
     dir += 'Oi_prj_predictor_files_by_month_{}/'.format(res)
     df = pd.read_csv(dir+filename)
     # make sure the variables have the same names

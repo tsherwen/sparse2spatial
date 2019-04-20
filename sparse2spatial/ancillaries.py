@@ -115,7 +115,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
-    file_dir = get_Oi_file_locations('DOC')
+    file_dir = get_file_locations('DOC')
     # file str
     file_str = 'DOCmodelSR.nc'
     # Open dataset
@@ -154,7 +154,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
-    file_dir = get_Oi_file_locations('DOC')
+    file_dir = get_file_locations('DOC')
     # file str
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
@@ -188,7 +188,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
 def mk_RAD_NetCDF_monthly():
     """ Resample NetCDF from daily to monthly """
     # Directory?
-    file_dir = get_Oi_file_locations('GFDL')
+    file_dir = get_file_locations('GFDL')
     # File str
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
@@ -338,7 +338,7 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     # Gov. Printing Office, Wash., D.C., 96 pp. 87 figs. (pdf, 13.0 MB).
     # variables for
     MLD_vars = ['pt', 'pd', 'vd']
-    file_dir = get_Oi_file_locations('WOA_1994')
+    file_dir = get_file_locations('WOA_1994')
     # --- loop MLD variables.
     for var_ in MLD_vars:
         file_str = 'mld*{}*'.format(var_)
