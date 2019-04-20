@@ -20,7 +20,7 @@ Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L
 """
 # import os
 # import sys
-# import numpy as np
+import numpy as np
 # import pandas as pd
 # import xarray as xr
 # import AC_tools as AC
@@ -35,7 +35,13 @@ Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L
 # from time import gmtime, strftime
 # import time
 
-import sparse2spatial.utils
+import sparse2spatial as s2s
+import sparse2spatial.utils as utils
+import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
+import sparse2spatial.archiving as archiving
+import sparse2spatial.RTRbuild as RTRbuild
+import sparse2spatial.RTRanalysis as analysis
+
 
 def main():
     """

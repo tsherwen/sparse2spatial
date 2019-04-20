@@ -1,3 +1,8 @@
+"""
+"""
+import getpass
+import platform
+import numpy as np
 
 
 
@@ -689,10 +694,6 @@ def is_number(s):
 
 def get_file_locations(input_var):
     """ Dictionary store of data locations """
-    # Get the user and platform in use
-    import getpass
-    import platform
-
     # Get a dictionary of paths
     d = read_settings_rc_file2dict()
     # Try to add the user name and and platform to dictionary

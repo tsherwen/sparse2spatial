@@ -3,13 +3,16 @@
 Process input data (sea-surface iodide) to a DataFrame for modelling.
 
 """
-
+import numpy as np
+import pandas as pd
 
 
 def get_dataset_processed4ML(restrict_data_max=False,
                              rm_Skagerrak_data=False, rm_iodide_outliers=True,
                              rm_LOD_filled_data=False):
-    """ Get dataset as a DataFrame with standard munging settings. """
+    """
+    Get dataset as a DataFrame with standard munging settings
+    """
     # ----- Local variables
     testing_features = None
     target = 'Iodide'
@@ -79,9 +82,6 @@ def get_dataset_processed4ML(restrict_data_max=False,
     return df
 
 
-
-
-
 def get_coastal_flag(df=None, Salinity_var='WOA_Salinity',
                      coastal_flag='coastal_flagged'):
     """ Flag data if coastal (Chance et al 2014) """
@@ -101,8 +101,6 @@ def get_coastal_flag(df=None, Salinity_var='WOA_Salinity',
     # Where values are New and high salinity, set to coastal
     df.loc[n_bool & S_bool, coastal_flag] = 1.0
     return df
-
-
 
 
 def get_processed_df_obs_mod(reprocess_params=False,
@@ -158,7 +156,6 @@ def get_processed_df_obs_mod(reprocess_params=False,
             rm_Skagerrak_data=rm_Skagerrak_data
         )
     return df
-
 
 
 def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
@@ -257,7 +254,9 @@ def get_core_rosie_obs(debug=False):
 #    sub_set_no_hue = [ i for i in sub_set if (i != 'Data_Key') ]
     # this should be done more pythoncally!
     make_data_floats = [
-        'Ammonium', 'Chl-a', 'Iodate', 'Iodide', 'Latitude', 'Longitude', 'MLD', 'MLD(vd)', 'Month', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity', 'Temperature', 'Total-I'
+    'Ammonium', 'Chl-a', 'Iodate', 'Iodide', 'Latitude', 'Longitude', 'MLD',
+    'MLD(vd)', 'Month', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity',
+    'Temperature', 'Total-I'
     ]
     #
     # 2nd iteration excludes 'MLD(vd)', so remove this.
@@ -613,9 +612,6 @@ def get_Rosies_MASTER_obs_file(sheetname='S>30 data set'):
     return df
 
 
-
-
-
 def add_extra_vars_rm_some_data(df=None,
                                 restrict_data_max=False, restrict_min_salinity=False,
                                 use_median_value_for_chlor_when_NaN=False,
@@ -625,7 +621,9 @@ def add_extra_vars_rm_some_data(df=None,
                                 add_modulus_of_lat=False,
                                 rm_Skagerrak_data=False, rm_iodide_outliers=False,
                                 verbose=True, debug=False):
-    """ Add, process, or remove (requested) derivative variables """
+    """
+    Add, process, or remove (requested) derivative variables for use with ML code
+    """
     # --- Apply choices & Make user aware of choices applied to data
     Shape0 = str(df.shape)
     N0 = df.shape[0]
@@ -723,7 +721,7 @@ def add_extra_vars_rm_some_data(df=None,
             if verbose:
                 print(ver_str.format(var_, N_NaNs))
 
-    # - dpeth values have -100 as fill arrays are prone to NaNs...
+    # - depth values have -100 as fill arrays are prone to NaNs...
     if median_4depth_when_greater_than_0:
         # Get MLD variables
         var_ = 'Depth_GEBCO'
@@ -771,8 +769,6 @@ def add_extra_vars_rm_some_data(df=None,
             print('now must be reindexed for ML!!!')
         df.index = np.arange(df.shape[0])
     return df
-
-
 
 
 def convert_old_Data_Key_names2new(df, var2use='Data_Key'):

@@ -5,6 +5,10 @@ Analysis output from RandomForestRegressor algorithms
 
 """
 
+import numpy as np
+import xarray as xr
+
+
 
 def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
                                     testing_features=None, df=None, target='Iodide',
