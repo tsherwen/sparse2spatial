@@ -278,50 +278,6 @@ def Convert_martins_productivity_file_into_a_NetCDF():
     ds.to_netcdf(filename, unlimited_dims={'time': True})
 
 
-
-def set_backup_month_if_unkonwn(lat=None, var2use='', main_var='',
-                                Data_key_ID_=None, debug=True):
-    """
-    Some of the input data doesn't have a known month, so assume
-    three months prior to summer solstice for NH and SH.
-
-    Parameters
-    -------
-    lat (float): latitude degrees north
-    Data_key_ID_ (str): ID for input data point
-    var2use (str): var to extracted from NetCDF
-    main_var (str): general variable (e.g. TEMP)
-
-    Returns
-    -------
-    (float), (str)
-    (or list of two sets of above variables if get_max_and_sum_of_values==True)
-
-    Notes
-    -----
-    """
-    # seasons  = 'DJF', 'MAM', 'JJA', 'SON'
-    if lat > 0:  # if NH
-        # if Lat assume mid of season as April (as June is summer solstice in the NH)
-        # Choose 3 months before summer solstice (southern hemisphere)
-        month_ = 3
-    else:  # if SH
-        # summer is from December to March and winter is from June to
-        # September. September 22 or 23 is the vernal equinox and March
-        # 20 or 21 is the autumnal equinox
-        # Choose 3 months before summer solstice (southern hemisphere)
-        month_ = 9
-    if debug:
-        warn_str = '!'*10
-        warn_str += 'WARNING: Annual val unknown for '
-        warn_str += '{}({})!! (use month:{})'.format(main_var, var2use, month_)
-        warn_str += '(ID:{})'.format(Data_key_ID_)
-        warn_str += '!'*10
-    if debug:
-        print(warn_str)
-    return month_
-
-
 def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     """ Process NOAA WOA94 csv files to netCDF """
     # The MLD fields available are computed from climatological monthly mean
