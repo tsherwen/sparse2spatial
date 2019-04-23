@@ -2,9 +2,56 @@
 
 Process input data (sea-surface iodide) to a DataFrame for modelling.
 
+This file is intended to run as a standard alone script. It generates the file of observational data used both in the paper that describes the sea-surface iodide observations [Chance et al 2019] and the work that uses this to build a monthly sea-surface field [Sherwen et al 2019].
+
+e.g.
+
+python observations.py
+
+Citations
+-------
+
+“Global sea-surface iodide observations, 1967-2018”, R. J. Chance, L. Tinel, T. Sherwen , et al., in review, 2019
+
+Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data Discuss., https://doi.org/10.5194/essd-2019-40, in review, 2019.
+
+Notes
+-------
+ - Abbreviations used here:
+obs. = observations
+
 """
 import numpy as np
 import pandas as pd
+import sparse2spatial as s2s
+from sparse2spatial.utils import get_file_locations
+from sparse2spatial.utils import set_backup_month_if_unkonwn
+from sparse2spatial.utils import get_outlier_value
+from sparse2spatial.RTRbuild import mk_iodide_ML_testing_and_training_set
+from sparse2spatial.ancillaries2grid_oversample import extract_ancillary_obs_from_COMPILED_file
+
+
+def main(add_ancillaries=False):
+    """
+    Driver to process sea-surface iodide observations into a single .csv file
+
+    Parameters
+    -------
+    add_ancillaries (bool): Inc. ancillaries in .csv file for obs. locations?
+
+    Returns
+    -------
+    (None)
+    """
+    # Get iodide observations? (if already processed)
+#    get_iodide_obs()
+    # Re-process observations file?
+    get_iodide_obs(process_new_iodide_obs_file=True)
+    # Add ancillaries variables to core file for observation locations?
+    if add_ancillaries:
+        # Re-process ancillaries file?
+#        process_iodide_obs_ancillaries_2_csv()
+        pass
 
 
 def get_dataset_processed4ML(restrict_data_max=False,
@@ -12,8 +59,21 @@ def get_dataset_processed4ML(restrict_data_max=False,
                              rm_LOD_filled_data=False):
     """
     Get dataset as a DataFrame with standard munging settings
+
+
+    Parameters
+    -------
+    restrict_data_max (bool): restrict the obs. data to a maximum value?
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    Notes
+    -----
+
     """
-    # ----- Local variables
+    # - Local variables
     testing_features = None
     target = 'Iodide'
     target_name = target
@@ -22,18 +82,17 @@ def get_dataset_processed4ML(restrict_data_max=False,
     restrict_min_salinity = False
     use_median_value_for_chlor_when_NaN = False
     add_modulus_of_lat = False
-    # apply transforms to  data?
+    # Apply transforms to data?
     do_not_transform_feature_data = True
-    # just use the forest out comes
+    # Just use the forest outcomes and do not optimise
     use_forest_without_optimising = True
     # KLUDGE - this is for N=85
     median_4MLD_when_NaN_or_less_than_0 = False  # This is no longer needed?
     # KLUDGE -  this is for depth values greater than zero
     median_4depth_when_greater_than_0 = False
-
-    # --- Get data as a DataFrame
+    # - Get data as a DataFrame
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
-    # - add extra vairables and remove some data.
+    # Add extra vairables and remove some data.
     df = add_extra_vars_rm_some_data(df=df,
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
@@ -46,7 +105,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
                       median_4depth_when_greater_than_0=median_4depth_when_greater_than_0,
                                      )    # add
 
-    # ---- Add test and training set assignment to columns
+    # - Add test and training set assignment to columns
 #    print( 'WARNING - What testing had been done on training set selection?!' )
     # Choose a sub set of data to exclude from the input data...
 #     from sklearn.model_selection import train_test_split
@@ -71,7 +130,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
                                                     random_strat_split=random_strat_split,
                                                     testing_features=df.columns.tolist(),
                                                      test_plots_of_iodide_dist=False
-                                                              #            testing_features=testing_features,
+#                                                   testing_features=testing_features,
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
@@ -84,7 +143,20 @@ def get_dataset_processed4ML(restrict_data_max=False,
 
 def get_coastal_flag(df=None, Salinity_var='WOA_Salinity',
                      coastal_flag='coastal_flagged'):
-    """ Flag data if coastal (Chance et al 2014) """
+    """
+    Flag data if coastal (Chance et al 2014)
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    Notes
+    -----
+     - This function is redundent. All values in data files now have a coastal flag.
+    """
     # Setup a flag
     df[coastal_flag] = 0
     # For Chance et al data use coastal flag
@@ -106,10 +178,24 @@ def get_coastal_flag(df=None, Salinity_var='WOA_Salinity',
 def get_processed_df_obs_mod(reprocess_params=False,
                              filename='Iodine_obs_WOA.csv',
                              rm_Skagerrak_data=False,
+                             file_and_path='./sparse2spatial.rc',
                              verbose=True, debug=False):
-    """ Get the processed observation and model output """
+    """
+    Get the processed observation and model output
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    Notes
+    -----
+
+    """
     # Read in processed csv file
-    dir = get_Oi_file_locations('iodide_data')
+    dir = get_file_locations('iodide_data', file_and_path=file_and_path)
     df = pd.read_csv(dir+filename, encoding='utf-8')
     # Kludge (temporary) - make Chlorophyll values all floats
 #     def mk_float_or_nan(input):
@@ -118,7 +204,6 @@ def get_processed_df_obs_mod(reprocess_params=False,
 #         except:
 #             return np.nan
 #     df['SeaWIFs_ChlrA'] = df['SeaWIFs_ChlrA'].map(mk_float_or_nan)
-
     # Add ln of iodide too
     df['ln(Iodide)'] = df['Iodide'].map(np.ma.log)
     # Add SST in Kelvin too
@@ -142,8 +227,10 @@ def get_processed_df_obs_mod(reprocess_params=False,
         NaN_months_df[month_var] = NaN_months_df.apply(lambda x:
                                                        set_backup_month_if_unkonwn(
                                                            lat=x['Latitude'],
-                                                           #            main_var=var2use, var2use=var2use,
-                                                           #            Data_key_ID_=Data_key_ID_,
+                                                           #main_var=var2use,
+                                                           #var2use=var2use,
+                                                           #
+                                                           #Data_key_ID_=Data_key_ID_,
                                                            debug=False), axis=1)
         # Add back into DataFrame
         df.loc[NaN_months_bool, month_var] = NaN_months_df[month_var].values
@@ -159,12 +246,21 @@ def get_processed_df_obs_mod(reprocess_params=False,
 
 
 def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
+                                         file_and_path='./sparse2spatial.rc',
                                          verbose=True):
     """
     Create a csv files of iodide observation and ancilllary observations
 
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (pd.DataFrame)
+
     Notes
-    ----
+    -----
      -  Workflow assumes that this step will be run to compile the data
     """
     # Get iodide observations (as a dictionary/DataFrame)
@@ -175,12 +271,12 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
     obs_data_df = extract_ancillary_obs_from_COMPILED_file(
         obs_data_df=obs_data_df, obs_metadata_df=obs_metadata_df)
     # Save the intermediate file
-    folder = get_Oi_file_locations('iodide_data')
+    folder = get_file_locations('iodide_data', file_and_path=file_and_path)
     filename = 'Iodine_obs_WOA_v8_5_1_TEMP_TEST.csv'
     obs_data_df.to_csv(folder+filename, encoding='utf-8')
-    # --- Add predicted iodide from MacDonald and Chance parameterisations
+    # - Add predicted iodide from MacDonald and Chance parameterisations
     obs_data_df = get_literature_predicted_iodide(df=obs_data_df)
-    # - Add ensemble prediction by averaging predictions at obs. locations.
+    # - Add ensemble prediction by averaging predictions at obs. locations.?
     if add_ensemble:
         print('NOTE - models must have already b provided via RFR_dict')
         RFR_dict = build_or_get_current_models(
@@ -192,7 +288,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
                                                     RFR_dict=RFR_dict,
                                                     rm_Skagerrak_data=rm_Skagerrak_data
                                                     )
-    # ---  join dataframes and save as csv.
+    # - Join dataframes and save as csv.
 #    filename = 'Iodine_obs_WOA.csv'
 #    filename = 'Iodine_obs_WOA_v8_1_PLUS_ENSEMBLE.csv'
 #    filename = 'Iodine_obs_WOA_v8_5_1_PLUS_ENSEMBLE_8_3_ENSEMBLE.csv'
@@ -208,21 +304,28 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
 # ---------------------------------------------------------------------------
 # ---------------- Iodide obs. processing/extraction/input testing ----------
 # ---------------------------------------------------------------------------
-def get_core_rosie_obs(debug=False):
+def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     """
     Get Rosies observation data
 
+    Parameters
+    -------
+
+    Returns
+    -------
+    (pd.DataFrame)
+
     Notes
-    ----
+    -----
      - This assumes that core data is "surface data" above 20m
      - only considers rows of csv where there is iodine data.
     """
     # ---- get file
-    # dir
-    dir = get_Oi_file_locations('iodide_data')
-    # filename
+    # directory to use?
+    dir = get_file_locations('iodide_data', file_and_path=file_and_path)
+    # filename for <20m iodide data?
     f = 'Iodide_data_above_20m.csv'
-    # get DataFrame
+    # Get data as DataFrame
     df = pd.read_csv(dir+f)
     # ---- process
     # list of core variables
@@ -237,10 +340,9 @@ def get_core_rosie_obs(debug=False):
     core_vars.pop(core_vars.index('MLD(vd)'))
     # 2nd iterations includes new flag columns. Add these.
     core_vars += ['Coastal', 'LocatorFlag', 'Province', ]
-    # just select core variables
+    # Just select core variables
     df = df[core_vars]
-    # remove datapoints that are not floats
-
+    # Remove datapoints that are not floats
     def make_sure_values_are_floats(x):
         """
         Some values in the dataframes are "nd" or "###?". remove these.
@@ -250,7 +352,7 @@ def get_core_rosie_obs(debug=False):
         except:
             x = np.NaN
         return x
-    # loop none Hue columns
+    # Loop none Hue columns
 #    sub_set_no_hue = [ i for i in sub_set if (i != 'Data_Key') ]
     # this should be done more pythoncally!
     make_data_floats = [
@@ -258,18 +360,15 @@ def get_core_rosie_obs(debug=False):
     'MLD(vd)', 'Month', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity',
     'Temperature', 'Total-I'
     ]
-    #
     # 2nd iteration excludes 'MLD(vd)', so remove this.
     make_data_floats.pop(make_data_floats.index('MLD(vd)'))
     # 2nd iterations includes new flag columns. Add these.
     make_data_floats += ['Coastal', 'LocatorFlag', 'Province', ]
     # v8.4 had further updates.
     make_data_floats += ['ErrorFlag', ]
-
     for col in make_data_floats:
         df[col] = df[col].map(make_sure_values_are_floats)[:]
-    # only consider rows where there is iodide data.
-    # of values from <20m N=930, in Chance the value is 925
+    # Only consider rows where there is iodide data (of values from <20m N=930)
     if debug:
         print('I- df shape (inc. NaNs): {}'.format(str(df.shape)))
 #    df = df[ df['Iodide'] != np.NaN ]
@@ -281,10 +380,12 @@ def get_core_rosie_obs(debug=False):
     return df
 
 
-def get_iodide_obs_metadata():
-    """ Extract and return metadata from metadata csv """
-    # Data location
-    iodide_dir = get_Oi_file_locations('iodide_data')
+def get_iodide_obs_metadata(file_and_path='./sparse2spatial.rc'):
+    """
+    Extract and return metadata from metadata csv
+    """
+    # What is the location of the iodide data?
+    iodide_dir = get_file_locations('iodide_data', file_and_path=file_and_path)
     # Filename?
     filename = 'Iodine_climatology_Submitted_data_list_formatted_TMS.xlsx'
     # Extract
@@ -296,10 +397,23 @@ def get_iodide_obs_metadata():
 def get_iodide_obs(just_use_submitted_data=False,
                    just_rosie_core_data=True, analyse_iodide_values2drop=False,
                    process_new_iodide_obs_file=False,
+                   file_and_path='./sparse2spatial.rc',
                    limit_depth_to=20, verbose=True, debug=False):
-    """ Extract iodide observations from the (re-formated) file from Rosie """
-    # data location
-    iodide_dir = get_Oi_file_locations('iodide_data')
+    """
+    Extract iodide observations from the (re-formated) file from Rosie
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    Notes
+    -----
+    """
+    # What is the location of the iodide data?
+    iodide_dir = get_file_locations('iodide_data', file_and_path=file_and_path)
     # Name to save file as
     filename = 'Iodide_data_above_20m.csv'
     # --- Get Metadata (and keep as a seperate DataFrame )
@@ -307,11 +421,11 @@ def get_iodide_obs(just_use_submitted_data=False,
     # Process new iodide obs. (data) file?
     if process_new_iodide_obs_file:
         # --- Extract data?
-        # to test processing... just use submitted data?
+        # To test processing... just use submitted data?
         if just_use_submitted_data:
             Data_Keys = metadata_df['Data_Key'][metadata_df['source'] == 's']
             print(Data_Keys)
-            # add bodc data
+            # Add bodc data
             bool_ = metadata_df['source'] == 'bodc'
             bodc_Data_Keys = metadata_df['Data_Key'].loc[bool_]
             Data_Keys = list(Data_Keys)
@@ -324,7 +438,7 @@ def get_iodide_obs(just_use_submitted_data=False,
         # --- Loop Data_Keys
         # Setup list to store dataframes
         dfs = []
-        # loop data keys for sites
+        # Loop data keys for sites
         for n_Data_Key, Data_Key in enumerate(Data_Keys):
             pcent = float(n_Data_Key)/len(Data_Keys)*100
             if verbose:
@@ -333,13 +447,13 @@ def get_iodide_obs(just_use_submitted_data=False,
             df = extract_rosie_excel_file(Data_Key=Data_Key,
                                           metadata_df=metadata_df,
                                           limit_depth_to=limit_depth_to)
-            # save to list
+            # Save to list
             dfs += [df]
         # Combine dataframes.
         main_df = pd.concat(dfs)
         # Analyse the datapoints that are being removed.
         if analyse_iodide_values2drop:
-                        # Loop indexes and save out values that are "odd"
+            # Loop indexes and save out values that are "odd"
             ind2save = []
             tmp_var = 'temp #'
             main_df[tmp_var] = np.arange(main_df.shape[0])
@@ -349,9 +463,6 @@ def get_iodide_obs(just_use_submitted_data=False,
                     pd.to_numeric(df_tmp['Iodide'])
                 except:
                     ind2save += [ind]
-
-
-#        print main_df.head()
         # Make sure core values are numeric
         core_numeric_vars = [
             u'Ammonium', u'Chl-a', u'Depth', u'Iodate', u'Iodide', u'Latitude',
@@ -365,10 +476,10 @@ def get_iodide_obs(just_use_submitted_data=False,
             main_df[var] = pd.to_numeric(main_df[var].values, errors='coerce')
         # Save to disk
         main_df.to_csv(iodide_dir+filename, encoding='utf-8')
-    # ---  Just use existing file
+    # - Just use existing file
     else:
         try:
-            # just open existing file
+            # Just open existing file
             if just_rosie_core_data:
                 main_df = get_core_rosie_obs()
             else:
@@ -381,38 +492,51 @@ def get_iodide_obs(just_use_submitted_data=False,
 
 def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
                              metadata_df=None, use_inclusive_limit=False,
+                             file_and_path='./sparse2spatial.rc',
                              verbose=True, debug=False):
-    """ Extract an excel file from Rosies' collectiom & return as DataFrame """
+    """
+    Extract an excel file from Rosies' collectiom & return as DataFrame
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    Notes
+    -----
+    """
     # limit_depth_to=20; Data_Key=None; metadata_df=None; debug=False
     # ---  Get file details
-    # meta data
+    # Load metadata file as a DataFrame
     Data_Key_meta = metadata_df[metadata_df.Data_Key == Data_Key]
     # Use TMS updated variable for filename
 #    filename = Data_Key_meta['File name'].values[0]
     filename = Data_Key_meta['File_name_UPDATED'].values[0]
     source = Data_Key_meta['source'].values[0]
     InChance2014 = Data_Key_meta['In Chance2014?'].values[0] == 'Y'
-    # --- Get directory
+    # - Get directory which contains files
     # Data submitted directly for preparation
     # (as publish by Chance et al (2014) )
     # New data, acquired since 2017
     if (not InChance2014):
-        dir_ = get_Oi_file_locations('new_data')
+        dir_ = get_file_locations('new_data', file_and_path=file_and_path)
     elif ((source == 's') or (source == 'bodc')) and (InChance2014):
-        dir_ = get_Oi_file_locations('submitted_data')
+        dir_ = get_file_locations('submitted_data', file_and_path=file_and_path)
     # Data digitalised for Chance et al (2014)
     elif (source == 'd') and (InChance2014):
-        dir_ = get_Oi_file_locations('digitised_data')
+        dir_ = get_file_locations('digitised_data', file_and_path=file_and_path)
     else:
         print("Source received ('') unknown?!".format(source))
         sys.exit()
     # File specific reading settings?
     read_csv_settings = read_csv_settings_4_data_key_file(Data_Key=Data_Key)
     skiprows, file_extension = read_csv_settings
-    # ---- Read file and process
+    # - Read file and process
     if verbose:
         print('reading: {}'.format(filename), Data_Key)
-    df = pd.read_excel(dir_+filename+file_extension, sheet='Data',
+    df = pd.read_excel(dir_+filename+file_extension, sheet_name='Data',
                        skiprows=skiprows)
     # Force use of 'Index' column as index to preserve ordering.
     df.index = df['Index'].values
@@ -435,22 +559,33 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
         df = df.loc[df['Depth'] <= limit_depth_to, :]  # only consider values
     else:
         df = df.loc[df['Depth'] < limit_depth_to, :]  # only consider values
-    # Add a column to be a unique identifier and column index.
-
+    # Add a column to be a unique identifier and column index
     def get_unique_Data_Key_label(x, Data_Key=Data_Key):
         # Use the index as the number (which now starts from 1)
         x = int(x)
         return '{}_{:0>4}'.format(Data_Key, x)
-    # map to index, then assign to be index
+    # Map to index, then assign to be index
     df['Data_Key_ID'] = df['Index'].map(get_unique_Data_Key_label)
 #    df.index = df['Data_Key_ID']
-    # also add column for data key
+    # Also add column for data key
     df['Data_Key'] = Data_Key
     return df
 
 
 def read_csv_settings_4_data_key_file(Data_Key=None):
-    """ get skiprows/extension of observational excel files """
+    """
+    get skiprows/extension of observational excel files
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (tuple)
+
+    Notes
+    -----
+    """
     # Dictionary values: Data Key : ( skiprows, file extension)
     d = {
         'Wong_Z_2003': (1, '.xls'),
@@ -518,7 +653,19 @@ def read_csv_settings_4_data_key_file(Data_Key=None):
 
 def build_comparisons_between_MASTER_obs_file_and_extracted_data(
         show_plot=False, dpi=320):
-    """ Check the extract data against the values used previously """
+    """
+    Check the extract data against the values used previously
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (tuple)
+
+    Notes
+    -----
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     current_palette = sns.color_palette("colorblind")
@@ -592,22 +739,30 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def get_Rosies_MASTER_obs_file(sheetname='S>30 data set'):
+def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows = 1,
+                               file_and_path='./sparse2spatial.rc',):
     """
     To check on the correlations between the newly extract climatological
     values, this funtion extracts the details from Rosie's master
     spreadsheet to perform comparisons.
 
+    Parameters
+    -------
+
+    Returns
+    -------
+    (tuple)
+
+    Notes
+    -----
     """
     # location and filename?
     filename = 'Iodide_correlations_310114_MASTER_TMS_EDIT.xlsx'
-    dir_ = get_Oi_file_locations('iodide_data') + '/RJC_spreadsheets/'
+    dir_ = get_file_locations('iodide_data', file_and_path=file_and_path)
+    dir_ += '/RJC_spreadsheets/'
     # Extract Rosies MASTER excel sheet (for values with depth <20m)
-#     skiprows = 1
-#     df = pd.read_excel(dir_+filename, sheetname='<20 m all data', \
-#        skiprows=skiprows)
+#    sheetname='<20 m all data', \
     # Extract Rosies MASTER excel sheet (for values with salinity >30)
-    skiprows = 1
     df = pd.read_excel(dir_+filename, sheetname=sheetname, skiprows=skiprows)
     return df
 
@@ -623,6 +778,16 @@ def add_extra_vars_rm_some_data(df=None,
                                 verbose=True, debug=False):
     """
     Add, process, or remove (requested) derivative variables for use with ML code
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (tuple)
+
+    Notes
+    -----
     """
     # --- Apply choices & Make user aware of choices applied to data
     Shape0 = str(df.shape)
@@ -637,7 +802,6 @@ def add_extra_vars_rm_some_data(df=None,
         df = df_tmp
     # - Remove the outliers (N=19 for v8.1)
     if restrict_data_max:
-        #        df_tmp = df[ df['Iodide']< 450. ]
         df_tmp = df[df['Iodide'] < 400.]  # updated on 180611 (& commented out)
         prt_str = 'Restricting max iodide values. (df {}=>{},{})'
         N = int(df_tmp.shape[0])
@@ -674,10 +838,9 @@ def add_extra_vars_rm_some_data(df=None,
         df = df_tmp
     # - Chlorophyll arrays are prone to NaNs...
     if use_median_value_for_chlor_when_NaN:
-        # average value
+        # Average value
         avg = df['SeaWIFs_ChlrA'].median()
-        # function to map
-
+        # Function to map
         def swp_NaN4_median(input, avg=avg):
             """ swap NaNs for median """
             if np.isfinite(input):
@@ -702,26 +865,24 @@ def add_extra_vars_rm_some_data(df=None,
             df.loc[bool_, var_] = np.NaN
             bool_ = ~np.isfinite(df[var_].values)
             df.loc[bool_, var_] = np.NaN
-            # save number of NaNs
+            # Save number of NaNs
             N_NaNs = df.loc[bool_, var_].shape[0]
             # Get the average
             avg = df[var_].median()
-            # function to map
-
+            # Function to map
             def swp_NaN4_median(input, avg=avg):
                 """ swap NaNs for median """
                 if np.isfinite(input):
                     return input
                 else:
                     return avg
-            # swap NaNs for median values
+            # Swap NaNs for median values
             df[var_] = df[var_].copy().map(swp_NaN4_median)
-            # print to screen any swaps
+            # Print to screen any swaps
             ver_str = '{}: Swapped NaNs for median values (N={})'
             if verbose:
                 print(ver_str.format(var_, N_NaNs))
-
-    # - depth values have -100 as fill arrays are prone to NaNs...
+    # - Depth values have -100 as fill arrays are prone to NaNs...
     if median_4depth_when_greater_than_0:
         # Get MLD variables
         var_ = 'Depth_GEBCO'
@@ -729,25 +890,23 @@ def add_extra_vars_rm_some_data(df=None,
         df.loc[bool_, var_] = np.NaN
         bool_ = ~np.isfinite(df[var_].values)
         df.loc[bool_, var_] = np.NaN
-        # save number of NaNs
+        # Save number of NaNs
         N_NaNs = df.loc[bool_, var_].shape[0]
         # Get the average
         avg = df[var_].median()
-        # function to map
-
+        # Function to map
         def swp_NaN4_median(input, avg=avg):
             """ swap NaNs for median """
             if np.isfinite(input):
                 return input
             else:
                 return avg
-        # swap NaNs for median values
+        # Swap NaNs for median values
         df[var_] = df[var_].copy().map(swp_NaN4_median)
         #
         ver_str = '{}: Swapped NaNs for median values (N={})'
         if verbose:
             print(ver_str.format(var_, N_NaNs))
-
     # - Add temperature in Kelvin
     new_var = 'WOA_TEMP_K'
     if (new_var not in df.columns):
@@ -772,20 +931,31 @@ def add_extra_vars_rm_some_data(df=None,
 
 
 def convert_old_Data_Key_names2new(df, var2use='Data_Key'):
-    """ Convert Data_Keys in old files to be sama as data desp. paper """
-    # v8.3
+    """
+    Convert Data_Keys in old files to be sama as data desp. paper
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    Notes
+    -----
+    """
+    # Variables for version v8.3
     NIU, md_df = get_iodide_obs()
     Data_Keys_8_5_1 = md_df['Data_Key'].values
-    # v8.2
+    # Variables for version v8.2
     filename = 'Iodine_climatology_Submitted_data_list_formatted_TMS_v8_2.xlsx'
     md_df2 = pd.read_excel(folder + filename, sheetname='Full')
     Data_Keys_8_2 = md_df2['Data_Key'].values
-    # map together as dictionary
+    # Map together as dictionary
     d = dict(zip(Data_Keys_8_2, Data_Keys_8_5_1))
     # Add the misspelling
     d['Elderfeild_T_1980'] = 'Elderfield_T_1980'
-    # setup as a mappable function
-
+    # Setup as a mappable function
     def nename_col(input):
         if input in d.keys():
             return d[input]
@@ -793,7 +963,10 @@ def convert_old_Data_Key_names2new(df, var2use='Data_Key'):
             prt_str = "Input Data_Key '{}' not in dictionary"
             print(prt_str.format(input))
             sys.exit()
-    # map the updates then return dataframe
+    # Map the updates then return dataframe
     df[var2use] = df[var2use].map(nename_col)
     return df
 
+
+if __name__ == "__main__":
+    main()
