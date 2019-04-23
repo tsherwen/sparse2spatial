@@ -45,7 +45,7 @@ def compare_emissions(wd_dict=None, inorg_emiss=None, specs=None):
 
 def get_emissions_testing_runs():
     """ """
-    folder = get_Oi_file_locations('earth0_home_dir')
+    folder = get_file_locations('earth0_home_dir')
     folder += '/data/all_model_simulations/iodine_runs/iGEOSChem_4.0_v10/'
 
     #
@@ -92,7 +92,7 @@ def get_inorg_emissions_for_params(wd_dict=None, res='4x5'):
 def get_inorganic_iodide_emissions():
     """ Get emissions for """
     # Location of run data
-    wd = get_Oi_file_locations('earth0_home_dir')
+    wd = get_file_locations('earth0_home_dir')
     wd += '/data/all_model_simulations/iodine_runs/iGEOSChem_4.0_v10/'
     #
     print('WARNING: Neither simulation used NEI2011 emissions!!')

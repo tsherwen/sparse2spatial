@@ -886,7 +886,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5',
         testing_features_dict = RFR_dict['testing_features_dict']
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
-        folder = get_Oi_file_locations('iodide_data')
+        folder = get_file_locations('iodide_data')
     extr_str = '_INTERP_NEAREST_DERIVED'
     # Add lines to save strings
     if use_updated_predictor_NetCDF:
