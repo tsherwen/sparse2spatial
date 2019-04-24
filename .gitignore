@@ -113,3 +113,6 @@ venv.bak/
 *.png
 *.jpg
 *.pdf
+
+# Do not include bash scripts 
+*.sh
