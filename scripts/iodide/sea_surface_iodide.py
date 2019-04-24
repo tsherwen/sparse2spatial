@@ -40,7 +40,11 @@ import sparse2spatial.utils as utils
 import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 import sparse2spatial.archiving as archiving
 import sparse2spatial.RTRbuild as RTRbuild
-import sparse2spatial.RTRanalysis as analysis
+import sparse2spatial.RFRanalysis as analysis
+from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
+from sparse2spatial.utils import calc_iodide_chance2014_Multivariate
+from sparse2spatial.utils import calc_iodide_MacDonald2014
+
 
 
 def main():

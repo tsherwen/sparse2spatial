@@ -29,9 +29,14 @@ from sparse2spatial.utils import set_backup_month_if_unkonwn
 from sparse2spatial.utils import get_outlier_value
 from sparse2spatial.RTRbuild import mk_iodide_ML_testing_and_training_set
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillary_obs_from_COMPILED_file
+from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
+from sparse2spatial.utils import calc_iodide_chance2014_Multivariate
+from sparse2spatial.utils import calc_iodide_MacDonald2014
+# iodide specific functions (move these to this directory?)
+#from sparse2spatial.utils import get_literature_predicted_iodide
 
 
-def main(add_ancillaries=False):
+def main(add_ancillaries=True):
     """
     Driver to process sea-surface iodide observations into a single .csv file
 
@@ -50,7 +55,7 @@ def main(add_ancillaries=False):
     # Add ancillaries variables to core file for observation locations?
     if add_ancillaries:
         # Re-process ancillaries file?
-#        process_iodide_obs_ancillaries_2_csv()
+        process_iodide_obs_ancillaries_2_csv()
         pass
 
 
@@ -245,7 +250,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
     return df
 
 
-def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
+def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=False,
                                          file_and_path='./sparse2spatial.rc',
                                          verbose=True):
     """
@@ -278,7 +283,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
     obs_data_df = get_literature_predicted_iodide(df=obs_data_df)
     # - Add ensemble prediction by averaging predictions at obs. locations.?
     if add_ensemble:
-        print('NOTE - models must have already b provided via RFR_dict')
+        print('NOTE - models must have already been provided via RFR_dict')
         RFR_dict = build_or_get_current_models(
             rm_Skagerrak_data=rm_Skagerrak_data,
         )
@@ -965,6 +970,129 @@ def convert_old_Data_Key_names2new(df, var2use='Data_Key'):
             sys.exit()
     # Map the updates then return dataframe
     df[var2use] = df[var2use].map(nename_col)
+    return df
+
+
+def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
+    """
+    Add Chance et al 2014 parameterisations to df (from processed .csv)
+    """
+    # get details of parameterisations
+#    filename='Chance_2014_Table2_PROCESSED_17_04_19.csv'
+    filename = 'Chance_2014_Table2_PROCESSED.csv'
+    folder = get_file_locations('data_root')
+    param_df = pd.read_csv(folder+filename)
+    # map input variables
+    input_dict = {
+        'C': 'WOA_TEMP',
+        'ChlorA': 'SeaWIFs_ChlrA',
+        'K': 'WOA_TEMP_K',
+        'Lat': 'Latitude',
+        'MLDpd': 'WOA_MLDpd',
+        'MLDpt': 'WOA_MLDpt',
+        'MLDvd': 'WOA_MLDvd',
+        'MLDpd_max': 'WOA_MLDpd_max',
+        'MLDpt_max': 'WOA_MLDpt_max',
+        'MLDvd_max': 'WOA_MLDvd_max',
+        'MLDpd_sum': 'WOA_MLDpd_sum',
+        'MLDpt_sum': 'WOA_MLDpt_sum',
+        'MLDvd_sum': 'WOA_MLDvd_sum',
+        'NO3': 'WOA_Nitrate',
+        'Salinity': 'WOA_Salinity',
+    }
+    # --- Loop parameterisation and add to data frame
+    for param in param_df['TMS ID'].values:
+        sub_df = param_df[param_df['TMS ID'] == param]
+        if debug:
+            print(sub_df)
+        # extract variables
+        data = df[input_dict[sub_df.param.values[0]]].values
+        #  Function to use?
+        func2use = str(sub_df.function.values[0])
+        if debug:
+            print(func2use)
+        # Do any functions on the data
+        if func2use == 'None':
+            pass
+        elif func2use == 'abs':
+            data = abs(data)
+        elif func2use == 'inverse':
+            data = 1./data
+        elif func2use == 'square':
+            data = data**2
+#        elif func2use == 'max':
+#            print 'Need to add max option!'
+#        elif func2use == 'sum':
+#            print 'Need to add sum option!'
+        else:
+            print('function not in list')
+            sys.exit()
+#        if not isinstance(func2use, type(None) ):
+#            data = func2use(data)
+        # apply linear scaling
+        m, c = [sub_df[i].values[0] for i in ['m', 'c']]
+#        print [ (type(i), i) for i in m, c,data ]
+        data = (m*data) + c
+        # now add to dictionary
+        df[param] = data
+    return df
+
+
+
+def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
+    """ Get predicted iodide from literature parametersations """
+    # Set local variables
+    TEMPvar = 'WOA_TEMP'  # temperature
+    # Add temperature in Kelvin to array
+    TEMPvar_K = TEMPvar+'_K'
+    try:
+        df[TEMPvar_K]
+    except KeyError:
+        print('Adding temperature in Kelvin')
+        df[TEMPvar+'_K'] = df[TEMPvar].values+273.15
+    # Add Modulus to Dataframe, if not present
+    MOD_LAT_var = "Latitude (Modulus)"
+    try:
+        df[MOD_LAT_var]
+    except KeyError:
+        print('Adding modulus of Latitude')
+        df[MOD_LAT_var] = np.sqrt(df["Latitude"].copy()**2)
+    # Other variables used in module
+    NO3_var = u'WOA_Nitrate'
+    sumMLDpt_var = 'WOA_MLDpt_sum'
+    salinity_var = u'WOA_Salinity'
+    # --- Function to calculate Chance et al. (2014) correlation
+    # functions to calculate (main) Chance et al correlation
+    # In order of table 2 from Chance et al. (2014)
+    # Add two main parameterisations to dataframe
+    # Chance et al. (2014)
+    var2use = 'Chance2014_STTxx2_I'
+    try:
+        df[var2use]
+    except KeyError:
+        df[var2use] = df[TEMPvar].map(calc_iodide_chance2014_STTxx2_I)
+    # MacDonald et al. (2014)
+    var2use = 'MacDonald2014_iodide'
+    try:
+        df[var2use]
+    except KeyError:
+        df[var2use] = df[TEMPvar].map(calc_iodide_MacDonald2014)
+    # Add all parameterisations from Chance et al (2014) to dataframe
+    df = add_all_Chance2014_correlations(df=df, debug=debug)
+#    print df.shape
+    # Add multivariate parameterisation too (Chance et al. (2014))
+    # Chance et al. (2014). multivariate
+    var2use = 'Chance2014_Multivariate'
+    try:
+        df[var2use]
+    except KeyError:
+        df[var2use] = df.apply(lambda x:
+                               calc_iodide_chance2014_Multivariate(NO3=x[NO3_var],
+                                                                 sumMLDpt=x[sumMLDpt_var],
+                                                                   MOD_LAT=x[MOD_LAT_var],
+                                                                   TEMP=x[TEMPvar],
+                                                                salinity=x[salinity_var]),
+                                                                   axis=1)
     return df
 
 
