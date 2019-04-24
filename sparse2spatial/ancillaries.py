@@ -115,11 +115,11 @@ def Convert_DOC_file_into_Standard_NetCDF():
     import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
     file_str = 'DOCmodelSR.nc'
     # Open dataset
-    ds = xr.open_dataset(file_dir+file_str)
+    ds = xr.open_dataset(folder+file_str)
     # ---  Force use of coordinate variables in netCDF
     ds['latitude'] = ds['LAT'][0, 0, :].values
     ds['latitude'].attrs = ds['LAT'].attrs
@@ -146,7 +146,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     ds.attrs = d
     # --- Save the new NetCDF file
     newfile_str = file_str.split('.nc')[0]+'_TMS_EDIT.nc'
-    ds.to_netcdf(file_dir + newfile_str)
+    ds.to_netcdf(folder + newfile_str)
 
 
 def Convert_DOC_prod_file_into_Standard_NetCDF():
@@ -154,11 +154,11 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
-    ds = xr.open_dataset(file_dir+file_str)
+    ds = xr.open_dataset(folder+file_str)
     # ---  Force use of coordinate variables in netCDF
     ds['latitude'] = ds['lat'][0, :].values
     ds['latitude'].attrs = ds['lat'].attrs
@@ -182,13 +182,13 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     ds.attrs = d
     # --- Save the new NetCDF file
     newfile_str = file_str.split('.nc')[0]+'_TMS_EDIT.nc'
-    ds.to_netcdf(file_dir + newfile_str)
+    ds.to_netcdf(folder + newfile_str)
 
 
 def mk_RAD_NetCDF_monthly():
     """ Resample NetCDF from daily to monthly """
     # Directory?
-    file_dir = get_file_locations('GFDL')
+    folder = get_file_locations('GFDL')
     # File str
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
@@ -196,7 +196,7 @@ def mk_RAD_NetCDF_monthly():
     ds = ds.resample(dim='TIME', freq='M')
     # Save as NetCDF
     newfile_str = file_str.split('.nc')[0]+'_TMS_EDIT.nc'
-    ds.to_netcdf(file_dir+newfile_str)
+    ds.to_netcdf(folder+newfile_str)
 
 
 def Convert_martins_productivity_file_into_a_NetCDF():
@@ -294,11 +294,11 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     # Gov. Printing Office, Wash., D.C., 96 pp. 87 figs. (pdf, 13.0 MB).
     # variables for
     MLD_vars = ['pt', 'pd', 'vd']
-    file_dir = get_file_locations('WOA_1994')
+    folder = get_file_locations('WOA_1994')
     # --- loop MLD variables.
     for var_ in MLD_vars:
         file_str = 'mld*{}*'.format(var_)
-        files = sorted(glob.glob(file_dir+file_str))
+        files = sorted(glob.glob(folder+file_str))
         print(files)
         # loop files and extract data as an arrayu
         ars = []

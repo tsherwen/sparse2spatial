@@ -21,13 +21,13 @@ def extract_4_nearest_points_in_NetCDF(lons=None, lats=None,
     Extract requested variable for nearest point and time from NetCDF
     """
     # --- Get data from NetCDF as a xarray dataset
-    dir_ = get_file_locations('data_root')
+    folder = get_file_locations('data_root')
     filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
     if rm_Skagerrak_data:
         filename = filename.format('_No_Skagerrak')
     else:
         filename = filename.format('')
-    ds = xr.open_dataset(dir_ + filename)
+    ds = xr.open_dataset(folder + filename)
     # Check that the same about of locations have been given for all months
     lens = [len(i) for i in (lons, lats, months)]
     assert len(set(lens)) == 1, 'All lists provided must be same length!'
@@ -491,8 +491,8 @@ def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
     # get details of parameterisations
 #    filename='Chance_2014_Table2_PROCESSED_17_04_19.csv'
     filename = 'Chance_2014_Table2_PROCESSED.csv'
-    dir_ = get_file_locations('data_root')
-    param_df = pd.read_csv(dir_+filename)
+    folder = get_file_locations('data_root')
+    param_df = pd.read_csv(folder+filename)
     # map input variables
     input_dict = {
         'C': 'WOA_TEMP',
@@ -703,11 +703,11 @@ def get_WOA_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     """
     #
     # Set directory files are in (using nitrate arrays)
-    dir = get_file_locations('WOA_2013')+'Nitrate_1x1/'
+    folder = get_file_locations('WOA_2013')+'Nitrate_1x1/'
     # Select the correct file (abituaryily using September )
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Get index of cell mid point closest to obs lat
         #        half_grid_cell = (rootgrp['lat_bnds'][0][0]-rootgrp['lat_bnds'][0][1])/2
         #        file_latc = rootgrp['lat']+abs(half_grid_cell)
@@ -759,12 +759,12 @@ def get_GEBCO_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     """
     # var2use='elevation'; buffer_CORDS=2; rtn_flag=True; debug=True
     # Directory?
-    file_dir = get_file_locations('BODC')
+    folder = get_file_locations('BODC')
     # file str
     filename = 'GRIDONE_2D.nc'
     # --- Extract data
     # Open file
-    with Dataset(file_dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -807,12 +807,12 @@ def get_WOA_array_025x025_indices(lons=None, lats=None, month=9, debug=False):
     -----
     """
     # Set directory files are in (using temperatures arrays)
-    dir = get_file_locations('WOA_2013')+'Temperature_025x025/'
+    folder = get_file_locations('WOA_2013')+'Temperature_025x025/'
     # Select the correct file (abituaryily using September )
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Get index of cell mid point closest to obs lat
         #        half_grid_cell = (rootgrp['lat_bnds'][0][0]-rootgrp['lat_bnds'][0][1])/2
         #        file_latc = rootgrp['lat']+abs(half_grid_cell)
@@ -861,12 +861,12 @@ def get_RAD_array_1_9x1_9_indices(lons=None, lats=None, month=9, debug=False):
     -----
     """
     # Directory?
-    file_dir = get_file_locations('GFDL')
+    folder = get_file_locations('GFDL')
     # file str
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         # NOTE: latitude is -90 to 90
@@ -939,11 +939,11 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
     else:
         month_ = month
     # Directory?
-    file_dir = get_file_locations('SeaWIFS')
+    folder = get_file_locations('SeaWIFS')
     # file str
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
-    files = glob.glob(file_dir+file_Str)
+    files = glob.glob(folder+file_Str)
 #    print files
     # Loop
     dates_for_files = []
@@ -1008,14 +1008,14 @@ def get_DOC_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     -----
     """
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
 #    file_str = 'DOCmodelSR.nc'
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
-#    print file_dir+file_str
+#    print folder+file_str
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -1068,7 +1068,7 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    file_dir = get_file_locations('Martin_Wadley')
+    folder = get_file_locations('Martin_Wadley')
     # file str
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # --- Extract data
@@ -1080,7 +1080,7 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     else:
         month_ = month
     # Open file
-    with Dataset(file_dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -1128,13 +1128,13 @@ def get_WOA_MLD_array_1x1_indices(var2use='pt', lons=None, lats=None, month=9,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    file_dir = get_file_locations('WOA_1994')
+    folder = get_file_locations('WOA_1994')
     # file str
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
-#    print file_dir+file_str
+#    print folder+file_str
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -1192,14 +1192,14 @@ def get_DOC_accum_1x1_indices(var2use='DOCaccum_avg', lons=None, lats=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
     if debug:
-        print(file_dir+file_str)
+        print(folder+file_str)
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -1444,7 +1444,7 @@ def get_Prod4indices(lat_idx=None, lon_idx=None, month=None,
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    file_dir = get_file_locations('Martin_Wadley')
+    folder = get_file_locations('Martin_Wadley')
     # file str
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # --- Extract data
@@ -1456,7 +1456,7 @@ def get_Prod4indices(lat_idx=None, lon_idx=None, month=None,
     else:
         month_ = month
     # Open file
-    with Dataset(file_dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # NOTE: pythonic index starts at 0, therefore month index = n_month-1
         file_data = rootgrp[var2use][month_-1, ...]
         file_data_ = file_data[lat_idx, lon_idx]
@@ -1491,7 +1491,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    file_dir = get_file_locations('Martin_Wadley')
+    folder = get_file_locations('Martin_Wadley')
     # file str
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # --- Extract data
@@ -1503,7 +1503,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
     else:
         month_ = month
     # Open file
-    with Dataset(file_dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -1583,13 +1583,13 @@ def get_DOC4indices(lat_idx=None, lon_idx=None, month=None,
      - The time resolution for depth NetCDF is annual.
     """
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
     if debug:
-        print(file_dir+file_str)
+        print(folder+file_str)
     # --- Open file
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # Now extract data (dims: depth, lon, lat)
         file_data = rootgrp[var2use][:][depth, ...]
         # NOTE: array is LON, LAT (not LAT, LON)!
@@ -1624,14 +1624,14 @@ def get_DOC_4_loc(var2use='DOCmdl_avg', lat=None, lon=None, month=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
 #    file_str = 'DOCmodelSR.nc'
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
-#    print file_dir+file_str
+#    print folder+file_str
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #         latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -1717,13 +1717,13 @@ def get_DOC_accum4indices(lat_idx=None, lon_idx=None, month=None,
     -----
     """
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # File str
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
     if debug:
-        print(file_dir+file_str)
+        print(folder+file_str)
     # Open file
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         file_data = rootgrp[var2use][:]
         # NOTE: array is LON, LAT (not LAT, LON)!
         file_data_ = file_data[lon_idx, lat_idx]
@@ -1758,13 +1758,13 @@ def get_DOC_accum_4_loc(var2use='DOCaccum_avg', lat=None, lon=None, month=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
-#    print file_dir+file_str
+#    print folder+file_str
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -1861,11 +1861,11 @@ def get_RAD4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Directory?
-    file_dir = get_file_locations('GFDL')
+    folder = get_file_locations('GFDL')
     # File str
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # Open file
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # now extract data  (dims: time, lat, lon)
         # NOTE: pythonic index starts at 0, therefore month index = n_month-1
         file_data = rootgrp[var2use][:][month-1, ...]
@@ -1897,7 +1897,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    file_dir = get_file_locations('GFDL')
+    folder = get_file_locations('GFDL')
     # file str
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # --- which month to use?
@@ -1909,7 +1909,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
         month_ = month
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         # NOTE: latitude is -90 to 90
@@ -2063,14 +2063,14 @@ def extract_MLD_file4indices(var2use='pt', lat_idx=None, lon_idx=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    file_dir = get_file_locations('WOA_1994')
+    folder = get_file_locations('WOA_1994')
     # file str
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     if debug:
-        print(file_dir+file_str)
+        print(folder+file_str)
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # NOTE: pythonic index starts at 0, therefore month index = n_month-1
         file_data = rootgrp[var2use][month-1, ...]
         # Select values for indices
@@ -2102,13 +2102,13 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    file_dir = get_file_locations('WOA_1994')
+    folder = get_file_locations('WOA_1994')
     # file str
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
-#    print file_dir+file_str
+#    print folder+file_str
     # --- Open file
     # Using compiled NetCDFs (data was only available as csv.)
-    with Dataset(file_dir+file_str, 'r') as rootgrp:
+    with Dataset(folder+file_str, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -2249,11 +2249,11 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
     else:
         month_ = month
     # Directory?
-    file_dir = get_file_locations('SeaWIFS')
+    folder = get_file_locations('SeaWIFS')
     # file str
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
-    files = glob.glob(file_dir+file_Str)
+    files = glob.glob(folder+file_Str)
     if debug:
         print(files)
     # Loop
@@ -2333,11 +2333,11 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     else:
         month_ = month
     # Directory?
-    file_dir = get_file_locations('SeaWIFS')
+    folder = get_file_locations('SeaWIFS')
     # file str
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
-    files = glob.glob(file_dir+file_Str)
+    files = glob.glob(folder+file_Str)
 #    print files
     # Loop
     dates_for_files = []
@@ -2478,11 +2478,11 @@ def get_Depth_GEBCO4indices(lat_idx=None, lon_idx=None, month=None,
      - The time resolution for depth NetCDF is annual.
     """
     # Directory?
-    file_dir = get_file_locations('BODC')
+    folder = get_file_locations('BODC')
     # file str
     filename = 'GRIDONE_2D.nc'
     # Open file and extract data
-    with Dataset(file_dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Select values for indices
         file_data = rootgrp[var2use][:]
         file_data_ = file_data[lat_idx, lon_idx]
@@ -2520,12 +2520,12 @@ def get_GEBCO_depth_4_loc(lat=None, lon=None, month=None,
     """
     # var2use='elevation'; buffer_CORDS=2; rtn_flag=True; debug=True
     # Directory?
-    file_dir = get_file_locations('BODC')
+    folder = get_file_locations('BODC')
     # file str
     filename = 'GRIDONE_2D.nc'
     # --- Extract data
     # Open file
-    with Dataset(file_dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # --- get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
@@ -2661,16 +2661,16 @@ def get_WOA_TEMP4indices(lat_idx=None, lon_idx=None, month=None,
        contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Temperature_025x025/'
+    folder = get_file_locations('WOA_2013')+'Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
     # Fix depth = 0 for now...
     depth = 0
     if debug:
-        print(dir+filename)
+        print(folder+filename)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Select values for indices
         # array dims = (time lat lon depth) - (!!!incorrect in file!!!!)
         # lon== 1440, lat=720 so time, depth, lat, lon
@@ -2715,14 +2715,14 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
     if debug:
         print(locals())
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Temperature_025x025/'
+    folder = get_file_locations('WOA_2013')+'Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
     if debug:
-        print(dir+filename)
+        print(folder+filename)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Get index of cell mid point closest to obs lat
         #        half_grid_cell = (rootgrp['lat_bnds'][0][0]-rootgrp['lat_bnds'][0][1])/2
         #        file_latc = rootgrp['lat']+abs(half_grid_cell)
@@ -2818,13 +2818,13 @@ def get_WOA_Nitrate4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Nitrate_1x1/'
+    folder = get_file_locations('WOA_2013')+'Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
     depth = 0
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Select values for indices
         # now extract data
         # array dims = (time lat lon depth) - (!!!incorrect in file!!!!)
@@ -2870,11 +2870,11 @@ def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Nitrate_1x1/'
+    folder = get_file_locations('WOA_2013')+'Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Get index of cell mid point closest to obs lat
         #         half_grid_cell = (rootgrp['lat_bnds'][0][0]-rootgrp['lat_bnds'][0][1])/2
         #         file_latc = rootgrp['lat']+abs(half_grid_cell)
@@ -2956,13 +2956,13 @@ def get_WOA_Salinity4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Salinity_025x025/'
+    folder = get_file_locations('WOA_2013')+'Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Fix depth = 0 for now...
     depth = 0
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Extract data for indices
         # array dims = (time lat lon depth) - (!!!incorrect in file!!!!)
         # lon== 1440, lat=720 so time, depth, lat, lon
@@ -3005,11 +3005,11 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
     """
 #    debug=True
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Salinity_025x025/'
+    folder = get_file_locations('WOA_2013')+'Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Get index of cell mid point closest to obs lat
         #         half_grid_cell = (rootgrp['lat_bnds'][0][0]-rootgrp['lat_bnds'][0][1])/2
         #         file_latc = rootgrp['lat']+abs(half_grid_cell)
@@ -3102,13 +3102,13 @@ def get_WOA_Silicate4indices(lat_idx=None, lon_idx=None, month=None,
      contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Silicate_1x1/'
+    folder = get_file_locations('WOA_2013')+'Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
     depth = 0
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Extract data for indices
         # array dims = (time lat lon depth) - (!!!incorrect in file!!!!)
         # lon== 1440, lat=720 so time, depth, lat, lon
@@ -3152,11 +3152,11 @@ def get_WOA_Silicate_4_loc(lat=None, lon=None, month=None, var2use='i_an',
     """
 #    debug=True
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Silicate_1x1/'
+    folder = get_file_locations('WOA_2013')+'Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Get index of cell mid point closest to obs lat
         #         half_grid_cell = (rootgrp['lat_bnds'][0][0]-rootgrp['lat_bnds'][0][1])/2
         #         file_latc = rootgrp['lat']+abs(half_grid_cell)
@@ -3235,13 +3235,13 @@ def get_WOA_Phosphate4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Phosphate_1x1/'
+    folder = get_file_locations('WOA_2013')+'Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
     depth = 0
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Extract data for indices
         # array dims = (time lat lon depth) - (!!!incorrect in file!!!!)
         # lon== 1440, lat=720 so time, depth, lat, lon
@@ -3285,11 +3285,11 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
     in each grid-square which contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Phosphate_1x1/'
+    folder = get_file_locations('WOA_2013')+'Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Get index of cell mid point closest to obs lat
         #        half_grid_cell = (rootgrp['lat_bnds'][0][0]-rootgrp['lat_bnds'][0][1])/2
         #        file_latc = rootgrp['lat']+abs(half_grid_cell)
@@ -3377,13 +3377,13 @@ def get_WOA_Dissolved_O24indices(lat_idx=None, lon_idx=None, month=None,
     grid-square which contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Dissolved_O2_1x1/'
+    folder = get_file_locations('WOA_2013')+'Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
     depth = 0
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Extract data for indices
         # array dims = (time lat lon depth) - (!!!incorrect in file!!!!)
         # lon== 1440, lat=720 so time, depth, lat, lon
@@ -3425,11 +3425,11 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
     grid-square which contain at least one measurement." ;
     """
     # Set directory files are in
-    dir = get_file_locations('WOA_2013')+'Dissolved_O2_1x1/'
+    folder = get_file_locations('WOA_2013')+'Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Open file
-    with Dataset(dir+filename, 'r') as rootgrp:
+    with Dataset(folder+filename, 'r') as rootgrp:
         # Get index of cell mid point closest to obs lat
         #         half_grid_cell = (rootgrp['lat_bnds'][0][0]-rootgrp['lat_bnds'][0][1])/2
         #         file_latc = rootgrp['lat']+abs(half_grid_cell)

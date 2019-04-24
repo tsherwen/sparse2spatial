@@ -830,7 +830,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
                                                  res='0.125x0.125',
                                                  show_plot=False, close_plot=True,
                                                  save_plot=False, shade_std=True,
-                                                 folder=None, ds=None, topmodels=None):
+                                                  folder =None, ds=None, topmodels=None):
     """ Plot a figure of iodide vs laitude - showing all ensemble members """
     from collections import OrderedDict
     import seaborn as sns
@@ -3303,7 +3303,7 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320,
 def calculate_average_predicted_surface_conc():
     """ Calculate the average predicted surface concentration """
     # directory
-    dir_ = '/Users/tomassherwen/Google_Drive/data/iodide_Oi_project/'
+    folder = '/Users/tomassherwen/Google_Drive/data/iodide_Oi_project/'
     # files
     file_dict = {
         'Macdonald2014': 'Oi_prj_Iodide_monthly_param_4x5_Macdonald2014.nc',
@@ -3315,7 +3315,7 @@ def calculate_average_predicted_surface_conc():
     for param in file_dict.keys():
         filename = file_dict[param]
 #        print( param, filename )
-        ds = xr.open_dataset(dir_+filename)
+        ds = xr.open_dataset(folder+filename)
         ds = ds['iodide'].mean(dim='time')
         # mask for ocean
         MASK = AC.ocean_unmasked()
@@ -5391,7 +5391,7 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
                                      plot_avg_as_median=False, RFR_dict=None,
                                      res='0.125x0.125',
                                      show_plot=False, close_plot=True, save_plot=False,
-                                     folder=None, ds=None, topmodels=None):
+                                      folder =None, ds=None, topmodels=None):
     """ Plot a figure of iodide vs laitude - showing all ensemble members """
     import seaborn as sns
     sns.set(color_codes=True)

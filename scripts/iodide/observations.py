@@ -195,8 +195,8 @@ def get_processed_df_obs_mod(reprocess_params=False,
 
     """
     # Read in processed csv file
-    dir = get_file_locations('data_root', file_and_path=file_and_path)
-    df = pd.read_csv(dir+filename, encoding='utf-8')
+    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    df = pd.read_csv(folder+filename, encoding='utf-8')
     # Kludge (temporary) - make Chlorophyll values all floats
 #     def mk_float_or_nan(input):
 #         try:
@@ -322,11 +322,11 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     """
     # ---- get file
     # directory to use?
-    dir = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = get_file_locations('data_root', file_and_path=file_and_path)
     # filename for <20m iodide data?
     f = 'Iodide_data_above_20m.csv'
     # Get data as DataFrame
-    df = pd.read_csv(dir+f)
+    df = pd.read_csv(folder+f)
     # ---- process
     # list of core variables
     core_vars = [
@@ -521,12 +521,12 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     # (as publish by Chance et al (2014) )
     # New data, acquired since 2017
     if (not InChance2014):
-        dir_ = get_file_locations('new_data', file_and_path=file_and_path)
+        folder = get_file_locations('new_data', file_and_path=file_and_path)
     elif ((source == 's') or (source == 'bodc')) and (InChance2014):
-        dir_ = get_file_locations('submitted_data', file_and_path=file_and_path)
+        folder = get_file_locations('submitted_data', file_and_path=file_and_path)
     # Data digitalised for Chance et al (2014)
     elif (source == 'd') and (InChance2014):
-        dir_ = get_file_locations('digitised_data', file_and_path=file_and_path)
+        folder = get_file_locations('digitised_data', file_and_path=file_and_path)
     else:
         print("Source received ('') unknown?!".format(source))
         sys.exit()
@@ -536,7 +536,7 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     # - Read file and process
     if verbose:
         print('reading: {}'.format(filename), Data_Key)
-    df = pd.read_excel(dir_+filename+file_extension, sheet_name='Data',
+    df = pd.read_excel(folder+filename+file_extension, sheet_name='Data',
                        skiprows=skiprows)
     # Force use of 'Index' column as index to preserve ordering.
     df.index = df['Index'].values
@@ -758,12 +758,12 @@ def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows = 1,
     """
     # location and filename?
     filename = 'Iodide_correlations_310114_MASTER_TMS_EDIT.xlsx'
-    dir_ = get_file_locations('data_root', file_and_path=file_and_path)
-    dir_ += '/RJC_spreadsheets/'
+    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/RJC_spreadsheets/'
     # Extract Rosies MASTER excel sheet (for values with depth <20m)
 #    sheetname='<20 m all data', \
     # Extract Rosies MASTER excel sheet (for values with salinity >30)
-    df = pd.read_excel(dir_+filename, sheetname=sheetname, skiprows=skiprows)
+    df = pd.read_excel(folder+filename, sheetname=sheetname, skiprows=skiprows)
     return df
 
 

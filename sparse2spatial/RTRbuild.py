@@ -792,9 +792,9 @@ def get_current_model(dir=None,
     from sklearn.externals import joblib
     # Get the location of the saved model and load it
     if isinstance(dir, type(None)):
-        dir = get_file_locations('data_root')+'/models/'
+        folder = get_file_locations('data_root')+'/models/'
     model_savename = "my_model_{}.pkl".format(extr_str)
-    return joblib.load(dir+model_savename)
+    return joblib.load(folder+model_savename)
 
 
 
@@ -806,9 +806,9 @@ def get_predict_lat_lon_array(res='4x5', testing_features=None, month=9):
     if res == '4x5':
         filename += '_TEST'
     filename += '.csv'
-    dir = get_file_locations('data_root')
-    dir += 'Oi_prj_predictor_files_by_month_{}/'.format(res)
-    df = pd.read_csv(dir+filename)
+    folder = get_file_locations('data_root')
+   folder+= 'Oi_prj_predictor_files_by_month_{}/'.format(res)
+    df = pd.read_csv(folder+filename)
     # make sure the variables have the same names
     rename_dict = {'lat': 'Latitude', 'lon': 'Longitude'}
     df.rename(columns=rename_dict, inplace=True)

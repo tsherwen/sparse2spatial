@@ -724,9 +724,9 @@ def plot_up_ln_iodide_vs_SST(show_plot=True):
     obtained from the World Ocean Atlas as described in the text.
     """
     #  ---  location of data to plot
-    dir = get_file_locations('data_root')
+    folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
-    df = pd.read_csv(dir+f, encoding='utf-8')
+    df = pd.read_csv(folder+f, encoding='utf-8')
     # take log of iodide
     df['Iodide'] = np.log(df['Iodide'].values)
     # --- Plot up all nitrate concentrations
@@ -754,9 +754,9 @@ def plot_up_ln_iodide_vs_salinity(show_plot=True):
     30 have been excluded from further analysis and are not shown in Fig. 8–11.
     """
     #  ---  location of data to plot
-    dir = get_file_locations('data_root')
+    folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
-    df = pd.read_csv(dir+f, encoding='utf-8')
+    df = pd.read_csv(folder+f, encoding='utf-8')
     # Just select non-coastal data
 #    df = df[ ~(df['Coastal']==True) ]
     # take log of iodide
@@ -1915,9 +1915,9 @@ def plot_PDF_iodide_obs_mod(bins=10):
     import matplotlib.pyplot as plt
     import seaborn as sns
     #  ---  location of data to plot
-    dir = get_file_locations('data_root')
+    folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
-    df = pd.read_csv(dir+f, encoding='utf-8')
+    df = pd.read_csv(folder+f, encoding='utf-8')
 
     # Just select non-coastal data
     print(df.shape)
@@ -1951,9 +1951,9 @@ def plot_PDF_iodide_obs_mod(bins=10):
 #     import seaborn as sns
 #
 #     #  ---  location of data to plot
-#     dir = get_file_locations('data_root')
+#     folder = get_file_locations('data_root')
 #     f = 'Iodine_obs_WOA.csv'
-#     df = pd.read_csv( dir+f, encoding='utf-8' )
+#     df = pd.read_csv(folderf, encoding='utf-8' )
 #
 #     # Just select non-coastal data
 #     df = df[ ~(df['Coastal']==True) ]
@@ -2015,9 +2015,9 @@ def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
     sns.set_context("paper")
 
     #  ---  Get data
-    dir = get_file_locations('data_root')
+    folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
-    df = pd.read_csv(dir+f, encoding='utf-8')
+    df = pd.read_csv(folder+f, encoding='utf-8')
 
     # --- local variables
     # sub select variables of interest.
@@ -2130,9 +2130,9 @@ def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False):
     df2 = df.loc[bool]
     # ---  add existing data
     # get existing data... (Chance et al 2014 )
-#    dir = get_file_locations('data_root')
+#    folder = get_file_locations('data_root')
 #    f = 'Iodine_obs_WOA.csv'
-#    df1 = pd.read_csv( dir+f, encoding='utf-8' )
+#    df1 = pd.read_csv(folderf, encoding='utf-8' )
     # select lons and lats
     lats1 = df1['Latitude'].values
     lons1 = df1['Longitude'].values
@@ -2151,7 +2151,7 @@ def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False):
 
     # --- Add in Liselotte's data
 #    f = 'Iodine_climatology_ISOE9.xlsx'
-#    df2 = pd.read_excel( dir+'/Liselotte_data/'+f, skiprows=1 )
+#    df2 = pd.read_excel(folder'/Liselotte_data/'+f, skiprows=1 )
     # Data from SOE-9
     lats2 = df2['Latitude'].values
     lons2 = df2['Longitude'].values
@@ -2178,9 +2178,9 @@ def map_plot_of_locations_of_obs4rosie():
     show = True
 
     # ---  get data
-    dir = get_file_locations('data_root')
+    folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
-    df = pd.read_csv(dir+f, encoding='utf-8')
+    df = pd.read_csv(folder+f, encoding='utf-8')
 
     # only consider non-coastal  locations
     print(df.shape)
@@ -2284,8 +2284,8 @@ def plot_up_parameterisations(df=None, save2pdf=True, show=False):
     # get details of parameterisations
 #    filename='Chance_2014_Table2_PROCESSED_17_04_19.csv'
     filename = 'Chance_2014_Table2_PROCESSED.csv'
-    dir_ = get_file_locations('data_root')
-    param_df = pd.read_csv(dir_+filename)
+    folder = get_file_locations('data_root')
+    param_df = pd.read_csv(folder+filename)
 
     # only consider non-coastal  locations
     print(df.shape)

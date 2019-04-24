@@ -106,7 +106,7 @@ def get_stats_on_multiple_global_predictions(model_name=None,
         extr_str = ''
     # location of data
     data_root = get_file_locations('data_root') + '/models/'+'/LIVE/'
-#    data_root = './' # KLUDGE: use current dir whilst testing
+#    data_root = './' # KLUDGE: use currentfolderwhilst testing
    # Get the folder and filename to use
     loc2use = '{}/ENSEMBLE_REPEAT_BUILD{}/'
     loc2use = loc2use.format(data_root, extr_str)
@@ -121,12 +121,12 @@ def get_stats_on_multiple_global_predictions(model_name=None,
     # USe different drivers depending on resolution
     if res == '0.125x0.125':
         df = get_stats_on_spatial_predictions_0125x0125(filename=filename,
-                                                        folder=folder,
+                                                         folder =folder,
                                                         just_return_df=True,
                                                         ex_str=model_name)
     else:
         df = get_stats_on_spatial_predictions_4x5_2x25(filename=filename,
-                                                       folder=folder,
+                                                        folder =folder,
                                                        just_return_df=True,
                                                        ex_str=model_name)
     # remove the values that aren't for a specific model
@@ -1081,7 +1081,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
 
 def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
                                               use_annual_mean=True, filename=None,
-                                              folder=None, just_return_df=False,
+                                               folder =None, just_return_df=False,
                                               ):
     """ Evaluate the spatial predictions between models """
     # ----
@@ -1135,7 +1135,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
 
 def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
                                                      use_annual_mean=False, filename=None,
-                                                     folder=None, ds=None,
+                                                      folder =None, ds=None,
                                                      debug=False):
     """ Evaluate the spatial predictions between models """
     # ----

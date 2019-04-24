@@ -23,8 +23,8 @@ def mk_LWI_avg_array():
     savename = 'nature_run_lev_72_res_0.125_spec_LWI_avg_ctm.nc'
     ds.mean(dim='time').to_netcdf(savename)
     #
-    dir_ = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
-    files = glob.glob(dir_+'*nc')
+    folder = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
+    files = glob.glob(folder+'*nc')
     dates = [(int(i[-14:-14+4]), int(i[-9:-9+2]), 1) for i in files]
     dates = [datetime.datetime(*i) for i in dates]
     ds.rename({'concat_dims': 'time'}, inplace=True)
