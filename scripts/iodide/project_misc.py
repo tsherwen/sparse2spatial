@@ -6,6 +6,43 @@ This includes presentation at conferences etc...
 
 """
 
+def main():
+    """
+    Run various misc. scripted tasks linked to the "iodide in the ocean" project
+    """
+    pass
+
+    # ---- ----- ----- ----- ----- ----- ----- ----- -----
+    # ----- ----- Misc (associated iodide project tasks)
+    # These include getting CTM (GEOS-Chem) output for Anoop/Sawalha/TropMet
+    # --- Make planeflight files for cruise
+#    mk_pf_files4Iodide_cruise()
+#    mk_pf_files4Iodide_cruise(mk_column_output_files=True)
+
+    # Test the input files for these cruises?
+#    test_input_files4Iodide_cruise_with_plots()
+
+    # Test output files for cruises
+#    TEST_iodide_cruise_output()
+#    TEST_AND_PROCESS_iodide_cruise_output()
+#    TEST_AND_PROCESS_iodide_cruise_output(just_process_surface_data=False)
+
+    # Get numbers for data paper (data descriptor paper)
+#    get_numbers_for_data_paper()
+
+    # Get Longhurst province labelled NetCDF for res
+#    add_LonghurstProvince2NetCDF(res='4x5', ExStr='TEST_VI' )
+#    add_LonghurstProvince2NetCDF(res='2x2.5', ExStr='TEST_V' )
+#    add_LonghurstProvince2NetCDF(res='0.125x0.125', ExStr='TEST_VIII' )
+
+    # Add Longhurst Province to a lower res NetCDF file
+#    folder = './'
+#     filename = 'Oi_prj_output_iodide_field_1x1_deg_0_5_centre.nc'
+#    filename = 'Oi_prj_output_iodide_field_0_5x0_5_deg_centre.nc'
+#    ds = xr.open_dataset(folder+filename)
+#    add_LonghurstProvince2NetCDF(ds=ds, res='0.5x0.5', ExStr='TEST_VIII')
+
+    # process this to csv files for Rosie
 
 
 # ---------------------------------------------------------------------------
@@ -4092,11 +4129,6 @@ def evalulate_burdens_and_surface_conc(run_dict=None, extra_str='', REF1=None,
     return df
 
 
-
-
-
-
-
 def Check_sensitivity_of_HOI_I2_param2WS():
     """ Check the sensitivity of the parameterisation to wind speed """
     import seaborn as sns
@@ -4131,3 +4163,5 @@ def Check_sensitivity_of_HOI_I2_param2WS():
     plt.show()
 
 
+if __name__ == "__main__":
+    main()

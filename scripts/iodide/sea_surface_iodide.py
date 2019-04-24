@@ -39,26 +39,34 @@ import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 import sparse2spatial.archiving as archiving
-import sparse2spatial.RTRbuild as RTRbuild
+import sparse2spatial.RTRbuild as build
 import sparse2spatial.RFRanalysis as analysis
-from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
-from sparse2spatial.utils import calc_iodide_chance2014_Multivariate
-from sparse2spatial.utils import calc_iodide_MacDonald2014
+from sparse2spatial.RTRbuild import build_or_get_current_models
 
-
+# Get iodide specific functions
+from observations import get_dataset_processed4ML
 
 def main():
     """
     Driver for module's man if run directly from command line. unhash
     functionalitliy to call.
     """
+    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+    print( model_feature_dict )
+    print( model_feature_dict['NO3+DOC+Phos'] )
     # ---- ---- Over-arching settings
+    # General settings
     rm_Skagerrak_data = True
 #    rm_Skagerrak_data = False
     # Use top models from full dataset  ( now: nOutliers + nSkagerak
-    RFR_dict = build_or_get_current_models(rm_Skagerrak_data=rm_Skagerrak_data)
-#    RFR_dict = build_or_get_current_models( rm_Skagerrak_data=False )
+    RFR_dict = build_or_get_current_models_iodide( rm_Skagerrak_data=rm_Skagerrak_data)
+#    RFR_dict = build_or_get_current_models_iodide( rm_Skagerrak_data=False )
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+    print( RFR_dict.keys )
+    print( topmodels )
+    # Check statistics on prediction
+    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=True)
+    print( stats )
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Evaluating input datasets
@@ -80,79 +88,51 @@ def main():
     # Check extracted data against observations.
 #    compare_obs_ancillaries_with_extracted_values()
 
+
+    # ---- ----- ----- ----- ----- ----- ----- ----- -----
+    # ----- ----- Build ancillary variable dataset file
+    # ---
+    # Build either a full or low res ancillary NetCDF file
+#    res = '0.125x0.125'
+#    res = '4x5' # low resolution to test extraction etc?
+    # Get indicies to extract for variables in imported NetCDF
+#    mk_array_of_indices4locations4res( res=res )
+    # Extract the variables to NetCDF
+#    extract_predictor_variables2NetCDF( res=res )
+    # Interpolate the fields at full resolution
+#    interpolate_NaNs_in_feature_variables( res=res )
+
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Building new iodide field (inc. Machine learning)
-    # --- Make a CSV to test predicted values with...
-#    res='2x2.5'
-#     res='4x5'
-# # #    month = 9
-# # #    mk_predictor_variable_csv(res=res, month=month)
-#      # Get all months
-#     for month in np.arange(1, 13 ):
-#         mk_predictor_variable_csv(res=res, month=month)
-    # make as NetCDF at 12km resolution to extract from.
-
-    # interpolate the fields
-#    interpolate_NaNs_in_feature_variables( res='0.125x0.125' )
-#    for res in ['4x5', ]:
-#    for res in ['4x5', '2x2.5', '1x1']:
-#    for res in ['4x5', '2x2.5']:
-#    for res in [ '2x2.5', ]:
-#     for res in ['0.125x0.125',]:
-# #    for res in ['1x1',]:
-#         # Get indicies to extract for variables in imported NetCDFsq
-#         mk_array_of_indices4locations4res( res=res )
-#         # Extract the variables to NetCDF
-#         extract_predictor_variables2NetCDF( res=res )
-#         # interpolate the variables with NaNs
-#         interpolate_NaNs_in_feature_variables( res=res )
-
-    # --- Build new/existing  model
-#    mk_ML_stat_model()
-
-    # --- Test training dataset
-#    mk_iodide_ML_testing_and_training_set()
-
-    # --- Choose top models
-#    build_models_to_test_comparisons()
-    # re-build all models (random stats means this gives the same answer )
-#  build_or_get_current_models(save_model_to_disk=True,
-#      read_model_from_disk=False, delete_existing_model_files=True )
-
-    # --- Test model hyper parameters dataset
-#    Hyperparameter_Tune_model()
-
-    # tune hyperparameters
-#    Hyperparameter_Tune4choosen_models()
+    # ---
+    # (Re-)Build all models
+    # (random stats means this gives the same answer everytime)
+#    build_or_get_current_models_iodide(rebuild=True,
+#                                       rm_Skagerrak_data=rm_Skagerrak_data )
 
     # --- Update the predictor array values
 #     res='4x5'
 #     set_SAL_and_NIT_above_65N_to_avg(res=res)
 
     # --- Predict values globally (only use 0.125)
-#     xsave_str = ''
-#    xsave_str = '_v8_5_1_'
-#     xsave_str = '_v8_5_1_nSkagerrak_nOutliers'
-#    xsave_str = '_v8_5_1_nOutliers_REPEAT'
-# #    xsave_str = '_v8_5_1_nSkagerrak_SAME_models'
-# #    xsave_str = '_v8_5nS_OLD'
-# #    xsave_str = '_OLD_topmodels_TAKE_IV'
-#  	# Now get the models built without Skagerrak data
-# #    rm_Skagerrak_data = True
-#     RFR_dict = build_or_get_current_models()
-#    RFR_dict = build_or_get_current_models( rm_Skagerrak_data=rm_Skagerrak_data)
-#	# additionally remake the list of topmodels
-#    topmodels = get_top_models( RFR_dict=RFR_dict, NO_DERIVED=True, n=10 )
+    # extra strig for NetCDF save name
+    xsave_str = ''
     # make NetCDF predictions from the main array
-#    save2NetCDF=True
-#    res = '0.125x0.125'
-# #    res='2x2.5'
-#     res='4x5'
-#     mk_iodide_predictions_from_ancillaries( None, res=res, RFR_dict=RFR_dict,
-#         use_updated_predictor_NetCDF=False, save2NetCDF=save2NetCDF,
-# 			rm_Skagerrak_data=rm_Skagerrak_data,
-# 			topmodels=topmodels,
-# 			xsave_str=xsave_str, add_ensemble2ds=True )
+    save2NetCDF=True
+    # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
+    res = '0.125x0.125'
+#    res='4x5'
+#     mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
+#                                            use_updated_predictor_NetCDF=False,
+#                                            save2NetCDF=save2NetCDF,
+#                                            rm_Skagerrak_data=rm_Skagerrak_data,
+#                                            topmodels=topmodels,
+#                                            xsave_str=xsave_str, add_ensemble2ds=True )
+
+
+    # ---- ----- ----- ----- ----- ----- ----- ----- -----
+    # ----- ----- Sensitive test the new iodide field (
+    # ---
     # make NetCDF predictions from the updated arrays
 # vars2use = [
 # 'WOA_Nitrate', 'WOA_Salinity', 'WOA_Phosphate', 'WOA_TEMP_K', 'Depth_GEBCO',
@@ -186,38 +166,6 @@ def main():
     # then test if depth is set to
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
-    # ----- ----- Misc (associated iodide project tasks)
-    # These include getting CTM (GEOS-Chem) output for Anoop/Sawalha/TropMet
-    # --- Make planeflight files for cruise
-#    mk_pf_files4Iodide_cruise()
-#    mk_pf_files4Iodide_cruise(mk_column_output_files=True)
-
-    # Test the input files for these cruises?
-#    test_input_files4Iodide_cruise_with_plots()
-
-    # Test output files for cruises
-#    TEST_iodide_cruise_output()
-#    TEST_AND_PROCESS_iodide_cruise_output()
-#    TEST_AND_PROCESS_iodide_cruise_output(just_process_surface_data=False)
-
-    # Get  numbers for data paper (data descriptor paper)
-#    get_numbers_for_data_paper()
-
-    # Get Longhurst province labelled NetCDF for res
-#    add_LonghurstProvince2NetCDF(res='4x5', ExStr='TEST_VI' )
-#    add_LonghurstProvince2NetCDF(res='2x2.5', ExStr='TEST_V' )
-#    add_LonghurstProvince2NetCDF(res='0.125x0.125', ExStr='TEST_VIII' )
-
-    # Add Longhurst Province to a lower res NetCDF file
-#    folder = './'
-#     filename = 'Oi_prj_output_iodide_field_1x1_deg_0_5_centre.nc'
-#    filename = 'Oi_prj_output_iodide_field_0_5x0_5_deg_centre.nc'
-#    ds = xr.open_dataset(folder+filename)
-#    add_LonghurstProvince2NetCDF(ds=ds, res='0.5x0.5', ExStr='TEST_VIII')
-
-    # process this to csv files for Rosie
-
-    # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Plotting of output
 #     res = '4x5'
 #     res = '2x2.5'
@@ -245,24 +193,6 @@ def main():
     # Get shared data
 #    RFR_dict = build_or_get_current_models()
 
-    # explore the observational data in the Arctic
-#    explore_observational_data_in_Arctic_parameter_space( RFR_dict=RFR_dict )
-
-    # plot up where decision points are
-#    plot_spatial_area4core_decisions( res='4x5' )
-#    plot_spatial_area4core_decisions( res='0.125x0.125' )
-
-    # Explore the sensitivity to data denial
-#    explore_sensitivity_of_65N2data_denial( res='4x5' )
-#    explore_sensitivity_of_65N2data_denial( res='2x2.5' )
-#    explore_sensitivity_of_65N2data_denial( res='0.125x0.125' )
-
-    # Extract trees to .dot files (used make make the single tree figures)
-#    extract_trees4models( RFR_dict=RFR_dict, N_trees2output=50 )
-
-    # Now make Ensemble diagram
-#    mk_ensemble_diagram()
-
     # --- 2D analysis
     # Plot up spatial comparison of obs. and params
 #    plot_up_obs_spatially_against_predictions( RFR_dict=RFR_dict )
@@ -283,8 +213,8 @@ def main():
 
     # Plot the locations with greatest variation in the predictions - REDUNDENT!
     # (Use plot_up_ensemble_avg_and_std_spatially instead )
-#     plot_up_spatial_uncertainty_predicted_values( res=res,
-#     	rm_Skagerrak_data=rm_Skagerrak_data )
+#     plot_up_spatial_uncertainty_predicted_values(res=res,
+#                                                  rm_Skagerrak_data=rm_Skagerrak_data )
 
     # Get stats from the 4x5 and 2x2.5 predictions
 #    get_stats_on_spatial_predictions_4x5_2x25()
@@ -310,6 +240,9 @@ def main():
 #    mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
 #        save_str='TEST_V' )
 
+
+
+
     # --- Point-for-point analysis
     # build ODR plots for obs. vs. model
 #    analyse_X_Y_correlations_ODR( RFR_dict=RFR_dict, context='poster' )
@@ -324,13 +257,31 @@ def main():
     # Get general stats on the current models
 #    get_stats_on_current_models( RFR_dict=RFR_dict )
 
+    # Get tabulated performance
+    make_table_of_point_for_point_performance(RFR_dict=RFR_dict)
+#    make_table_of_point_for_point_performance_ALL(RFR_dict=RFR_dict)
+#    make_table_of_point_for_point_performance_TESTSET(RFR_dict=RFR_dict)
+
     # Get CDF and PDF plots for test, training, entire, and residual
 #    plot_up_CDF_and_PDF_of_obs_and_predictions( df=RFR_dict['df'] )
 
     # Plot up various spatial plots for iodide concs + std.
-    plot_up_ensemble_avg_and_std_spatially(
-        rm_Skagerrak_data=rm_Skagerrak_data
-    )
+#    plot_up_ensemble_avg_and_std_spatially(
+#        rm_Skagerrak_data=rm_Skagerrak_data
+#    )
+
+    # --- Spatial analysis for specific locations
+    # explore the observational data in the Arctic
+#    explore_observational_data_in_Arctic_parameter_space( RFR_dict=RFR_dict )
+
+    # plot up where decision points are
+#    plot_spatial_area4core_decisions( res='4x5' )
+#    plot_spatial_area4core_decisions( res='0.125x0.125' )
+
+    # Explore the sensitivity to data denial
+#    explore_sensitivity_of_65N2data_denial( res='4x5' )
+#    explore_sensitivity_of_65N2data_denial( res='2x2.5' )
+#    explore_sensitivity_of_65N2data_denial( res='0.125x0.125' )
 
     # --- Analysis of models build
     # testset analysis
@@ -341,11 +292,6 @@ def main():
     # selection of variables to build models
 
     # hyperparameter tuning of selected models
-
-    # analysis of node spliting
-#    analyse_nodes_in_models( RFR_dict=RFR_dict )
-    # analysis of outputted trees
-#    analyse_nodes_in_models()
 
     # Analysis of the spatial variance of individual ensemble members
 #    rm_Skagerrak_data = True
@@ -363,8 +309,68 @@ def main():
 #   regrid_output_to_common_res_as_NetCDFs(topmodels=topmodels,
 #                                         rm_Skagerrak_data=rm_Skagerrak_data)
 
+    # --- Do tree by tree analysis
+    # Extract trees to .dot files (used make make the single tree figures)
+#    extract_trees4models( RFR_dict=RFR_dict, N_trees2output=50 )
+
+    # Plot up interpretation of trees
+    # Now in TreeSurgeon - see separate repository on github
+    # https://github.com/wolfiex/TreeSurgeon
+
+    # analysis of node spliting
+#    analyse_nodes_in_models( RFR_dict=RFR_dict )
+    # analysis of outputted trees
+#    analyse_nodes_in_models()
+
+
+    # Now make Ensemble diagram
+#    mk_ensemble_diagram()
+
+
+
     # pass if no functions are uncommented
     pass
+
+
+def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
+                                       rm_LOD_filled_data=False,
+                                       rm_iodide_outliers=True,
+                                       rebuild=False ):
+    """
+    Wrapper call to build_or_get_current_models for sea-surface iodide
+    """
+    # Get the dictionary  of model names and features (specific to iodide)
+    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+
+    # Get the observational dataset prepared for ML pipeline
+    df = get_dataset_processed4ML(
+        rm_Skagerrak_data=rm_Skagerrak_data,
+        rm_LOD_filled_data=rm_LOD_filled_data,
+        rm_iodide_outliers=rm_iodide_outliers,
+        )
+    #
+    if rm_Skagerrak_data:
+        model_sub_dir = '/TEMP_MODELS_No_Skagerrak/'
+#     elif rm_LOD_filled_data:
+#         temp_model_dir = wrk_dir+'/TEMP_MODELS_no_LOD_filled/'
+    else:
+        model_sub_dir = '/TEMP_MODELS/'
+
+    if rebuild:
+        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+#                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                    model_feature_dict=model_feature_dict,
+                                    df=df,
+                                    read_model_from_disk=False,
+                                    delete_existing_model_files=True )
+    else:
+        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+#                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                    model_feature_dict=model_feature_dict,
+                                    df=df,
+                                    read_model_from_disk=True,
+                                    delete_existing_model_files=False )
+    return RFR_dict
 
 
 def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
@@ -721,7 +727,9 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 
 
 def get_model_testing_features_dict(model_name=None, rtn_dict=False):
-    """ return a dictionary of test variables to use """
+    """
+    return a dictionary of test variables to use
+    """
     d = {
         #    'TEMP+DEPTH+SAL(N=100)': ['WOA_TEMP_K', 'WOA_Salinity','Depth_GEBCO',],
         # (1 variable) all induvidual
@@ -922,12 +930,12 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5',
     # -- Also get values for parameterisations
     # Chance et al (2013)
     param = u'Chance2014_STTxx2_I'
-    arr = calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+    arr = utils.calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
     ds[param] = ds[modelname]  # use existing array as dummy to fill
     ds[param].values = arr
     # MacDonald et al (2013)
     param = 'MacDonald2014_iodide'
-    arr = calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+    arr = utils.calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
     ds[param] = ds[modelname]  # use existing array as dummy to fill
     ds[param].values = arr
     # Add ensemble to ds too
@@ -1190,6 +1198,173 @@ def mk_ensemble_diagram(dpi=1000):
                         )
     # Save figure
     plt.savefig('Oi_prj_ensemble_workflow_image.png', dpi=dpi)
+
+
+
+def make_table_of_point_for_point_performance(RFR_dict=None,
+                                              testset='Test set (strat. 20%)',
+                                              target='Iodide'):
+    """
+    Make a table to summarise point-for-point performance
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
+    # def get data
+    if isinstance(RFR_dict, type(None)):
+        RFR_dict = build_or_get_current_models()
+    # Get stats on model tuns runs
+    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+    # Select param values of interest (and give updated title names )
+    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
+                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
+                     'RFR(Ensemble)': 'RFR(Ensemble)',
+                     'Iodide': 'Obs.',
+                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+                     }
+    # Set the stats to use
+    first_columns = [
+        'mean', 'std', '25%', '50%', '75%',
+        'RMSE ({})'.format(testset),  'RMSE (all)',
+    ]
+#    rest_of_columns = [i for i in stats.columns if i not in first_columns]
+    stats = stats[first_columns]
+    # rename columns (50% to median and ... )
+    cols2rename = {
+        '50%': 'median', 'std': 'std. dev.',
+        'RMSE ({})'.format(testset): 'RMSE (withheld)'
+    }
+    stats.rename(columns=cols2rename,  inplace=True)
+    # only select params of interest
+    stats = stats.T[rename_titles.values()].T
+    # rename
+    stats.rename(index=rename_titles, inplace=True)
+    # Set filename and save detail on models
+    csv_name = 'Oi_prj_point_for_point_comp4tabale.csv'
+    earth0_data_root = get_file_locations(
+        'earth0_home_dir')+'data/iodide/'
+#    stats.round(2).to_csv( earth0_data_root+csv_name )
+    stats.round(1).to_csv(csv_name)
+
+
+def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
+                                                      testset='Test set (strat. 20%)',
+                                                      target='Iodide'):
+    """
+    Make a table to summarise point-for-point performance
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
+    # def get data
+    if isinstance(RFR_dict, type(None)):
+        RFR_dict = build_or_get_current_models()
+    # Just select the
+    df = RFR_dict['df']
+    df = df.loc[df[testset] == True, :]
+    # Get stats on model tuns runs
+    stats = get_stats_on_current_models(RFR_dict=RFR_dict, df=df,
+                                        verbose=False)
+    # Select param values of interest (and give updated title names )
+    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
+                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
+                     'RFR(Ensemble)': 'RFR(Ensemble)',
+                     'Iodide': 'Obs.',
+                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+                     }
+    # Set the stats to use
+    first_columns = [
+        'mean', 'std', '25%', '50%', '75%',
+        'RMSE ({})'.format(testset),  'RMSE (all)',
+    ]
+#    rest_of_columns = [i for i in stats.columns if i not in first_columns]
+    stats = stats[first_columns]
+    # rename columns (50% to median and ... )
+    cols2rename = {
+        '50%': 'median', 'std': 'std. dev.',
+        'RMSE ({})'.format(testset): 'RMSE (withheld)'
+    }
+    stats.rename(columns=cols2rename,  inplace=True)
+    # only select params of interest
+    stats = stats.T[rename_titles.values()].T
+    # rename
+    stats.rename(index=rename_titles, inplace=True)
+    # Set filename and save detail on models
+    csv_name = 'Oi_prj_point_for_point_comp4tabale_TESTSET.csv'
+    earth0_data_root = get_file_locations(
+        'earth0_home_dir')+'data/iodide/'
+#    stats.round(2).to_csv( earth0_data_root+csv_name )
+    stats.round(1).to_csv(csv_name)
+
+
+def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
+                                                  testset='Test set (strat. 20%)',
+                                                  target='Iodide'):
+    """
+    Make a table to summarise point-for-point performance
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
+    # def get data
+    if isinstance(RFR_dict, type(None)):
+        RFR_dict = build_or_get_current_models()
+    # Get stats on model tuns runs
+    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+    # Select param values of interest (and give updated title names )
+    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
+                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
+                     'RFR(Ensemble)': 'RFR(Ensemble)',
+                     target: 'Obs.',
+                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+                     }
+    # Set the stats to use
+    first_columns = [
+        'mean', 'std', '25%', '50%', '75%',
+        'RMSE ({})'.format(testset),  'RMSE (all)',
+    ]
+#    rest_of_columns = [i for i in stats.columns if i not in first_columns]
+    stats = stats[first_columns]
+    # rename columns (50% to median and ... )
+    cols2rename = {
+        '50%': 'median', 'std': 'std. dev.',
+        'RMSE ({})'.format(testset): 'RMSE (withheld)'
+    }
+    stats.rename(columns=cols2rename,  inplace=True)
+    # rename
+    stats.rename(index=rename_titles, inplace=True)
+    # Set filename and save detail on models
+    csv_name = 'Oi_prj_point_for_point_comp4tabale_ALL.csv'
+    earth0_data_root = get_file_locations(
+        'earth0_home_dir')+'data/iodide/'
+#    stats.round(2).to_csv( earth0_data_root+csv_name )
+    stats.round(1).to_csv(csv_name)
+    # also save a .csv of values without derived values
+    index2use = [i for i in stats.index if all(
+        [ii not in i for ii in derived])]
+    stats = stats.T
+    stats = stats[index2use]
+    stats = stats.T
+    csv_name = 'Oi_prj_point_for_point_comp4tabale_ALL_NO_DERIV.csv'
+    stats.round(1).to_csv(csv_name)
 
 
 
