@@ -830,7 +830,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
                                                  res='0.125x0.125',
                                                  show_plot=False, close_plot=True,
                                                  save_plot=False, shade_std=True,
-                                                  folder =None, ds=None, topmodels=None):
+                                                 folder=None, ds=None, topmodels=None):
     """ Plot a figure of iodide vs laitude - showing all ensemble members """
     from collections import OrderedDict
     import seaborn as sns
@@ -5391,7 +5391,7 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
                                      plot_avg_as_median=False, RFR_dict=None,
                                      res='0.125x0.125',
                                      show_plot=False, close_plot=True, save_plot=False,
-                                      folder =None, ds=None, topmodels=None):
+                                     folder=None, ds=None, topmodels=None):
     """ Plot a figure of iodide vs laitude - showing all ensemble members """
     import seaborn as sns
     sns.set(color_codes=True)

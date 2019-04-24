@@ -1081,7 +1081,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
 
 def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
                                               use_annual_mean=True, filename=None,
-                                               folder =None, just_return_df=False,
+                                              folder=None, just_return_df=False,
                                               ):
     """ Evaluate the spatial predictions between models """
     # ----
@@ -1135,7 +1135,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
 
 def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
                                                      use_annual_mean=False, filename=None,
-                                                      folder =None, ds=None,
+                                                     folder=None, ds=None,
                                                      debug=False):
     """ Evaluate the spatial predictions between models """
     # ----

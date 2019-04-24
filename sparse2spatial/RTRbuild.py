@@ -807,7 +807,7 @@ def get_predict_lat_lon_array(res='4x5', testing_features=None, month=9):
         filename += '_TEST'
     filename += '.csv'
     folder = get_file_locations('data_root')
-   folder+= 'Oi_prj_predictor_files_by_month_{}/'.format(res)
+    folder+= 'Oi_prj_predictor_files_by_month_{}/'.format(res)
     df = pd.read_csv(folder+filename)
     # make sure the variables have the same names
     rename_dict = {'lat': 'Latitude', 'lon': 'Longitude'}
