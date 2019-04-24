@@ -195,7 +195,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
 
     """
     # Read in processed csv file
-    dir = get_file_locations('iodide_data', file_and_path=file_and_path)
+    dir = get_file_locations('data_root', file_and_path=file_and_path)
     df = pd.read_csv(dir+filename, encoding='utf-8')
     # Kludge (temporary) - make Chlorophyll values all floats
 #     def mk_float_or_nan(input):
@@ -271,7 +271,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
     obs_data_df = extract_ancillary_obs_from_COMPILED_file(
         obs_data_df=obs_data_df, obs_metadata_df=obs_metadata_df)
     # Save the intermediate file
-    folder = get_file_locations('iodide_data', file_and_path=file_and_path)
+    folder = get_file_locations('data_root', file_and_path=file_and_path)
     filename = 'Iodine_obs_WOA_v8_5_1_TEMP_TEST.csv'
     obs_data_df.to_csv(folder+filename, encoding='utf-8')
     # - Add predicted iodide from MacDonald and Chance parameterisations
@@ -322,7 +322,7 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     """
     # ---- get file
     # directory to use?
-    dir = get_file_locations('iodide_data', file_and_path=file_and_path)
+    dir = get_file_locations('data_root', file_and_path=file_and_path)
     # filename for <20m iodide data?
     f = 'Iodide_data_above_20m.csv'
     # Get data as DataFrame
@@ -385,11 +385,11 @@ def get_iodide_obs_metadata(file_and_path='./sparse2spatial.rc'):
     Extract and return metadata from metadata csv
     """
     # What is the location of the iodide data?
-    iodide_dir = get_file_locations('iodide_data', file_and_path=file_and_path)
+    data_root = get_file_locations('data_root', file_and_path=file_and_path)
     # Filename?
     filename = 'Iodine_climatology_Submitted_data_list_formatted_TMS.xlsx'
     # Extract
-    df = pd.read_excel(iodide_dir+filename, sheetname='Full')
+    df = pd.read_excel(data_root+filename, sheetname='Full')
     # return as DataFrame
     return df
 
@@ -413,7 +413,7 @@ def get_iodide_obs(just_use_submitted_data=False,
     -----
     """
     # What is the location of the iodide data?
-    iodide_dir = get_file_locations('iodide_data', file_and_path=file_and_path)
+    data_root = get_file_locations('data_root', file_and_path=file_and_path)
     # Name to save file as
     filename = 'Iodide_data_above_20m.csv'
     # --- Get Metadata (and keep as a seperate DataFrame )
@@ -475,7 +475,7 @@ def get_iodide_obs(just_use_submitted_data=False,
         for var in core_numeric_vars:
             main_df[var] = pd.to_numeric(main_df[var].values, errors='coerce')
         # Save to disk
-        main_df.to_csv(iodide_dir+filename, encoding='utf-8')
+        main_df.to_csv(data_root+filename, encoding='utf-8')
     # - Just use existing file
     else:
         try:
@@ -483,7 +483,7 @@ def get_iodide_obs(just_use_submitted_data=False,
             if just_rosie_core_data:
                 main_df = get_core_rosie_obs()
             else:
-                main_df = pd.read_csv(iodide_dir+filename, encoding='utf-8')
+                main_df = pd.read_csv(data_root+filename, encoding='utf-8')
         except:
             print('Error opening processed iodide data file')
     # Return DataFrames
@@ -758,7 +758,7 @@ def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows = 1,
     """
     # location and filename?
     filename = 'Iodide_correlations_310114_MASTER_TMS_EDIT.xlsx'
-    dir_ = get_file_locations('iodide_data', file_and_path=file_and_path)
+    dir_ = get_file_locations('data_root', file_and_path=file_and_path)
     dir_ += '/RJC_spreadsheets/'
     # Extract Rosies MASTER excel sheet (for values with depth <20m)
 #    sheetname='<20 m all data', \

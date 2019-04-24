@@ -43,9 +43,9 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
     target_name = target
     # Get feature values for resolution
     if isinstance(dsA, type(None)):
-        iodide_dir = get_file_locations('iodide_data')
+        data_root = get_file_locations('data_root')
         filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-        dsA = xr.open_dataset(iodide_dir + filename)
+        dsA = xr.open_dataset(data_root + filename)
     # Take coordinate variables from dsA
     lat = dsA['lat'].values
     lon = dsA['lon'].values
@@ -808,7 +808,7 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
     """
     # Check to make sure that the full observations are used to calc the outlier
     if check_full_df_used:
-        folder = get_file_locations('iodide_data')
+        folder = get_file_locations('data_root')
         filename = 'Iodide_data_above_20m.csv'
         dfA = pd.read_csv(folder+filename)
         dfA = dfA.loc[np.isfinite(dfA[var2use]), :]

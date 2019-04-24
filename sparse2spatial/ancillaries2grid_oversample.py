@@ -21,7 +21,7 @@ def extract_4_nearest_points_in_NetCDF(lons=None, lats=None,
     Extract requested variable for nearest point and time from NetCDF
     """
     # --- Get data from NetCDF as a xarray dataset
-    dir_ = get_file_locations('iodide_data')
+    dir_ = get_file_locations('data_root')
     filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
     if rm_Skagerrak_data:
         filename = filename.format('_No_Skagerrak')
@@ -491,7 +491,7 @@ def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
     # get details of parameterisations
 #    filename='Chance_2014_Table2_PROCESSED_17_04_19.csv'
     filename = 'Chance_2014_Table2_PROCESSED.csv'
-    dir_ = get_file_locations('iodide_data')
+    dir_ = get_file_locations('data_root')
     param_df = pd.read_csv(dir_+filename)
     # map input variables
     input_dict = {
@@ -560,9 +560,9 @@ def extract_ancillary_obs_from_COMPILED_file(obs_data_df=None,
     # file ancillary data as a xarray Dataset
 #    res= '4x5' # use 4x5 for testing
     res = '0.125x0.125'  # Use Nature res. run for analysis
-    iodide_dir = get_file_locations('iodide_data')
+    data_root = get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    dsA = xr.open_dataset(iodide_dir + filename)
+    dsA = xr.open_dataset(data_root + filename)
     # Get list of site IDs...
     # WARNING - if a new index axis is created, then the index info is lost!
     Data_key_ID = obs_data_df['Data_Key_ID'].values

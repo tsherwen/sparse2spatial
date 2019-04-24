@@ -38,7 +38,7 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320,
         extr_str = ''
     filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res4param, extr_str)
 #    folder =  './'
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # Set the variable to plot underneath observations
     var2plot = 'Ensemble_Monthly_mean'
@@ -137,7 +137,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320,
     else:
         extr_str = ''
     filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res4param, extr_str)
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # Set the variable to plot underneath observations
     var2plot = 'Ensemble_Monthly_mean'
@@ -543,7 +543,7 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
     # Get predicted values
 #    folder = '/shared/scratch/hpc2/users/ts551/labbook/Python_progs/'
     if isinstance(ds, type(None)):
-        folder = get_file_locations('iodide_data')
+        folder = get_file_locations('data_root')
         filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
         if rm_Skagerrak_data:
             filename = filename.format('_No_Skagerrak')
@@ -666,11 +666,11 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320,
     df_obs = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get predicted values
 #    folder = '/shared/scratch/hpc2/users/ts551/labbook/Python_progs/'
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
     ds = xr.open_dataset(folder + filename.format('_No_Skagerrak'))
     # Get data with Skagerrak data too.
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds2 = xr.open_dataset(folder + filename.format(''))
     # Rename to a more concise name
     try:
@@ -840,7 +840,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
     df_obs = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get predicted values
     if isinstance(folder, type(None)):
-        folder = get_file_locations('iodide_data')
+        folder = get_file_locations('data_root')
     if isinstance(ds, type(None)):
         filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_str)
         ds = xr.open_dataset(folder + filename)
@@ -2497,7 +2497,7 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640,
 #    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
 #    filename= 'Oi_prj_predicted_iodide_4x5_UPDATED_Depth_GEBCO.nc'
     filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
@@ -2586,7 +2586,7 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640,
     else:
         extr_str = ''
     filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_str)
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
@@ -2658,7 +2658,7 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
     filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
 #    filename = 'Oi_prj_predicted_iodide_4x5_UPDATED_Depth_GEBCO.nc'
 #    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
@@ -2728,7 +2728,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extr_str = ''
     # Get spatial data from saved NetCDF
     filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_str)
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # setup a PDF
     savetitle = 'Oi_prj_spatial_avg_and_std_ensemble_models_{}_{}'
@@ -2959,7 +2959,7 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
         RFR_dict = build_or_get_current_models()
     # get XR Dataset of data
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # setup a PDF
     savetitle = 'Oi_prj_input_ancillaries_spatailly_{}'.format(res)
@@ -3111,7 +3111,7 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320,
     # get data
     filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
 #    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
-    folder = get_file_locations('iodide_data')
+    folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # setup a PDF
     savetitle = 'Oi_prj_spatial_comparison_models_{}'.format(res)
@@ -3218,7 +3218,7 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320,
 #         extr_str = ''
 #     # Get data
 #     filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format( res, extr_str )
-#     folder = get_file_locations( 'iodide_data'  )
+#     folder = get_file_locations( 'data_root'  )
 # #    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
 #     ds = xr.open_dataset( folder + filename )
 #     # setup a PDF
@@ -3395,7 +3395,7 @@ def get_diagnostic_plots_analysis4model(res='4x5', extr_str=''):
                                                         testing_features=testing_features)
     # -- Also get the working output from processed file for obs.
     pro_df = pd.read_csv(get_file_locations(
-        'iodide_data')+'Iodine_obs_WOA.csv')
+        'data_root')+'Iodine_obs_WOA.csv')
     # Exclude v. high values (N=4 -  in intial dataset)
     # Exclude v. high values (N=7 -  in final dataset)
     pro_df = pro_df.loc[pro_df['Iodide'] < 400.]
@@ -3935,9 +3935,9 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
     if isinstance(stats, type(None)):
         stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
     # Get the core input variables
-    iodide_dir = get_file_locations('iodide_data')
+    data_root = get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    ds = xr.open_dataset(iodide_dir + filename)
+    ds = xr.open_dataset(data_root + filename)
     # set up a dictionary for different dataset splits
     dss = {}
     # Keep the base case to use as a reference
@@ -4095,9 +4095,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     # --- Local variables
     Iaq = '[I$^{-}_{aq}$]'
     # Get the core input variables
-    iodide_dir = get_file_locations('iodide_data')
+    data_root = get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    ds = xr.open_dataset(iodide_dir + filename)
+    ds = xr.open_dataset(data_root + filename)
     # Get the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -5058,9 +5058,9 @@ def explore_sensitivity_of_65N(res='4x5'):
     """ Explore sensitivty of iodide parameterisations to  input vairables """
     # --- Local variables
     # Get the core input variables
-    iodide_dir = get_file_locations('iodide_data')
+    data_root = get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    ds = xr.open_dataset(iodide_dir + filename)
+    ds = xr.open_dataset(data_root + filename)
     # Get the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -5401,7 +5401,7 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
         RFR_dict = build_or_get_current_models()
     # Get predicted values
     if isinstance(folder, type(None)):
-        folder = get_file_locations('iodide_data')
+        folder = get_file_locations('data_root')
     if isinstance(ds, type(None)):
         filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_str)
         ds = xr.open_dataset(folder + filename)
@@ -5478,11 +5478,11 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
     """ Set values above a latitude to the monthly lon average """
     print(var2set)
     # local variables
-    iodide_dir = get_file_locations('iodide_data')
+    data_root = get_file_locations('data_root')
     # Get existing file
     if isinstance(ds, type(None)):
         filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-        ds = xr.open_dataset(iodide_dir + filename)
+        ds = xr.open_dataset(data_root + filename)
     # get the average value at lat
     avg = ds[var2set].sel(lat=lat_above2set, method='nearest')
     # get index of lat to set values from

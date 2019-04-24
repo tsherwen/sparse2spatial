@@ -6,10 +6,10 @@
 #
 # - Locations of input data
 #
-iodide_data          : /work/home/ts551/data/iodide/
+data_root          : /work/home/ts551/data/iodide/
 submitted_data       : /work/home/ts551/data/iodide/submitted_data/
 digitised_data       : /work/home/ts551/data/iodide/digitised_data/
-new_data             : /work/home/ts551/data/iodide/iodide_data_recieved_post_Chance2014/
+new_data             : /work/home/ts551/data/iodide/data_root_recieved_post_Chance2014/
 DOC                  : /work/home/ts551/data/iodide/DOC/
 Martin_Wadley        : /work/home/ts551/data/iodide/Martin_Wadley/
 GFDL                 : /work/home/ts551/data/iodide/GFDL/
