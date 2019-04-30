@@ -13,7 +13,18 @@ import xarray as xr
 def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
                                     testing_features=None, df=None, target='Iodide',
                                     verbose=False):
-    """ Get stats on performance of mutliple model builds on obs. testset """
+    """
+    Get stats on performance of mutliple model builds on obs. testset
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
     from sklearn.metrics import mean_squared_error
@@ -140,7 +151,18 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
                                         RFR_dict=None,
                                         testset='Test set (strat. 20%)',
                                         rm_Skagerrak_data=False):
-    """ Build a set of 20 random models based on a single model """
+    """
+    Build a set of 20 random models based on a single model
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
     # target='Iodide'
@@ -216,7 +238,18 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
                                                  testing_features=None, target='Iodide',
                                                  df=None,
                                                  n_estimators=500):
-    """ Run tests on the sensitivity of model to test/training choices """
+    """
+    Run tests on the sensitivity of model to test/training choices
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
     # target='Iodide'
@@ -404,14 +437,23 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     plt.close()
 
 
-
 def run_tests_on_model_build_options(df=None, use_choosen_model=True,
                                      testset='Test set (strat. 20%)',
                                      model_name='TEST_MODEL'):
-    """ Test feature and hyperparameter options for model """
+    """
+    Test feature and hyperparameter options for model
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
-    #  testset='Test set (strat. 20%)'; use_choosen_model=True; do_not_transform_feature_data=True
     # ----- Local variables
     testing_features = None
     target = 'Iodide'
@@ -502,141 +544,10 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True,
         df[model_name] = get_model_predictions4obs_point(model=model)
 
 
-
-def make_table_of_point_for_point_performance(RFR_dict=None,
-                                              testset='Test set (strat. 20%)',
-                                              target='Iodide'):
-    """ Make a table to summarise point-for-point performance """
-    # def get data
-    if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
-    # Get stats on model tuns runs
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
-    # Select param values of interest (and give updated title names )
-    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
-                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
-                     'RFR(Ensemble)': 'RFR(Ensemble)',
-                     'Iodide': 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
-                     }
-    # Set the stats to use
-    first_columns = [
-        'mean', 'std', '25%', '50%', '75%',
-        'RMSE ({})'.format(testset),  'RMSE (all)',
-    ]
-#    rest_of_columns = [i for i in stats.columns if i not in first_columns]
-    stats = stats[first_columns]
-    # rename columns (50% to median and ... )
-    cols2rename = {
-        '50%': 'median', 'std': 'std. dev.',
-        'RMSE ({})'.format(testset): 'RMSE (withheld)'
-    }
-    stats.rename(columns=cols2rename,  inplace=True)
-    # only select params of interest
-    stats = stats.T[rename_titles.values()].T
-    # rename
-    stats.rename(index=rename_titles, inplace=True)
-    # Set filename and save detail on models
-    csv_name = 'Oi_prj_point_for_point_comp4tabale.csv'
-    earth0_data_root = get_file_locations(
-        'earth0_home_dir')+'data/iodide/'
-#    stats.round(2).to_csv( earth0_data_root+csv_name )
-    stats.round(1).to_csv(csv_name)
-
-
-def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
-                                                      testset='Test set (strat. 20%)',
-                                                      target='Iodide'):
-    """ Make a table to summarise point-for-point performance """
-    # def get data
-    if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
-    # Just select the
-    df = RFR_dict['df']
-    df = df.loc[df[testset] == True, :]
-    # Get stats on model tuns runs
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, df=df,
-                                        verbose=False)
-    # Select param values of interest (and give updated title names )
-    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
-                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
-                     'RFR(Ensemble)': 'RFR(Ensemble)',
-                     'Iodide': 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
-                     }
-    # Set the stats to use
-    first_columns = [
-        'mean', 'std', '25%', '50%', '75%',
-        'RMSE ({})'.format(testset),  'RMSE (all)',
-    ]
-#    rest_of_columns = [i for i in stats.columns if i not in first_columns]
-    stats = stats[first_columns]
-    # rename columns (50% to median and ... )
-    cols2rename = {
-        '50%': 'median', 'std': 'std. dev.',
-        'RMSE ({})'.format(testset): 'RMSE (withheld)'
-    }
-    stats.rename(columns=cols2rename,  inplace=True)
-    # only select params of interest
-    stats = stats.T[rename_titles.values()].T
-    # rename
-    stats.rename(index=rename_titles, inplace=True)
-    # Set filename and save detail on models
-    csv_name = 'Oi_prj_point_for_point_comp4tabale_TESTSET.csv'
-    earth0_data_root = get_file_locations(
-        'earth0_home_dir')+'data/iodide/'
-#    stats.round(2).to_csv( earth0_data_root+csv_name )
-    stats.round(1).to_csv(csv_name)
-
-
-def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
-                                                  testset='Test set (strat. 20%)',
-                                                  target='Iodide'):
-    """ Make a table to summarise point-for-point performance """
-    # def get data
-    if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
-    # Get stats on model tuns runs
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
-    # Select param values of interest (and give updated title names )
-    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
-                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
-                     'RFR(Ensemble)': 'RFR(Ensemble)',
-                     target: 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
-                     }
-    # Set the stats to use
-    first_columns = [
-        'mean', 'std', '25%', '50%', '75%',
-        'RMSE ({})'.format(testset),  'RMSE (all)',
-    ]
-#    rest_of_columns = [i for i in stats.columns if i not in first_columns]
-    stats = stats[first_columns]
-    # rename columns (50% to median and ... )
-    cols2rename = {
-        '50%': 'median', 'std': 'std. dev.',
-        'RMSE ({})'.format(testset): 'RMSE (withheld)'
-    }
-    stats.rename(columns=cols2rename,  inplace=True)
-    # rename
-    stats.rename(index=rename_titles, inplace=True)
-    # Set filename and save detail on models
-    csv_name = 'Oi_prj_point_for_point_comp4tabale_ALL.csv'
-    earth0_data_root = get_file_locations(
-        'earth0_home_dir')+'data/iodide/'
-#    stats.round(2).to_csv( earth0_data_root+csv_name )
-    stats.round(1).to_csv(csv_name)
-    # also save a .csv of values without derived values
-    index2use = [i for i in stats.index if all(
-        [ii not in i for ii in derived])]
-    stats = stats.T
-    stats = stats[index2use]
-    stats = stats.T
-    csv_name = 'Oi_prj_point_for_point_comp4tabale_ALL_NO_DERIV.csv'
-    stats.round(1).to_csv(csv_name)
-
 def get_predictor_variable_importance(RFR_dict=None):
-    """ Get the feature variable inmportance for current models """
+    """
+    Get the feature variable inmportance for current models
+    """
     # ---- Local variables
     # set models to compare...
     models2compare = [
@@ -952,131 +863,6 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 
     # return dataframe of stats regardless
     return stats
-
-
-def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
-                                save_model_to_disk=False, read_model_from_disk=True,
-                                target_name='Iodide', target='Iodide', model_names=None,
-                                delete_existing_model_files=False,
-                                rm_Skagerrak_data=False, rm_iodide_outliers=True,
-                                rm_LOD_filled_data=False, debug=False):
-    """ Build various models (diff. features) to test comparisons """
-    from sklearn.ensemble import RandomForestRegressor
-    from sklearn.externals import joblib
-    import gc
-    # elephant
-    # testset='Test set (strat. 20%)'; save_model_to_disk=False; target_name='Iodide'; target='Iodide';  read_model_from_disk=True; delete_existing_model_files=False
-    # delete_existing_model_files=True; save_model_to_disk=True; read_model_from_disk=True
-    # --- Get processed data
-    if isinstance(df, type(None)):
-        df = get_dataset_processed4ML(
-            rm_Skagerrak_data=rm_Skagerrak_data,
-            rm_LOD_filled_data=rm_LOD_filled_data,
-            rm_iodide_outliers=rm_iodide_outliers,
-        )
-
-    # --- Get local variables
-    # Location to save models
-    data_root_dir = get_file_locations('data_root')
-    wrk_dir = data_root_dir+'/models/'+'/LIVE/'
-    if rm_Skagerrak_data:
-        temp_model_dir = wrk_dir+'/TEMP_MODELS_No_Skagerrak/'
-#     elif rm_LOD_filled_data:
-#         temp_model_dir = wrk_dir+'/TEMP_MODELS_no_LOD_filled/'
-    else:
-        temp_model_dir = wrk_dir+'/TEMP_MODELS/'
-    if debug:
-        print('Using models from {}'.format(temp_model_dir))
-    # Get details on model setups to use
-    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
-    if isinstance(model_names, type(None)):
-        model_names = list(sorted(model_feature_dict.keys()))
-    # Set a hyperparameter settings
-    hyperparam_dict = {
-        #    'n_estimators' : 100,
-        'n_estimators': 500,
-        #    'n_estimators' : 10,
-        'oob_score': True,
-        #    'oob_score' : False,
-    }
-    # Setup dictionaries to save detail on models to
-    N_testing_features = {}
-    testing_features_dict = {}
-    oob_scores = {}
-    models_dict = {}
-
-    # --- Loop and build models
-    if not read_model_from_disk:
-        for n_model_name, model_name in enumerate(model_names):
-            print(n_model_name, model_name)
-            # Get testing features and hyperparameters to build model
-            testing_features = model_feature_dict[model_name]
-            n_estimators = hyperparam_dict['n_estimators']
-            oob_score = hyperparam_dict['oob_score']
-            # select and split variables in the training and test dataset
-            train_set_tr = df.loc[df[testset] != True, testing_features]
-            train_set_tr_labels = df.loc[df[testset] != True, target_name]
-            # Build model (Setup and fit)
-            model = RandomForestRegressor(random_state=42,
-                                          n_estimators=n_estimators, oob_score=oob_score,
-                                          criterion='mse')
-            # Provide the model with the features (testing_features) and
-            # The labels ( target_name, train_set_tr_labels)
-            model.fit(train_set_tr, train_set_tr_labels)
-            # Save model in temporary folder?
-            if save_model_to_disk:
-                # Check if there are any existing files...
-                pkls_in_dir = glob.glob(temp_model_dir+'*.pkl')
-                Npkls = len(pkls_in_dir)
-                if delete_existing_model_files and (n_model_name == 0):
-                    import os
-                    [os.remove(i) for i in pkls_in_dir]
-                    print('WARNING: deleted existing ({}) pkls'.format(Npkls))
-                elif(not delete_existing_model_files) and (n_model_name == 0):
-                    assert Npkls == 0, 'WARNING: model files exist!'
-                else:
-                    pass
-                # Save models...
-                model_savename = "my_model_{:0>4}.pkl".format(n_model_name)
-                joblib.dump(model, temp_model_dir+model_savename)
-            # Also keep models online in dictionary
-            models_dict[model_name] = model
-            # force local tidy of garbage
-            gc.collect()
-
-    # -  Loop model and predict for all values
-    # If time to make models too great, then read-in here and 'rm' from above
-    for n_model_name, model_name in enumerate(model_names):
-        # Get testing features and hyperparameters to build model
-        testing_features = model_feature_dict[model_name]
-        print(n_model_name, model_name, testing_features)
-        # read from disk
-        if (not save_model_to_disk) and (read_model_from_disk):
-            model_savename = "my_model_{:0>4}.pkl".format(n_model_name)
-            model = joblib.load(temp_model_dir+model_savename)
-            models_dict[model_name] = model
-        else:
-            model = models_dict[model_name]
-        # Predict for all iodide observations
-        df[model_name] = model.predict(df[testing_features].values)
-        # Save number of features used too
-        N_testing_features[model_name] = len(testing_features)
-        testing_features_dict[model_name] = '+'.join(testing_features)
-        try:
-            oob_scores[model_name] = model.oob_score_
-        except:
-            oob_scores[model_name] = np.NaN
-        models_dict[model_name] = model
-
-    # ----  return models and predictions in a dictionary structure
-    RFR_dict = {}
-    RFR_dict['models_dict'] = models_dict
-    RFR_dict['model_names'] = model_names
-    RFR_dict['df'] = df
-    RFR_dict['testing_features_dict'] = testing_features_dict
-    RFR_dict['N_testing_features'] = N_testing_features
-    RFR_dict['oob_scores'] = oob_scores
-    return RFR_dict
 
 
 def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',

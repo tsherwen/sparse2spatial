@@ -696,6 +696,16 @@ def calc_iodide_chance2014_STTxx2_I(TEMP):
     return (0.225*(TEMP**2)) + 19.0
 
 
+def calc_iodide_chance2014_Multivariate(TEMP=None, MOD_LAT=None, NO3=None,
+                                        sumMLDpt=None, salinity=None):
+    """
+    Take variable and returns multivariate parameterised iodide from Chance2014
+    """
+    iodide = (0.28*TEMP**2) + (1.7*MOD_LAT) + (0.9*NO3) -  \
+        (0.020*sumMLDpt) + (7.0*salinity) - 309
+    return iodide
+
+
 def is_number(s):
     """
     check if input is a number (check via conversion to string)
@@ -823,6 +833,28 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
     OutlierDef = df[var2use].describe()['75%'] + (IQR*1.5)
     return OutlierDef
 
+
+def get_hyperparameter_dict():
+    """
+    get default hyperparam settings to use
+    """
+    hyperparam_dict = {
+        #    'n_estimators' : 100,
+        'n_estimators': 500,
+        #    'n_estimators' : 10,
+        'oob_score': True,
+        #    'oob_score' : False,
+    }
+    return hyperparam_dict
+
+
+def check_or_mk_directory_struture():
+    """
+    Check all the required directories are present and make them if not.
+    """
+    pstr = 'TODO: Make function to check directory strcuture and add folders if not'
+    pstr += '\n not present.'
+    print(pstr)
 
 
 def set_backup_month_if_unkonwn(lat=None, var2use='', main_var='',

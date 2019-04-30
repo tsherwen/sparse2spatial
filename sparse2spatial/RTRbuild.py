@@ -1,14 +1,174 @@
 """
+
+Build ensemble models from ensemble of RandomForestRegressor models
+
 """
+import sys
 import numpy as np
 import pandas as pd
+import xarray as xr
 import datetime as datetime
 import sklearn as sk
 from sklearn.ensemble import RandomForestRegressor
+import glob
+
+# s2s imports
+import sparse2spatial.utils as utils
+
+
+def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
+                                save_model_to_disk=False, read_model_from_disk=True,
+                                target_name='Iodide', target='Iodide', model_names=None,
+                                delete_existing_model_files=False,
+                                rm_Skagerrak_data=False, rm_iodide_outliers=True,
+                                rm_LOD_filled_data=False,
+                                model_feature_dict=None,
+                                model_sub_dir='/TEMP_MODELS/',
+                                debug=False):
+    """
+    Build various models (diff. features) to test comparisons
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (dict)
+
+    Notes
+    -----
+    """
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.externals import joblib
+    import gc
+    # elephant
+    # testset='Test set (strat. 20%)'; save_model_to_disk=False; target_name='Iodide'; target='Iodide';  read_model_from_disk=True; delete_existing_model_files=False
+    # delete_existing_model_files=True; save_model_to_disk=True; read_model_from_disk=True
+    # --- Get processed data
+    if isinstance(df, type(None)):
+#         df = get_dataset_processed4ML(
+#             rm_Skagerrak_data=rm_Skagerrak_data,
+#             rm_LOD_filled_data=rm_LOD_filled_data,
+#             rm_iodide_outliers=rm_iodide_outliers,
+#         )
+        print( 'Dictionary of model names and features must be provided!' )
+        sys.exit()
+
+    # - Get local variables
+    # Location to save models
+    data_root_dir = utils.get_file_locations('data_root')
+    working_folder = data_root_dir+'/models/'+'/LIVE/'+ model_sub_dir
+    if debug:
+        print('Using models from {}'.format(working_folder))
+    # Get details on model setups to use
+    if isinstance(model_feature_dict, type(None)):
+#        model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+        print( 'Dictionary of model names and features must be provided!' )
+        sys.exit()
+    if isinstance(model_names, type(None)):
+        model_names = list(sorted(model_feature_dict.keys()))
+    # Set a hyperparameter settings
+    hyperparam_dict = utils.get_hyperparameter_dict()
+    # Setup dictionaries to save detail on models to
+    N_testing_features = {}
+    testing_features_dict = {}
+    oob_scores = {}
+    models_dict = {}
+
+    # - Loop and build models
+    if not read_model_from_disk:
+        for n_model_name, model_name in enumerate(model_names):
+            print(n_model_name, model_name)
+            # Get testing features and hyperparameters to build model
+            testing_features = model_feature_dict[model_name]
+            n_estimators = hyperparam_dict['n_estimators']
+            oob_score = hyperparam_dict['oob_score']
+            # select and split variables in the training and test dataset
+            train_set_tr = df.loc[df[testset] != True, testing_features]
+            train_set_tr_labels = df.loc[df[testset] != True, target_name]
+            # Build model (Setup and fit)
+            model = RandomForestRegressor(random_state=42,
+                                          n_estimators=n_estimators,
+                                          oob_score=oob_score,
+                                          criterion='mse')
+            # Provide the model with the features (testing_features) and
+            # The labels ( target_name, train_set_tr_labels)
+            model.fit(train_set_tr, train_set_tr_labels)
+            # Save model in temporary folder?
+            if save_model_to_disk:
+                # Check if there are any existing files...
+                pkls_in_dir = glob.glob(working_folder+'*.pkl')
+                Npkls = len(pkls_in_dir)
+                if delete_existing_model_files and (n_model_name == 0):
+                    import os
+                    [os.remove(i) for i in pkls_in_dir]
+                    print('WARNING: deleted existing ({}) pkls'.format(Npkls))
+                elif(not delete_existing_model_files) and (n_model_name == 0):
+                    assert Npkls == 0, 'WARNING: model files exist!'
+                else:
+                    pass
+                # Save models...
+                model_savename = "my_model_{:0>4}.pkl".format(n_model_name)
+                try:
+                    joblib.dump(model, working_folder+model_savename)
+                except FileNotFoundError:
+                    utils.check_or_mk_directory_struture()
+            # Also keep models online in dictionary
+            models_dict[model_name] = model
+            # force local tidy of garbage
+            gc.collect()
+
+    # -  Loop model and predict for all values
+    # If time to make models too great, then read-in here and 'rm' from above
+    for n_model_name, model_name in enumerate(model_names):
+        # Get testing features and hyperparameters to build model
+        testing_features = model_feature_dict[model_name]
+        print(n_model_name, model_name, testing_features)
+        # read from disk
+        if (not save_model_to_disk) and (read_model_from_disk):
+            model_savename = "my_model_{:0>4}.pkl".format(n_model_name)
+            model = joblib.load(working_folder+model_savename)
+            models_dict[model_name] = model
+        else:
+            model = models_dict[model_name]
+        # Predict for all iodide observations
+        df[model_name] = model.predict(df[testing_features].values)
+        # Save number of features used too
+        N_testing_features[model_name] = len(testing_features)
+        testing_features_dict[model_name] = '+'.join(testing_features)
+        try:
+            oob_scores[model_name] = model.oob_score_
+        except:
+            oob_scores[model_name] = np.NaN
+        models_dict[model_name] = model
+
+    # - Return models and predictions in a dictionary structure
+    RFR_dict = {}
+    RFR_dict['models_dict'] = models_dict
+    RFR_dict['model_names'] = model_names
+    RFR_dict['df'] = df
+    RFR_dict['testing_features_dict'] = testing_features_dict
+    RFR_dict['N_testing_features'] = N_testing_features
+    RFR_dict['oob_scores'] = oob_scores
+    return RFR_dict
+
 
 
 def get_features_used_by_model_list(models_list=None, RFR_dict=None):
-    """ Get the (set of) features used by a list of models """
+    """
+    Get the (set of) features used by a list of models
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (dict)
+
+    Notes
+    -----
+
+    """
     # Get dictionary of shared data if not provided
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -29,6 +189,16 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
                    exclude_ensemble=True, verbose=True):
     """
     retrieve the names of the top 10 models
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (dict)
+
+    Notes
+    -----
     """
     # get stats on models in RFR_dict
     if isinstance(RFR_dict, type(None)):
@@ -56,14 +226,25 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
 
 
 def get_choosen_model_from_features_selection(rtn_features=True):
-    """ Load choosen model and retrieve its testing features"""
+    """
+    Load choosen model and retrieve its testing features
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.externals import joblib
     import glob
     # load best estimator model
-    data_root_dir = get_file_locations('data_root')
-    wrk_dir = data_root_dir + '/models/LIVE/CHOOSEN_MODEL/'
+    data_root_dir = utils.get_file_locations('data_root')
+    working_folder = data_root_dir + '/models/LIVE/CHOOSEN_MODEL/'
     prefix = 'my_model_'
-    model_savename = glob.glob(wrk_dir+prefix+"*.pkl")
+    model_savename = glob.glob(working_folder+prefix+"*.pkl")
     N = len(model_savename)
     assert N == 1, 'There should be only one choosen model! Not {}'.format(N)
     model_savename = model_savename[0]
@@ -75,10 +256,22 @@ def get_choosen_model_from_features_selection(rtn_features=True):
         mdict['testing_features'] = get_model_testing_features_dict(name)
     return mdict
 
+
 def Hyperparameter_Tune4choosen_models(RFR_dict=None,
                                        testset='Test set (strat. 20%)',
                                        target_name=['Iodide']):
-    """ Driver to tune mutiple RFR models """
+    """
+    Driver to tune mutiple RFR models
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.externals import joblib
     # testset='Test set (strat. 20%)'; target_name=['Iodide']
     # Get the data for the models
@@ -98,7 +291,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
     testing_features_dict = RFR_dict['testing_features_dict']
     models_dict = RFR_dict['models_dict']
 
-    # use five fold cross validation.
+    # use X fold cross validation (e.g. 5 or 7)
     cv = 7
 
     # Loop and save optimised model
@@ -115,10 +308,10 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
                                        RFR_dict=RFR_dict,
                                        testing_features=testing_features, cv=cv)
         # Save
-#        data_root_dir = get_file_locations('data_root')
-#        wrk_dir = data_root_dir+'/models/'+'/LIVE//BEST_ESTIMATORS/'
+#        data_root_dir = utils.get_file_locations('data_root')
+#        working_folder = data_root_dir+'/models/'+'/LIVE//BEST_ESTIMATORS/'
 #
-#        joblib.dump(BEST_ESTIMATOR, wrk_dir + model_savename)
+#        joblib.dump(BEST_ESTIMATOR, working_folder + model_savename)
 
     # --- Test the tuned models against the test set
     test_the_tuned_models = False
@@ -132,8 +325,8 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
         # also sub select all vectors for input data
 
         #
-        data_root_dir = get_file_locations('data_root')
-        wrk_dir = data_root_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
+        data_root_dir = utils.get_file_locations('data_root')
+        working_folder = data_root_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
 
         # Test the improvements in the optimised models?
         for model_name in models2compare:
@@ -158,7 +351,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
             # - Get optimised model
             try:
                 model_savename = "my_model_{}.pkl".format(model_name)
-                OPmodel = joblib.load(wrk_dir + model_savename)
+                OPmodel = joblib.load(working_folder + model_savename)
                 #
                 print(' - Optimised values: ')
                 quick_model_evaluation(OPmodel, test_features, test_labels)
@@ -173,8 +366,8 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
         train_set = df.loc[df[testset] == False, :]
         # also sub select all vectors for input data
         # locations of the optimised models
-        data_root_dir = get_file_locations('data_root')
-        wrk_dir = data_root_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
+        data_root_dir = utils.get_file_locations('data_root')
+        working_folder = data_root_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
 
         # Test the improvements in the optimised models?
         for model_name in models2compare:
@@ -199,7 +392,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
             # - Get optimised model
             try:
                 model_savename = "my_model_{}.pkl".format(model_name)
-                OPmodel = joblib.load(wrk_dir + model_savename)
+                OPmodel = joblib.load(working_folder + model_savename)
                 #
                 print(' - Optimised values: ')
                 quick_model_evaluation(OPmodel, train_features, train_labels)
@@ -212,7 +405,18 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
                               testset='Test set (strat. 20%)', target_name=['Iodide'],
                               testing_features=None, model_name=None,
                               save_best_estimator=True):
-    """ Tune hyperparmeters of model """
+    """
+    Driver to tune hyperparmeters of model
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.externals import joblib
     from sklearn.ensemble import RandomForestRegressor
     # use_choosen_model=True; testset='Test set (strat. 20%)'; target_name=['Iodide']
@@ -248,11 +452,13 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     quick_model_evaluation(base_model, test_features, test_labels)
 
     # - First make an intial explore of the parameter space
-    rf_random = Use_RandomizedSearchCV_to_explore_hyperparams(cv=cv,
-                                                            train_features=train_features,
-                                                              train_labels=train_labels,
-                                                        testing_features=testing_features)
-#        test_features=test_features, test_labels=test_labels
+    rf_random = Use_RS_CV_to_explore_hyperparams(cv=cv,
+                                                 train_features=train_features,
+                                                 train_labels=train_labels,
+                                                 testing_features=testing_features
+#                                                 test_features=test_features,
+#                                                 test_labels=test_labels
+                                                 )
     # Check the performance by Random searching (RandomizedSearchCV)
     best_random = rf_random.best_estimator_
     best_params_ = rf_random.best_params_
@@ -265,12 +471,13 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
         testing_features=testing_features, best_params_=best_params_,
         param_grid_based_on_RandomizedSearchCV=True)
     # Use GridSearchCV
-    grid_search = use_GridSearchCV_to_tune_Hyperparameters(cv=cv,
-                                                           train_features=train_features,
-                                                           param_grid=param_grid,
-                                                           train_labels=train_labels,
-                                                        testing_features=testing_features,
-                                                           #        test_features=test_features, test_labels=test_labels
+    grid_search = use_GS_CV_to_tune_Hyperparams(cv=cv,
+                                               train_features=train_features,
+                                               param_grid=param_grid,
+                                               train_labels=train_labels,
+                                               testing_features=testing_features,
+#                                               test_features=test_features,
+#                                                test_labels=test_labels
                                                            )
     print(grid_search.best_params_)
     # Check the performance of grid seraching searching
@@ -279,22 +486,34 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
 
     # Save the best estimator now for future use
     if save_best_estimator:
-        data_root_dir = get_file_locations('data_root')
-        wrk_dir = data_root_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
+        data_root_dir = utils.get_file_locations('data_root')
+        working_folder = data_root_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
         model_savename = "my_model_{}.pkl".format(model_name)
-        joblib.dump(BEST_ESTIMATOR, wrk_dir + model_savename)
+        joblib.dump(BEST_ESTIMATOR, working_folder + model_savename)
     else:
         return BEST_ESTIMATOR
 
 
-def Use_RandomizedSearchCV_to_explore_hyperparams(train_features=None,
-                                                  train_labels=None,
-                                                  testing_features=None,
-                                                  test_features=None,
-                                                  test_labels=None,
-                                                  scoring='neg_mean_squared_error',
-                                                  cv=3):
-    """ Intial test of parameter space using RandomizedSearchCV """
+def Use_RS_CV_to_explore_hyperparams(train_features=None,
+                                     train_labels=None,
+                                     testing_features=None,
+                                     test_features=None,
+                                     test_labels=None,
+                                     scoring='neg_mean_squared_error',
+                                     cv=3):
+    """
+    Intial test of parameter space using RandomizedSearchCV
+
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.model_selection import RandomizedSearchCV
     from sklearn.ensemble import RandomForestRegressor
     # Number of trees in random forest
@@ -336,13 +555,24 @@ def Use_RandomizedSearchCV_to_explore_hyperparams(train_features=None,
     return rf_random
 
 
-def use_GridSearchCV_to_tune_Hyperparameters(param_grid=None,
-                                             train_features=None, train_labels=None,
-                                             testing_features=None, \
-                                             #        test_features=None, test_labels=None
-                                             scoring='neg_mean_squared_error', cv=3,
-                                             ):
-    """ Refine hyperparameters using (GridSearchCV)  """
+def use_GS_CV_to_tune_Hyperparams(param_grid=None,
+                                  train_features=None, train_labels=None,
+                                  testing_features=None, \
+#                                  test_features=None, test_labels=None
+                                  scoring='neg_mean_squared_error', cv=3,
+                                  ):
+    """
+    Refine hyperparameters using (GridSearchCV)
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.model_selection import GridSearchCV
     from sklearn.ensemble import RandomForestRegressor
     # Create a based model
@@ -356,6 +586,9 @@ def use_GridSearchCV_to_tune_Hyperparameters(param_grid=None,
 
 
 def quick_model_evaluation(model, test_features, test_labels):
+    """
+    Perform a quick model evaluation
+    """
     from sklearn.metrics import mean_squared_error
     predictions = model.predict(test_features)
 #    mse = np.mean( (predictions - test_labels.values) **2 )
@@ -374,7 +607,18 @@ def define_hyperparameter_options2test(testing_features=None,
                                        best_params_=None,
                                        param_grid_based_on_intial_guesses=True,
                                        ):
-    """ Define a selction of test groups """
+    """
+    Define a selction of test groups
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     # - Shared variables in grid
     vals2test = {
         'n_estimators': [10, 50, 75, 100, 125, 200, 300, 500],
@@ -454,7 +698,6 @@ def define_hyperparameter_options2test(testing_features=None,
                 'bootstrap': [True],
             }
     # Check the number of variations being tested
-
     def prod(iterable):
         import operator
         return reduce(operator.mul, iterable, 1)
@@ -522,15 +765,24 @@ def define_hyperparameter_options2test(testing_features=None,
         return param_grid_based_on_RandomizedSearchCV
 
 
-
-
 def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
                                         models_dict=None, testing_features_dict=None,
                                         RFR_dict=None,
                                         stats=None, plot2check=False,
                                         rm_Skagerrak_data=False,
                                         debug=False):
-    """ Make a NetCDF file of predicted vairables for a given resolution """
+    """
+    Make a NetCDF file of predicted vairables for a given resolution
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from sklearn.externals import joblib
     import gc
     import glob
@@ -549,15 +801,15 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     else:
         extr_str = ''
     # Get location to save file and set filename
-    data_root = get_file_locations('data_root')
+    data_root = utils.get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     dsA = xr.open_dataset(data_root + filename)
     #  location of data
-    wrk_dir = get_file_locations('data_root')+'/models/'+'/LIVE/'
+    working_folder = utils.get_file_locations('data_root')+'/models/'+'/LIVE/'
     # --- Make a da for each model
     ds_l = []
     # Get list of twenty models built
-    loc2use = '{}/{}{}/'.format(wrk_dir, '/ENSEMBLE_REPEAT_BUILD', extr_str)
+    loc2use = '{}/{}{}/'.format(working_folder, '/ENSEMBLE_REPEAT_BUILD', extr_str)
     models_str = loc2use + '*{}*.pkl'.format(model2use)
     builds4model = glob.glob(models_str)
     print(builds4model, models_str)
@@ -610,7 +862,18 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
 
 def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
                                     model=None, testing_features=None):
-    """ Get model predictions for all observaed points """
+    """
+    Get model predictions for all observed points
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     # Model name?
     if isinstance(model, type(None)):
         extr_str = {
@@ -629,9 +892,11 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
         #         testing_features_dict = {
         #         'TEMP+DEPTH+SAL' : ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO'],
         #         }
-        testing_features = get_model_testing_features_dict(model_name)
-        target_name = ['Iodide']
-    #
+#        testing_features = get_model_testing_features_dict(model_name)
+        func_name = 'get_model_predictions4obs_point'
+        print( "The model's features must be provided to {}".format(func_name) )
+#        target_name = ['Iodide']
+    # Now predict for the given testing features
     target_predictions = model.predict(df[testing_features])
     return target_predictions
 
@@ -642,70 +907,18 @@ def mk_iodide_ML_testing_and_training_set(df=None, target_name=['Iodide'],
                                           test_plots_of_iodide_dist=False,
                                           random_20_80_split=False,
                                           nsplits=4, verbose=True, debug=False):
-    """ Make a test and training dataset for ML algorthims """
+    """
+    Make a test and training dataset for ML algorithms
 
-    # https://github.com/ageron/handson-ml/blob/master/02_end_to_end_machine_learning_project.ipynb
+    Parameters
+    -------
 
-    #
-#     if test_plots_of_iodide_dist:
-#         # Save off variables
-#         show_plot=False
-#         savetitle = 'Oi_prj_iodide_stratified_binning'
-#         dpi = 320
-#         pdff = AC.plot2pdfmulti( title=savetitle, open=True, dpi=dpi )
-#         # Now plot
-#         import seaborn as sns
-#         Iodide = df[u'Iodide']
-#         # ceil of the median divided by
-#         ceil_div_med_limited = np.ceil( Iodide / Iodide.median() )
-#         ceil_div_med_limited[ceil_div_med_limited> 5] = 5
-#         #
-#         ceil_ln_limited = np.ceil(  np.log( Iodide) )
-#         ceil_ln_limited[ ceil_ln_limited <=2 ] = 2
-#         #
-#         vars_ = {
-#         u'Iodide' : Iodide,
-#         u'ln(Iodide)': np.log( Iodide),
-#         u'np.ceil( ln(Iodide) )': np.ceil(  np.log( Iodide) ),
-#         u'np.ceil( ln(Iodide) ), limited to 2': ceil_ln_limited,
-#         u'Iodide / median ': Iodide / Iodide.median(),
-#         u'ceil( Iodide / median )': np.ceil( Iodide / Iodide.median() ),
-#         u'Iodide / mean': Iodide / Iodide.mean(),
-#         u'ceil( Iodide / mean )': np.ceil( Iodide / Iodide.mean() ),
-#         u'ceil( Iodide / median ), limited to 5': ceil_div_med_limited,
-#         }
-#         for key_ in vars_:
-#             print('plotting :', key_)
-#             sns.distplot(  vars_[key_] )
-#             plt.title( 'PDF of {}'.format(key_) )
-#             plt.xlabel( key_ )
-#
-#
-#             # if there are less than 8 bins give the populations of bins
-#             counts = vars_[key_].value_counts()
-#             if len( counts ) < 8:
-#                 bins = counts.index
-#                 count = counts.values
-#                 bins = dict(zip(bins,count))
-#                 print( bins )
-#                 ax = plt.gca()
-#                 bins = ['{} (N={})'.format(i, bins[i]) for i in bins.keys()]
-#                 bins = ', '.join(bins[:4])+ '\n'+', '.join(bins[4:])
-#                 subtitle='Bins: \n' + bins
-#                 print(  subtitle )
-#                 plt_txt_x, plt_txt_y = 0.5, 0.85
-#                 plt.text(  plt_txt_x, plt_txt_y, \
-#                     subtitle, ha='center', va='center', \
-#                     transform=ax.transAxes)#, fontsize=f_size*.65)
-#
-# #            savename = 'Oi_prj_iodide_obs_var_{}'.format( key_ )
-# #            plt.savefig( rm_spaces_and_chars_from_str( savename ) )
-#             AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
-#             if show_plot: plt.show()
-#             plt.close()
-#         #  save entire pdf
-#         AC.plot2pdfmulti( pdff, savetitle, close=True, dpi=dpi )
+    Returns
+    -------
 
+    Notes
+    -----
+    """
     # --- ------ make Test and
     # to make this approach's output identical at every run
     np.random.seed(42)
@@ -786,27 +999,37 @@ def mk_iodide_ML_testing_and_training_set(df=None, target_name=['Iodide'],
     return train_set, test_set, test_set_targets
 
 
-def get_current_model(dir=None,
-                      extr_str='FINAL_DATA_tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'):
-    """ Load the saved model being used by this work """
+def get_current_model(dir=None, extr_str=''):
+    """
+    Load the saved model being used by this work
+    """
     from sklearn.externals import joblib
     # Get the location of the saved model and load it
     if isinstance(dir, type(None)):
-        folder = get_file_locations('data_root')+'/models/'
+        folder = utils.get_file_locations('data_root')+'/models/'
     model_savename = "my_model_{}.pkl".format(extr_str)
     return joblib.load(folder+model_savename)
 
 
-
-
 def get_predict_lat_lon_array(res='4x5', testing_features=None, month=9):
-    """ Load extracted predictor array """
+    """
+    Load extracted predictor array
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     # get file of predictor values for res and month
     filename = 'Oi_prj_predictor_values_{}_month_num_{}'.format(res, month)
     if res == '4x5':
         filename += '_TEST'
     filename += '.csv'
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     folder+= 'Oi_prj_predictor_files_by_month_{}/'.format(res)
     df = pd.read_csv(folder+filename)
     # make sure the variables have the same names
