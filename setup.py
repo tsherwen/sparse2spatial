@@ -6,7 +6,7 @@ DISTNAME = 'sparse2spatial'
 DESCRIPTION = "Convert sparse spatial data to a spatially and temporally resolved 2D/3D data"
 AUTHOR = 'Tomas Sherwen'
 AUTHOR_EMAIL = 'tomas.sherwen@york.ac.uk'
-URL = 'https://github.com/tsherwen/Sparse2Spatial'
+URL = 'https://github.com/tsherwen/sparse2spatial'
 LICENSE = 'MIT'
 PYTHON_REQUIRES = '>=3.5'
 

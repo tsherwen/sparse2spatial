@@ -1,18 +1,19 @@
 """
+Shared utility functions for sparse2 spatial
 """
 import getpass
 import platform
 import numpy as np
-
+import pandas as pd
+from netCDF4 import Dataset
 
 
 def mk_LWI_avg_array():
     """
-    Make an array of average Land Water Ice (LWI) indices
+    Make an array of average Land Water Ice (LWI) indices from NASA "nature run" output
     """
     import glob
     import xarray as xr
-
     folder = '/work/home/ts551/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'
     files = glob.glob(folder+'*ctm*nc')
     ds_l = [xr.open_dataset(i) for i in files]
@@ -22,8 +23,8 @@ def mk_LWI_avg_array():
     savename = 'nature_run_lev_72_res_0.125_spec_LWI_avg_ctm.nc'
     ds.mean(dim='time').to_netcdf(savename)
     #
-    dir_ = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
-    files = glob.glob(dir_+'*nc')
+    folder = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
+    files = glob.glob(folder+'*nc')
     dates = [(int(i[-14:-14+4]), int(i[-9:-9+2]), 1) for i in files]
     dates = [datetime.datetime(*i) for i in dates]
     ds.rename({'concat_dims': 'time'}, inplace=True)
@@ -34,16 +35,18 @@ def mk_LWI_avg_array():
 
 def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
                               dsA=None, testing_features=None):
-    """ Make a dataset of 3D predicted values from model """
-    # ---  Local variables
+    """
+    Make a dataset of 3D predicted values from model
+    """
+    # Local variables
     target = 'Iodide'
     target_name = target
     # Get feature values for resolution
     if isinstance(dsA, type(None)):
-        iodide_dir = get_file_locations('iodide_data')
+        data_root = get_file_locations('data_root')
         filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-        dsA = xr.open_dataset(iodide_dir + filename)
-    # take coordinate variables from dsA
+        dsA = xr.open_dataset(data_root + filename)
+    # Take coordinate variables from dsA
     lat = dsA['lat'].values
     lon = dsA['lon'].values
     dates = dsA['time'].values
@@ -53,10 +56,10 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
     for n_month, month in enumerate(months):
         # Select data for month
         ds = dsA.sel(time=(dsA['time.month'] == month))
-        # remove time (all values have only 1 time (confirm with asssert)
+        # Remove time (all values have only 1 time (confirm with asssert)
         assert len(ds.time) == 1, 'Only 1 time should be selected!'
         ds = ds.mean(dim='time')
-        # extract feature variables to 2D DataFrame
+        # Extract feature variables to 2D DataFrame
         df = pd.DataFrame()
         for fvar in testing_features:
             #
@@ -69,12 +72,12 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
         df[target] = model.predict(df[testing_features].values)
         # Now re-build into a 3D dataset
         df = df[target].unstack()
-        # sort lat to be -90 to 90
+        # Sort lat to be -90 to 90
 #        df = df[lat]
-        # extract array
+        # Extract array to be included in dataset
         arr = df.values.T[None, ...]
 #        df = pd.DataFrame( df_tmp, index=[lat,lon] ).unstack()
-        # convert to Dataset
+        # Convert to Dataset
         date = dates[n_month]
         da_l += [
             xr.Dataset(
@@ -123,7 +126,7 @@ def mk_NetCDF_of_surface_iodide_by_month4param(res='4x5',
         da_l += [xr.Dataset(
             data_vars={varname: (['time', 'lat', 'lon', ], arr)},
             coords={'lat': lat, 'lon': lon, 'time': [month]})]
-    # Concatenate
+    # Concatenate to a single dataset
     ds = xr.concat(da_l, dim='time')
     # Update time ...
     ds = update_time_in_NetCDF2save(ds)
@@ -139,11 +142,12 @@ def mk_NetCDF_of_surface_iodide_by_month4param(res='4x5',
 
 
 def mk_NetCDF_of_surface_iodide_by_month(res='4x5', extr_str=''):
-    """ Make a NetCDF of (monthly) iodide fields """
+    """
+    Make a NetCDF of predicted data fields by month
+    """
     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
     import xarray as xr
     from time import gmtime, strftime
-
     # Get the model
     model = get_current_model(extr_str=extr_str)
     testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
@@ -171,7 +175,7 @@ def mk_NetCDF_of_surface_iodide_by_month(res='4x5', extr_str=''):
         da_l += [xr.Dataset(
             data_vars={varname: (['time', 'lat', 'lon', ], arr)},
             coords={'lat': lat, 'lon': lon, 'time': [month]})]
-    # concatenate
+    # Concatenate to a single dataset
     ds = xr.concat(da_l, dim='time')
     # Update time ...
 #    sdate = datetime.datetime(1970, 1, 1) # Unix time
@@ -186,12 +190,11 @@ def mk_NetCDF_of_surface_iodide_by_month(res='4x5', extr_str=''):
 #    ds = da.to_dataset()
     attrs_dict = {'units': 'hours since 1985-01-01 00:00:00'}
     ds['time'].attrs = attrs_dict
-    # --- Add attributes
+    # Add attributes
     ds = add_attrs2iodide_ds(ds, varname=extr_str, convert_to_kg_m3=True)
-    # save to NetCDF
+    # Save to NetCDF
     filename = 'Oi_prj_Iodide_monthly_param_{}.nc'.format(res)
     ds.to_netcdf(filename, unlimited_dims={'time': True})
-
 
 
 def add_units2ds(ds):
@@ -222,7 +225,7 @@ def add_units2ds(ds):
         u'WOA_TEMP': '$^{o}$C',
         u'WOA_TEMP_K': '$^{o}$K',
     }
-
+    # Loop data variables and add units
     for var_ in ds.data_vars:
         updated_units = False
         attrs = ds[var_].attrs.copy()
@@ -234,8 +237,10 @@ def add_units2ds(ds):
     return ds
 
 
-
 def interpolate_array_with_GRIDDATA(arr_, da=None):
+    """
+    Interpolate an array with scipy's griddata function
+    """
     import gc
     from time import gmtime, strftime
     import time
@@ -276,7 +281,7 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
     # Print timings
     time_now = strftime("%c", gmtime())
     print('finished intpolating @ {}'.format(time_now))
-    # return the array
+    # Return the array
     return arr_
 
 
@@ -289,14 +294,13 @@ def interpolate_array_with_RBF(arr_, subX=None, subY=None):
     print('Started intpolating @ {}'.format(time_now))
     # mesh grid to axes
     rr, cc = np.meshgrid(subX, subY)
-    # fill masked values with nans
+    # Fill masked values with nans
     M = np.ma.filled(arr_, fill_value=np.nan)
     # only consider non nan values as values to interpolate with
     vals = ~np.isnan(M)
     # interpolate
-    f = interpolate.Rbf(rr[vals], cc[vals], M[vals],
-                        function='linear')
-    # extract interpolation...
+    f = interpolate.Rbf(rr[vals], cc[vals], M[vals], function='linear')
+    # Extract interpolation...
     interpolated = f(rr, cc)
     # Overwrite values that are NaNs with interpolated values
     arr_[~vals] = interpolated[~vals]
@@ -309,29 +313,27 @@ def interpolate_array_with_RBF(arr_, subX=None, subY=None):
     return arr_
 
 
-
-
 def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
                                 Z_data=None):
     """ Make a 2D interpolation using RadialBasisFunctions """
     import numpy as np
     from scipy.interpolate import Rbf
     import matplotlib.pyplot as plt
-    # --- process dataframe here for now
+    # --- Process dataframe here for now
     X_locs = df['Longitude'].values
     Y_locs = df['Latitude'].values
     Z_data = df['Iodide'].values
     # --- Degrade resolution
     if res == '1x1':
         X_COORDS, Y_COORDS, NIU = AC.get_latlonalt4res(res=res)
-    # --- remove double ups in data for now...
+    # --- Remove double ups in data for now...
     print([len(i) for i in (X_locs, Y_locs)])
-    # degrade to 1x1 resolution...
+    # Degrade to 1x1 resolution...
     X_locs = [int(i) for i in X_locs]
     Y_locs = [int(i) for i in Y_locs]
-    # make a dictionary to remove double ups...
+    # Make a dictionary to remove double ups...
     Z_dict = dict(list(zip(list(zip(X_locs, Y_locs)), Z_data)))
-    # unpack
+    # Unpack
     locs = sorted(Z_dict.keys())
     Z_data = [Z_dict[i] for i in locs]
     X_locs, Y_locs = list(zip(*locs))
@@ -357,7 +359,9 @@ def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
 def mk_uniform_2D_array(df_predictors=None, target_predictions=None,
                         res='4x5', lon_var='Longitude', lat_var='Latitude',
                         target_name=None,  debug=False):
-    """ Make a uniform 2D array from df containing some lat and lon values """
+    """
+    Make a uniform 2D array from df containing some lat and lon values
+    """
     # recombine into a 2D array
     coord_vars = [df_predictors[i].values for i in (lat_var, lon_var)]
     df_target = pd.DataFrame(coord_vars + [target_predictions]).T
@@ -379,39 +383,35 @@ def mk_uniform_2D_array(df_predictors=None, target_predictions=None,
     # Setup zero array to fill with target data
     lons, lats, NIU = AC.get_latlonalt4res(res=res)
     arr = np.zeros((len(lons), len(lats)))
-
     # Loop months...
 #    months =
 #    for month_ in months
 #    ars = []
     # Loop Lons
     for lon_ in sorted(set(df_target[lon_var].values))[::-1]:
-        # select values for lon_
+        # Select values for lon_
         sub_df = df_target[df_target[lon_var] == lon_]
-        # get index for lon
+        # Get index for lon
         lon_ind = AC.get_gc_lon(lon_, res=res)
         if debug:
             print(lon_, sub_df.shape, sub_df)
-
         # Loop lats and Extract values
         for lat_ in sorted(sub_df[lat_var].values)[::-1]:
-
-            # get index for lon
+            # Get index for lon
             lat_ind = AC.get_gc_lat(lat_, res=res)
-
-            # select values for lon_
+            # Select values for lon_
             val = sub_df[sub_df[lat_var] == lat_][target_name[0]].values[0]
             if debug:
                 print(lon_, lat_, lon_ind, lat_ind, val)
-
-            # fill in value
+            # Fill in value
             arr[lon_ind, lat_ind] = val
-
     return arr
 
 
-
 def transform_from_latlon(lat, lon):
+    """
+    Tranform from latitude and longitude
+    """
     lat = np.asarray(lat)
     lon = np.asarray(lon)
     trans = Affine.translation(lon[0], lat[0])
@@ -436,7 +436,9 @@ def rasterize(shapes, coords, fill=np.nan, **kwargs):
 
 
 def update_time_in_NetCDF2save(ds, convert_time2dt=False):
-    """ Update time of monthly output to be in NetCDF saveable format """
+    """
+    Update time of monthly output to be in NetCDF saveable format
+    """
     # Climate model time
     sdate = datetime.datetime(1985, 1, 1)
     # Convert / setup time dim?
@@ -453,7 +455,9 @@ def update_time_in_NetCDF2save(ds, convert_time2dt=False):
 
 
 def add_attrs2iodide_ds_global_and_iodide_param(ds):
-    """ Helper func to add both global and iodide parm attrs """
+    """
+    Helper func to add both global and iodide parm attrs
+    """
     # add param values
     for var2use in ds.data_vars:
         ds = add_attrs2iodide_ds(ds, add_global_attrs=False, varname=var2use)
@@ -467,7 +471,9 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
                         add_global_attrs=True, add_varname_attrs=True,
                         update_varnames_to_remove_spaces=False,
                         convert2HEMCO_time=False ):
-    """ Update attributes for iodide dataset saved as NetCDF """
+    """
+    Update attributes for iodide dataset saved as NetCDF
+    """
     # --- Coordinate and global values
     if add_varname_attrs:
         attrs_dict = {}
@@ -561,7 +567,9 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
 # ------------------------- Global helper functions -------------------------
 # ---------------------------------------------------------------------------
 def check_plots4plotting():
-    """ Do a test plot of the colour cycle being used for plotting """
+    """
+    Do a test plot of the colour cycle being used for plotting
+    """
     # Get colours
     CB_color_cycle = AC.get_CB_color_cycle()
     CB_color_cycle += ['darkgreen']
@@ -573,7 +581,9 @@ def check_plots4plotting():
 
 def add_LWI2array(ds=None,  res='4x5', var2template='Chance2014_STTxx2_I',
                   inc_booleans_and_area=True):
-    """ Add LWI and core vars to dataset object """
+    """
+    Add Land/Water/Ice (LWI) values to xr.DataArray/xr.Dataset
+    """
     if res == '0.125x0.125':
         ds = add_LWI2ds_0125x0125(ds=ds, res=res, var2template=var2template,
                                   inc_booleans_and_area=inc_booleans_and_area)
@@ -588,11 +598,13 @@ def add_LWI2array(ds=None,  res='4x5', var2template='Chance2014_STTxx2_I',
 
 def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
                          res='0.125x0.125', inc_booleans_and_area=True):
-    """ Add LWI + core vars to ds """
+    """
+    Add Land/Water/Ice (LWI) values to xr.DataArray
+    """
 #    folderLWI = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
 #    filenameLWI = 'nature_run_lev_72_res_0.125_spec_LWI_monthly_ctm.nc'
-    folderLWI = get_file_locations(
-        'AC_tools')+'/data/LM/TEMP_NASA_Nature_run/'
+    folderLWI = get_file_locations('AC_tools')
+    folderLWI += '/data/LM/TEMP_NASA_Nature_run/'
     filenameLWI = 'ctm.nc'
     LWI = xr.open_dataset(folderLWI+filenameLWI)
     # updates dates (to be Jan=>Dec)
@@ -628,6 +640,9 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
 
 def add_LWI2ds_2x25_4x5(ds, var2template='Chance2014_STTxx2_I',
                         res='0.125x0.125', inc_booleans_and_area=True):
+    """
+    Add Land/Water/Ice (LWI) values to xr.DataArray
+    """
     # add LWI to array
     LWI = AC.get_land_map(res=res)[..., 0]
     LWI = np.array([LWI.T]*12)
@@ -692,10 +707,12 @@ def is_number(s):
         return False
 
 
-def get_file_locations(input_var):
-    """ Dictionary store of data locations """
+def get_file_locations(input_var, file_and_path='./sparse2spatial.rc'):
+    """
+    Dictionary store of data/file locations
+    """
     # Get a dictionary of paths
-    d = read_settings_rc_file2dict()
+    d = read_settings_rc_file2dict(file_and_path=file_and_path)
     # Try to add the user name and and platform to dictionary
     try:
         host = platform.node()
@@ -708,7 +725,9 @@ def get_file_locations(input_var):
 
 
 def convert_fullname_to_shortname(input=None, rtn_dict=False, invert=False):
-    """ Convert short names to long names """
+    """
+    Convert short names to long names
+    """
     name_dict = {
         u'DOC': u'DOC',
         u'DOCaccum': u'Accum. DOC',
@@ -745,7 +764,7 @@ def convert_fullname_to_shortname(input=None, rtn_dict=False, invert=False):
 
 def read_settings_rc_file2dict( file_and_path ):
     """
-    Read the settings file (e.g. 'sparse2spatial.rc')
+    Read the settings file (e.g. './sparse2spatial.rc')
     """
     # Setup dictionary to store lines that have been read-in
     d = {}
@@ -765,10 +784,31 @@ def read_settings_rc_file2dict( file_and_path ):
 
 
 def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
-    """ Get the upper outlier value for a given variable in a DataFrame"""
+    """
+    Get the upper outlier value for a given variable in a DataFrame
+
+    Parameters
+    -------
+    var2use (str): variable to check
+    check_full_df_used (bool): check the entire iodide observation is used for calc.
+    var2use (str): var to extracted from NetCDF
+    main_var (str): general variable (e.g. TEMP)
+
+    Returns
+    -------
+    (float)
+
+    Notes
+    -----
+     - outliers are definded here as values greater than the 3rd quartile plus 1.5 times
+       the interquartile range (Frigge et al., 1989).
+     -  Citation(s):
+    Frigge, M., Hoaglin, D. C., and Iglewicz, B.: Some implementations of the boxplot,
+    American Statistician, https://doi.org/10.1080/00031305.1989.10475612, 1989.
+    """
     # Check to make sure that the full observations are used to calc the outlier
     if check_full_df_used:
-        folder = get_file_locations('iodide_data')
+        folder = get_file_locations('data_root')
         filename = 'Iodide_data_above_20m.csv'
         dfA = pd.read_csv(folder+filename)
         dfA = dfA.loc[np.isfinite(dfA[var2use]), :]
@@ -782,5 +822,50 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
     IQR = df[var2use].describe()['75%'] - df['Iodide'].describe()['25%']
     OutlierDef = df[var2use].describe()['75%'] + (IQR*1.5)
     return OutlierDef
+
+
+
+def set_backup_month_if_unkonwn(lat=None, var2use='', main_var='',
+                                Data_key_ID_=None, debug=True):
+    """
+    Some of the input data may not have a known month so use an arbitrary one
+
+    Parameters
+    -------
+    lat (float): latitude degrees north
+    Data_key_ID_ (str): ID for input data point
+    var2use (str): var to extracted from NetCDF
+    main_var (str): general variable (e.g. TEMP)
+
+    Returns
+    -------
+    (float), (str)
+    (or list of two sets of above variables if get_max_and_sum_of_values==True)
+
+    Notes
+    -----
+     - a value of three months prior to summer solstice for NH and SH is assumed
+
+    """
+    # seasons  = 'DJF', 'MAM', 'JJA', 'SON'
+    if lat > 0:  # if NH
+        # if Lat assume mid of season as April (as June is summer solstice in the NH)
+        # Choose 3 months before summer solstice (Northern Hemisphere)
+        month_ = 3
+    else:  # if SH
+        # summer is from December to March and winter is from June to
+        # September. September 22 or 23 is the vernal equinox and March
+        # 20 or 21 is the autumnal equinox
+        # Choose 3 months before summer solstice (Southern Hemisphere)
+        month_ = 9
+    if debug:
+        warn_str = '!'*10
+        warn_str += 'WARNING: Annual val unknown for '
+        warn_str += '{}({})!! (use month:{})'.format(main_var, var2use, month_)
+        warn_str += '(ID:{})'.format(Data_key_ID_)
+        warn_str += '!'*10
+    if debug:
+        print(warn_str)
+    return month_
 
 

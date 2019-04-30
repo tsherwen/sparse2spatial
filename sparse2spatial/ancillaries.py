@@ -115,11 +115,11 @@ def Convert_DOC_file_into_Standard_NetCDF():
     import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
     file_str = 'DOCmodelSR.nc'
     # Open dataset
-    ds = xr.open_dataset(file_dir+file_str)
+    ds = xr.open_dataset(folder+file_str)
     # ---  Force use of coordinate variables in netCDF
     ds['latitude'] = ds['LAT'][0, 0, :].values
     ds['latitude'].attrs = ds['LAT'].attrs
@@ -146,7 +146,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     ds.attrs = d
     # --- Save the new NetCDF file
     newfile_str = file_str.split('.nc')[0]+'_TMS_EDIT.nc'
-    ds.to_netcdf(file_dir + newfile_str)
+    ds.to_netcdf(folder + newfile_str)
 
 
 def Convert_DOC_prod_file_into_Standard_NetCDF():
@@ -154,11 +154,11 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
-    file_dir = get_file_locations('DOC')
+    folder = get_file_locations('DOC')
     # file str
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
-    ds = xr.open_dataset(file_dir+file_str)
+    ds = xr.open_dataset(folder+file_str)
     # ---  Force use of coordinate variables in netCDF
     ds['latitude'] = ds['lat'][0, :].values
     ds['latitude'].attrs = ds['lat'].attrs
@@ -182,13 +182,13 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     ds.attrs = d
     # --- Save the new NetCDF file
     newfile_str = file_str.split('.nc')[0]+'_TMS_EDIT.nc'
-    ds.to_netcdf(file_dir + newfile_str)
+    ds.to_netcdf(folder + newfile_str)
 
 
 def mk_RAD_NetCDF_monthly():
     """ Resample NetCDF from daily to monthly """
     # Directory?
-    file_dir = get_file_locations('GFDL')
+    folder = get_file_locations('GFDL')
     # File str
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
@@ -196,7 +196,7 @@ def mk_RAD_NetCDF_monthly():
     ds = ds.resample(dim='TIME', freq='M')
     # Save as NetCDF
     newfile_str = file_str.split('.nc')[0]+'_TMS_EDIT.nc'
-    ds.to_netcdf(file_dir+newfile_str)
+    ds.to_netcdf(folder+newfile_str)
 
 
 def Convert_martins_productivity_file_into_a_NetCDF():
@@ -278,50 +278,6 @@ def Convert_martins_productivity_file_into_a_NetCDF():
     ds.to_netcdf(filename, unlimited_dims={'time': True})
 
 
-
-def set_backup_month_if_unkonwn(lat=None, var2use='', main_var='',
-                                Data_key_ID_=None, debug=True):
-    """
-    Some of the input data doesn't have a known month, so assume
-    three months prior to summer solstice for NH and SH.
-
-    Parameters
-    -------
-    lat (float): latitude degrees north
-    Data_key_ID_ (str): ID for input data point
-    var2use (str): var to extracted from NetCDF
-    main_var (str): general variable (e.g. TEMP)
-
-    Returns
-    -------
-    (float), (str)
-    (or list of two sets of above variables if get_max_and_sum_of_values==True)
-
-    Notes
-    -----
-    """
-    # seasons  = 'DJF', 'MAM', 'JJA', 'SON'
-    if lat > 0:  # if NH
-        # if Lat assume mid of season as April (as June is summer solstice in the NH)
-        # Choose 3 months before summer solstice (southern hemisphere)
-        month_ = 3
-    else:  # if SH
-        # summer is from December to March and winter is from June to
-        # September. September 22 or 23 is the vernal equinox and March
-        # 20 or 21 is the autumnal equinox
-        # Choose 3 months before summer solstice (southern hemisphere)
-        month_ = 9
-    if debug:
-        warn_str = '!'*10
-        warn_str += 'WARNING: Annual val unknown for '
-        warn_str += '{}({})!! (use month:{})'.format(main_var, var2use, month_)
-        warn_str += '(ID:{})'.format(Data_key_ID_)
-        warn_str += '!'*10
-    if debug:
-        print(warn_str)
-    return month_
-
-
 def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     """ Process NOAA WOA94 csv files to netCDF """
     # The MLD fields available are computed from climatological monthly mean
@@ -338,11 +294,11 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     # Gov. Printing Office, Wash., D.C., 96 pp. 87 figs. (pdf, 13.0 MB).
     # variables for
     MLD_vars = ['pt', 'pd', 'vd']
-    file_dir = get_file_locations('WOA_1994')
+    folder = get_file_locations('WOA_1994')
     # --- loop MLD variables.
     for var_ in MLD_vars:
         file_str = 'mld*{}*'.format(var_)
-        files = sorted(glob.glob(file_dir+file_str))
+        files = sorted(glob.glob(folder+file_str))
         print(files)
         # loop files and extract data as an arrayu
         ars = []

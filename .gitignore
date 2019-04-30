@@ -105,3 +105,14 @@ venv.bak/
 
 # temp. files
 *.~
+
+# outputed files
+*.nc
+*.nc4
+*.csv
+*.png
+*.jpg
+*.pdf
+
+# Do not include bash scripts 
+*.sh
