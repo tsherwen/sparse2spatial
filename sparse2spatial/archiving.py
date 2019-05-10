@@ -1,13 +1,9 @@
 """
 
-Make high-res and re-gridded data files for archiving
+Make high-res and re-gridded data files for archiving with xESMF
 
 """
 
-
-# ---------------------------------------------------------------------------
-# ------------------------- Regridding of output -------------------------
-# ---------------------------------------------------------------------------
 def mk_NetCDF_files_for_data_archiving():
     """
     Make data into NetCDF files for archiving at a data centre
@@ -87,12 +83,24 @@ def mk_NetCDF_files_for_data_archiving():
     dsA2[standard_vars+topmodels].to_netcdf(name2save+'.nc')
 
 
-
-
 def regrid_output_to_common_res_as_NetCDFs(topmodels=None,
                                            rm_Skagerrak_data=False, dsA=None,
                                            just_1x1_grids=False, debug=False):
-    """ Regrid output various common model resolutsion """
+    """
+    Regrid output various common model resolutsion
+
+    Parameters
+    -------
+    topmodels (list), List of models to include in re-gridded output
+    rm_Skagerrak_data (boolean), remove the single data from the Skagerrak region
+    dsA (xr.Dataset), data to regrid and save to NetCDFs
+    just_1x1_grids (boolean), Just regridd to the 1x1 (for debugging)
+    debug (boolean), perform debugging and verbose printing?
+
+    Returns
+    -------
+    (None)
+    """
     import xesmf as xe
     # Get file and location to regrid
     if rm_Skagerrak_data:
@@ -110,7 +118,7 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None,
     except KeyError:
         dsA = add_LWI2array(dsA, res='0.125x0.125',
                             inc_booleans_and_area=False)
-    # Which grids should be regridded too?
+    # Which grids should be regridded to?
     grids = reses2regrid2(just_1x1_grids=just_1x1_grids)
     vars2regrid = list(dsA.data_vars)
     # Remove any models?
@@ -127,11 +135,11 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None,
         # Now remove by pop
         [vars2regrid.pop(i) for i in sorted(vars2pop)[::-1] ]
 
-    # --- Regrid output
+    # Regrid output
     for grid in grids.keys():
         # Create a dataset to re-grid into
         ds_out = xr.Dataset({
-            #			'time': ( ['time'], dsA['time'] ),
+            #'time': ( ['time'], dsA['time'] ),
             'lat': (['lat'], grids[grid]['lat']),
             'lon': (['lon'], grids[grid]['lon']),
         })
@@ -185,7 +193,9 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None,
 
 
 def reses2regrid2(just_1x1_grids=False):
-    """ Func. to store resolutions and lat and lons to use """
+    """
+    Function to store coordinates for resolutions (lat and lons)
+    """
     # --- LAT, LON dictionary
     use_v_0_0_0_grids = False
     use_v_0_0_1_grids = True

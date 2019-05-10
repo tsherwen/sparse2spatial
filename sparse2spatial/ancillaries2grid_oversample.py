@@ -8,43 +8,8 @@ import pandas as pd
 import xarray as xr
 from sparse2spatial.utils import get_file_locations
 from sparse2spatial.utils import set_backup_month_if_unkonwn
+import gc
 
-
-# ---------------------------------------------------------------------------
-# ------------------- Function to bulk extract ancillaries for csv -------
-# ---------------------------------------------------------------------------
-def extract_4_nearest_points_in_NetCDF(lons=None, lats=None,
-                                       months=None, var2extract='Ensemble_Monthly_mean',
-                                       rm_Skagerrak_data=False, verbose=True,
-                                       debug=False):
-    """
-    Extract requested variable for nearest point and time from NetCDF
-    """
-    # --- Get data from NetCDF as a xarray dataset
-    folder = get_file_locations('data_root')
-    filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
-    if rm_Skagerrak_data:
-        filename = filename.format('_No_Skagerrak')
-    else:
-        filename = filename.format('')
-    ds = xr.open_dataset(folder + filename)
-    # Check that the same about of locations have been given for all months
-    lens = [len(i) for i in (lons, lats, months)]
-    assert len(set(lens)) == 1, 'All lists provided must be same length!'
-    # --- Loop locations and extract
-    extracted_vars = []
-    for n_lon, lon_ in enumerate(lons):
-        # get lats and month too
-        lat_ = lats[n_lon]
-        month_ = months[n_lon]
-        # select for monnth
-        ds_tmp = ds[var2extract].sel(time=(ds['time.month'] == month_))
-        # select nearest data
-        vals = ds_tmp.sel(lat=lat_, lon=lon_, method='nearest')
-        if debug:
-            print(vals)
-        extracted_vars += [vals.values[0]]
-    return extracted_vars
 
 
 def extract_ancillary_obs_from_RAW_external_files(obs_data_df=None,
@@ -52,13 +17,25 @@ def extract_ancillary_obs_from_RAW_external_files(obs_data_df=None,
                                                   fill_error_strings_with_NaNs=True,
                                                   buffer_CORDS=3, debug=False):
     """
-    Get ancillary data for each datapoint in observational dataset
+    Get ancillary data for each datapoint in observational dataset - REDUNDENT
+
+    Parameters
+    -------
+    obs_data_df (pd.DataFrame), DataFrame of observational data
+    obs_metadata_df (pd.DataFrame), DataFrame of metadata for observational data
+    fill_error_strings_with_NaNs (boolean), fill the error strings with NaNs?
+    buffer_CORDS (int), number of buffer coordinates to use for interpolation
+    debug (boolean), perform debugging and verbose printing?
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    Notes
+    -----
+     - This function is redundant. Ancillaries should just be extracted directly from
+       the ancillary NetCDF. use "extract_ancillary_obs_from_COMPILED_file" instead!
     """
-    # fill_error_strings_with_NaNs=True; buffer_CORDS=3; debug=False
-    import gc
-    debug = True
-    # --- Get list of site IDs...
-    print(obs_data_df.columns)
     # Get list of unique data point identifiers - WHY?! hashed this out
     # WARNING - if a new index axis is created, then the index info is lost!
 #    Data_key_ID = list(set(obs_data_df[ u'Data_Key_ID']))
@@ -66,7 +43,7 @@ def extract_ancillary_obs_from_RAW_external_files(obs_data_df=None,
     print(len(Data_key_ID), obs_data_df.shape)
     # for testing use only first few...
 #    Data_key_ID = Data_key_ID[:15]
-    # intialise master list to sort data
+    # Intialise master list to sort data
     master_l = []
     # Loop unique data indentifiers
     for n, Data_key_ID_ in enumerate(Data_key_ID):
@@ -417,6 +394,19 @@ def get_ancillary_values_for_df_of_values(df=None,
                                           df_time_var='month'):
     """
     Extract ancillary variables for a given lat, lon, and time
+
+    Parameters
+    -------
+    df (pd.DataFrame), DataFrame of observational data
+    get_vars4Rosies_multivariate_eqn (boolean), get the extra ancillary values needed?
+    fill_error_strings_with_NaNs (boolean), fill the error strings with NaNs?
+    df_lar_var (str), variable name in DataFrame for latitude
+    df_lon_var (str), variable name in DataFrame for longitude
+    df_time_var (str), variable name in DataFrame for time (month)
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
     # To extract ancillary variables only lat, lon, and time needed
     # --- Local variables
@@ -455,7 +445,24 @@ def get_ancillary_values_for_df_of_values(df=None,
 def mk_predictor_variable_csv(res='4x5', month=9,
                               df_lar_var='lat', df_lon_var='lon', df_time_var='month',
                               get_vars4Rosies_multivariate_eqn=False):
-    """ Make a predictor array to pass as input for a statistical model """
+    """
+    Make a predictor array to pass as input for a statistical model
+
+    Parameters
+    -------
+    df (pd.DataFrame), DataFrame of observational data
+    get_vars4Rosies_multivariate_eqn (boolean), get the extra ancillary values needed?
+    fill_error_strings_with_NaNs (boolean), fill the error strings with NaNs?
+    df_lar_var (str), variable name in DataFrame for latitude
+    df_lon_var (str), variable name in DataFrame for longitude
+    df_time_var (str), variable name in DataFrame for time (month)
+    month (int): month number to use (1=jan, 12=dec)
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+
+    Returns
+    -------
+    (pd.DataFrame)
+    """
     # res='4x5'; month=9; df_lar_var='lat'; df_lon_var='lon'; df_time_var='month'
     # --- Local variables
     # Make array of lon, lat, time
@@ -488,9 +495,17 @@ def extract_ancillary_obs_from_COMPILED_file(obs_data_df=None,
                                              obs_metadata_df=None, debug=False):
     """
     Get ancillary data for each datapoint in observational dataset
+
+    Parameters
+    -------
+    obs_data_df (pd.DataFrame), DataFrame of observational data
+    obs_metadata_df (pd.DataFrame), DataFrame of metadata for observational data
+    debug (boolean), perform debugging and verbose printing?
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
-    import gc
-    debug = True
     # --- local variables
     # file ancillary data as a xarray Dataset
 #    res= '4x5' # use 4x5 for testing
@@ -567,12 +582,22 @@ def extract_ancillary_obs_from_COMPILED_file(obs_data_df=None,
     return obs_data_df
 
 
-def mk_array_of_indices4locations4res(res='4x5',
-                                      df_lar_var='lat', df_lon_var='lon',
-                                      df_time_var='month',
-                                      ):
+def mk_array_of_indices4locations4res(res='4x5', df_lar_var='lat', df_lon_var='lon',
+                                      df_time_var='month'):
     """
     Make a .csv to store indices to extract location data from
+
+    Parameters
+    -------
+    df (pd.DataFrame), DataFrame of observational data
+    df_lar_var (str), variable name in DataFrame for latitude
+    df_lon_var (str), variable name in DataFrame for longitude
+    df_time_var (str), variable name in DataFrame for time (month)
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+
+    Returns
+    -------
+    (None)
     """
     # df_lar_var='lat'; df_lon_var='lon'; df_time_var='month'
     # - Get all locations to extract for
@@ -635,6 +660,17 @@ def mk_array_of_indices4locations4res(res='4x5',
 def get_WOA_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     """
     Get the indices for given lats and lons in 1x1 WAO files
+
+    Parameters
+    -------
+    lons (np.array), list of Longitudes to use for spatial extraction
+    lats (np.array), list of latitudes to use for spatial extraction
+    month (int): month number to use (1=jan, 12=dec)
+    debug (boolean), perform debugging and verbose printing?
+
+    Returns
+    -------
+    (None)
     """
     #
     # Set directory files are in (using nitrate arrays)
@@ -1168,9 +1204,19 @@ def get_DOC_accum_1x1_indices(var2use='DOCaccum_avg', lons=None, lats=None,
 
 def extract_predictor_variables2NetCDF(res='4x5',
                                        interpolate_nans=True,
-                                       add_dervivitive_vars=True):
+                                       add_derivative_vars=True):
     """
     Construct a NetCDF of feature variables for testing
+
+    Parameters
+    -------
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    interpolate_nans (boolean), interpolate to fill the NaN values
+    add_derivative_vars (boolean), add the derivative feature variables
+
+    Returns
+    -------
+    (None)
     """
     import xarray as xr
     # --- Local variables
@@ -1285,7 +1331,7 @@ def extract_predictor_variables2NetCDF(res='4x5',
         filename = 'Oi_prj_feature_variables_{}{}.nc'.format(res, ext_str)
         ds.to_netcdf(filename)
     # Add derived variables?
-    if add_dervivitive_vars:
+    if add_derivative_vars:
         ds = add_derivitive_variables(ds)
         # save interpolated version
         ext_str = '_INTERP_NEAREST_DERIVED'
@@ -1293,12 +1339,13 @@ def extract_predictor_variables2NetCDF(res='4x5',
         ds.to_netcdf(filename)
 
 
-
 # ---------------------------------------------------------------------------
 # ------------------- External ancillary data extractors --------------------
 # ---------------------------------------------------------------------------
 def check_where_extraction_fails(verbose=True, dpi=320, debug=False):
-    """ Check locations where extraction fails """
+    """
+    Check locations where extraction fails - REDUNENT (Now extracting all points)
+    """
     # --- Get extracted and observational data
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # --- Local variables
@@ -2531,35 +2578,6 @@ def get_GEBCO_depth_4_loc(lat=None, lon=None, month=None,
                         raise ValueError
 #                except MemoryError:
                 except:
-                    #                     try:
-                    #                         # Now interpolate and extract data
-                    #                         # (using a smaller grid)
-                    #                         file_data_ = AC.interpolate_sparse_grid2value( \
-                    #                             X_CORDS=file_lonc, Y_CORDS=file_latc, X=lon, Y=lat,\
-                    #                             XYarray=file_data, buffer_CORDS=buffer_CORDS/6 )
-                    #                         # ADD flag to say values are interpolated.
-                    #                         flagged = 'Interpolated (buffer={})'
-                    #                         flagged = flagged.format(buffer_CORDS/6)
-                    #                         # Raise error if value greater than zero
-                    #                         if file_data_ > 0:
-                    #                             raise ValueError
-                    #                     except:
-                    #                         try:
-                    #                             # Now interpolate and extract data
-                    #                             # (using a smaller grid)
-                    #                             file_data_ = AC.interpolate_sparse_grid2value( \
-                    #                                 X_CORDS=file_lonc, Y_CORDS=file_latc,
-                    #                                 X=lon, Y=lat,\
-                    #                                 XYarray=file_data,
-                    #                                 buffer_CORDS=buffer_CORDS*1.5 )
-                    #                             # ADD flag to say values are interpolated.
-                    #                             flagged = 'Interpolated (buffer={})'
-                    #                             flagged = flagged.format(buffer_CORDS*1.5)
-                    #                             # Raise error if value greater than zero
-                    #                             if file_data_ > 0:
-                    #                                 raise ValueError
-                    #                         except:
-                    #                             flagged = 'FAILED INTERPOLATION!'
                     flagged = 'FAILED INTERPOLATION!'
         else:
             flagged = 'False'
@@ -2773,8 +2791,8 @@ def get_WOA_Nitrate4indices(lat_idx=None, lon_idx=None, month=None,
 
 
 def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
-                          buffer_CORDS=5, rtn_flag=True, Data_key_ID_=None, verbose=True,
-                          debug=False):
+                          buffer_CORDS=5, rtn_flag=True, Data_key_ID_=None,
+                          verbose=True, debug=False):
     """
     Extract Wold ocean atlas (WOA) climatology value for nitrate
 
@@ -3432,7 +3450,9 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
     Download all data for a given species at a given resolution
 
     NOTES:
-     - use level=71  for lowest level! (NetCDF is ordered the oposite way, python 0-71. Xarray numbering makes this level=72)
+     - use level=71  for lowest level!
+     (NetCDF is ordered the oposite way, python 0-71. Xarray numbering makes
+     this level=72)
      (or use dictionary through xarray)
     """
     # --- local variables
@@ -3469,7 +3489,6 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
     time = ds.time
     # --- loop days of year (doy)
     # Custom mask
-
     def is_dayofyear(doy):
         return (doy == doy_)
     # Loop doys
