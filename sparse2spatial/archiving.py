@@ -8,7 +8,7 @@ Make high-res and re-gridded data files for archiving
 # ---------------------------------------------------------------------------
 # ------------------------- Regridding of output -------------------------
 # ---------------------------------------------------------------------------
-def mk_NetCDF_files_for_data_archiving():
+def mk_NetCDF_files_for_data_archiving(target='iodide'):
     """
     Make data into NetCDF files for archiving at a data centre
     """
@@ -21,11 +21,11 @@ def mk_NetCDF_files_for_data_archiving():
         ext_str = '_No_Skagerrak'
     else:
         ext_str = ''
-    file2regrid = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'.format( ext_str)
+    file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(target, ext_str)
     folder = get_file_locations('data_root')
     dsA = xr.open_dataset(folder + file2regrid)
     # Make sure there are not spaces in variable names
-    dsA = add_attrs2iodide_ds( dsA, add_varname_attrs=False, add_global_attrs=False,
+    dsA = add_attrs2target_ds( dsA, add_varname_attrs=False, add_global_attrs=False,
                                update_varnames_to_remove_spaces=True   )
     # remove existing parameters if they are there
     try:
@@ -54,22 +54,22 @@ def mk_NetCDF_files_for_data_archiving():
     # what are the variables that should be in all files?
     standard_vars = ['Ensemble_Monthly_mean', 'Ensemble_Monthly_std', 'LWI']
     # Also save the main file with just the main prediction
-    name2save = 'predicted_iodide_0.125x0.125_Ns_Just_Ensemble'
+    name2save = 'predicted_{}_0.125x0.125_Ns_Just_Ensemble'.format(target)
     dsA[standard_vars].to_netcdf(name2save+'.nc')
 
     # Add with ensemble members
-    name2save = 'predicted_iodide_0.125x0.125_Ns_All_Ensemble_members'
+    name2save = 'predicted_{}_0.125x0.125_Ns_All_Ensemble_members'.format(target)
     dsA[standard_vars+topmodels].to_netcdf(name2save+'.nc')
 
     # - Also save out the file that is inc. excluded data.
-    name2save = 'predicted_iodide_0.125x0.125_All_Ensemble_members'
+    name2save = 'predicted_{}_0.125x0.125_All_Ensemble_members'.format(target)
     #
     ext_str = ''
-    file2regrid = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'.format( ext_str)
+    file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(target, ext_str)
     folder = get_file_locations('data_root')
     dsA2 = xr.open_dataset( folder+file2regrid )
     # Make sure there are not spaces in variable names
-    dsA2 = add_attrs2iodide_ds( dsA2, add_varname_attrs=False,
+    dsA2 = add_attrs2target_ds( dsA2, add_varname_attrs=False,
                                 add_global_attrs=False,
                                 update_varnames_to_remove_spaces=True   )
     # Add LWI to array
@@ -89,7 +89,7 @@ def mk_NetCDF_files_for_data_archiving():
 
 
 
-def regrid_output_to_common_res_as_NetCDFs(topmodels=None,
+def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='iodide',
                                            rm_Skagerrak_data=False, dsA=None,
                                            just_1x1_grids=False, debug=False):
     """ Regrid output various common model resolutsion """
@@ -100,8 +100,7 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None,
     else:
         ext_str = ''
     if isinstance(dsA, type(None)):
-        file2regrid = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'.format(
-            ext_str)
+        file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(target, ext_str)
         folder = get_file_locations('data_root')
         dsA = xr.open_dataset(folder + file2regrid)
     # Add LWI to array
@@ -164,7 +163,7 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None,
             # Add atributes
             Vars2NotRename = 'LWI', 'LonghurstProvince'
             if var2use not in Vars2NotRename:
-                ds = add_attrs2iodide_ds(ds, add_global_attrs=False,
+                ds = add_attrs2target_ds(ds, add_global_attrs=False,
                                          varname=var2use)
             else:
                 # Update attributes too
@@ -175,11 +174,11 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None,
         # clean up
         regridder.clean_weight_file()
         # Make sure the file has appropriate attributes
-        ds = add_attrs2iodide_ds(ds, add_varname_attrs=False)
+        ds = add_attrs2target_ds(ds, add_varname_attrs=False)
         # Time values
         ds = update_time_in_NetCDF2save(ds)
         # Save the file
-        filename = 'Oi_prj_output_iodide_field_{}'.format(grid)
+        filename = 'Oi_prj_output_{}_field_{}'.format(target, grid)
         filename = AC.rm_spaces_and_chars_from_str(filename)
         ds.to_netcdf(filename+'.nc')
 

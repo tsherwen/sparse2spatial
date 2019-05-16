@@ -1,15 +1,17 @@
-def add_longhurst_raster_array_and_LWI_core_NetCDFs():
-    """ Driver to add Longhurst Provinces to files """
+def add_longhurst_raster_array_and_LWI_core_NetCDFs(target='Iodide'):
+    """
+    Driver to add Longhurst Provinces fields to spatial NetCDF files
+    """
     Filenames = [
-        'Oi_prj_predicted_iodide_0.125x0.125_No_Skagerrak',
+        'Oi_prj_predicted_{}_0.125x0.125_No_Skagerrak',
         'Oi_prj_feature_variables_0.125x0.125',
-        'Oi_prj_predicted_iodide_0.125x0.125',
+        'Oi_prj_predicted_{}_0.125x0.125',
     ]
     folder = '/work/home/ts551/data/iodide/'
     for name in Filenames:
         print(name)
         # Open dataset
-        ds = xr.open_dataset(folder + name+'.nc')
+        ds = xr.open_dataset(folder + name.format(target)+'.nc')
         # Longhurst Province to dataset
         ds = add_Longhurst_Province_raster_to_array(ds)
         # Add LWI index too
@@ -20,7 +22,9 @@ def add_longhurst_raster_array_and_LWI_core_NetCDFs():
 
 
 def add_Longhurst_Province_raster_to_array(ds):
-    """ Add Longhurst Province to dataset as a raste"""
+    """
+    Add Longhurst Province to xr.dataset as a raster
+    """
     import geopandas
     from rasterio import features
     from affine import Affine

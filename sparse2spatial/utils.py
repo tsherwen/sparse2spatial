@@ -33,13 +33,12 @@ def mk_LWI_avg_array():
     ds.to_netcdf('nature_run_lev_72_res_0.125_spec_LWI_monthly_ctm.nc')
 
 
-def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
+def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iodide',
                               dsA=None, testing_features=None):
     """
     Make a dataset of 3D predicted values from model
     """
     # Local variables
-    target = 'Iodide'
     target_name = target
     # Get feature values for resolution
     if isinstance(dsA, type(None)):
@@ -89,10 +88,10 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
     return ds
 
 
-def mk_NetCDF_of_surface_iodide_by_month4param(res='4x5',
+def mk_NetCDF_of_surface_target_by_month4param(res='4x5', target='iodide',
                                                param='Chance2014'):
     """
-    Make a NetCDF of (monthly) iodide fields from previous params
+    Make a NetCDF of (monthly) target fields from previous params
     """
     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
     import xarray as xr
@@ -103,7 +102,6 @@ def mk_NetCDF_of_surface_iodide_by_month4param(res='4x5',
     }
     # Get the model
     testing_features = ['WOA_TEMP']
-    varname = 'iodide'
     # Initialise a dictionary to store data
     ars_dict = {}
     months = np.arange(1, 13)
@@ -115,7 +113,7 @@ def mk_NetCDF_of_surface_iodide_by_month4param(res='4x5',
         target_predictions = cal_dict[param](TEMP)
         # Save values
         ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
-                                              target_name=[varname], res=res,
+                                              target_name=[target], res=res,
                                               target_predictions=target_predictions)
     # Get coordinates
     lon, lat, alt = AC.get_latlonalt4res(res=res)
@@ -124,24 +122,24 @@ def mk_NetCDF_of_surface_iodide_by_month4param(res='4x5',
     for month in months:
         arr = ars_dict[month].T[None, ...]
         da_l += [xr.Dataset(
-            data_vars={varname: (['time', 'lat', 'lon', ], arr)},
+            data_vars={target: (['time', 'lat', 'lon', ], arr)},
             coords={'lat': lat, 'lon': lon, 'time': [month]})]
     # Concatenate to a single dataset
     ds = xr.concat(da_l, dim='time')
     # Update time ...
     ds = update_time_in_NetCDF2save(ds)
-    # Add attributes for iodide and global variables
-    ds = add_attrs2iodide_ds(ds, varname=varname)
-    # Add units etc for all of the iodide variables
+    # Add attributes for target variable and global variables
+    ds = add_attrs2target_ds(ds, varname=target)
+    # Add units etc for all of the dataset variables
     for var2use in ds.data_vars:
-        ds = add_attrs2iodide_ds(ds, add_global_attrs=False,
+        ds = add_attrs2target_ds(ds, add_global_attrs=False,
                                  varname=var2use)
     # save to NetCDF
-    filename = 'Oi_prj_Iodide_monthly_param_{}_{}.nc'.format(res, param)
+    filename = 'Oi_prj_{}_monthly_param_{}_{}.nc'.format(target, res, param)
     ds.to_netcdf(filename, unlimited_dims={'time': True})
 
 
-def mk_NetCDF_of_surface_iodide_by_month(res='4x5', extr_str=''):
+def mk_NetCDF_of_surface_target_by_month(res='4x5', extr_str='', target='iodide'):
     """
     Make a NetCDF of predicted data fields by month
     """
@@ -151,7 +149,7 @@ def mk_NetCDF_of_surface_iodide_by_month(res='4x5', extr_str=''):
     # Get the model
     model = get_current_model(extr_str=extr_str)
     testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
-    varname = 'iodide'
+
     # Initialise a dictionary to store data
     ars_dict = {}
     months = np.arange(1, 13)
@@ -164,7 +162,7 @@ def mk_NetCDF_of_surface_iodide_by_month(res='4x5', extr_str=''):
         model_name = "RandomForestRegressor '{}'"
         model_name = model_name.format('+'.join(testing_features))
         ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
-                                              target_name=[varname], res=res,
+                                              target_name=[target], res=res,
                                               target_predictions=target_predictions)
     # Get coordinates
     lon, lat, alt = AC.get_latlonalt4res(res=res)
@@ -173,7 +171,7 @@ def mk_NetCDF_of_surface_iodide_by_month(res='4x5', extr_str=''):
     for month in months:
         arr = ars_dict[month].T[None, ...]
         da_l += [xr.Dataset(
-            data_vars={varname: (['time', 'lat', 'lon', ], arr)},
+            data_vars={target: (['time', 'lat', 'lon', ], arr)},
             coords={'lat': lat, 'lon': lon, 'time': [month]})]
     # Concatenate to a single dataset
     ds = xr.concat(da_l, dim='time')
@@ -191,9 +189,9 @@ def mk_NetCDF_of_surface_iodide_by_month(res='4x5', extr_str=''):
     attrs_dict = {'units': 'hours since 1985-01-01 00:00:00'}
     ds['time'].attrs = attrs_dict
     # Add attributes
-    ds = add_attrs2iodide_ds(ds, varname=extr_str, convert_to_kg_m3=True)
+    ds = add_attrs2target_ds(ds, varname=extr_str, convert_to_kg_m3=True)
     # Save to NetCDF
-    filename = 'Oi_prj_Iodide_monthly_param_{}.nc'.format(res)
+    filename = 'Oi_prj_{}_monthly_param_{}.nc'.format(target, res)
     ds.to_netcdf(filename, unlimited_dims={'time': True})
 
 
@@ -454,30 +452,29 @@ def update_time_in_NetCDF2save(ds, convert_time2dt=False):
     return ds
 
 
-def add_attrs2iodide_ds_global_and_iodide_param(ds):
+def add_attrs2target_ds_global_and_iodide_param(ds):
     """
     Helper func to add both global and iodide parm attrs
     """
     # add param values
     for var2use in ds.data_vars:
-        ds = add_attrs2iodide_ds(ds, add_global_attrs=False, varname=var2use)
+        ds = add_attrs2target_ds(ds, add_global_attrs=False, varname=var2use)
     # Add global attributes
-    ds = add_attrs2iodide_ds(ds, add_varname_attrs=False)
+    ds = add_attrs2target_ds(ds, add_varname_attrs=False)
     return ds
 
 
-def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
+def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
                         varname='Ensemble_Monthly_mean',
                         add_global_attrs=True, add_varname_attrs=True,
                         update_varnames_to_remove_spaces=False,
+                        global_attrs_dict={},
                         convert2HEMCO_time=False ):
     """
     Update attributes for iodide dataset saved as NetCDF
     """
     # --- Coordinate and global values
     if add_varname_attrs:
-        attrs_dict = {}
-        attrs_dict['long_name'] = "sea-surface iodide concentration"
         # convert the units?
         if convert_to_kg_m3:
             # get surface array
@@ -543,21 +540,13 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
 #            times = [ AC.add_months(REFdatetime, int(i) ) for i in range(13) ]
             ds['time'].values = hours
         ds['time'].attrs = attrs_dict
-        # Add extra details
-        title_str = "A parameterisation of sea-surface iodide on a monthly basis"
-        global_attribute_dictionary = {
-            'Title': title_str,
-            'Author': 'Tomas Sherwen (tomas.sherwen@york.ac.uk)',
-            'Notes': 'This is a parameterisation of sea-surface iodide on a monthly basis. The NetCDF was made using xarray (xarray.pydata.org).',
-            'History': 'Last Modified on:' + strftime("%B %d %Y", gmtime()),
-            'Conventions': "COARDS",
-            'Main parameterisation variable': varname,
-            'DOI': '10.5285/02c6f4eea9914e5c8a8390dd09e5709a.',
-            'Citation': "A machine learning based global sea-surface iodide distribution, T. Sherwen , et al., in review, 2019 ; Data reference: Sherwen, T., Chance, R., Tinel, L., Ellis, D., Evans, M., and Carpenter, L.: Global predicted sea-surface iodide concentrations v0.0.0., https://doi.org/10.5285/02c6f4eea9914e5c8a8390dd09e5709a., 2019.",
-            'format' : 'NetCDF-4',
-            'references' : "Paper Reference: A machine learning based global sea-surface iodide distribution, T. Sherwen , et al., in review, 2019 ; Data reference: Sherwen, T., Chance, R., Tinel, L., Ellis, D., Evans, M., and Carpenter, L.: Global predicted sea-surface iodide concentrations v0.0.0., https://doi.org/10.5285/02c6f4eea9914e5c8a8390dd09e5709a., 2019.",
-        }
-        ds.attrs = global_attribute_dictionary
+        # Add details to the global attribute dictionary
+        History_str = 'Last Modified on: {}'
+        global_attrs_dict['History'] = History_str.format(strftime("%B %d %Y", gmtime()))
+        global_attrs_dict['Conventions'] = "COARDS"
+        global_attrs_dict['Main parameterisation variable'] = varname
+        global_attrs_dict['format'] = 'NetCDF-4'
+        ds.attrs = global_attrs_dict
     return ds
 
 
@@ -901,3 +890,85 @@ def set_backup_month_if_unkonwn(lat=None, var2use='', main_var='',
     return month_
 
 
+def get_df_stats_MSE_RMSE(df=None, target='Iodide',
+                          params=[], dataset_str='all', add_sklean_metrics=False):
+    """
+    Get stats (RSE/RMSE) on params. in DataFrame
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
+    mse = [(df[target]-df[param_])**2 for param_ in params]
+    mse = [np.mean(i) for i in mse]
+    MSE_varname = 'MSE ({})'.format(dataset_str)
+    stats = pd.DataFrame(mse, index=params, columns=[MSE_varname])
+    RMSE_varname = 'RMSE ({})'.format(dataset_str)
+    stats[RMSE_varname] = np.sqrt(stats[MSE_varname])
+    if add_sklean_metrics:
+        stats = add_sklean_metrics2df(df=df, target=target, params=params,
+                                      dataset_str=dataset_str, stats=stats)
+    return stats
+
+
+def add_sklean_metrics2df(df=None, stats=None, target='Iodide',
+                          params=[], dataset_str='all',):
+    """
+    Also add other metrics from sklearn.metrics
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
+    from sklearn.metrics import r2_score
+    from sklearn.metrics import explained_variance_score as EVS
+    from sklearn.metrics import median_absolute_error as MAE
+
+    # Add explained_variance_score
+    EVS_varname = 'EVS ({})'.format(dataset_str)
+    EVS = [EVS(df[target], df[param_]) for param_ in params]
+    stats[EVS_varname] = EVS
+    # Add r2_score
+    R2_varname = 'R2 ({})'.format(dataset_str)
+    R2 = [r2_score(df[target], df[param_]) for param_ in params]
+    stats[R2_varname] = R2
+    # Add Median Absolute Error
+    MAE_varname = 'MAE ({})'.format(dataset_str)
+    MAE = [MAE(df[target], df[param_]) for param_ in params]
+    stats[MAE_varname] = MAE
+    return stats
+
+
+def extract4nearest_points_in_ds(lons=None, lats=None, months=None,
+                                 var2extract='Ensemble_Monthly_mean',
+                                 verbose=True, debug=False):
+    """
+    Extract requested variable for nearest point and time from NetCDF
+    """
+    # Check that the same about of locations have been given for all months
+    lens = [len(i) for i in (lons, lats, months)]
+    assert len(set(lens)) == 1, 'All lists provided must be same length!'
+    # --- Loop locations and extract
+    extracted_vars = []
+    for n_lon, lon_ in enumerate(lons):
+        # get lats and month too
+        lat_ = lats[n_lon]
+        month_ = months[n_lon]
+        # select for monnth
+        ds_tmp = ds[var2extract].sel(time=(ds['time.month'] == month_))
+        # select nearest data
+        vals = ds_tmp.sel(lat=lat_, lon=lon_, method='nearest')
+        if debug:
+            print(vals)
+        extracted_vars += [vals.values[0]]
+    return extracted_vars

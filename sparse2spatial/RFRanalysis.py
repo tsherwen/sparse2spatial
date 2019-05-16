@@ -28,7 +28,6 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
     from sklearn.metrics import mean_squared_error
-    # target='Iodide'
     # ----- Local variables
     # Get unprocessed input data at observation points
     if isinstance(df, type(None)):
@@ -64,7 +63,7 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
             print(prt_str.format(random_state, model_name))
         # set the training and test sets
         # Stratified split by default, unless random var in name
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df,
+        returned_vars = mk_ML_testing_and_training_set(df=df,
                                                               random_20_80_split=False,
                                                         testing_features=testing_features,
                                                               random_state=random_state,
@@ -165,7 +164,6 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
-    # target='Iodide'
     # ----- Local variables
     # Get unprocessed input data at observation points
     if isinstance(RFR_dict, type(None)):
@@ -204,7 +202,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         print(prt_str.format(random_state, model_name))
         # set the training and test sets
         # Stratified split by default, unless random var in name
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df,
+        returned_vars = mk_ML_testing_and_training_set(df=df,
                                                               random_20_80_split=False,
                                                         testing_features=testing_features,
                                                               random_state=random_state,
@@ -252,7 +250,6 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
-    # target='Iodide'
     # ----- Local variables
     # Get unprocessed input data at observation points
     if isinstance(df, type(None)):
@@ -274,15 +271,19 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     target_name = [target]
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
-    # Formatted variable name for iodide
-    Iaq = '[I$^{-}_{aq}$]'
+    # Formatted variable name for target
+    if target == 'iodide':
+        Iaq = '[I$^{-}_{aq}$]'
+    else:
+        Iaq = target
+
     # --- set testset to evaulte
     TSETS = {}
     TSETS_N = {}
     TSETS_nsplits = {}
     # - no vals above 400
     Tname = '{}<400'.format(Iaq)
-    tmp_ts = df.loc[df['Iodide'] < 400][testing_features+[target]].copy()
+    tmp_ts = df.loc[df[target] < 400][testing_features+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 5
@@ -317,7 +318,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             random_strat_split = True
             random_20_80_split = False
             # get the training and test set
-            returned_vars = mk_iodide_ML_testing_and_training_set(df=df_tmp,
+            returned_vars = mk_ML_testing_and_training_set(df=df_tmp,
                                                     random_20_80_split=random_20_80_split,
                                                                 random_state=random_state,
                                                                   nsplits=TSETS_nsplits[
@@ -437,8 +438,9 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     plt.close()
 
 
-def run_tests_on_model_build_options(df=None, use_choosen_model=True,
+def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Iodide',
                                      testset='Test set (strat. 20%)',
+                                     testing_features=None,
                                      model_name='TEST_MODEL'):
     """
     Test feature and hyperparameter options for model
@@ -454,11 +456,9 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True,
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
-    # ----- Local variables
-    testing_features = None
-    target = 'Iodide'
+    # - Local variables
     target_name = target
-    # ---- Get the data/variables
+    # - Get the data/variables
     # get processed data
     if isinstance(df, type(None)):
         df = get_dataset_processed4ML()
@@ -474,7 +474,7 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True,
         testing_features = get_model_testing_features_dict(model_name)
     # Select just the testing features, target, and  testset split
     df = df[testing_features+[target_name, testset]]
-    # ----- Select training dataset
+    # - Select training dataset
     test_set = df.loc[df[testset] == True, :]
     train_set = df.loc[df[testset] == False, :]
     # also sub select all vectors for input data
@@ -484,15 +484,13 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True,
     test_set_full = df[testing_features].loc[test_set.index]
     test_set_targets = df[target_name].loc[test_set.index]
 
-    # ---- Preparing input data for ML algorythm
+    # - Preparing input data for ML algorythm
     # Make sure that the values are within a reasonable range
     # (almost all ML algorythims won't work without standardisation )
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
     # Setup as pipeline (only one operation... so this is overkill ATM.)
-    num_pipeline = Pipeline([
-        ('std_scaler', StandardScaler()),
-    ])
+    num_pipeline = Pipeline([ ('std_scaler', StandardScaler()), ])
     # not biniarisation or labels... so full_pipeline just equals pipeline
     full_pipeline = num_pipeline
     # transform data
@@ -503,7 +501,7 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True,
     else:
         train_set_tr = num_pipeline.fit_transform(train_set_full)
 
-    # -----
+    # - ...
     # Plot up variable (e.g. # trees) vs. RMSE (or oob error?),
     # use this to argue for # trees etc...
     from sklearn.model_selection import GridSearchCV
@@ -538,7 +536,7 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True,
     # <not pasted code here yet... >
     final_model = grid_search.best_estimator_
 
-    # ---- Test the performance of the models
+    # - Test the performance of the models
     for model_name in models.keys():
         model = models[model_name]
         df[model_name] = get_model_predictions4obs_point(model=model)
@@ -548,17 +546,10 @@ def get_predictor_variable_importance(RFR_dict=None):
     """
     Get the feature variable inmportance for current models
     """
-    # ---- Local variables
     # set models to compare...
-    models2compare = [
-        #    'RFR(TEMP+DEPTH+SAL+NO3+DOC)', 'RFR(TEMP+DEPTH+SAL+NO3)',
-        #    'RFR(TEMP+DEPTH+SAL)'
-        #    'RFR(TEMP+DEPTH+SAL+NO3+DOC)', 'RFR(TEMP+SAL+NO3)', 'RFR(TEMP+SAL+Prod)',
-        #    'RFR(TEMP)', 'RFR(TEMP+DEPTH+SAL)'
-    ]
+    models2compare = []
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
     models2compare = topmodels
-
     # Get data
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -587,7 +578,9 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                 save_CHOOSEN_MODEL=False,
                                 plot_up_model_performance=True, RFR_dict=None,
                                 add_sklean_metrics=False, verbose=True, debug=False):
-    """ Analyse the stats on of params and obs. """
+    """
+    Analyse the stats on of params and obs.
+    """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -601,11 +594,14 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     oob_scores = RFR_dict['oob_scores']
     # - Evaluate performance of models (e.g. Root Mean Square Error (RMSE) )
     # Also evaluate parameterisations
-    param_names = [
-        u'Chance2014_STTxx2_I',
-        #        u'Chance2014_Multivariate',
-        u'MacDonald2014_iodide',
-    ]
+    if target == 'Iodide':
+        param_names = [
+            u'Chance2014_STTxx2_I',
+            #        u'Chance2014_Multivariate',
+            u'MacDonald2014_iodide',
+        ]
+    else:
+        param_names = []
     # Aslo include the ensemble parameters
     param_names += ['RFR(Ensemble)']
     # Calculate performance
@@ -865,7 +861,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     return stats
 
 
-def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
+def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='iodide',
                                               use_annual_mean=True, filename=None,
                                               folder=None, just_return_df=False,
                                               ):
@@ -873,7 +869,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
     # ----
     # If filename or folder not given, then use defaults
     if isinstance(filename, type(None)):
-        filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
+        filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(folder, type(None)):
         folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
@@ -920,6 +916,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
 
 
 def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
+                                                     target='iodide',
                                                      use_annual_mean=False, filename=None,
                                                      folder=None, ds=None,
                                                      debug=False):
@@ -928,7 +925,7 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
     if isinstance(ds, type(None)):
         # If filename or folder not given, then use defaults
         if isinstance(filename, type(None)):
-            filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
+            filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
         if isinstance(folder, type(None)):
             folder = get_file_locations('data_root')
         ds = xr.open_dataset(folder + filename)
@@ -983,12 +980,13 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
 
 
 def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
+                                             target='iodide',
                                              debug=False, res='0.125x0.125'):
     """ Evaluate the spatial predictions between models """
     # ----
     # get data
     if isinstance(ds, type(None)):
-        filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
+        filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
         folder = '/shared/earth_home/ts551/labbook/Python_progs/'
     #    ds = xr.open_dataset( folder + filename )
         ds = xr.open_dataset(filename)
@@ -1040,7 +1038,7 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
     return df
 
 
-def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
+def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='iodide',
                                                RFR_dict=None, ex_str='',
                                                just_return_df=False, folder=None,
                                                filename=None, rm_Skagerrak_data=False,
@@ -1054,7 +1052,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
             extr_file_str = '_No_Skagerrak'
         else:
             extr_file_str = ''
-        filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_file_str)
+        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_file_str)
     if isinstance(folder, type(None)):
         folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
@@ -1112,7 +1110,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'Ensemble_Monthly_mean': 'RFR(Ensemble)',
                      'Iodide': 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+#                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     df.rename(columns=rename_titles,  inplace=True)
     # Sort the dataframe by the mean weighted vales
@@ -1182,12 +1180,12 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
     a.close()
 
 
-def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None,
+def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='iodide',
                                     stats=None, ds=None, topmodels=None,
                                     save2NetCDF=True):
     """ Plot up the ensemble average and std spatially  """
     # get existing dataset from NetCDF if ds not provided
-    filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
+    filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(ds, type(None)):
         folder = get_file_locations('data_root')
         ds = xr.open_dataset(folder + filename)
@@ -1307,7 +1305,7 @@ def test_performance_of_params(target='Iodide'):
         #
         df_tmp = df[testing_features+['Iodide']].copy()
         #
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df_tmp,
+        returned_vars = mk_ML_testing_and_training_set(df=df_tmp,
                                                     random_20_80_split=random_20_80_split,
                                                     random_strat_split=random_strat_split,
                                                     testing_features=testing_features,
@@ -1382,7 +1380,9 @@ def test_performance_of_params(target='Iodide'):
 
 
 def calculate_performance_of_params(df=None, target='Iodide', params=[]):
-    """ Calculate stats on performance of parameters in DataFrame """
+    """
+    Calculate stats on performance of parameters in DataFrame
+    """
     # Initialise with generic stats
     stats = [df[i].describe() for i in params + [target]]
     stats = pd.DataFrame(stats).T
@@ -1395,50 +1395,25 @@ def calculate_performance_of_params(df=None, target='Iodide', params=[]):
     return stats
 
 
-def get_df_stats_MSE_RMSE(df=None, target='Iodide',
-                          params=[], dataset_str='all', add_sklean_metrics=False):
-    """ Get stats (RSE/RMSE) on params. in DataFrame """
-    mse = [(df[target]-df[param_])**2 for param_ in params]
-    mse = [np.mean(i) for i in mse]
-    MSE_varname = 'MSE ({})'.format(dataset_str)
-    stats = pd.DataFrame(mse, index=params, columns=[MSE_varname])
-    RMSE_varname = 'RMSE ({})'.format(dataset_str)
-    stats[RMSE_varname] = np.sqrt(stats[MSE_varname])
-    if add_sklean_metrics:
-        stats = add_sklean_metrics2df(df=df, target=target, params=params,
-                                      dataset_str=dataset_str, stats=stats)
-    return stats
-
-
-def add_sklean_metrics2df(df=None, stats=None, target='Iodide',
-                          params=[], dataset_str='all',):
-    """ Also add other metrics from sklearn.metrics """
-    from sklearn.metrics import r2_score
-    from sklearn.metrics import explained_variance_score as EVS
-    from sklearn.metrics import median_absolute_error as MAE
-
-    # Add explained_variance_score
-    EVS_varname = 'EVS ({})'.format(dataset_str)
-    EVS = [EVS(df[target], df[param_]) for param_ in params]
-    stats[EVS_varname] = EVS
-    # Add r2_score
-    R2_varname = 'R2 ({})'.format(dataset_str)
-    R2 = [r2_score(df[target], df[param_]) for param_ in params]
-    stats[R2_varname] = R2
-    # Add Median Absolute Error
-    MAE_varname = 'MAE ({})'.format(dataset_str)
-    MAE = [MAE(df[target], df[param_]) for param_ in params]
-    stats[MAE_varname] = MAE
-
-    return stats
-
-
 # ---------------------------------------------------------------------------
 # ------------- Extract model / scripts linked to tree graphic --------------
 # ---------------------------------------------------------------------------
 def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7,
                          ouput_random_tree_numbers=False, verbose=True, ):
-    """ Extract individual trees from models """
+    """
+    Extract individual trees from models
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+     - This is a file processor for the TreeSurgeon java/node.js plotter
+     https://github.com/wolfiex/TreeSurgeon
+    """
     # Get the dictionary
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -1473,7 +1448,20 @@ def extract_trees_to_dot_files(folder=None, model_filename=None,
                                N_trees2output=10, ouput_random_tree_numbers=False,
                                max_depth=7,
                                extr_str=''):
-    """ Extract individual model trees to .dot files to be plotted in d3 """
+    """
+    Extract individual model trees to .dot files to be plotted in d3
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+     - This is a file processor for the TreeSurgeon java/node.js plotter
+     https://github.com/wolfiex/TreeSurgeon
+    """
     from sklearn.externals import joblib
     from sklearn import tree
     import os
@@ -1521,7 +1509,20 @@ def extract_trees_to_dot_files(folder=None, model_filename=None,
 
 
 def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
-    """ Analyse the nodes in a RFR model """
+    """
+    Analyse the nodes in a RFR model
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+     - This is a file processor for the TreeSurgeon java/node.js plotter
+     https://github.com/wolfiex/TreeSurgeon
+    """
     import glob
     # ---
     # get dictionary of data if not provided as arguement
@@ -1569,7 +1570,17 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
     """
     Get the variables driving decisions at each point
 
-    NOTE:
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+     - This is a file processor for the TreeSurgeon java/node.js plotter
+     https://github.com/wolfiex/TreeSurgeon
+     - Details on unfold approach
     link: http://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html
 # The decision estimator has an attribute called tree_  which stores the entire
 # tree structure and allows access to low level attributes. The binary tree

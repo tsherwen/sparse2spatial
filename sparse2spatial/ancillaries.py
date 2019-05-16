@@ -3,7 +3,7 @@
 Processing scripts for ancillary data to used as dependent variable for predition
 
 """
-
+import AC_tools as AC
 
 
 def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
@@ -186,7 +186,9 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
 
 
 def mk_RAD_NetCDF_monthly():
-    """ Resample NetCDF from daily to monthly """
+    """
+    Resample NetCDF from daily to monthly
+    """
     # Directory?
     folder = get_file_locations('GFDL')
     # File str
@@ -200,24 +202,26 @@ def mk_RAD_NetCDF_monthly():
 
 
 def Convert_martins_productivity_file_into_a_NetCDF():
-    """ Convert Martin's .csv file into a NetCDF file """
+    """
+    Convert productivity .csv file (Behrenfeld and Falkowski, 1997) into a NetCDF file
+    """
     import xarray as xr
     from time import gmtime, strftime
-    # ---  Local vars
+    # Location of data (update to use public facing host)
     folder = '/work/home/ts551/data/iodide/Martin_Wadley/'
-    # which file to use?
+    # Which file to use?
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.csv'
-    # setup coordinates
+    # Setup coordinates
     lon = np.arange(-180, 180, 1/6.)
     lat = np.arange(-90, 90, 1/6.)
     lat = np.append(lat, [90])
-    # setup time
+    # Setup time
     varname = 'vgpm'
     months = np.arange(1, 13)
-    # ---  Extract data
+    # Extract data
     df = pd.read_csv(folder+filename, header=None)
     print(df.shape)
-    # ---  Extract data by month
+    # Extract data by month
     da_l = []
     for n in range(12):
         # Assume the data is in blocks by month
@@ -229,7 +233,7 @@ def Convert_martins_productivity_file_into_a_NetCDF():
         da_l += [xr.Dataset(
             data_vars={varname: (['time', 'lat', 'lon', ], arr)},
             coords={'lat': lat, 'lon': lon, 'time': [n]})]
-    # concatenate
+    # Concatenate to data xr.Dataset
     ds = xr.concat(da_l, dim='time')
     # Update time ...
     sdate = datetime.datetime(1985, 1, 1)  # Climate model tiem
@@ -238,17 +242,16 @@ def Convert_martins_productivity_file_into_a_NetCDF():
     hours = [(AC.dt64_2_dt([i])[0] - sdate).days *
              24. for i in ds['time'].values]
     ds['time'] = hours
-    # add units
+    # Add units
     attrs_dict = {'units': 'hours since 1985-01-01 00:00:00'}
     ds['time'].attrs = attrs_dict
-    # --- Add attributes
-    # for variable
+    # Add attributes for variable
     attrs_dict = {
         'long_name': "net primary production",
         'units': "mg C / m**2 / day",
     }
     ds[varname].attrs = attrs_dict
-    # for lat...
+    # For latitude...
     attrs_dict = {
         'long_name': "latitude",
         'units': "degrees_north",
@@ -256,7 +259,7 @@ def Convert_martins_productivity_file_into_a_NetCDF():
         "axis": "Y",
     }
     ds['lat'].attrs = attrs_dict
-    # and lon...
+    # and longitude...
     attrs_dict = {
         'long_name': "longitude",
         'units': "degrees_east",
@@ -264,9 +267,9 @@ def Convert_martins_productivity_file_into_a_NetCDF():
         "axis": "X",
     }
     ds['lon'].attrs = attrs_dict
-    # Add extra details
+    # Add extra global attributes
     global_attribute_dictionary = {
-        'Title': 'A parameterisation sea-surface iodide on a monthly basis',
+        'Title': 'Sea-surface productivity (Behrenfeld and Falkowski, 1997)',
         'Author': 'Tomas Sherwen (tomas.sherwen@york.ac.uk)',
         'Notes': "Data extracted from OCRA and extrapolated to poles by Martin Wadley. NetCDF contructed using xarray (xarray.pydata.org) by Tomas Sherwen. \n NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.' ",
         'History': 'Last Modified on:' + strftime("%B %d %Y", gmtime()),
@@ -279,7 +282,9 @@ def Convert_martins_productivity_file_into_a_NetCDF():
 
 
 def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
-    """ Process NOAA WOA94 csv files to netCDF """
+    """
+    Process NOAA WOA94 csv files to netCDF
+    """
     # The MLD fields available are computed from climatological monthly mean
     # profiles of potential temperature and potential density based on three
     # different criteria: a temperature change from the ocean surface of 0.5

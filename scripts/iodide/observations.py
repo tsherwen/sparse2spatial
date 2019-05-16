@@ -27,7 +27,7 @@ import sparse2spatial as s2s
 from sparse2spatial.utils import get_file_locations
 from sparse2spatial.utils import set_backup_month_if_unkonwn
 from sparse2spatial.utils import get_outlier_value
-from sparse2spatial.RTRbuild import mk_iodide_ML_testing_and_training_set
+from sea_surface_iodide import mk_iodide_ML_testing_and_training_set
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillary_obs_from_COMPILED_file
 from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
 from sparse2spatial.utils import calc_iodide_chance2014_Multivariate
@@ -57,93 +57,6 @@ def main(add_ancillaries=True):
         # Re-process ancillaries file?
         process_iodide_obs_ancillaries_2_csv()
         pass
-
-
-def get_dataset_processed4ML(restrict_data_max=False,
-                             rm_Skagerrak_data=False, rm_iodide_outliers=True,
-                             rm_LOD_filled_data=False):
-    """
-    Get dataset as a DataFrame with standard munging settings
-
-
-    Parameters
-    -------
-    restrict_data_max (bool): restrict the obs. data to a maximum value?
-
-    Returns
-    -------
-    (pd.DataFrame)
-
-    Notes
-    -----
-
-    """
-    # - Local variables
-    testing_features = None
-    target = 'Iodide'
-    target_name = target
-    # - The following settings are set to False as default
-    # settings for incoming feature data
-    restrict_min_salinity = False
-    use_median_value_for_chlor_when_NaN = False
-    add_modulus_of_lat = False
-    # Apply transforms to data?
-    do_not_transform_feature_data = True
-    # Just use the forest outcomes and do not optimise
-    use_forest_without_optimising = True
-    # KLUDGE - this is for N=85
-    median_4MLD_when_NaN_or_less_than_0 = False  # This is no longer needed?
-    # KLUDGE -  this is for depth values greater than zero
-    median_4depth_when_greater_than_0 = False
-    # - Get data as a DataFrame
-    df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
-    # Add extra vairables and remove some data.
-    df = add_extra_vars_rm_some_data(df=df,
-                                     restrict_data_max=restrict_data_max,
-                                     restrict_min_salinity=restrict_min_salinity,
-                                     add_modulus_of_lat=add_modulus_of_lat,
-                                     rm_Skagerrak_data=rm_Skagerrak_data,
-                                     rm_iodide_outliers=rm_iodide_outliers,
-                                     rm_LOD_filled_data=rm_LOD_filled_data,
-                  use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
-                  median_4MLD_when_NaN_or_less_than_0=median_4MLD_when_NaN_or_less_than_0,
-                      median_4depth_when_greater_than_0=median_4depth_when_greater_than_0,
-                                     )    # add
-
-    # - Add test and training set assignment to columns
-#    print( 'WARNING - What testing had been done on training set selection?!' )
-    # Choose a sub set of data to exclude from the input data...
-#     from sklearn.model_selection import train_test_split
-#     targets = df[ target_name ]
-#     # Use a standard 20% test set.
-#     train_set, test_set =  train_test_split( targets, test_size=0.2, \
-#         random_state=42 )
-    # standard split vars?  (values=  random_20_80_split, random_strat_split )
-    ways2split_data = {
-        'rn. 20%': (True, False),
-        'strat. 20%': (False, True),
-    }
-    # Loop training/test split methods
-    for key_ in ways2split_data.keys():
-        # Get settings
-        random_20_80_split, random_strat_split = ways2split_data[key_]
-        # Copy a df for splitting
-#        df_tmp = df['Iodide'].copy()
-        # Now split using existing function
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                    random_20_80_split=random_20_80_split,
-                                                    random_strat_split=random_strat_split,
-                                                    testing_features=df.columns.tolist(),
-                                                     test_plots_of_iodide_dist=False
-#                                                   testing_features=testing_features,
-                                                              )
-        train_set, test_set, test_set_targets = returned_vars
-        # Now assign the values
-        key_varname = 'Test set ({})'.format(key_)
-        df[key_varname] = False
-        df.loc[test_set.index, key_varname] = True
-        df.loc[train_set.index, key_varname] = False
-    return df
 
 
 def get_coastal_flag(df=None, Salinity_var='WOA_Salinity',

@@ -20,7 +20,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
                                 save_model_to_disk=False, read_model_from_disk=True,
                                 target_name='Iodide', target='Iodide', model_names=None,
                                 delete_existing_model_files=False,
-                                rm_Skagerrak_data=False, rm_iodide_outliers=True,
+                                rm_Skagerrak_data=False, rm_target_outliers=True,
                                 rm_LOD_filled_data=False,
                                 model_feature_dict=None,
                                 model_sub_dir='/TEMP_MODELS/',
@@ -41,16 +41,8 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
     import gc
-    # elephant
-    # testset='Test set (strat. 20%)'; save_model_to_disk=False; target_name='Iodide'; target='Iodide';  read_model_from_disk=True; delete_existing_model_files=False
-    # delete_existing_model_files=True; save_model_to_disk=True; read_model_from_disk=True
     # --- Get processed data
     if isinstance(df, type(None)):
-#         df = get_dataset_processed4ML(
-#             rm_Skagerrak_data=rm_Skagerrak_data,
-#             rm_LOD_filled_data=rm_LOD_filled_data,
-#             rm_iodide_outliers=rm_iodide_outliers,
-#         )
         print( 'Dictionary of model names and features must be provided!' )
         sys.exit()
 
@@ -131,7 +123,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
             models_dict[model_name] = model
         else:
             model = models_dict[model_name]
-        # Predict for all iodide observations
+        # Predict target for all observation locations
         df[model_name] = model.predict(df[testing_features].values)
         # Save number of features used too
         N_testing_features[model_name] = len(testing_features)
@@ -273,27 +265,16 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
     -----
     """
     from sklearn.externals import joblib
-    # testset='Test set (strat. 20%)'; target_name=['Iodide']
     # Get the data for the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
-    #
-
     # Set models to optimise
     models2compare = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
-    # save model to dictionary of best estimators (BE)
-#    BE_dict = {}
-    #
-#    models2compare =  models2compare[6:]
-#    models2compare =  models2compare[:6]
-
-    # get variables needed from core dictionary
+    # Get variables needed from core dictionary
     testing_features_dict = RFR_dict['testing_features_dict']
     models_dict = RFR_dict['models_dict']
-
-    # use X fold cross validation (e.g. 5 or 7)
+    # Use X fold cross validation (e.g. 5 or 7)
     cv = 7
-
     # Loop and save optimised model
     # NOTE: this could be speed up by using more cores
     for model_name in models2compare:
@@ -310,7 +291,6 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
         # Save
 #        data_root_dir = utils.get_file_locations('data_root')
 #        working_folder = data_root_dir+'/models/'+'/LIVE//BEST_ESTIMATORS/'
-#
 #        joblib.dump(BEST_ESTIMATOR, working_folder + model_savename)
 
     # --- Test the tuned models against the test set
@@ -318,36 +298,29 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
     if test_the_tuned_models:
         # Get the core data
         df = RFR_dict['df']
-
         # get the data
         test_set = df.loc[df[testset] == True, :]
         train_set = df.loc[df[testset] == False, :]
         # also sub select all vectors for input data
-
-        #
         data_root_dir = utils.get_file_locations('data_root')
         working_folder = data_root_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
-
         # Test the improvements in the optimised models?
         for model_name in models2compare:
             # - Get existing model
             model = models_dict[model_name]
-            # get testing features
+            # Get testing features
             testing_features = testing_features_dict[model_name].split('+')
-
             # -  Get the data
             # ( Making sure to remove the target!!! )
     #        train_features = df[testing_features].loc[ train_set.index  ]
     #        train_labels = df[target_name].loc[ train_set.index  ]
             test_features = df[testing_features].loc[test_set.index]
             test_labels = df[target_name].loc[test_set.index]
-
             # - test the existing model
             print(' ---------------- '*3)
             print(' ---------------- {}: '.format(model_name))
             print(' - Base values: ')
             quick_model_evaluation(model, test_features, test_labels)
-
             # - Get optimised model
             try:
                 model_savename = "my_model_{}.pkl".format(model_name)
@@ -357,7 +330,6 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
                 quick_model_evaluation(OPmodel, test_features, test_labels)
             except:
                 pass
-
     # --- Test the tuned models against the training set
         # Get the core data
         df = RFR_dict['df']
@@ -368,27 +340,23 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None,
         # locations of the optimised models
         data_root_dir = utils.get_file_locations('data_root')
         working_folder = data_root_dir+'/models/'+'/LIVE/OPTIMISED_MODELS/'
-
         # Test the improvements in the optimised models?
         for model_name in models2compare:
             # - Get existing model
             model = models_dict[model_name]
             # get testing features
             testing_features = testing_features_dict[model_name].split('+')
-
             # -  Get the data
             # ( Making sure to remove the target!!! )
             train_features = df[testing_features].loc[train_set.index]
             train_labels = df[target_name].loc[train_set.index]
 #            test_features = df[testing_features].loc[ test_set.index ]
 #            test_labels = df[target_name].loc[ test_set.index ]
-
             # - test the existing model
             print(' ---------------- '*3)
             print(' ---------------- {}: '.format(model_name))
             print(' - Base values: ')
             quick_model_evaluation(model, train_features, train_labels)
-
             # - Get optimised model
             try:
                 model_savename = "my_model_{}.pkl".format(model_name)
@@ -767,7 +735,7 @@ def define_hyperparameter_options2test(testing_features=None,
 
 def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
                                         models_dict=None, testing_features_dict=None,
-                                        RFR_dict=None,
+                                        RFR_dict=None, target='iodide',
                                         stats=None, plot2check=False,
                                         rm_Skagerrak_data=False,
                                         debug=False):
@@ -786,16 +754,16 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     from sklearn.externals import joblib
     import gc
     import glob
-    # --- local variables
+    # - local variables
     # extract the models...
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models(
             rm_Skagerrak_data=rm_Skagerrak_data
         )
-    # get the variables required here
+    # Get the variables required here
     if isinstance(testing_features_dict, type(None)):
         testing_features_dict = RFR_dict['testing_features_dict']
-    # set the extr_str if rm_Skagerrak_data set to True
+    # Set the extr_str if rm_Skagerrak_data set to True
     if rm_Skagerrak_data:
         extr_str = '_No_Skagerrak'
     else:
@@ -804,9 +772,9 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     data_root = utils.get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     dsA = xr.open_dataset(data_root + filename)
-    #  location of data
+    # Location of data
     working_folder = utils.get_file_locations('data_root')+'/models/'+'/LIVE/'
-    # --- Make a da for each model
+    # - Make a da for each model
     ds_l = []
     # Get list of twenty models built
     loc2use = '{}/{}{}/'.format(working_folder, '/ENSEMBLE_REPEAT_BUILD', extr_str)
@@ -815,7 +783,6 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     print(builds4model, models_str)
     # Print a string to debug the output
     db_str = "Found {} saved models for '{} - glob str:{}'"
-#    if debug:
     print(db_str.format(len(builds4model), model2use, models_str))
     # Get the numbers for the models in directory
     b_modelnames = [i.split('my_model_')[-1][:-3] for i in builds4model]
@@ -836,18 +803,19 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
         gc.collect()
     # Combine datasets
     ds = xr.merge(ds_l)
-    # -- Also get values for parameterisations
-    # Chance et al (2013)
-    param = u'Chance2014_STTxx2_I'
-    arr = calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
-    ds[param] = ds[b_modelname]  # use existing array as dummy to fill
-    ds[param].values = arr
-    # MacDonald et al (2013)
-    param = 'MacDonald2014_iodide'
-    arr = calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
-    ds[param] = ds[b_modelname]  # use existing array as dummy to fill
-    ds[param].values = arr
-    # ---- Do a test diagnostic plot
+    # - Also get values for existing parameterisations
+    if target == 'iodide':
+        # Chance et al (2013)
+        param = u'Chance2014_STTxx2_I'
+        arr = calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        ds[param] = ds[b_modelname]  # use existing array as dummy to fill
+        ds[param].values = arr
+        # MacDonald et al (2013)
+        param = 'MacDonald2014_iodide'
+        arr = calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+        ds[param] = ds[b_modelname]  # use existing array as dummy to fill
+        ds[param].values = arr
+    # Do a test diagnostic plot?
     if plot2check:
         for var_ in ds.data_vars:
             # Do a quick plot to check
@@ -855,9 +823,9 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
             AC.map_plot(arr, res=res)
             plt.title(var_)
             plt.show()
-    # --- Save to NetCDF
-    save_name = 'Oi_prj_predicted_iodide_{}_ENSEMBLE_BUILDS_{}_{}.nc'
-    ds.to_netcdf(save_name.format(res, model2use, extr_str))
+    # Save to NetCDF
+    save_name = 'Oi_prj_predicted_{}_{}_ENSEMBLE_BUILDS_{}_{}.nc'
+    ds.to_netcdf(save_name.format(target, res, model2use, extr_str))
 
 
 def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
@@ -901,12 +869,10 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
     return target_predictions
 
 
-def mk_iodide_ML_testing_and_training_set(df=None, target_name=['Iodide'],
-                                          random_strat_split=True, testing_features=None,
-                                          random_state=42,
-                                          test_plots_of_iodide_dist=False,
-                                          random_20_80_split=False,
-                                          nsplits=4, verbose=True, debug=False):
+def mk_ML_testing_and_training_set(df=None, target='Iodide',
+                                   random_strat_split=True, testing_features=None,
+                                   random_state=42, random_20_80_split=False,
+                                   nsplits=4, verbose=True, debug=False):
     """
     Make a test and training dataset for ML algorithms
 
@@ -922,7 +888,7 @@ def mk_iodide_ML_testing_and_training_set(df=None, target_name=['Iodide'],
     # --- ------ make Test and
     # to make this approach's output identical at every run
     np.random.seed(42)
-
+    target_name = [target]
     # --- Standard random selection:
     if random_20_80_split:
         from sklearn.model_selection import train_test_split
@@ -943,7 +909,7 @@ def mk_iodide_ML_testing_and_training_set(df=None, target_name=['Iodide'],
         use_ceil_of_log = False  # This approach was only used
         if use_ceil_of_log:
             # Original approach taken for AGU work etc
-            ceil_ln_limited = np.ceil(np.log(df[u'Iodide']))
+            ceil_ln_limited = np.ceil(np.log(df[target]))
             # push bottom end values into lower bin
             ceil_ln_limited[ceil_ln_limited <= 2] = 2
             # push top end values in higher bin
@@ -952,12 +918,12 @@ def mk_iodide_ML_testing_and_training_set(df=None, target_name=['Iodide'],
         else:
             # Use decals and put the bins with high values to together
             # NOTE: use quartile cut! (pd.qcut, not pd.cut)
-            #            df[SPLITvar] = pd.cut(df['Iodide'].values,10).codes.astype(int)
+            #            df[SPLITvar] = pd.cut(df[target].values,10).codes.astype(int)
             # Combine the lesser populated higher 5 bins into the 5th bin
             #            df.loc[ df[SPLITvar] >= 4, SPLITvar ] = 4
             # qcut will split the data into N ("nsplits") bins (e.g. quintiles)
-            #            pd.qcut(df['Iodide'].values,5).value_counts()
-            df[SPLITvar] = pd.qcut(df['Iodide'].values, nsplits).codes
+            #            pd.qcut(df[target].values,5).value_counts()
+            df[SPLITvar] = pd.qcut(df[target].values, nsplits).codes
             if verbose:
                 print(df[SPLITvar].value_counts())
         # setup the split

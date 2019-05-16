@@ -11,12 +11,13 @@ Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L
 """
 import numpy as np
 import pandas as pd
+from sea_surface_iodide import mk_iodide_ML_testing_and_training_set
 
 
 # ---------------------------------------------------------------------------
 # ---------- Functions to produce plots/analysis for Oi! paper --------------
 # ---------------------------------------------------------------------------
-def plot_up_obs_spatially_against_predictions_options(dpi=320,
+def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
                                                       RFR_dict=None,
                                                       testset='Test set (strat. 20%)',
                                                       rm_Skagerrak_data=True,
@@ -36,7 +37,7 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320,
         extr_str = '_No_Skagerrak'
     else:
         extr_str = ''
-    filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res4param, extr_str)
+    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res4param, extr_str)
 #    folder =  './'
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
@@ -116,7 +117,7 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320,
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def plot_up_obs_spatially_against_predictions(dpi=320,
+def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
                                               RFR_dict=None,
                                               testset='Test set (strat. 20%)',
                                               rm_Skagerrak_data=False,
@@ -136,7 +137,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320,
         extr_str = '_No_Skagerrak'
     else:
         extr_str = ''
-    filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res4param, extr_str)
+    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res4param, extr_str)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # Set the variable to plot underneath observations
@@ -529,7 +530,7 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
                                         show_plot=False, shade_std=True,
                                         just_plot_existing_params=False,
                                         plot_up_param_iodide=True, context="paper",
-                                        ds=None,
+                                        ds=None, target='iodide',
                                         rm_Skagerrak_data=False):
     """ Plot a figure of iodide vs laitude """
     import seaborn as sns
@@ -544,11 +545,11 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
 #    folder = '/shared/scratch/hpc2/users/ts551/labbook/Python_progs/'
     if isinstance(ds, type(None)):
         folder = get_file_locations('data_root')
-        filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
+        filename = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'
         if rm_Skagerrak_data:
-            filename = filename.format('_No_Skagerrak')
+            filename = filename.format(target, '_No_Skagerrak')
         else:
-            filename = filename.format('')
+            filename = filename.format(target, '')
         ds = xr.open_dataset(folder + filename)
     # Rename to a more concise name
     try:
@@ -647,7 +648,7 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
     plt.close()
 
 
-def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320,
+def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodide',
                                                            plot_avg_as_median=False,
                                                            show_plot=False,
                                                            shade_std=True,
@@ -667,8 +668,8 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320,
     # Get predicted values
 #    folder = '/shared/scratch/hpc2/users/ts551/labbook/Python_progs/'
     folder = get_file_locations('data_root')
-    filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
-    ds = xr.open_dataset(folder + filename.format('_No_Skagerrak'))
+    filename = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'
+    ds = xr.open_dataset(folder + filename.format(target, '_No_Skagerrak'))
     # Get data with Skagerrak data too.
     folder = get_file_locations('data_root')
     ds2 = xr.open_dataset(folder + filename.format(''))
@@ -827,7 +828,7 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320,
 
 def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
                                                  plot_avg_as_median=False, RFR_dict=None,
-                                                 res='0.125x0.125',
+                                                 res='0.125x0.125', target='iodide',
                                                  show_plot=False, close_plot=True,
                                                  save_plot=False, shade_std=True,
                                                  folder=None, ds=None, topmodels=None):
@@ -842,7 +843,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
     if isinstance(folder, type(None)):
         folder = get_file_locations('data_root')
     if isinstance(ds, type(None)):
-        filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_str)
+        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
         ds = xr.open_dataset(folder + filename)
     # Rename to a more concise name
     print(ds.data_vars)
@@ -2144,7 +2145,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
 
 def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
                                     target_name='Iodide'):
-    """ """
+    """ Calculate the bias within the predictions """
     # Get data
     if isinstance(df, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -2242,7 +2243,6 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper", font_scale=0.75)
-    # show_plot=False; testset='Test set (strat. 20%)'; target_name='Iodide'; target='Iodide'
     # Get data
     if isinstance(df, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -2387,11 +2387,12 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
                                               target_name='Iodide',
                                               target='Iodide', df=None, plot_up_CDF=False,
                                               dpi=320):
-    """ Plot up CDF and PDF plots to explore point-vs-point data """
+    """
+    Plot up CDF and PDF plots to explore point-vs-point data
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper", font_scale=0.75)
-    # show_plot=False; testset='Test set (strat. 20%)'; target_name='Iodide'; target='Iodide'
     # Get data
     if isinstance(df, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -2485,18 +2486,17 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
     plt.savefig(savetitle)
 
 
-def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640,
+def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodide',
                                        stats=None, show_plot=False, save2png=True,
                                        skipna=True, fillcontinents=True,
                                        rm_non_water_boxes=True):
-    """ Plot up a window plot of predicted iodide """
+    """
+    Plot up a window plot of predicted iodide
+    """
     import seaborn as sns
     sns.reset_orig()
-    # get data
-#    filename = 'Oi_prj_predicted_iodide_{}.nc'.format( res )
-#    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
-#    filename= 'Oi_prj_predicted_iodide_4x5_UPDATED_Depth_GEBCO.nc'
-    filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
+    # get predicted target data
+    filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
@@ -2570,22 +2570,21 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640,
     plt.close()
 
 
-def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640,
+def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
                                   stats=None, show_plot=False, save2png=True,
                                   fillcontinents=True, rm_Skagerrak_data=False,
                                   rm_non_water_boxes=True, debug=False):
-    """ Plot up a window plot of predicted iodide """
+    """
+    Plot up a window plot of predicted iodide
+    """
     import seaborn as sns
     sns.reset_orig()
-    # get data
-#    filename = 'Oi_prj_predicted_iodide_{}.nc'.format( res )
-#    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
-#    filename= 'Oi_prj_predicted_iodide_4x5_UPDATED_Depth_GEBCO.nc'
+    # Get data predicted target data
     if rm_Skagerrak_data:
         extr_str = '_No_Skagerrak'
     else:
         extr_str = ''
-    filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_str)
+    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
@@ -2649,15 +2648,16 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640,
 
 
 def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
+                                                 target='iodide',
                                                  stats=None, show_plot=False,
                                                  save2png=True, fillcontinents=True):
-    """ Plot up predictions from existing parameters spatially """
+    """
+    Plot up predictions from existing parameters spatially
+    """
     import seaborn as sns
     sns.reset_orig()
-    # get data
-    filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
-#    filename = 'Oi_prj_predicted_iodide_4x5_UPDATED_Depth_GEBCO.nc'
-#    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
+    # Get data predicted target data
+    filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
@@ -2714,11 +2714,13 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
 
 def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                            stats=None, show_plot=False, save2png=True,
-                                           fillcontinents=True,
+                                           fillcontinents=True, target='iodide',
                                            rm_Skagerrak_data=False,
                                            rm_non_water_boxes=True, skipna=True,
                                            verbose=True, debug=False):
-    """ Plot up the ensemble average and uncertainty (std. dev.) spatially  """
+    """
+    Plot up the ensemble average and uncertainty (std. dev.) spatially
+    """
     import seaborn as sns
     sns.reset_orig()
     # Use the predicted values with or without the Skagerrak data?
@@ -2727,7 +2729,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     else:
         extr_str = ''
     # Get spatial data from saved NetCDF
-    filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_str)
+    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # setup a PDF
@@ -3089,11 +3091,13 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320,
+def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodide',
                                                 show_plot=False, save2png=True,
                                                 fillcontinents=True,
                                                 window=False, f_size=20):
-    """ Plot up the spatial changes between models  """
+    """
+    Plot up the spatial changes between models
+    """
     import seaborn as sns
     sns.reset_orig()
     #
@@ -3109,7 +3113,7 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320,
 #     'RFR(TEMP)',
 #     ]
     # get data
-    filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
+    filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
 #    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
@@ -3194,121 +3198,17 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320,
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-# def plot_up_spatial_uncertainty_predicted_values( res='4x5', dpi=320,
-#         show_plot=False, save2png=True, fillcontinents=True,
-#         rm_Skagerrak_data=False ):
-#     """ Plot up the spatial uncertainty between models  """
-#     import seaborn as sns
-#     sns.reset_orig()
-#     # --- set variables
-#     #
-#     models2compare = [
-# #    'RFR(TEMP+DEPTH+SAL+NO3+DOC)', 'RFR(TEMP+DEPTH+SAL+NO3)',
-# #    'RFR(TEMP+DEPTH+SAL)'
-#     'RFR(TEMP+DEPTH+SAL+NO3+DOC)',
-# #    'RFR(TEMP+SAL+NO3)',
-#     'RFR(TEMP+SAL+Prod)',
-# #    'RFR(TEMP)',
-#     'RFR(TEMP+DEPTH+SAL)'
-#     ]
-# 	#
-#     if rm_Skagerrak_data:
-#         extr_str = '_No_Skagerrak'
-#     else:
-#         extr_str = ''
-#     # Get data
-#     filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format( res, extr_str )
-#     folder = get_file_locations( 'data_root'  )
-# #    folder = '/shared/earth_home/ts551/labbook/Python_progs/'
-#     ds = xr.open_dataset( folder + filename )
-#     # setup a PDF
-#     savetitle = 'Oi_prj_spatial_uncertainity_models_{}'.format( res )
-#     pdff = AC.plot2pdfmulti( title=savetitle, open=True, dpi=dpi )
-#     #
-#     if res == '0.125x0.125':
-#         centre=True
-#     else:
-#         centre=False
-#     # iodide in aq
-#     Iaq = '[I$^{-}_{aq}$]'
-#     # --- Calculate the uncertainty on annual basis
-#     print( ds.data_vars )
-#     # get all the predicted values
-#     ars = [ ds[i].mean(dim='time') for i in models2compare ]
-#     units = 'nM'
-#     # calculate an average 2D field
-#     mean_values = np.array( ars ).mean(axis=0)
-#     # subtract this from the averages of the other values
-#     UNars = [i-mean_values for i in ars ]
-#     # get the standard deviation of this
-#     arr = np.std( np.stack( UNars ), axis=0 )
-#     # calculate value as % of mean
-# #    arr = arr / mean_values *100
-# #    units = '%'
-#     # Plot up this uncertainty
-#     title = 'Std. dev. ({}) of annual average predicted {}'.format( units, Iaq )
-#     if units == 'nM':
-#         fixcb, nticks = np.array( [0., 20.] ), 5
-#     else:
-#         fixcb, nticks = np.array( [0., 50.] ), 6
-#     extend='max'
-#     AC.plot_spatial_figure( arr, fixcb=fixcb, nticks=nticks, \
-#         extend=extend, res=res, show=False, title=title, \
-#         fillcontinents=True, centre=centre )
-# #        AC.map_plot( arr, res=res )
-#     # beautify
-#     # save plot
-#     AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
-#     if show_plot: plt.show()
-#     png_filename = AC.rm_spaces_and_chars_from_str( savetitle +'_'+'Annual' )
-#     if save2png: plt.savefig( png_filename, dpi=dpi )
-#     plt.close()
-#
-#     # --- Calculate the uncertainty considering temporal variation
-#     # get all the predicted values
-#     ars = [ ds[i]for i in models2compare ]
-#     units = 'nM'
-#     # calculate an average 2D field
-#     mean_values = np.concatenate( ars, axis=0 ).mean(axis=0)
-#     # subtract this from the averages of the other values
-#     UNars = [ i-mean_values for i in ars ]
-#     # get the standard deviation of this
-#     arr = np.std( np.concatenate( UNars,  axis=0 ), axis=0 )
-#     # calculate value as % of mean
-# #    arr = arr / mean_values *100
-# #    units = '%'
-#     # Plot up this uncertainty
-#     title = 'Std. dev. ({}) of monthly predicted {}'.format( units, Iaq )
-#     if units == 'nM':
-#         fixcb, nticks = np.array( [0., 30.] ), 7
-#     else:
-#         fixcb, nticks = np.array( [0., 50.] ), 6
-#     extend='max'
-#     AC.plot_spatial_figure( arr, fixcb=fixcb, nticks=nticks, \
-#         extend=extend, res=res, show=False, title=title, \
-#         fillcontinents=True, centre=centre )
-# #        AC.map_plot( arr, res=res )
-#     # beautify
-#     # save plot
-#     AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
-#     if show_plot: plt.show()
-#     png_filename = AC.rm_spaces_and_chars_from_str( savetitle +'_'+'monthly' )
-#     if save2png: plt.savefig( png_filename, dpi=dpi )
-#     plt.close()
-#
-#     # --- Save entire pdf
-#     AC.plot2pdfmulti( pdff, savetitle, close=True, dpi=dpi )
-
-
-def calculate_average_predicted_surface_conc():
-    """ Calculate the average predicted surface concentration """
+def calculate_average_predicted_surface_conc(target='Iodide'):
+    """
+    Calculate the average predicted surface concentration
+    """
     # directory
     folder = '/Users/tomassherwen/Google_Drive/data/iodide_Oi_project/'
     # files
     file_dict = {
-        'Macdonald2014': 'Oi_prj_Iodide_monthly_param_4x5_Macdonald2014.nc',
-        'Chance2014': 'Oi_prj_Iodide_monthly_param_4x5_Chance2014.nc',
-        'NEW_PARAM': 'Oi_prj_Iodide_monthly_param_4x5_NEW_PARAM.nc',
+        'Macdonald2014': 'Oi_prj_{}_monthly_param_4x5_Macdonald2014.nc'.format(target),
+        'Chance2014': 'Oi_prj_{}_monthly_param_4x5_Chance2014.nc'.format(target),
+        'NEW_PARAM': 'Oi_prj_{}_monthly_param_4x5_NEW_PARAM.nc'.format(target),
     }
     s_area = AC.get_surface_area(res=res)[..., 0]  # m2 land map
     #
@@ -3324,41 +3224,6 @@ def calculate_average_predicted_surface_conc():
         # Area weight (masked) array by surface area
         value = AC.get_2D_arr_weighted_by_X(arr.T,  s_area=s_area)
         print(param, value)
-
-
-# def check_partial_dependence( model=None,
-#         features=None, feature_names=None
-#         ):
-#     """ N/A only model setup is 'BaseGradientBoosting' """
-# #    features = [0, 5, 1, 2, (5, 1)]
-#     fig, axs = plot_partial_dependence( model, X_train, features=feature_names,
-#                                        feature_names=feature_names,
-#                                        n_jobs=3, grid_resolution=50)
-#     fig.suptitle('Partial dependence of house value on nonlocation features\n'
-#                  'for the California housing dataset')
-#     plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
-#
-#     print('Custom 3d plot via ``partial_dependence``')
-#     fig = plt.figure()
-#
-#     target_feature = (1, 5)
-#     pdp, axes = partial_dependence(clf, target_feature,
-#                                    X=X_train, grid_resolution=50)
-#     XX, YY = np.meshgrid(axes[0], axes[1])
-#     Z = pdp[0].reshape(list(map(np.size, axes))).T
-#     ax = Axes3D(fig)
-#     surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
-#                            cmap=plt.cm.BuPu, edgecolor='k')
-#     ax.set_xlabel(names[target_feature[0]])
-#     ax.set_ylabel(names[target_feature[1]])
-#     ax.set_zlabel('Partial dependence')
-#     #  pretty init view
-#     ax.view_init(elev=22, azim=122)
-#     plt.colorbar(surf)
-#     plt.suptitle('Partial dependence of house value on median\n'
-#                  'age and average occupancy')
-#     plt.subplots_adjust(top=0.9)
-#     plt.show()
 
 
 def get_diagnostic_plots_analysis4model(res='4x5', extr_str=''):
@@ -3384,12 +3249,12 @@ def get_diagnostic_plots_analysis4model(res='4x5', extr_str=''):
 
     # - Also get arrays of data for Chance et al and MacDonald et al...
     param_name = 'Chance et al (2014)'
-    ars_dict[param_name] = get_equivlient_Chance_arr(res=res,
+    ars_dict[param_name] = get_equiv_Chance_arr(res=res,
                                                     target_predictions=target_predictions,
                                                      df=df_predictors,
                                                      testing_features=testing_features)
     param_name = 'MacDonald et al (2014)'
-    ars_dict[param_name] = get_equivlient_MacDonald_arr(res=res,
+    ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
                                                     target_predictions=target_predictions,
                                                         df=df_predictors,
                                                         testing_features=testing_features)
@@ -3633,7 +3498,7 @@ def get_diagnostic_plots_analysis4model(res='4x5', extr_str=''):
 
 
 
-def get_equivlient_Chance_arr(df=None, target_predictions=None,
+def get_equiv_Chance_arr(df=None, target_predictions=None,
                               testing_features=None, target_name=['Iodide'], res='4x5'):
     """ Calculate Iodide from Chance parametistaion and input data"""
     # calculate dependency of iodide from Chance et al 2014
@@ -3645,7 +3510,7 @@ def get_equivlient_Chance_arr(df=None, target_predictions=None,
     return arr
 
 
-def get_equivlient_MacDonald_arr(df=None, target_predictions=None,
+def get_equiv_MacDonald_arr(df=None, target_predictions=None,
                                  testing_features=None, target_name=['Iodide'],
                                  res='4x5'):
     """ Calculate Iodide from Chance parametistaion and input data"""
@@ -5279,7 +5144,7 @@ def explore_sensitivity_of_65N(res='4x5'):
 
 def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
                                      plot_avg_as_median=False, RFR_dict=None,
-                                     res='0.125x0.125',
+                                     res='0.125x0.125', target='iodide',
                                      show_plot=False, close_plot=True, save_plot=False,
                                      folder=None, ds=None, topmodels=None):
     """ Plot a figure of iodide vs laitude - showing all ensemble members """
@@ -5293,7 +5158,7 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
     if isinstance(folder, type(None)):
         folder = get_file_locations('data_root')
     if isinstance(ds, type(None)):
-        filename = 'Oi_prj_predicted_iodide_{}{}.nc'.format(res, extr_str)
+        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
         ds = xr.open_dataset(folder + filename)
     # Rename to a more concise name
     print(ds.data_vars)
@@ -5453,7 +5318,9 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
 
 
 def set_SAL_and_NIT_above_65N_to_avg(res='0.125x0.125'):
-    """ Driver to build NetCDF files with updates """
+    """
+    Driver to build NetCDF files with updates
+    """
     # Local variables
     vars2set = [
         'WOA_Nitrate', 'WOA_Salinity', 'WOA_Phosphate',
@@ -5467,4 +5334,26 @@ def set_SAL_and_NIT_above_65N_to_avg(res='0.125x0.125'):
     for var2set in vars2set:
         set_values_at_of_var_above_X_lat_2_avg(var2set=var2set, res=res,
                                                fixed_value2use=fixed_value2use)
+
+
+def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodide',
+                                       months=None, var2extract='Ensemble_Monthly_mean',
+                                       rm_Skagerrak_data=False, verbose=True,
+                                       debug=False):
+    """
+    Wrapper for extract4nearest_points_in_ds for iodide
+    """
+    # Get data from NetCDF as a xarray dataset
+    folder = get_file_locations('data_root')
+    filename = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(target)
+    if rm_Skagerrak_data:
+        filename = filename.format('_No_Skagerrak')
+    else:
+        filename = filename.format('')
+    ds = xr.open_dataset(folder + filename)
+    # Now extract the dataset
+    extracted_vars = extract4nearest_points_in_ds(lons=lons, lats=lats, months=months,
+        var2extract=var2extract, verbose=verbose, debug=debug)
+    return extracted_vars
+
 

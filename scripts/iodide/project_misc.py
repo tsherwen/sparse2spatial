@@ -385,9 +385,10 @@ def get_analysis_numbers_for_AGU17_poster():
         plt.show()
 
 
-def get_plots_for_AGU_poster(res='4x5',
-                        extr_str='FINAL_DATA_tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'):
-    """ Produces all the plots for an AGU poster on this work """
+def get_plots_for_AGU_poster(res='4x5', extr_str='', target='Iodide'):
+    """
+    Produces all the plots for an AGU poster on this work
+    """
     # res='4x5'; extr_str='tree_X_K_JUST_TEMP_GEBCO_SALINTY'
     # Get the model
     model = get_current_model(extr_str=extr_str)
@@ -407,12 +408,12 @@ def get_plots_for_AGU_poster(res='4x5',
                                                target_predictions=target_predictions)
     # - Also get arrays of data for Chance et al and MacDonald et al...
     param_name = 'Chance et al (2014)'
-    ars_dict[param_name] = get_equivlient_Chance_arr(res=res,
+    ars_dict[param_name] = get_equiv_Chance_arr(res=res,
                                                     target_predictions=target_predictions,
                                                      df=df_predictors,
                                                      testing_features=testing_features)
     param_name = 'MacDonald et al (2014)'
-    ars_dict[param_name] = get_equivlient_MacDonald_arr(res=res,
+    ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
                                                     target_predictions=target_predictions,
                                                         df=df_predictors,
                                                         testing_features=testing_features)
@@ -539,7 +540,7 @@ def get_plots_for_AGU_poster(res='4x5',
     res = '2x2.5'
     import xarray as xr
     folder = get_file_locations('data_root')
-    filename = 'Oi_prj_Iodide_monthly_param_{}.nc'.format(res)
+    filename = 'Oi_prj_{}_monthly_param_{}.nc'.format(target, res)
     ds = xr.open_dataset(folder+filename)
     # annual average e
     ds = ds.mean(dim='time')
@@ -790,7 +791,7 @@ def plot_up_ln_iodide_vs_salinity(show_plot=True):
     than 30, shown in shaded area in (A). Note samples with salinity less than
     30 have been excluded from further analysis and are not shown in Fig. 8–11.
     """
-    #  ---  location of data to plot
+    # - location of data to plot
     folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
@@ -798,35 +799,26 @@ def plot_up_ln_iodide_vs_salinity(show_plot=True):
 #    df = df[ ~(df['Coastal']==True) ]
     # take log of iodide
     df['Iodide'] = np.log(df['Iodide'].values)
-    # --- Plot up all nitrate concentrations
-    df.plot(kind='scatter', x='Salinity', y='Iodide', marker='D',
-            color='k')  # ,
-#        alpha=.75,
-#        logy=True )
+    # - Plot up all nitrate concentrations
+    df.plot(kind='scatter', x='Salinity', y='Iodide', marker='D', color='k')
     plt.ylabel('LN[Iodide], nM')
     plt.xlabel('Salinity')
     plt.xlim(-2, AC.myround(max(df['Salinity']), 10, round_up=True))
     if show_plot:
         plt.show()
     plt.close()
-    # --- Plot up all nitrate concentrations
+    # - Plot up all nitrate concentrations
     df_tmp = df[df['Salinity'] < 30]
-    df_tmp.plot(kind='scatter', x='Salinity', y='Iodide', marker='D',
-                color='k')  # ,
-#        alpha=.75,
-#        logy=True )
+    df_tmp.plot(kind='scatter', x='Salinity', y='Iodide', marker='D', color='k')
     plt.ylabel('LN[Iodide], nM')
     plt.xlabel('Salinity')
     plt.xlim(-2, AC.myround(max(df['Salinity']), 10, round_up=True))
     if show_plot:
         plt.show()
     plt.close()
-    # --- Plot up all nitrate concentrations
+    # - Plot up all nitrate concentrations
     df_tmp = df[df['Salinity'] > 30]
-    df_tmp.plot(kind='scatter', x='Salinity', y='Iodide', marker='D',
-                color='k')  # ,
-#        alpha=.75,
-#        logy=True )
+    df_tmp.plot(kind='scatter', x='Salinity', y='Iodide', marker='D', color='k')
     plt.ylabel('LN[Iodide], nM')
     plt.xlabel('Salinity')
     plt.xlim(29, AC.myround(max(df['Salinity']), 10, round_up=True))
@@ -1981,60 +1973,6 @@ def plot_PDF_iodide_obs_mod(bins=10):
     plt.show()
 
 
-# def plt_predicted_iodide_vs_obs( ):
-#     """
-#     """
-#     import matplotlib.pyplot as plt
-#     import seaborn as sns
-#
-#     #  ---  location of data to plot
-#     folder = get_file_locations('data_root')
-#     f = 'Iodine_obs_WOA.csv'
-#     df = pd.read_csv(folderf, encoding='utf-8' )
-#
-#     # Just select non-coastal data
-#     df = df[ ~(df['Coastal']==True) ]
-#
-#     # sub select variables of interest.
-#     interest_vars = [ \
-#         'Chance2014_STTxx2_I',  'MacDonald2014_iodide', 'Iodide', 'Latitude', \
-#         ]
-#     df = df[interest_vars]
-#
-#     # ---
-#     ax = df.plot( kind='scatter', x='Latitude', y='Iodide', marker='D', \
-#         s=2, color='k' )
-#
-#     # Add binned mean
-# #    bins  = np.arange(-70, 70, 10 )
-#     bins = np.arange(-80, 90, 10 )
-# #    groups = df.groupby( np.digitize(df[u'Latitude'], bins) )
-#     groups = df.groupby( pd.cut(df[u'Latitude'], bins) )
-#     # take means of groups
-# #    groups_avg = groups.mean()
-#     groups_avg = groups.median()
-#
-#     # --- Plot up
-#     # plot groups
-# #    X_data = groups_avg['Latitude']
-#     # MacDonald iodide
-#     ax = groups_avg.plot( x='Latitude', y='MacDonald2014_iodide', \
-#         label='MacDonald2014', ax=ax )
-#     # chance et al iodide
-#     ax = groups_avg.plot(x='Latitude', y='Chance2014_STTxx2_I', ax=ax, \
-#         label='Chance2014' )
-#     # obs?
-#     ax = groups_avg.plot(x='Latitude', y='Iodide', ax=ax, \
-#         label='Obs.' )
-#
-#     # --- Beuatify
-#     #  legend
-#     plt.legend(loc='upper right')
-#     plt.xlim( -80, 80 )
-#
-#     plt.show()
-
-
 def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
                                       limit_to_400nM=False, inc_iodide=False):
     """
@@ -2136,7 +2074,9 @@ def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
 
 
 def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False):
-    """ Plot up old and new data on map """
+    """
+    Plot up old and new data on map
+    """
     import seaborn as sns
     sns.reset_orig()
     # - Setup plot
@@ -2207,7 +2147,9 @@ def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False):
 
 
 def map_plot_of_locations_of_obs4rosie():
-    """ Plot up locations of observations of data for Rosie/to double check """
+    """
+    Plot up locations of observations of data for Rosie/to double check
+    """
     import matplotlib.pyplot as plt
 
     # --- settings
@@ -2414,23 +2356,18 @@ def plot_up_parameterisations(df=None, save2pdf=True, show=False):
 def mk_X_Y_scatter_plot_param_vs_iodide(X=None, Y=None, iodide_var=None,
                                         title=None):
     """
-    Plots up a (pretty) X vs. Y plot for a parameterisatio of iodine (Y)
-    against obs iodide (X)
+    Plots up a X vs. Y plot for a parameterisation of iodine (Y) against obs iodide (X)
     """
     import matplotlib.pyplot as plt
     import seaborn as sns
-    # PLOT UP
+    # Plot up
     plt.scatter(X, Y, marker='+', alpha=0.5)
-
-#    print title
     plt.title(title)
     plt.ylabel('Param. [Iodide], nM')
     plt.xlabel('Obs. [{}], nM'.format(iodide_var))
-
     # Add a trendline
     ax = plt.gca()
     AC.Trendline(ax, X=X, Y=Y, color='green')
-
     # Adjust x and y axis limits
     round_max_X = AC.myround(max(X), 50, round_up=True)
     round_max_Y = AC.myround(max(Y), 50, round_up=True)
@@ -2439,12 +2376,9 @@ def mk_X_Y_scatter_plot_param_vs_iodide(X=None, Y=None, iodide_var=None,
         round_max_Y = AC.myround(max(Y), 5, round_up=True)
     plt.xlim(-(round_max_X/40), round_max_X)
     plt.ylim(-(round_max_Y/40), round_max_Y)
-
     # Add an N value to plot
     alt_text = '(N={})'.format(len(X))
-    ax.annotate(alt_text, xy=(0.8, 0.10), textcoords='axes fraction',
-                fontsize=10)
-
+    ax.annotate(alt_text, xy=(0.8, 0.10), textcoords='axes fraction', fontsize=10)
     return ax
 
 
@@ -2919,7 +2853,9 @@ def plot_up_lat_varI_varII(restrict_data_max=True, restrict_min_salinity=True):
 
 def plot_chance_param(df=None, X_var='Temperature', Y_var='Iodide',
                       data_str='(Obs.) data'):
-    """ Plot up chance et al (2014) param vs. data in DataFrame """
+    """
+    Plot up chance et al (2014) param vs. data in DataFrame
+    """
     # Only include finite data points for temp
     # ( NOTE: down to 1/3 of data of obs. data?! )
     df = df[np.isfinite(df[X_var])]
@@ -3139,7 +3075,7 @@ def get_numbers_for_data_paper():
         #	u'Month (Orig.)',  # This is RAW data, therefore Month is observation one
         u'Month',
         'Day',
-        'Iodide', 	u'δIodide',
+        'Iodide', u'δIodide',
         'ErrorFlag', 'Method', 'Coastal',  u'LocatorFlag',
     ]
     df = df[cols2use]
@@ -3213,27 +3149,6 @@ def get_numbers_for_data_paper():
     print(dfD.sum(axis=0)[dfD.sum(axis=0) > 1])
 
 
-# def make_a_file_for_Data_descriptor_paper( ):
-#     """ Make a file for submission for the data descriptor paper - REDUNDENT """
-#     # Get the latest file
-#     folder = get_file_locations('data_root')
-#     filename = 'Iodine_obs_WOA.csv'
-#     df = pd.read_csv( folder + filename )
-#     # just include variables of interest
-#     vars2include = [
-#     'Data_Key','Data_Key_ID', u'Latitude', u'Longitude',
-#     'Year', 'Month', 'Day',  'Iodide',
-#     u'Coastal',
-#     'Station', u'Cruise',
-#     u'Province',
-#     u'Month (Orig.)',
-#     ]
-#     df = df[ vars2include ]
-#     #
-#     filename = 'Iodide_obs_surface4DataDescriptorPaper.csv'
-#     df.to_csv( filename  )
-
-
 def mk_PDF_plot_for_Data_descriptor_paper():
     """
     Make a PDF plot for the data descriptor paper
@@ -3273,7 +3188,9 @@ def mk_PDF_plot_for_Data_descriptor_paper():
 
 def mk_pf_files4Iodide_cruise(dfs=None, test_input_files=False,
                               mk_column_output_files=False, num_tracers=103):
-    """ Make planeflight input files for iodide cruises """
+    """
+    Make planeflight input files for iodide cruises
+    """
     # Get locations for cruises as
     if isinstance(dfs, type(None)):
         dfs = get_iodide_cruise_data_from_Anoop_txt_files()
@@ -3330,7 +3247,9 @@ def mk_pf_files4Iodide_cruise(dfs=None, test_input_files=False,
 
 
 def test_input_files4Iodide_cruise_with_plots(dfs=None, show=False):
-    """" Plot up maps of routes """
+    """"
+    Plot up maps of iodide cruise routes
+    """
     # Get locations for cruises as
     if isinstance(dfs, type(None)):
         dfs = get_iodide_cruise_data_from_Anoop_txt_files()
@@ -3445,7 +3364,9 @@ def get_iodide_cruise_data_from_Anoop_txt_files(verbose=False):
 
 
 def get_iodide_cruise_data_from_MATlab_files():
-    """ Get location data (space, time)  for the iodide cruise """
+    """
+    Get location data (space, time)  for the iodide cruise
+    """
     # Import datetime as dt
     from datetime import timedelta
     from datetime import datetime
@@ -3470,7 +3391,9 @@ def get_iodide_cruise_data_from_MATlab_files():
 
 
 def TEST_AND_PROCESS_iodide_cruise_output(just_process_surface_data=False):
-    """ Process, plot (test values), then save planeflight values to csv """
+    """
+    Process, plot (test values), then save planeflight values to csv
+    """
     # --- Local variables
     wd = '/scratch/ts551/GC/v10-01_HAL/'
     files_dict = {

@@ -13,40 +13,6 @@ from sparse2spatial.utils import set_backup_month_if_unkonwn
 # ---------------------------------------------------------------------------
 # ------------------- Function to bulk extract ancillaries for csv -------
 # ---------------------------------------------------------------------------
-def extract_4_nearest_points_in_NetCDF(lons=None, lats=None,
-                                       months=None, var2extract='Ensemble_Monthly_mean',
-                                       rm_Skagerrak_data=False, verbose=True,
-                                       debug=False):
-    """
-    Extract requested variable for nearest point and time from NetCDF
-    """
-    # --- Get data from NetCDF as a xarray dataset
-    folder = get_file_locations('data_root')
-    filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
-    if rm_Skagerrak_data:
-        filename = filename.format('_No_Skagerrak')
-    else:
-        filename = filename.format('')
-    ds = xr.open_dataset(folder + filename)
-    # Check that the same about of locations have been given for all months
-    lens = [len(i) for i in (lons, lats, months)]
-    assert len(set(lens)) == 1, 'All lists provided must be same length!'
-    # --- Loop locations and extract
-    extracted_vars = []
-    for n_lon, lon_ in enumerate(lons):
-        # get lats and month too
-        lat_ = lats[n_lon]
-        month_ = months[n_lon]
-        # select for monnth
-        ds_tmp = ds[var2extract].sel(time=(ds['time.month'] == month_))
-        # select nearest data
-        vals = ds_tmp.sel(lat=lat_, lon=lon_, method='nearest')
-        if debug:
-            print(vals)
-        extracted_vars += [vals.values[0]]
-    return extracted_vars
-
-
 def extract_ancillary_obs_from_RAW_external_files(obs_data_df=None,
                                                   obs_metadata_df=None,
                                                   fill_error_strings_with_NaNs=True,
