@@ -5,10 +5,21 @@ Processing scripts for ancillary data to used as dependent variable for preditio
 """
 import AC_tools as AC
 
-
 def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
                                           save2NetCDF=False):
-    """ Interpolate the NaNs in 2D arrarys of feature variables """
+    """
+    Interpolate the NaNs in 2D arrarys of feature variables
+
+    Parameters
+    -------
+    ds (xr.Dataset), dataset object with variables to interpolate
+    res (res), horizontal resolution (e.g. 4x5) of Dataset
+    save2NetCDF (boolean), save interpolated Dataset to as a NetCDF?
+
+    Returns
+    -------
+    (xr.Dataset)
+    """
     import gc
     from multiprocessing import Pool
     from time import gmtime, strftime
@@ -27,7 +38,7 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
         # make sure all values are floats
         da = da.astype(np.float64)
         arr = np.ma.array(da.values)
-        # If depth, make all values greater than 0 NaNs
+        # If depth, set all values greater or equal to 1 to NaNs
         # (only depths < 0 are of interest)
         if var == 'Depth_GEBCO':
             arr[arr >= -1.] = np.NaN
@@ -36,7 +47,7 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
 #            arr = np.array(arr)
         # If World ocean atlas, set 0 values as NaNs (to be interpolated later)
         # A handful of values are 0,  but not masked
-        # (only MLD depths > 0 are of interest - )
+        # (only MLD depths > 0 are of interest )
         # ( also the -99 fill_value is not being removed, so mask this )
         if 'WOA_' in var:
             arr[arr == 0.] = np.NaN
@@ -98,7 +109,9 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
 
 
 def add_derivitive_variables(ds=None):
-    """ Add variables that are deirived from others """
+    """
+    Add variables to dataset that are derived from others within the Dataset
+    """
     # Add temperature in Kelvin
     TEMP_var = 'WOA_TEMP'
     ds[TEMP_var+'_K'] = ds['WOA_TEMP'].copy() + 273.15
@@ -111,7 +124,9 @@ def add_derivitive_variables(ds=None):
 
 
 def Convert_DOC_file_into_Standard_NetCDF():
-    """ Make DOC file(s) from UC-SB CF compliant """
+    """
+    Make DOC file(s) from UC-SB CF compliant
+    """
     import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
@@ -150,7 +165,9 @@ def Convert_DOC_file_into_Standard_NetCDF():
 
 
 def Convert_DOC_prod_file_into_Standard_NetCDF():
-    """ Convert Saeed Roshan's file into CF compliant format """
+    """
+    Convert Saeed Roshan's file into CF compliant format
+    """
     import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
@@ -187,7 +204,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
 
 def mk_RAD_NetCDF_monthly():
     """
-    Resample NetCDF from daily to monthly
+    Resample shortwave radiation NetCDF from daily to monthly
     """
     # Directory?
     folder = get_file_locations('GFDL')
@@ -224,9 +241,10 @@ def Convert_martins_productivity_file_into_a_NetCDF():
     # Extract data by month
     da_l = []
     for n in range(12):
-        # Assume the data is in blocks by month
+        # Assume the data is in blocks by longitude?
         arr = df.values[:, n*1081: (n+1)*1081].T[None, ...]
-        # Assume the data is in blocks by month #  Not the case!
+        # Assume the data is in blocks by month
+        #  Not the case!
 #        arr = df.values[:,n::12] # Not the case!
 #        arr = arr.T[None,...] # Not the case!
         print(arr.shape)
@@ -283,7 +301,16 @@ def Convert_martins_productivity_file_into_a_NetCDF():
 
 def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     """
-    Process NOAA WOA94 csv files to netCDF
+    Process NOAA WOA94 csv files into NetCDF files
+
+    Parameters
+    -------
+    _fill_value (float), fill value to use for new NetCDF
+    debug (boolean), perform debugging and verbose printing?
+
+    Returns
+    -------
+    (xr.Dataset)
     """
     # The MLD fields available are computed from climatological monthly mean
     # profiles of potential temperature and potential density based on three

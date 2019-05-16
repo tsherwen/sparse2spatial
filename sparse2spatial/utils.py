@@ -631,6 +631,17 @@ def add_LWI2ds_2x25_4x5(ds, var2template='Chance2014_STTxx2_I',
                         res='0.125x0.125', inc_booleans_and_area=True):
     """
     Add Land/Water/Ice (LWI) values to xr.DataArray
+
+    Parameters
+    -------
+    ds (xr.Dataset), xarray dataset to add LWI to
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    var2template (str): variable to use a template for making LWI variable
+    inc_booleans_and_area (boolean), include extra booleans and surface area
+
+    Returns
+    -------
+    (xr.Dataset)
     """
     # add LWI to array
     LWI = AC.get_land_map(res=res)[..., 0]
@@ -726,6 +737,16 @@ def get_file_locations(input_var, file_and_path='./sparse2spatial.rc'):
 def convert_fullname_to_shortname(input=None, rtn_dict=False, invert=False):
     """
     Convert short names to long names
+
+    Parameters
+    -------
+    input (str), input string to use as key to return dictionary value
+    invert (float), reverse the key/pair of the dictionary
+    rtn_dict (boolean), return the entire dictionary.
+
+    Returns
+    -------
+    (str)
     """
     name_dict = {
         u'DOC': u'DOC',
@@ -788,10 +809,9 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
 
     Parameters
     -------
-    var2use (str): variable to check
     check_full_df_used (bool): check the entire iodide observation is used for calc.
-    var2use (str): var to extracted from NetCDF
-    main_var (str): general variable (e.g. TEMP)
+    var2use (str): var to check from NetCDF
+    df (pd.DataFrame): DataFrame to check variable ("var2use") within
 
     Returns
     -------
@@ -866,7 +886,6 @@ def set_backup_month_if_unkonwn(lat=None, var2use='', main_var='',
     Notes
     -----
      - a value of three months prior to summer solstice for NH and SH is assumed
-
     """
     # seasons  = 'DJF', 'MAM', 'JJA', 'SON'
     if lat > 0:  # if NH
@@ -954,21 +973,60 @@ def extract4nearest_points_in_ds(lons=None, lats=None, months=None,
                                  verbose=True, debug=False):
     """
     Extract requested variable for nearest point and time from NetCDF
+
+
+    Parameters
+    -------
+    lons (np.array), list of Longitudes to use for spatial extraction
+    lats (np.array), list of latitudes to use for spatial extraction
+    months (np.array), list of months to use for temporal extraction
+    var2extract (str), name of variable to extract data for
+    rm_Skagerrak_data (boolean), remove the single data from the Skagerrak region
+
+    Returns
+    -------
+    (xr.Dataset)
     """
+    # Get data from NetCDF as a xarray dataset
+    ds = get_predicted_values_as_ds()
     # Check that the same about of locations have been given for all months
     lens = [len(i) for i in (lons, lats, months)]
     assert len(set(lens)) == 1, 'All lists provided must be same length!'
-    # --- Loop locations and extract
+    # Loop locations and extract
     extracted_vars = []
     for n_lon, lon_ in enumerate(lons):
-        # get lats and month too
+        # Get lats and month too
         lat_ = lats[n_lon]
         month_ = months[n_lon]
-        # select for monnth
+        # Select for monnth
         ds_tmp = ds[var2extract].sel(time=(ds['time.month'] == month_))
-        # select nearest data
+        # Select nearest data
         vals = ds_tmp.sel(lat=lat_, lon=lon_, method='nearest')
         if debug:
             print(vals)
         extracted_vars += [vals.values[0]]
     return extracted_vars
+
+
+def get_predicted_values_as_ds(rm_Skagerrak_data=False):
+    """
+    Get predicted values from saved NetCDF file
+    """
+    folder = get_file_locations('data_root')
+    filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
+    if rm_Skagerrak_data:
+        filename = filename.format('_No_Skagerrak')
+    else:
+        filename = filename.format('')
+    ds = xr.open_dataset(folder + filename)
+    return ds
+
+
+def get_feature_variables_as_ds(res='4x5'):
+    """
+    Get feature variables from saved NetCDF file
+    """
+    filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+    folder = get_file_locations('data_root')
+    ds = xr.open_dataset(folder + filename)
+    return ds

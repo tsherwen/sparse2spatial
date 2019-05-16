@@ -1,3 +1,9 @@
+"""
+
+Functions for working with Longhurst provinces
+
+"""  
+
 def add_longhurst_raster_array_and_LWI_core_NetCDFs(target='Iodide'):
     """
     Driver to add Longhurst Provinces fields to spatial NetCDF files
@@ -28,12 +34,10 @@ def add_Longhurst_Province_raster_to_array(ds):
     import geopandas
     from rasterio import features
     from affine import Affine
-
-    # - Get the shape files
+    # Get the shape files
     provinces = geopandas.read_file('/work/home/ts551/data/longhurst_v4_2010')
     shapes = [(shape, n) for n, shape in enumerate(provinces.geometry)]
-
-    # - Now add the existing array
+    # Now add the existing array
     ds_tmp = ds[list(ds.data_vars)[0]].copy().mean(dim='time')
     # Add raster the provinces onto this
     ds_tmp['LonghurstProvince'] = rasterize(shapes, ds_tmp.coords)
@@ -52,17 +56,30 @@ def add_Longhurst_Province_raster_to_array(ds):
 
 def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
                                  CoordVar='Province', ExStr=''):
-    """ Add numbers for Longhurst Provinces to NetCDF """
+    """
+    Add numbers for Longhurst Provinces to NetCDF
+
+
+    Parameters
+    -------
+    ds (xr.Dataset), xarray dataset to add LWI to
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    CoordVar (str), name to give to newly created
+    LatVar (str), variable name in DataFrame for latitude
+    LonVar (str), variable name in DataFrame for longitude
+    ExStr (str), extra string to add as a suffix to outputted files
+
+    Returns
+    -------
+    (None)
+    """
     # Get xml data  for provinces
     provinces, tree = ParseLonghurstProvinceFile()
     # Just use 4x5 as an example
     if isinstance(ds, type(None)):
-        filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-        folder = get_file_locations('data_root')
-        ds = xr.open_dataset(folder + filename)
+        ds = get_feature_variables_as_ds(res=res)
     # get dictionary of province numbers
-    Rnum2prov = RosieLonghurstProvinceFileNum2Province(
-        None, invert=True, rtn_dict=True)
+    Rnum2prov = RosieLonghurstProvinceFileNum2Province(None, invert=True, rtn_dict=True)
     # use an existing variables as a template
 #	var2use = 'WOA_TEMP'
 #	df = ds[var2use].mean(dim='time')
@@ -86,7 +103,6 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
     df[LonVar] = lons
 #	df[CoordVar] = coords
     # Add a single variable for the coordinate
-
     def f(x):
         return (x[LonVar], x[LatVar])
     df[CoordVar] = df.apply(f, axis=1)
@@ -197,125 +213,132 @@ def add_LonghurstProvince2table(df, LatVar='Latitude', LonVar='Longitude'):
     print(PrtStr.format(', '.join(set(tmp['Data_Key']))))
 
 
-def Get_LonghurstProvince4coord(coords, myLon=None, myLat=None,  provinces=None,
-                                tree=None, num2prov=None, verbose=False):
-    """
-    Get the Longhurst Province
-
-    coords (tuple), (LON, LAT) Easterly longitude ranging from -180 to 180,
-    Northerly latitude ranging from -90 to 90
-
-    Note orginal code is from X.
-     -  code hosted as below
-    https://github.com/thechisholmlab/Longhurst-Province-Finder
-     - original documentation for COORDS2LONGHURST
-    This script takes as input latitude and longitude coordinates and returns the
-    Longhurst Province where the coordinate is found.  It works by parsing a file that
-    contains lat/long coordinates that bound each province and performing the Crossings Test
-    on each province.  The Crossings Test is used in computer graphics to quickly
-    determine if a point is within or outside a polygon by "drawing" a line east from the
-    input coordinate and seeing how many crossings the line makes with the polygon border.
-    If there is an odd number of crossings, the point is within the polygon, otherwise the
-    point is outside the polygon.
-
-    """
-    from xml.dom.minidom import parse, parseString
-
-    # - Get lat and lon from coords tuple if not provided individual
-    if isinstance(myLon, type(None)) or isinstance(myLat, type(None)):
-        myLon, myLat = coords
-    # Parse GML data from longhurst.xml - if not provided
-    if isinstance(provinces, type(None)):
-        provinces, tree = ParseLonghurstProvinceFile()
-    # Find which candidate provinces our coordinates come from.
-    inProvince = {}
-    for p in provinces:
-        inLat = 0
-        inLon = 0
-        if (myLat >= provinces[p]['y1'] and myLat <= provinces[p]['y2']):
-            inLat = 1
-        if (myLon >= provinces[p]['x1'] and myLon <= provinces[p]['x2']):
-            inLon = 1
-        if inLat and inLon:
-            inProvince[p] = True
-
-    # Perform Crossings Test on each candidate province.
-    for node in tree.getElementsByTagName('MarineRegions:longhurst'):
-        fid = node.getAttribute("fid")
-        if inProvince.get(fid):
-            crossings = 0
-            # 1. Get all coordinate pairs for this province.
-            geom = node.getElementsByTagName('MarineRegions:the_geom')
-            for g in geom:
-                c = g.getElementsByTagName('gml:coordinates')
-                for i in c:
-                    ii = i.childNodes
-                    coordStr = ii[0].data  # <--- contains coordinate strings
-                    P = coordStr.split(' ')
-                    pairs = []
-                    for p in P:
-                        [lon, lat] = p.split(',')
-                        pairs.append([float(lon), float(lat)])
-                    # 2. Use pair p and p+1 to perform Crossings Test.
-                    for i in range(len(pairs)-1):
-                        # test latitude
-                        passLat = (pairs[i][1] >= myLat and pairs[i+1][1] <= myLat) or (
-                            pairs[i][1] <= myLat and pairs[i+1][1] >= myLat)
-                        # test longitude
-                        passLon = (myLon <= pairs[i+1][0])
-                        if passLon and passLat:
-                            crossings += 1
-            if crossings % 2 == 1:
-                inProvince[fid] = True
-            else:
-                inProvince[fid] = False
-
-    # Confirm the solution
-    solution = []
-    for i in inProvince:
-        if inProvince[i] == True:
-            solution.append([provinces[i]['provCode'],
-                             provinces[i]['provName']])
-    # No solutions?
-    if len(solution) == 0:
-        if verbose:
-            print()
-            print('No province found matching ', myLat, 'N, ', myLon, 'E.  ')
-            print('This coordinate is either on land or it could be in one of these... ')
-            for i in inProvince:
-                print(provinces[i]['provCode'], '\t', provinces[i]['provName'])
-            print()
-        return np.NaN
-    # one solution
-    elif len(solution) == 1:
-        if verbose:
-            print()
-            print(myLat, 'N, ', myLon, 'E -->  ',
-                  solution[0][0], '\t', solution[0][1])
-            print()
-#		return solution[0][0]
-        return num2prov[solution[0][0]]
-    # mutiple solutions
-    elif len(solution) > 1:
-        if verbose:
-            print()
-            print('Conflict between these provinces... ')
-            for i in solution:
-                print(solution[0][0], '\t', solution[0][1])
-            print()
-        return np.NaN
+# def Get_LonghurstProvince4coord(coords, myLon=None, myLat=None,  provinces=None,
+#                                 tree=None, num2prov=None, verbose=False):
+#     """
+#     Get the Longhurst Province - REDUNDENT AND NOT IN USE
+#
+#     Notes
+#     -----
+#
+#     coords (tuple), (LON, LAT) Easterly longitude ranging from -180 to 180,
+#     Northerly latitude ranging from -90 to 90
+#
+#     Note orginal code is from X.
+#      -  code hosted as below
+#     https://github.com/thechisholmlab/Longhurst-Province-Finder
+#      - original documentation for COORDS2LONGHURST
+#     This script takes as input latitude and longitude coordinates and returns the
+#     Longhurst Province where the coordinate is found.  It works by parsing a file that
+#     contains lat/long coordinates that bound each province and performing the Crossings Test
+#     on each province.  The Crossings Test is used in computer graphics to quickly
+#     determine if a point is within or outside a polygon by "drawing" a line east from the
+#     input coordinate and seeing how many crossings the line makes with the polygon border.
+#     If there is an odd number of crossings, the point is within the polygon, otherwise the
+#     point is outside the polygon.
+#
+#     """
+#     from xml.dom.minidom import parse, parseString
+#
+#     # - Get lat and lon from coords tuple if not provided individual
+#     if isinstance(myLon, type(None)) or isinstance(myLat, type(None)):
+#         myLon, myLat = coords
+#     # Parse GML data from longhurst.xml - if not provided
+#     if isinstance(provinces, type(None)):
+#         provinces, tree = ParseLonghurstProvinceFile()
+#     # Find which candidate provinces our coordinates come from.
+#     inProvince = {}
+#     for p in provinces:
+#         inLat = 0
+#         inLon = 0
+#         if (myLat >= provinces[p]['y1'] and myLat <= provinces[p]['y2']):
+#             inLat = 1
+#         if (myLon >= provinces[p]['x1'] and myLon <= provinces[p]['x2']):
+#             inLon = 1
+#         if inLat and inLon:
+#             inProvince[p] = True
+#
+#     # Perform Crossings Test on each candidate province.
+#     for node in tree.getElementsByTagName('MarineRegions:longhurst'):
+#         fid = node.getAttribute("fid")
+#         if inProvince.get(fid):
+#             crossings = 0
+#             # 1. Get all coordinate pairs for this province.
+#             geom = node.getElementsByTagName('MarineRegions:the_geom')
+#             for g in geom:
+#                 c = g.getElementsByTagName('gml:coordinates')
+#                 for i in c:
+#                     ii = i.childNodes
+#                     coordStr = ii[0].data  # <--- contains coordinate strings
+#                     P = coordStr.split(' ')
+#                     pairs = []
+#                     for p in P:
+#                         [lon, lat] = p.split(',')
+#                         pairs.append([float(lon), float(lat)])
+#                     # 2. Use pair p and p+1 to perform Crossings Test.
+#                     for i in range(len(pairs)-1):
+#                         # test latitude
+#                         passLat = (pairs[i][1] >= myLat and pairs[i+1][1] <= myLat) or (
+#                             pairs[i][1] <= myLat and pairs[i+1][1] >= myLat)
+#                         # test longitude
+#                         passLon = (myLon <= pairs[i+1][0])
+#                         if passLon and passLat:
+#                             crossings += 1
+#             if crossings % 2 == 1:
+#                 inProvince[fid] = True
+#             else:
+#                 inProvince[fid] = False
+#
+#     # Confirm the solution
+#     solution = []
+#     for i in inProvince:
+#         if inProvince[i] == True:
+#             solution.append([provinces[i]['provCode'],
+#                              provinces[i]['provName']])
+#     # No solutions?
+#     if len(solution) == 0:
+#         if verbose:
+#             print()
+#             print('No province found matching ', myLat, 'N, ', myLon, 'E.  ')
+#             print('This coordinate is either on land or it could be in one of these... ')
+#             for i in inProvince:
+#                 print(provinces[i]['provCode'], '\t', provinces[i]['provName'])
+#             print()
+#         return np.NaN
+#     # one solution
+#     elif len(solution) == 1:
+#         if verbose:
+#             print()
+#             print(myLat, 'N, ', myLon, 'E -->  ',
+#                   solution[0][0], '\t', solution[0][1])
+#             print()
+# #		return solution[0][0]
+#         return num2prov[solution[0][0]]
+#     # mutiple solutions
+#     elif len(solution) > 1:
+#         if verbose:
+#             print()
+#             print('Conflict between these provinces... ')
+#             for i in solution:
+#                 print(solution[0][0], '\t', solution[0][1])
+#             print()
+#         return np.NaN
 
 
 def ParseLonghurstProvinceFile():
-    """ Parse the .xml file into a dictionary object """
+    """
+    Parse the Longhurst *.xml file into a dictionary object
+
+    Notes
+    -----
+     - This code is copied from elsewhere and not used...
+    Original code: https://github.com/thechisholmlab/Longhurst-Province-Finder
+    """
 #	from xml.dom.minidom
     from xml.dom.minidom import parse, parseString
-
     provinces = {}
     tree = parse('longhurst.xml')
-
     for node in tree.getElementsByTagName('MarineRegions:longhurst'):
-
         # 1. Get province code, name and bounding box from file
         provCode = node.getElementsByTagName('MarineRegions:provcode')[
             0].firstChild.data
@@ -323,7 +346,6 @@ def ParseLonghurstProvinceFile():
             0].firstChild.data
         fid = node.getAttribute("fid")
         b = node.getElementsByTagName('gml:coordinates')[0].firstChild.data
-
         # 2. Parse bounding box coordinates
         b = b.split(' ')
         x1, y1 = b[0].split(',')
@@ -332,17 +354,29 @@ def ParseLonghurstProvinceFile():
         y1 = float(y1)
         x2 = float(x2)
         y2 = float(y2)
-
+        # Add province to dictionary
         provinces[fid] = {'provName': provName, 'provCode': provCode,
                           'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
-
     return provinces, tree
 
 
 def LonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
     """
-    Get the longhurst province
-    NOTE: these are not the longhurst numbers (just number within MIT list)
+    Get the Longhurst province - REDUNDENT
+
+    Parameters
+    -------
+    input (str), input string to use as key to return dictionary value
+    invert (float), reverse the key/pair of the dictionary
+    rtn_dict (boolean), return the entire dictionary.
+
+    Returns
+    -------
+    (str)
+
+    Notes
+    -----
+     - these are not the longhurst numbers (just number within MIT list)
     """
     num2prov = {
     1: u'FKLD', 2: u'CHIL', 3: u'TASM', 4: u'BRAZ', 5: u'SATL', 6: u'EAFR', 7: u'AUSW',
@@ -368,8 +402,22 @@ def LonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
 def MarineRegionsOrg_LonghurstProvinceFileNum2Province(input, invert=False,
                                                        rtn_dict=False):
     """
-    Get the longhurst province
-    NOTE: this is listing order of the shape file from http://www.marineregions.org/sources.php#longhurst
+    Get the Longhurst province
+
+    Parameters
+    -------
+    input (str), input string to use as key to return dictionary value
+    invert (float), reverse the key/pair of the dictionary
+    rtn_dict (boolean), return the entire dictionary.
+
+    Returns
+    -------
+    (str)
+
+    Notes
+    -----
+     - This is listing order of the shape file from
+    http://www.marineregions.org/sources.php#longhurst
     """
     num2prov = {
     0: u'BPLR', 1: u'ARCT', 2: u'SARC', 3: u'NADR', 4: u'GFST', 5: u'NASW', 6: u'NATR',
@@ -395,7 +443,20 @@ def MarineRegionsOrg_LonghurstProvinceFileNum2Province(input, invert=False,
 def RosieLonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
     """
     Get the longhurst province
-    NOTE: these **are** the longhurst numbers
+
+    Parameters
+    -------
+    input (str), input string to use as key to return dictionary value
+    invert (float), reverse the key/pair of the dictionary
+    rtn_dict (boolean), return the entire dictionary.
+
+    Returns
+    -------
+    (str)
+
+    Notes
+    -----
+     - these **are** the longhurst numbers (other funcs. give numbers used elsewhere)
     """
     Rnum2prov = {
     1: 'BPLR', 2: 'ARCT', 3: 'SARC', 4: 'NADR', 5: 'GFST', 6: 'NASW', 7: 'NATR',
@@ -427,7 +488,9 @@ def RosieLonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
 
 
 def Get_LonghurstProvinceName4Num(input):
-    """ Get full Longhurst Province for given number """
+    """
+    Get full Longhurst Province for given number
+    """
     LonghurstProvinceDict = {
         'ALSK': 'AlaskaDownwellingCoastalProvince',
         'ANTA': 'AntarcticProvince',
