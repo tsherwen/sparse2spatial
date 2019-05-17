@@ -6,21 +6,7 @@
 #
 # - Locations of input data
 #
-data_root            : /work/home/ts551/data/iodide/
-submitted_data       : /work/home/ts551/data/iodide/submitted_data/
-digitised_data       : /work/home/ts551/data/iodide/digitised_data/
-new_data             : /work/home/ts551/data/iodide/iodide_data_recieved_post_Chance2014/
-DOC                  : /work/home/ts551/data/iodide/DOC/
-Martin_Wadley        : /work/home/ts551/data/iodide/Martin_Wadley/
-GFDL                 : /work/home/ts551/data/iodide/GFDL/
-WOA_2013             : /work/home/ts551/data/iodide/WOA13/
-WOA_2001             : /work/home/ts551/data/iodide/WOA13/
-WOA_1994             : /work/home/ts551/data/iodide/WOA94/
-SeaWIFS              : /work/home/ts551/data/iodide/SeaWIFS/
-BODC                 : /work/home/ts551/data/iodide/BODC/
-NASA_data_dir        : /work/data//NASA/nature_run/
-root_data_dir        : /work/data/
-home_dir             : /work/home/ts551/
-earth0_home_dir      : /work/home/ts551/
+data_root            : /work/home/ts551/data/s2s/data/
+s2s_root             : /work/home/ts551/data/s2s/
 AC_tools             : /work/home/ts551//labbook/Python_progs/AC_tools/
 # End of file
