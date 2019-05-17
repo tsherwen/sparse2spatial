@@ -104,7 +104,8 @@ venv.bak/
 .mypy_cache/
 
 # temp. files
-*.~
+*~
+*#*
 
 # outputed files
 *.nc
