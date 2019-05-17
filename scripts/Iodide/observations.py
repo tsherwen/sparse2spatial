@@ -440,12 +440,12 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     # New data, acquired since 2017
     data_root = get_file_locations('data_root', file_and_path=file_and_path)
     if (not InChance2014):
-        folder = data_root + '/new_data/'
+        folder = data_root + '/inputs/new_data/'
     elif ((source == 's') or (source == 'bodc')) and (InChance2014):
-        folder = data_root + '/submitted_data/'
+        folder = data_root + '/inputs/submitted_data/'
     # Data digitalised for Chance et al (2014)
     elif (source == 'd') and (InChance2014):
-        folder = data_root + '/digitised_data/'
+        folder = data_root + '/inputs/digitised_data/'
     else:
         print("Source received ('') unknown?!".format(source))
         sys.exit()

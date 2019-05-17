@@ -28,33 +28,33 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
     from sklearn.metrics import mean_squared_error
-    # ----- Local variables
+    # - Local variables
     # Get unprocessed input data at observation points
     if isinstance(df, type(None)):
         if isinstance(RFR_dict, type(None)):
             RFR_dict = build_or_get_current_models()
         df = RFR_dict['df']
-    # ---- get the data
+    # - Get the data
     # get processed data
     # Which "features" (variables) to use
     if isinstance(testing_features, type(None)):
         #        model_name = 'ALL'
         #        model_name = 'RFR(TEMP+DEPTH+SAL)'
         testing_features = get_model_testing_features_dict(model_name)
-        # Fix the extr_str variable for now
+    # Fix the extra_str variable for now
     extr_str = ''
 
-    # --- local variables
+    # - local variables
     # dictionary of test set variables
     # NOTE: default increase of the base number of n_estimators from 10 to 500
     # set name name as list of target
     target_name = [target]
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
-    #  location of data
-    wrk_dir = get_file_locations('data_root')+'/models/'+'/LIVE/'
-
-    # --- predict multiple models and save these
+    # Location of data
+    s2s_root = utils.get_file_locations('s2s_root')
+    folder = '{}/{}/models/LIVE/'.format(s2s_root, target)
+    # - Predict multiple models and save these
     dfs = {}
     # get random state to use
     for random_state in random_states:
@@ -64,14 +64,14 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
         # set the training and test sets
         # Stratified split by default, unless random var in name
         returned_vars = mk_ML_testing_and_training_set(df=df,
-                                                              random_20_80_split=False,
-                                                        testing_features=testing_features,
-                                                              random_state=random_state,
-                                                              random_strat_split=True,
-                                                              nsplits=4,
-                                                              )
+                                                       random_20_80_split=False,
+                                                       testing_features=testing_features,
+                                                       random_state=random_state,
+                                                       random_strat_split=True,
+                                                       nsplits=4,
+                                                       )
         train_set, test_set, test_set_targets = returned_vars
-        # set the training and test sets
+        # Set the training and test sets
         train_features = df[testing_features].loc[train_set.index]
         train_labels = df[target_name].loc[train_set.index]
         test_features = df[testing_features].loc[test_set.index]
@@ -82,8 +82,7 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
         # Open the already built model model
         model_savename = "my_model_{}_{}.pkl".format(model_name, random_state)
         b_modelname = model_savename.split('my_model_')[-1][:-3]
-        loc2use = '{}/{}{}/'.format(wrk_dir,
-                                    '/ENSEMBLE_REPEAT_BUILD', extr_str)
+        loc2use = '{}/{}{}/'.format(folder,'/ENSEMBLE_REPEAT_BUILD', extr_str)
         model = joblib.load(loc2use + model_savename)
         # Predict with model for the test conditions
         predictions = model.predict(test_features)
@@ -95,17 +94,31 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
         df_tmp = df_tmp.T
         df_tmp.columns = [b_modelname]
         dfs[b_modelname] = df_tmp
-        # remove the model from memory
+        # Remove the model from memory
         del model
-    # return a single data frame
+    # Return a single data frame
     return pd.concat([dfs[i].T for i in dfs.keys()], axis=0)
 
 
-def get_stats_on_multiple_global_predictions(model_name=None,
+def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
                                              RFR_dict=None, res='0.125x0.125',
                                              rm_Skagerrak_data=False):
-    """ Get stats on the mutiple global predictions per model """
-    # --- Set local variables
+    """
+    Get stats on the mutiple global predictions per model
+
+    Parameters
+    -------
+    target (str), name of the target variable being predicted by the feature variables
+    model_name (str), name of the RFR model being used to predict the target variable
+    RFR_dict (dict), dictionary of models, data and shared variables
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    rm_Skagerrak_data (boolean), Remove specific data
+    (above argument is a iodide specific option - remove this)
+
+    Returns
+    -------
+    (pd.DataFrame)
+    """
     # Get key data as a dictionary
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
@@ -114,13 +127,13 @@ def get_stats_on_multiple_global_predictions(model_name=None,
         extr_str = '_No_Skagerrak'
     else:
         extr_str = ''
-    # location of data
-    data_root = get_file_locations('data_root') + '/models/'+'/LIVE/'
-#    data_root = './' # KLUDGE: use currentfolderwhilst testing
-   # Get the folder and filename to use
-    loc2use = '{}/ENSEMBLE_REPEAT_BUILD{}/'
-    loc2use = loc2use.format(data_root, extr_str)
-    file_str = loc2use + '*{}*ENSEMBLE_BUILDS*{}*.nc'
+    # Location of data
+#    s2s_root = './' # KLUDGE: use currentfolderwhilst testing
+    s2s_root = utils.get_file_locations('s2s_root')
+    folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
+    folder = folder_str.format(s2s_root, target, extr_str)
+    # Get the folder and filename to use
+    file_str = folder + '*{}*ENSEMBLE_BUILDS*{}*.nc'
     file2use = glob.glob(file_str.format(res, model_name))
     assert_str = "There aren't any file for the model! ({})"
     assert len(file2use) != 0, assert_str.format(model_name)
@@ -128,18 +141,18 @@ def get_stats_on_multiple_global_predictions(model_name=None,
     file2use = file2use[0]
     filename = file2use.split('/')[-1]
     folder = '/'.join(file2use.split('/')[:-1]) + '/'
-    # USe different drivers depending on resolution
+    # Use different drivers depending on resolution
     if res == '0.125x0.125':
         df = get_stats_on_spatial_predictions_0125x0125(filename=filename,
-                                                         folder =folder,
+                                                         folder=folder,
                                                         just_return_df=True,
                                                         ex_str=model_name)
     else:
         df = get_stats_on_spatial_predictions_4x5_2x25(filename=filename,
-                                                        folder =folder,
+                                                        folder=folder,
                                                        just_return_df=True,
                                                        ex_str=model_name)
-    # remove the values that aren't for a specific model
+    # Remove the values that aren't for a specific model
     df = df[[i for i in df.columns if model_name in i]]
     # return the DataFrame
     return df
@@ -181,11 +194,10 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # get processed data
     # Which "features" (variables) to use
     if isinstance(testing_features, type(None)):
-        #        model_name = 'ALL'
-        model_name = 'RFR(TEMP+DEPTH+SAL)'
-        testing_features = get_model_testing_features_dict(model_name)
-
-    # --- local variables
+#        model_name = 'RFR(TEMP+DEPTH+SAL)'
+#        testing_features = get_model_testing_features_dict(model_name)
+        print( 'please provided testing_features to build_the_same_model_mulitple_times')
+        sys.exit()
     # dictionary of test set variables
     # NOTE: default increase of the base number of n_estimators from 10 to 500
     # set name name as list of target
@@ -193,9 +205,11 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
     #  location of data
-    wrk_dir = get_file_locations('data_root')+'/models/'+'/LIVE/'
+    s2s_root = utils.get_file_locations('s2s_root')
+    folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
+    folder = folder_str.format(s2s_root, target, extr_str)
 
-    # --- build multiple models and save these
+    # - build multiple models and save these
     # get random state to use
     for random_state in random_states:
         prt_str = 'Using: random_state = {} to build model = {}'
@@ -203,12 +217,12 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         # set the training and test sets
         # Stratified split by default, unless random var in name
         returned_vars = mk_ML_testing_and_training_set(df=df,
-                                                              random_20_80_split=False,
-                                                        testing_features=testing_features,
-                                                              random_state=random_state,
-                                                              random_strat_split=True,
-                                                              nsplits=4,
-                                                              )
+                                                       random_20_80_split=False,
+                                                       testing_features=testing_features,
+                                                       random_state=random_state,
+                                                       random_strat_split=True,
+                                                       nsplits=4,
+                                                       )
         train_set, test_set, test_set_targets = returned_vars
         # set the training and test sets
         train_features = df[testing_features].loc[train_set.index]
@@ -225,9 +239,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         model.fit(train_features, train_labels)
         # Save the newly built model model
         model_savename = "my_model_{}_{}.pkl".format(model_name, random_state)
-        loc2save = '{}{}{}/'.format(wrk_dir,
-                                    '/ENSEMBLE_REPEAT_BUILD', extr_str)
-        joblib.dump(model, loc2save+model_savename)
+        joblib.dump(model, folder+model_savename)
         # remove the model from memory
         del model
 
@@ -860,20 +872,23 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodide',
                                               use_annual_mean=True, filename=None,
                                               folder=None, just_return_df=False,
+                                              var2template='Chance2014_STTxx2_I',
                                               ):
-    """ Evaluate the spatial predictions between models """
+    """
+    Evaluate the spatial predictions between models at a resolution of 4x5 or 2x2.5
+    """
     # ----
     # If filename or folder not given, then use defaults
     if isinstance(filename, type(None)):
         filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(folder, type(None)):
-        folder = get_file_locations('data_root')
+        s2s_root = utils.get_file_locations('s2s_root')
+        folder = '{}/{}/'.format(s2s_root, target)
     ds = xr.open_dataset(folder + filename)
-#    ds = xr.open_dataset( filename )
     # variables to consider
     vars2plot = list(ds.data_vars)
     # add LWI and surface area to array
-    ds = add_LWI2array(ds=ds, var2template='Chance2014_STTxx2_I')
+    ds = add_LWI2array(ds=ds, var2template=var2template)
     # ----
     df = pd.DataFrame()
     # -- get general annual stats
@@ -915,43 +930,44 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
                                                      target='Iodide',
                                                      use_annual_mean=False, filename=None,
                                                      folder=None, ds=None,
+                                                     var2template='Chance2014_STTxx2_I',
                                                      debug=False):
-    """ Evaluate the spatial predictions between models """
-    # ----
+    """
+    Evaluate the spatial predictions between models, binned by latitude
+    """
     if isinstance(ds, type(None)):
         # If filename or folder not given, then use defaults
         if isinstance(filename, type(None)):
             filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
         if isinstance(folder, type(None)):
-            folder = get_file_locations('data_root')
+            s2s_root = utils.get_file_locations('s2s_root')
+            folder = '{}/{}/'.format(s2s_root, target)
         ds = xr.open_dataset(folder + filename)
-#    ds = xr.open_dataset( filename )
-    # variables to consider
+    # Variables to consider
     vars2analyse = list(ds.data_vars)
-    # add LWI to array
-    ds = add_LWI2array(ds=ds, var2template='Chance2014_STTxx2_I', res=res)
-    # ----
+    # Add LWI to array
+    ds = add_LWI2array(ds=ds, var2template=var2template, res=res)
+    # - Get general annual stats
     df = pd.DataFrame()
-    # -- get general annual stats
     # take annual average
     if use_annual_mean:
         ds_tmp = ds.mean(dim='time')
     else:
         ds_tmp = ds
     for var_ in vars2analyse:
-        # mask to only consider (100%) water boxes
+        # Mask to only consider (100%) water boxes
         arr = ds_tmp[var_].values
         if debug:
             print(arr.shape, (ds_tmp['IS_WATER'] == False).shape)
         arr[(ds_tmp['IS_WATER'] == False).values] = np.NaN
-        # update values to include np.NaN
+        # Update values to include np.NaN
         ds_tmp[var_].values = arr
-        # setup series objects to hold stats
+        # Setup series objects to hold stats
         s_mean = pd.Series()
         s_75 = pd.Series()
         s_50 = pd.Series()
         s_25 = pd.Series()
-        # loop by latasave to dataframe
+        # Loop by latasave to dataframe
         for lat_ in ds['lat'].values:
             vals = ds_tmp[var_].sel(lat=lat_).values
             stats_ = pd.Series(vals.flatten()).dropna().describe()
@@ -1039,7 +1055,9 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
                                                just_return_df=False, folder=None,
                                                filename=None, rm_Skagerrak_data=False,
                                                debug=False):
-    """ Evaluate the spatial predictions between models """
+    """
+    Evaluate the spatial predictions between models at 0.125x0.125
+    """
     # ----
     # Get spatial prediction data from NetCDF files saved already
     res = '0.125x0.125'
@@ -1050,7 +1068,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
             extr_file_str = ''
         filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_file_str)
     if isinstance(folder, type(None)):
-        folder = get_file_locations('data_root')
+        s2s_root = utils.get_file_locations('s2s_root')
+        folder = '{}/{}/'.format(s2s_root, target)
     ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
@@ -1179,11 +1198,14 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
 def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Iodide',
                                     stats=None, ds=None, topmodels=None,
                                     save2NetCDF=True):
-    """ Plot up the ensemble average and std spatially  """
+    """
+    Add the ensemble average and standard deviation on a spatial basis
+    """
     # get existing dataset from NetCDF if ds not provided
     filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(ds, type(None)):
-        folder = get_file_locations('data_root')
+        s2s_root = utils.get_file_locations('s2s_root')
+        folder = '{}/{}/'.format(s2s_root, target)
         ds = xr.open_dataset(folder + filename)
     # Just use top 10 models are included
     # ( with derivative variables )
@@ -1392,7 +1414,7 @@ def calculate_performance_of_params(df=None, target='Iodide', params=[]):
 # ---------------------------------------------------------------------------
 # ------------- Extract model / scripts linked to tree graphic --------------
 # ---------------------------------------------------------------------------
-def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7,
+def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='Iodide',
                          ouput_random_tree_numbers=False, verbose=True, ):
     """
     Extract individual trees from models
@@ -1414,8 +1436,8 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7,
     # Get the top model names
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
     # Set the folder
-    folder = get_file_locations('data_root')
-    folder += '/models/LIVE/TEMP_MODELS/'
+    s2s_root = utils.get_file_locations('s2s_root')
+    folder = '{}/{}/models/LIVE/TEMP_MODELS/'.format(s2s_root, target)
     # Get the file names for these
     modelnames = glob.glob(folder+'*.pkl')
     modelname_d = dict(zip(RFR_dict['model_names'], modelnames))
@@ -1437,11 +1459,9 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7,
                                    extr_str=modelname, testing_features=testing_features)
 
 
-def extract_trees_to_dot_files(folder=None, model_filename=None,
-                               testing_features=None,
-                               N_trees2output=10, ouput_random_tree_numbers=False,
-                               max_depth=7,
-                               extr_str=''):
+def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide',
+                               testing_features=None, N_trees2output=10, max_depth=7,
+                               ouput_random_tree_numbers=False, extr_str=''):
     """
     Extract individual model trees to .dot files to be plotted in d3
 
@@ -1461,7 +1481,8 @@ def extract_trees_to_dot_files(folder=None, model_filename=None,
     import os
     # Get the location of the saved model.
     if isinstance(folder, type(None)):
-        folder = get_file_locations('data_root')+'/models/'
+        s2s_root = utils.get_file_locations('s2s_root')
+        folder = '{}/{}/models/'.format(s2s_root, target)
     # Create a file name for model if not provided
     if isinstance(model_filename, type(None)):
         model_filename = "my_model_{}.pkl".format(extr_str)
@@ -1523,12 +1544,7 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
     # models to analyse?
-    models2compare = [
-        #    'RFR(TEMP+DEPTH+SAL+NO3+DOC)', 'RFR(TEMP+DEPTH+SAL+NO3)',
-        #    'RFR(TEMP+DEPTH+SAL)', 'RFR(TEMP+SAL+Prod)',
-        #    'RFR(TEMP+SAL+NO3)',
-        #    'RFR(TEMP+DEPTH+SAL)',
-    ]
+    models2compare = []
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
     models2compare = topmodels
     # get strings to update variable names to

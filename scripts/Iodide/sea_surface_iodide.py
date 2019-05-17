@@ -1227,7 +1227,7 @@ def make_table_of_point_for_point_performance(RFR_dict=None,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      'Iodide': 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+#                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     # Set the stats to use
     first_columns = [
@@ -1329,7 +1329,7 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      target: 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+#                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     # Set the stats to use
     first_columns = [
@@ -1357,9 +1357,6 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
     stats = stats.T
     csv_name = 'Oi_prj_point_for_point_comp4tabale_ALL_NO_DERIV.csv'
     stats.round(1).to_csv(csv_name)
-
-
-
 
 
 def get_dataset_processed4ML(restrict_data_max=False,
@@ -1451,7 +1448,9 @@ def get_dataset_processed4ML(restrict_data_max=False,
 
 
 
-
+# ---------------------------------------------------------------------------
+# ---------- Wrappers for s2s -------------
+# ---------------------------------------------------------------------------
 def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
                                          random_strat_split=True, testing_features=None,
                                          random_state=42, random_20_80_split=False,
@@ -1471,9 +1470,6 @@ def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
 
 
 
-# ---------------------------------------------------------------------------
-# ---------- Wrappers for s2s -------------
-# ---------------------------------------------------------------------------
 def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
                         varname='Ensemble_Monthly_mean',
                         add_global_attrs=True, add_varname_attrs=True,

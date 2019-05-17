@@ -88,111 +88,111 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
     return ds
 
 
-def mk_NetCDF_of_surface_target_by_month4param(res='4x5', target='iodide',
-                                               param='Chance2014'):
-    """
-    Make a NetCDF of (monthly) target fields from previous params
-    """
-    # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
-    import xarray as xr
-    from time import gmtime, strftime
-    cal_dict = {
-        'Macdonald2014': calc_iodide_MacDonald2014,
-        'Chance2014': calc_iodide_chance2014_STTxx2_I,
-    }
-    # Get the model
-    testing_features = ['WOA_TEMP']
-    # Initialise a dictionary to store data
-    ars_dict = {}
-    months = np.arange(1, 13)
-    for month in months:
-        # get array of predictor for lats and lons (at res... )
-        df_predictors = get_predict_lat_lon_array(res=res, month=month)
-        # now make predictions for target ("y") from loaded predictors
-        TEMP = df_predictors[testing_features].values
-        target_predictions = cal_dict[param](TEMP)
-        # Save values
-        ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
-                                              target_name=[target], res=res,
-                                              target_predictions=target_predictions)
-    # Get coordinates
-    lon, lat, alt = AC.get_latlonalt4res(res=res)
-    # Make a dataset of arrays
-    da_l = []
-    for month in months:
-        arr = ars_dict[month].T[None, ...]
-        da_l += [xr.Dataset(
-            data_vars={target: (['time', 'lat', 'lon', ], arr)},
-            coords={'lat': lat, 'lon': lon, 'time': [month]})]
-    # Concatenate to a single dataset
-    ds = xr.concat(da_l, dim='time')
-    # Update time ...
-    ds = update_time_in_NetCDF2save(ds)
-    # Add attributes for target variable and global variables
-    ds = add_attrs2target_ds(ds, varname=target)
-    # Add units etc for all of the dataset variables
-    for var2use in ds.data_vars:
-        ds = add_attrs2target_ds(ds, add_global_attrs=False,
-                                 varname=var2use)
-    # save to NetCDF
-    filename = 'Oi_prj_{}_monthly_param_{}_{}.nc'.format(target, res, param)
-    ds.to_netcdf(filename, unlimited_dims={'time': True})
+# def mk_NetCDF_of_surface_target_by_month4param(res='4x5', target='iodide',
+#                                                param='Chance2014'):
+#     """
+#     Make a NetCDF of (monthly) target fields from previous params
+#     """
+#     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
+#     import xarray as xr
+#     from time import gmtime, strftime
+#     cal_dict = {
+#         'Macdonald2014': calc_iodide_MacDonald2014,
+#         'Chance2014': calc_iodide_chance2014_STTxx2_I,
+#     }
+#     # Get the model
+#     testing_features = ['WOA_TEMP']
+#     # Initialise a dictionary to store data
+#     ars_dict = {}
+#     months = np.arange(1, 13)
+#     for month in months:
+#         # get array of predictor for lats and lons (at res... )
+#         df_predictors = get_predict_lat_lon_array(res=res, month=month)
+#         # now make predictions for target ("y") from loaded predictors
+#         TEMP = df_predictors[testing_features].values
+#         target_predictions = cal_dict[param](TEMP)
+#         # Save values
+#         ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
+#                                               target_name=[target], res=res,
+#                                               target_predictions=target_predictions)
+#     # Get coordinates
+#     lon, lat, alt = AC.get_latlonalt4res(res=res)
+#     # Make a dataset of arrays
+#     da_l = []
+#     for month in months:
+#         arr = ars_dict[month].T[None, ...]
+#         da_l += [xr.Dataset(
+#             data_vars={target: (['time', 'lat', 'lon', ], arr)},
+#             coords={'lat': lat, 'lon': lon, 'time': [month]})]
+#     # Concatenate to a single dataset
+#     ds = xr.concat(da_l, dim='time')
+#     # Update time ...
+#     ds = update_time_in_NetCDF2save(ds)
+#     # Add attributes for target variable and global variables
+#     ds = add_attrs2target_ds(ds, varname=target)
+#     # Add units etc for all of the dataset variables
+#     for var2use in ds.data_vars:
+#         ds = add_attrs2target_ds(ds, add_global_attrs=False,
+#                                  varname=var2use)
+#     # save to NetCDF
+#     filename = 'Oi_prj_{}_monthly_param_{}_{}.nc'.format(target, res, param)
+#     ds.to_netcdf(filename, unlimited_dims={'time': True})
 
 
-def mk_NetCDF_of_surface_target_by_month(res='4x5', extr_str='', target='iodide'):
-    """
-    Make a NetCDF of predicted data fields by month
-    """
-    # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
-    import xarray as xr
-    from time import gmtime, strftime
-    # Get the model
-    model = get_current_model(extr_str=extr_str)
-    testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
-
-    # Initialise a dictionary to store data
-    ars_dict = {}
-    months = np.arange(1, 13)
-    for month in months:
-        # get array of predictor for lats and lons (at res... )
-        df_predictors = get_predict_lat_lon_array(res=res, month=month)
-        # now make predictions for target ("y") from loaded predictors
-        target_predictions = model.predict(df_predictors[testing_features])
-        # Convert output vector to 2D lon/lat array
-        model_name = "RandomForestRegressor '{}'"
-        model_name = model_name.format('+'.join(testing_features))
-        ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
-                                              target_name=[target], res=res,
-                                              target_predictions=target_predictions)
-    # Get coordinates
-    lon, lat, alt = AC.get_latlonalt4res(res=res)
-    # Make a dataset of arrays
-    da_l = []
-    for month in months:
-        arr = ars_dict[month].T[None, ...]
-        da_l += [xr.Dataset(
-            data_vars={target: (['time', 'lat', 'lon', ], arr)},
-            coords={'lat': lat, 'lon': lon, 'time': [month]})]
-    # Concatenate to a single dataset
-    ds = xr.concat(da_l, dim='time')
-    # Update time ...
-#    sdate = datetime.datetime(1970, 1, 1) # Unix time
-#    da['time'] = [ AC.add_months( sdate, i-1) for i in months ]
-    sdate = datetime.datetime(1985, 1, 1)  # Climate model tiem
-    ds['time'] = [AC.add_months(sdate, i-1) for i in months]
-    # Update to hours since X
-    hours = [(AC.dt64_2_dt([i])[0] - sdate).days *
-             24. for i in ds['time'].values]
-    ds['time'] = hours
-    # Now turn into a DataArray?
-#    ds = da.to_dataset()
-    attrs_dict = {'units': 'hours since 1985-01-01 00:00:00'}
-    ds['time'].attrs = attrs_dict
-    # Add attributes
-    ds = add_attrs2target_ds(ds, varname=extr_str, convert_to_kg_m3=True)
-    # Save to NetCDF
-    filename = 'Oi_prj_{}_monthly_param_{}.nc'.format(target, res)
-    ds.to_netcdf(filename, unlimited_dims={'time': True})
+# def mk_NetCDF_of_surface_target_by_month(res='4x5', extr_str='', target='iodide'):
+#     """
+#     Make a NetCDF of predicted data fields by month
+#     """
+#     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
+#     import xarray as xr
+#     from time import gmtime, strftime
+#     # Get the model
+#     model = get_current_model(extr_str=extr_str)
+#     testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
+#
+#     # Initialise a dictionary to store data
+#     ars_dict = {}
+#     months = np.arange(1, 13)
+#     for month in months:
+#         # get array of predictor for lats and lons (at res... )
+#         df_predictors = get_predict_lat_lon_array(res=res, month=month)
+#         # now make predictions for target ("y") from loaded predictors
+#         target_predictions = model.predict(df_predictors[testing_features])
+#         # Convert output vector to 2D lon/lat array
+#         model_name = "RandomForestRegressor '{}'"
+#         model_name = model_name.format('+'.join(testing_features))
+#         ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
+#                                               target_name=[target], res=res,
+#                                               target_predictions=target_predictions)
+#     # Get coordinates
+#     lon, lat, alt = AC.get_latlonalt4res(res=res)
+#     # Make a dataset of arrays
+#     da_l = []
+#     for month in months:
+#         arr = ars_dict[month].T[None, ...]
+#         da_l += [xr.Dataset(
+#             data_vars={target: (['time', 'lat', 'lon', ], arr)},
+#             coords={'lat': lat, 'lon': lon, 'time': [month]})]
+#     # Concatenate to a single dataset
+#     ds = xr.concat(da_l, dim='time')
+#     # Update time ...
+# #    sdate = datetime.datetime(1970, 1, 1) # Unix time
+# #    da['time'] = [ AC.add_months( sdate, i-1) for i in months ]
+#     sdate = datetime.datetime(1985, 1, 1)  # Climate model tiem
+#     ds['time'] = [AC.add_months(sdate, i-1) for i in months]
+#     # Update to hours since X
+#     hours = [(AC.dt64_2_dt([i])[0] - sdate).days *
+#              24. for i in ds['time'].values]
+#     ds['time'] = hours
+#     # Now turn into a DataArray?
+# #    ds = da.to_dataset()
+#     attrs_dict = {'units': 'hours since 1985-01-01 00:00:00'}
+#     ds['time'].attrs = attrs_dict
+#     # Add attributes
+#     ds = add_attrs2target_ds(ds, varname=extr_str, convert_to_kg_m3=True)
+#     # Save to NetCDF
+#     filename = 'Oi_prj_{}_monthly_param_{}.nc'.format(target, res)
+#     ds.to_netcdf(filename, unlimited_dims={'time': True})
 
 
 def add_units2ds(ds):
@@ -827,7 +827,7 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
     """
     # Check to make sure that the full observations are used to calc the outlier
     if check_full_df_used:
-        folder = get_file_locations('data_root')
+        folder = get_file_locations('data_root')+
         filename = 'Iodide_data_above_20m.csv'
         dfA = pd.read_csv(folder+filename)
         dfA = dfA.loc[np.isfinite(dfA[var2use]), :]
@@ -837,8 +837,8 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
             print(ptr_str.format(df.shape[0], origN))
             df = dfA[[var2use]].copy()
             print('Now using the original file - {}'.format(filename))
-        # Now calculate the outlier
-    IQR = df[var2use].describe()['75%'] - df['Iodide'].describe()['25%']
+    # Now calculate the outlier
+    IQR = df[var2use].describe()['75%'] - df[var2use].describe()['25%']
     OutlierDef = df[var2use].describe()['75%'] + (IQR*1.5)
     return OutlierDef
 

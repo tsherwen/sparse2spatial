@@ -385,181 +385,181 @@ def get_analysis_numbers_for_AGU17_poster():
         plt.show()
 
 
-def get_plots_for_AGU_poster(res='4x5', extr_str='', target='Iodide'):
-    """
-    Produces all the plots for an AGU poster on this work
-    """
-    # res='4x5'; extr_str='tree_X_K_JUST_TEMP_GEBCO_SALINTY'
-    # Get the model
-    model = get_current_model(extr_str=extr_str)
-    testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
-    target_name = ['Iodide']
-    # Initialise a dictionary to store data
-    ars_dict = {}
-    # get array of predictor for lats and lons (at res... )
-    df_predictors = get_predict_lat_lon_array(res=res, month=9)
-    # now make predictions for target ("y") from loaded predictors
-    target_predictions = model.predict(df_predictors[testing_features])
-    # Convert output vector to 2D lon/lat array
-    model_name = "RandomForestRegressor '{}'"
-    model_name = model_name.format('+'.join(testing_features))
-    ars_dict[model_name] = mk_uniform_2D_array(df_predictors=df_predictors,
-                                               target_name=target_name, res=res,
-                                               target_predictions=target_predictions)
-    # - Also get arrays of data for Chance et al and MacDonald et al...
-    param_name = 'Chance et al (2014)'
-    ars_dict[param_name] = get_equiv_Chance_arr(res=res,
-                                                    target_predictions=target_predictions,
-                                                     df=df_predictors,
-                                                     testing_features=testing_features)
-    param_name = 'MacDonald et al (2014)'
-    ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
-                                                    target_predictions=target_predictions,
-                                                        df=df_predictors,
-                                                        testing_features=testing_features)
-    # -- Also get the working output from processed file for obs.
-    pro_df = pd.read_csv(get_file_locations(
-        'data_root')+'Iodine_obs_WOA.csv')
-    # Exclude v. high values (N=4 -  in intial dataset)
-    # Exclude v. high values (N=7 -  in final dataset)
-    pro_df = pro_df.loc[pro_df['Iodide'] < 400.]
-    # sort a fixed order of param names
-    param_names = sorted(ars_dict.keys())
-
-    # --- --- --- --- --- --- --- ---
-    # --- Plot up Poster scaled surface Iodide plots
-    dpi = 320
-
-    # --- Locations of observations
-    import seaborn as sns
-#    current_palette = sns.color_palette()
-    current_palette = sns.color_palette("colorblind")
-    colour_dict = dict(zip(param_names, current_palette[:len(param_names)]))
-    colour_dict['Obs.'] = 'K'
-    #  --- Plot up locations of old and new data
-    plot_up_data_locations_OLD_and_new(save_plot=False, show_plot=False)
-    # Save to PDF and close plot
-    savetitle = 'Oi_prj_POSTER_Obs_locations_{}.png'.format(res)
-    plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
-    plt.close()
-
-    # --- plot up surface plots
-    import seaborn as sns
-    sns.reset_orig()
-#    plot_current_parameterisations()
-    for param_name in param_names:
-        plot_up_surface_iodide(arr=ars_dict[param_name], title=param_name,
-                               res=res, plot4poster=True)
-        # Save to PDF and close plot
-        savetitle = 'Oi_prj_POSTER_param_{}_{}.png'.format(param_name, res)
-        savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
-        plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
-        plt.close()
-
-    # --------  Emissions plots
-    res = '4x5'
-    dpi = 320
-    # Get emission runs that test output
-    wd_dict = get_emissions_testing_runs()
-    params = sorted(wd_dict.keys())
-    # get emissions
-    inorg_emiss, specs = get_inorg_emissions_for_params(wd_dict=wd_dict)
-    #
-    s_area = AC.get_surface_area(res=res)[..., 0]
-
-    # ---  plot up emissions
-    spec = 'Inorg'
-    arr = inorg_emiss['Chance2014'][specs.index(spec)]
-    for param in params:
-        arr = inorg_emiss[param][specs.index(spec)]
-        arr = arr.copy().mean(axis=-1)
-#        axlabel = 'Tg yr$^{-1}$'
-#        fixcb=np.array( [0., 0.0015 ] )
-#        nticks=6
-        # Convert to nmol
-        axlabel = '10$^{-13}$ kg m$^{-2}$ s$^{-1}$'
-        # =>g => /m2 => /s => kg => /1E13
-        arr = arr * 1E12 / s_area / (365*24*60*60) / 1E3 * 1E13
-        # print out values
-        print(param, axlabel)
-        print('mean avg. surface {} flux {}'.format(spec, arr.mean()))
-        print('area weighted mean avg. surface {} flux {}'.format(spec,
-                                                                  np.sum(arr*s_area) /
-                                                                  np.sum(s_area)))
-        fixcb = np.array([0., 1.2])
-        nticks = 5
-        extend = 'max'
-        # Plot up
-        plot_up_surface_iodide(arr=arr, title=param,
-                               res=res, plot4poster=True, nticks=nticks,
-                               axlabel=axlabel, fixcb=fixcb, extend=extend,
-                               )
-        # Save to PDF and close plot
-        title_str = 'Oi_prj_POSTER_param_{}_{}_time_average'
-        savetitle = title_str.format(param, res)
-        savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
-        plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
-        plt.close()
-
-    # --------  Plot up change in emissions
-#    ref =
-#    ref= 'MacDonald2014'
-    change = 'RFR(offline)'
-    for ref in ('Chance2014', 'MacDonald2014'):
-        # Get arrays
-        arr_ref = inorg_emiss[ref][specs.index(spec)].copy()
-        arr_change = inorg_emiss[change][specs.index(spec)].copy()
-        # make sure values are masked
-        arr_ref, arr_change = [np.ma.array(i) for i in (arr_ref, arr_change)]
-        # annual average
-        arr_ref, arr_change = [i.mean(axis=-1) for i in (arr_ref, arr_change)]
-        # Calc % change
-        arr = (arr_change - arr_ref)/arr_ref*100
-        print([(i.min(), i.mean(), i.max()) for i in [arr]])
-        # Plot settings
-        axlabel = '%'
-        fixcb = np.array([-50, 250])
-        nticks = 4
-        extend = 'both'
-        # Plot up
-        plot_up_surface_iodide(arr=arr, title=param,
-                               res=res, plot4poster=True,
-                               axlabel=axlabel, fixcb=fixcb, extend=extend, nticks=nticks,
-                               )
-        # Save to PDF and close plot
-        title_str = 'Oi_prj_POSTER_param_{}_{}_time_average_change_{}_ref_{}'
-        savetitle = title_str.format(param, res, change, ref)
-        savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
-        plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
-        plt.close()
-    # get df comparing emissions
-    df = compare_emissions(inorg_emiss=inorg_emiss.copy(), specs=specs)
-    print(df)
-
-    # --------  Plott up annual average 2x2.5 iodide
-    res = '2x2.5'
-    import xarray as xr
-    folder = get_file_locations('data_root')
-    filename = 'Oi_prj_{}_monthly_param_{}.nc'.format(target, res)
-    ds = xr.open_dataset(folder+filename)
-    # annual average e
-    ds = ds.mean(dim='time')
-    arr = ds['iodide'].values
-    # convert from kg/m3 to nM ( =>g,=>M, =>nM, =>/dm3 )
-    arr = arr / 1E3 / 127 * 1E9 * 1E3
-    print([(i.min(), i.mean(), i.max()) for i in [arr]])
-
-    # now plot
-    plot_up_surface_iodide(arr=arr,
-                           #        title=param,\
-                           res=res, plot4poster=True,
-                           )
-    # Save to PDF and close plot
-    title_str = 'Oi_prj_POSTER_param_{}_annual_avg_{}'
-    savetitle = title_str.format(res, extr_str)
-    savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
-    plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
-    plt.close()
+# def get_plots_for_AGU_poster(res='4x5', extr_str='', target='Iodide'):
+#     """
+#     Produces all the plots for an AGU poster on this work
+#     """
+#     # res='4x5'; extr_str='tree_X_K_JUST_TEMP_GEBCO_SALINTY'
+#     # Get the model
+#     model = get_current_model(extr_str=extr_str)
+#     testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
+#     target_name = ['Iodide']
+#     # Initialise a dictionary to store data
+#     ars_dict = {}
+#     # get array of predictor for lats and lons (at res... )
+#     df_predictors = get_predict_lat_lon_array(res=res, month=9)
+#     # now make predictions for target ("y") from loaded predictors
+#     target_predictions = model.predict(df_predictors[testing_features])
+#     # Convert output vector to 2D lon/lat array
+#     model_name = "RandomForestRegressor '{}'"
+#     model_name = model_name.format('+'.join(testing_features))
+#     ars_dict[model_name] = mk_uniform_2D_array(df_predictors=df_predictors,
+#                                                target_name=target_name, res=res,
+#                                                target_predictions=target_predictions)
+#     # - Also get arrays of data for Chance et al and MacDonald et al...
+#     param_name = 'Chance et al (2014)'
+#     ars_dict[param_name] = get_equiv_Chance_arr(res=res,
+#                                                     target_predictions=target_predictions,
+#                                                      df=df_predictors,
+#                                                      testing_features=testing_features)
+#     param_name = 'MacDonald et al (2014)'
+#     ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
+#                                                     target_predictions=target_predictions,
+#                                                         df=df_predictors,
+#                                                         testing_features=testing_features)
+#     # -- Also get the working output from processed file for obs.
+#     pro_df = pd.read_csv(get_file_locations(
+#         'data_root')+'Iodine_obs_WOA.csv')
+#     # Exclude v. high values (N=4 -  in intial dataset)
+#     # Exclude v. high values (N=7 -  in final dataset)
+#     pro_df = pro_df.loc[pro_df['Iodide'] < 400.]
+#     # sort a fixed order of param names
+#     param_names = sorted(ars_dict.keys())
+#
+#     # --- --- --- --- --- --- --- ---
+#     # --- Plot up Poster scaled surface Iodide plots
+#     dpi = 320
+#
+#     # --- Locations of observations
+#     import seaborn as sns
+# #    current_palette = sns.color_palette()
+#     current_palette = sns.color_palette("colorblind")
+#     colour_dict = dict(zip(param_names, current_palette[:len(param_names)]))
+#     colour_dict['Obs.'] = 'K'
+#     #  --- Plot up locations of old and new data
+#     plot_up_data_locations_OLD_and_new(save_plot=False, show_plot=False)
+#     # Save to PDF and close plot
+#     savetitle = 'Oi_prj_POSTER_Obs_locations_{}.png'.format(res)
+#     plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
+#     plt.close()
+#
+#     # --- plot up surface plots
+#     import seaborn as sns
+#     sns.reset_orig()
+# #    plot_current_parameterisations()
+#     for param_name in param_names:
+#         plot_up_surface_iodide(arr=ars_dict[param_name], title=param_name,
+#                                res=res, plot4poster=True)
+#         # Save to PDF and close plot
+#         savetitle = 'Oi_prj_POSTER_param_{}_{}.png'.format(param_name, res)
+#         savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
+#         plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
+#         plt.close()
+#
+#     # --------  Emissions plots
+#     res = '4x5'
+#     dpi = 320
+#     # Get emission runs that test output
+#     wd_dict = get_emissions_testing_runs()
+#     params = sorted(wd_dict.keys())
+#     # get emissions
+#     inorg_emiss, specs = get_inorg_emissions_for_params(wd_dict=wd_dict)
+#     #
+#     s_area = AC.get_surface_area(res=res)[..., 0]
+#
+#     # ---  plot up emissions
+#     spec = 'Inorg'
+#     arr = inorg_emiss['Chance2014'][specs.index(spec)]
+#     for param in params:
+#         arr = inorg_emiss[param][specs.index(spec)]
+#         arr = arr.copy().mean(axis=-1)
+# #        axlabel = 'Tg yr$^{-1}$'
+# #        fixcb=np.array( [0., 0.0015 ] )
+# #        nticks=6
+#         # Convert to nmol
+#         axlabel = '10$^{-13}$ kg m$^{-2}$ s$^{-1}$'
+#         # =>g => /m2 => /s => kg => /1E13
+#         arr = arr * 1E12 / s_area / (365*24*60*60) / 1E3 * 1E13
+#         # print out values
+#         print(param, axlabel)
+#         print('mean avg. surface {} flux {}'.format(spec, arr.mean()))
+#         print('area weighted mean avg. surface {} flux {}'.format(spec,
+#                                                                   np.sum(arr*s_area) /
+#                                                                   np.sum(s_area)))
+#         fixcb = np.array([0., 1.2])
+#         nticks = 5
+#         extend = 'max'
+#         # Plot up
+#         plot_up_surface_iodide(arr=arr, title=param,
+#                                res=res, plot4poster=True, nticks=nticks,
+#                                axlabel=axlabel, fixcb=fixcb, extend=extend,
+#                                )
+#         # Save to PDF and close plot
+#         title_str = 'Oi_prj_POSTER_param_{}_{}_time_average'
+#         savetitle = title_str.format(param, res)
+#         savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
+#         plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
+#         plt.close()
+#
+#     # --------  Plot up change in emissions
+# #    ref =
+# #    ref= 'MacDonald2014'
+#     change = 'RFR(offline)'
+#     for ref in ('Chance2014', 'MacDonald2014'):
+#         # Get arrays
+#         arr_ref = inorg_emiss[ref][specs.index(spec)].copy()
+#         arr_change = inorg_emiss[change][specs.index(spec)].copy()
+#         # make sure values are masked
+#         arr_ref, arr_change = [np.ma.array(i) for i in (arr_ref, arr_change)]
+#         # annual average
+#         arr_ref, arr_change = [i.mean(axis=-1) for i in (arr_ref, arr_change)]
+#         # Calc % change
+#         arr = (arr_change - arr_ref)/arr_ref*100
+#         print([(i.min(), i.mean(), i.max()) for i in [arr]])
+#         # Plot settings
+#         axlabel = '%'
+#         fixcb = np.array([-50, 250])
+#         nticks = 4
+#         extend = 'both'
+#         # Plot up
+#         plot_up_surface_iodide(arr=arr, title=param,
+#                                res=res, plot4poster=True,
+#                                axlabel=axlabel, fixcb=fixcb, extend=extend, nticks=nticks,
+#                                )
+#         # Save to PDF and close plot
+#         title_str = 'Oi_prj_POSTER_param_{}_{}_time_average_change_{}_ref_{}'
+#         savetitle = title_str.format(param, res, change, ref)
+#         savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
+#         plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
+#         plt.close()
+#     # get df comparing emissions
+#     df = compare_emissions(inorg_emiss=inorg_emiss.copy(), specs=specs)
+#     print(df)
+#
+#     # --------  Plott up annual average 2x2.5 iodide
+#     res = '2x2.5'
+#     import xarray as xr
+#     folder = get_file_locations('data_root')
+#     filename = 'Oi_prj_{}_monthly_param_{}.nc'.format(target, res)
+#     ds = xr.open_dataset(folder+filename)
+#     # annual average e
+#     ds = ds.mean(dim='time')
+#     arr = ds['iodide'].values
+#     # convert from kg/m3 to nM ( =>g,=>M, =>nM, =>/dm3 )
+#     arr = arr / 1E3 / 127 * 1E9 * 1E3
+#     print([(i.min(), i.mean(), i.max()) for i in [arr]])
+#
+#     # now plot
+#     plot_up_surface_iodide(arr=arr,
+#                            #        title=param,\
+#                            res=res, plot4poster=True,
+#                            )
+#     # Save to PDF and close plot
+#     title_str = 'Oi_prj_POSTER_param_{}_annual_avg_{}'
+#     savetitle = title_str.format(res, extr_str)
+#     savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
+#     plt.savefig(savetitle, bbox_inches='tight', dpi=dpi)
+#     plt.close()
 
 
 

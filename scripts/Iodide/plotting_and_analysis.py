@@ -3211,259 +3211,164 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
         value = AC.get_2D_arr_weighted_by_X(arr.T,  s_area=s_area)
         print(param, value)
 
-
-def get_diagnostic_plots_analysis4model(res='4x5', extr_str='', target='Iodide'):
-    """ Plot up a selection of diagnostic plots the model (& exsiting param) """
-    # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
-    # Get the model
-    model = get_current_model(extr_str=extr_str)
-    testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
-    target_name = [target]
-    # Initialise a dictionary to store data
-    ars_dict = {}
-
-    # get array of predictor for lats and lons (at res... )
-    df_predictors = get_predict_lat_lon_array(res=res)
-    # now make predictions for target ("y") from loaded predictors
-    target_predictions = model.predict(df_predictors[testing_features])
-    # Convert output vector to 2D lon/lat array
-    model_name = "RandomForestRegressor '{}'"
-    model_name = model_name.format('+'.join(testing_features))
-    ars_dict[model_name] = mk_uniform_2D_array(df_predictors=df_predictors,
-                                               target_name=target_name, res=res,
-                                               target_predictions=target_predictions)
-
-    # - Also get arrays of data for Chance et al and MacDonald et al...
-    param_name = 'Chance et al (2014)'
-    ars_dict[param_name] = get_equiv_Chance_arr(res=res,
-                                                    target_predictions=target_predictions,
-                                                     df=df_predictors,
-                                                     testing_features=testing_features)
-    param_name = 'MacDonald et al (2014)'
-    ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
-                                                    target_predictions=target_predictions,
-                                                        df=df_predictors,
-                                                        testing_features=testing_features)
-    # -- Also get the working output from processed file for obs.
-    pro_df = pd.read_csv(get_file_locations(
-        'data_root')+'Iodine_obs_WOA.csv')
-    # Exclude v. high values (N=4 -  in intial dataset)
-    # Exclude v. high values (N=7 -  in final dataset)
-    pro_df = pro_df.loc[pro_df[target] < 400.]
-
-    # sort a fixed order of param names
-    param_names = sorted(ars_dict.keys())
-
-    # - Also build 2D arrays for input testing variables
-    feature_dict = {}
-    extras = [u'SeaWIFs_ChlrA', u'WOA_Nitrate']
-    for feature in testing_features + extras:
-        feature_dict[feature] = mk_uniform_2D_array(
-            df_predictors=df_predictors, target_name=target_name, res=res,
-            target_predictions=df_predictors[feature])
-
-    # - Also build 2D arrays for input testing point data
-#     NOTE: This needs to be updates to consider overlapping data points.
-#     point_dict_ars ={}
-#     for feature in testing_features + extras + target_name:
 #
+# def get_diagnostic_plots_analysis4model(res='4x5', extr_str='', target='Iodide'):
+#     """ Plot up a selection of diagnostic plots the model (& exsiting param) """
+#     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
+#     # Get the model
+#     model = get_current_model(extr_str=extr_str)
+#     testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
+#     target_name = [target]
+#     # Initialise a dictionary to store data
+#     ars_dict = {}
 #
-#         point_dict_ars[feature] = mk_uniform_2D_array(
-#         df_predictors=pro_df, target_name=target_name, res=res,
-#         target_predictions=pro_df[feature] )
-
-    # ---- Create diagnostics and save as a PDF
-    # misc. shared variables
-    axlabel = '[I$^{-}_{aq}$] (nM)'
-    # setup PDf
-    savetitle = 'Oi_prj_param_plots_{}_{}'.format(res, extr_str)
-    dpi = 320
-    pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
-    # colours to use?
-    import seaborn as sns
-    sns.reset_orig()
-#    current_palette = sns.color_palette()
-    current_palette = sns.color_palette("colorblind")
-    colour_dict = dict(zip(param_names, current_palette[:len(param_names)]))
-    colour_dict['Obs.'] = 'K'
-    #  --- Plot up locations of old and new data
-    plot_up_data_locations_OLD_and_new(save_plot=False, show_plot=False)
-    # Save to PDF and close plot
-    AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-    plt.close()
-
-    # --- Plot up parameterisations as spatial plot
-    # reset Seaborn settings
-    import seaborn as sns
-    sns.reset_orig()
-
-#    plot_current_parameterisations()
-    for param_name in param_names:
-        plot_up_surface_iodide(arr=ars_dict[param_name], title=param_name,
-                               res=res)
-        # Save to PDF and close plot
-        AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-        plt.close()
-
-    # ---- plot up input fields for Temp, salinity, GEBCO
-    # reset Seaborn settings
-    import seaborn as sns
-    sns.reset_orig()
-
-#    plot_current_parameterisations()
-    for feature in feature_dict.keys():
-        arr = feature_dict[feature]
-        fixcb = np.array([arr.min(), arr.max()])
-        extend = 'neither'
-        nticks = 10
-#        plot_up_surface_iodide( arr=, title=feature,\
-#            res=res, fixcb, extend=extend )
-        title = feature + '(inputed feature)'
-
-        #
-        AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
-                               res=res, units=None, title=title, show=False)
-        # Save to PDF and close plot
-        AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-        plt.close()
-
-    # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
-    # ( as before, but- normalised to the mean )
-    # reset Seaborn settings
-    import seaborn as sns
-    sns.reset_orig()
-
-#    plot_current_parameterisations()
-    for feature in feature_dict.keys():
-        arr = feature_dict[feature].copy()
-        arr = arr / arr.mean()
-        arr = np.ma.log(arr)
-        fixcb = np.array([arr.min(), arr.max()])
-        extend = 'neither'
-        nticks = 10
-        if fixcb[0] == 0:
-            fixcb[0] = 0.01
-            extend = 'min'
-#        plot_up_surface_iodide( arr=, title=feature,\
-#            res=res, fixcb, extend=extend )
-        title = feature + '( log fraction of mean )'
-        #
-        AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
-                               res=res, units=axlabel, title=title, show=False, )
-        # Save to PDF and close plot
-        AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-        plt.close()
-
-    # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
-    # ( as before, but- normalised to the median )
-    # reset Seaborn settings
-    import seaborn as sns
-    sns.reset_orig()
-
-#    plot_current_parameterisations()
-    for feature in feature_dict.keys():
-        print(feature)
-        arr = feature_dict[feature].copy()
-        arr = arr / np.median(arr)
-        arr = np.ma.log(arr)
-        fixcb = np.array([arr.min(), arr.max()])
-        extend = 'neither'
-        nticks = 10
-        if fixcb[0] == 0:
-            fixcb[0] = 0.01
-            extend = 'min'
-#        plot_up_surface_iodide( arr=, title=feature,\
-#            res=res, fixcb, extend=extend )
-        title = feature + '( log fraction of median )'
-        #
-        if arr.mask.all():
-            #            np.min(arr[~arr.mask])
-            # check if array is completely masked
-            # ValueError: zero-size array to reduction operation minimum which
-            # has no identity
-            ax, fig = plt.subplots()
-            msg = 'WARNING: entire array masked for {}'.format(feature)
-            plt.text(0.1, 0.5, msg)
-            plt.title(title)
-            print(msg)
-        else:
-            AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                                   extend=extend,
-                                   res=res, units=axlabel, title=title, show=False, )
-        # Save to PDF and close plot
-        AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-        plt.close()
-
-    # --- Plot up parameterisations as a PDF
-    import seaborn as sns
-    sns.set(color_codes=True)
-    sns.set_context("paper")
-    # plot 1st model...
-    param_name = param_names[0]
-    arr = ars_dict[param_name].flatten()
-    ax = sns.distplot(arr, axlabel=axlabel, label=param_name,
-                      color=colour_dict[param_name])
-    # Then loop rest of params
-    for param_name in param_names[1:]:
-        arr = ars_dict[param_name].flatten()
-        ax = sns.distplot(arr, axlabel=axlabel,
-                          label=param_name,
-                          color=colour_dict[param_name], ax=ax)
-    # force y axis extend to be correct
-    max_yval = max([h.get_height() for h in ax.patches])
-    plt.ylim(0, max_yval+max_yval*0.025)
-    # Beautify
-    plt.title('PDF of predicted ocean surface '+axlabel)
-    plt.legend()
-    # Save to PDF and close plot
-    AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-    plt.close()
-
-    # --- Plot up parameterisations as a CDF
-    # plot 1st model...
-    param_name = param_names[0]
-    arr = ars_dict[param_name].flatten()
-    ax = sns.distplot(arr, axlabel=axlabel, label=param_name,
-                      color=colour_dict[param_name],
-                      hist_kws=dict(cumulative=True), kde_kws=dict(cumulative=True))
-    # Then loop rest of params
-    for param_name in param_names[1:]:
-        arr = ars_dict[param_name].flatten()
-        ax = sns.distplot(arr, axlabel=axlabel,
-                          label=param_name,
-                          color=colour_dict[param_name], ax=ax,
-                          hist_kws=dict(cumulative=True), kde_kws=dict(cumulative=True))
-    # force y axis extend to be correct
-    max_yval = max([h.get_height() for h in ax.patches])
-    plt.ylim(0, max_yval+max_yval*0.025)
-    # Beautify
-    plt.title('CDF of predicted ocean surface '+axlabel)
-    plt.legend()
-    # Save to PDF and close plot
-    AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-    plt.close()
-
-    # --- --- --- --- --- --- --- ---
-    # --- Calculate differs between point observations and params
-
-    # --- All of observational dataset
-
-    # --- Just the test set of observations (20% of original data )
-
-    # ---- plot up input fields for Temp, salinity, GEBCO
-    # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
-    # reset Seaborn settings
+#     # get array of predictor for lats and lons (at res... )
+#     df_predictors = get_predict_lat_lon_array(res=res)
+#     # now make predictions for target ("y") from loaded predictors
+#     target_predictions = model.predict(df_predictors[testing_features])
+#     # Convert output vector to 2D lon/lat array
+#     model_name = "RandomForestRegressor '{}'"
+#     model_name = model_name.format('+'.join(testing_features))
+#     ars_dict[model_name] = mk_uniform_2D_array(df_predictors=df_predictors,
+#                                                target_name=target_name, res=res,
+#                                                target_predictions=target_predictions)
+#
+#     # - Also get arrays of data for Chance et al and MacDonald et al...
+#     param_name = 'Chance et al (2014)'
+#     ars_dict[param_name] = get_equiv_Chance_arr(res=res,
+#                                                     target_predictions=target_predictions,
+#                                                      df=df_predictors,
+#                                                      testing_features=testing_features)
+#     param_name = 'MacDonald et al (2014)'
+#     ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
+#                                                     target_predictions=target_predictions,
+#                                                         df=df_predictors,
+#                                                         testing_features=testing_features)
+#     # -- Also get the working output from processed file for obs.
+#     pro_df = pd.read_csv(get_file_locations(
+#         'data_root')+'Iodine_obs_WOA.csv')
+#     # Exclude v. high values (N=4 -  in intial dataset)
+#     # Exclude v. high values (N=7 -  in final dataset)
+#     pro_df = pro_df.loc[pro_df[target] < 400.]
+#
+#     # sort a fixed order of param names
+#     param_names = sorted(ars_dict.keys())
+#
+#     # - Also build 2D arrays for input testing variables
+#     feature_dict = {}
+#     extras = [u'SeaWIFs_ChlrA', u'WOA_Nitrate']
+#     for feature in testing_features + extras:
+#         feature_dict[feature] = mk_uniform_2D_array(
+#             df_predictors=df_predictors, target_name=target_name, res=res,
+#             target_predictions=df_predictors[feature])
+#
+#     # - Also build 2D arrays for input testing point data
+# #     NOTE: This needs to be updates to consider overlapping data points.
+# #     point_dict_ars ={}
+# #     for feature in testing_features + extras + target_name:
+# #
+# #
+# #         point_dict_ars[feature] = mk_uniform_2D_array(
+# #         df_predictors=pro_df, target_name=target_name, res=res,
+# #         target_predictions=pro_df[feature] )
+#
+#     # ---- Create diagnostics and save as a PDF
+#     # misc. shared variables
+#     axlabel = '[I$^{-}_{aq}$] (nM)'
+#     # setup PDf
+#     savetitle = 'Oi_prj_param_plots_{}_{}'.format(res, extr_str)
+#     dpi = 320
+#     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
+#     # colours to use?
+#     import seaborn as sns
+#     sns.reset_orig()
+# #    current_palette = sns.color_palette()
+#     current_palette = sns.color_palette("colorblind")
+#     colour_dict = dict(zip(param_names, current_palette[:len(param_names)]))
+#     colour_dict['Obs.'] = 'K'
+#     #  --- Plot up locations of old and new data
+#     plot_up_data_locations_OLD_and_new(save_plot=False, show_plot=False)
+#     # Save to PDF and close plot
+#     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
+#     plt.close()
+#
+#     # --- Plot up parameterisations as spatial plot
+#     # reset Seaborn settings
+#     import seaborn as sns
+#     sns.reset_orig()
+#
+# #    plot_current_parameterisations()
+#     for param_name in param_names:
+#         plot_up_surface_iodide(arr=ars_dict[param_name], title=param_name,
+#                                res=res)
+#         # Save to PDF and close plot
+#         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
+#         plt.close()
+#
+#     # ---- plot up input fields for Temp, salinity, GEBCO
+#     # reset Seaborn settings
 #     import seaborn as sns
 #     sns.reset_orig()
 #
 # #    plot_current_parameterisations()
 #     for feature in feature_dict.keys():
-#         arr = pro_df[feature].copy()
-#         #
-#
-#         fixcb = np.array([ arr.min(), arr.max() ] )
+#         arr = feature_dict[feature]
+#         fixcb = np.array([arr.min(), arr.max()])
 #         extend = 'neither'
-#         nticks =10
+#         nticks = 10
+# #        plot_up_surface_iodide( arr=, title=feature,\
+# #            res=res, fixcb, extend=extend )
+#         title = feature + '(inputed feature)'
+#
+#         #
+#         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
+#                                res=res, units=None, title=title, show=False)
+#         # Save to PDF and close plot
+#         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
+#         plt.close()
+#
+#     # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
+#     # ( as before, but- normalised to the mean )
+#     # reset Seaborn settings
+#     import seaborn as sns
+#     sns.reset_orig()
+#
+# #    plot_current_parameterisations()
+#     for feature in feature_dict.keys():
+#         arr = feature_dict[feature].copy()
+#         arr = arr / arr.mean()
+#         arr = np.ma.log(arr)
+#         fixcb = np.array([arr.min(), arr.max()])
+#         extend = 'neither'
+#         nticks = 10
+#         if fixcb[0] == 0:
+#             fixcb[0] = 0.01
+#             extend = 'min'
+# #        plot_up_surface_iodide( arr=, title=feature,\
+# #            res=res, fixcb, extend=extend )
+#         title = feature + '( log fraction of mean )'
+#         #
+#         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
+#                                res=res, units=axlabel, title=title, show=False, )
+#         # Save to PDF and close plot
+#         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
+#         plt.close()
+#
+#     # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
+#     # ( as before, but- normalised to the median )
+#     # reset Seaborn settings
+#     import seaborn as sns
+#     sns.reset_orig()
+#
+# #    plot_current_parameterisations()
+#     for feature in feature_dict.keys():
+#         print(feature)
+#         arr = feature_dict[feature].copy()
+#         arr = arr / np.median(arr)
+#         arr = np.ma.log(arr)
+#         fixcb = np.array([arr.min(), arr.max()])
+#         extend = 'neither'
+#         nticks = 10
 #         if fixcb[0] == 0:
 #             fixcb[0] = 0.01
 #             extend = 'min'
@@ -3471,17 +3376,112 @@ def get_diagnostic_plots_analysis4model(res='4x5', extr_str='', target='Iodide')
 # #            res=res, fixcb, extend=extend )
 #         title = feature + '( log fraction of median )'
 #         #
-#         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
-#             res=res, units=axlabel, title=title, show=False, )
+#         if arr.mask.all():
+#             #            np.min(arr[~arr.mask])
+#             # check if array is completely masked
+#             # ValueError: zero-size array to reduction operation minimum which
+#             # has no identity
+#             ax, fig = plt.subplots()
+#             msg = 'WARNING: entire array masked for {}'.format(feature)
+#             plt.text(0.1, 0.5, msg)
+#             plt.title(title)
+#             print(msg)
+#         else:
+#             AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
+#                                    extend=extend,
+#                                    res=res, units=axlabel, title=title, show=False, )
 #         # Save to PDF and close plot
-#         AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
+#         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
 #         plt.close()
 #
-
-    # -- Save entire pdf
-    AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
-
-
+#     # --- Plot up parameterisations as a PDF
+#     import seaborn as sns
+#     sns.set(color_codes=True)
+#     sns.set_context("paper")
+#     # plot 1st model...
+#     param_name = param_names[0]
+#     arr = ars_dict[param_name].flatten()
+#     ax = sns.distplot(arr, axlabel=axlabel, label=param_name,
+#                       color=colour_dict[param_name])
+#     # Then loop rest of params
+#     for param_name in param_names[1:]:
+#         arr = ars_dict[param_name].flatten()
+#         ax = sns.distplot(arr, axlabel=axlabel,
+#                           label=param_name,
+#                           color=colour_dict[param_name], ax=ax)
+#     # force y axis extend to be correct
+#     max_yval = max([h.get_height() for h in ax.patches])
+#     plt.ylim(0, max_yval+max_yval*0.025)
+#     # Beautify
+#     plt.title('PDF of predicted ocean surface '+axlabel)
+#     plt.legend()
+#     # Save to PDF and close plot
+#     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
+#     plt.close()
+#
+#     # --- Plot up parameterisations as a CDF
+#     # plot 1st model...
+#     param_name = param_names[0]
+#     arr = ars_dict[param_name].flatten()
+#     ax = sns.distplot(arr, axlabel=axlabel, label=param_name,
+#                       color=colour_dict[param_name],
+#                       hist_kws=dict(cumulative=True), kde_kws=dict(cumulative=True))
+#     # Then loop rest of params
+#     for param_name in param_names[1:]:
+#         arr = ars_dict[param_name].flatten()
+#         ax = sns.distplot(arr, axlabel=axlabel,
+#                           label=param_name,
+#                           color=colour_dict[param_name], ax=ax,
+#                           hist_kws=dict(cumulative=True), kde_kws=dict(cumulative=True))
+#     # force y axis extend to be correct
+#     max_yval = max([h.get_height() for h in ax.patches])
+#     plt.ylim(0, max_yval+max_yval*0.025)
+#     # Beautify
+#     plt.title('CDF of predicted ocean surface '+axlabel)
+#     plt.legend()
+#     # Save to PDF and close plot
+#     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
+#     plt.close()
+#
+#     # --- --- --- --- --- --- --- ---
+#     # --- Calculate differs between point observations and params
+#
+#     # --- All of observational dataset
+#
+#     # --- Just the test set of observations (20% of original data )
+#
+#     # ---- plot up input fields for Temp, salinity, GEBCO
+#     # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
+#     # reset Seaborn settings
+# #     import seaborn as sns
+# #     sns.reset_orig()
+# #
+# # #    plot_current_parameterisations()
+# #     for feature in feature_dict.keys():
+# #         arr = pro_df[feature].copy()
+# #         #
+# #
+# #         fixcb = np.array([ arr.min(), arr.max() ] )
+# #         extend = 'neither'
+# #         nticks =10
+# #         if fixcb[0] == 0:
+# #             fixcb[0] = 0.01
+# #             extend = 'min'
+# # #        plot_up_surface_iodide( arr=, title=feature,\
+# # #            res=res, fixcb, extend=extend )
+# #         title = feature + '( log fraction of median )'
+# #         #
+# #         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
+# #             res=res, units=axlabel, title=title, show=False, )
+# #         # Save to PDF and close plot
+# #         AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
+# #         plt.close()
+# #
+#
+#     # -- Save entire pdf
+#     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
+#
+#
 
 
 def get_equiv_Chance_arr(df=None, target_predictions=None,
