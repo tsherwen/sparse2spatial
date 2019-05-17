@@ -62,19 +62,20 @@ def get_CHBr3_obs(target='CHBr3', limit_depth_to=20,):
     return df
 
 
-def process_obs_and_ancillaries_2_csv( target='CHBr3' ):
+def process_obs_and_ancillaries_2_csv(target='CHBr3',
+                                      file_and_path='./sparse2spatial.rc'):
     """
     Process the observations and extract ancillary variables for these locations
     """
     # Get the bass observations
     df = get_CHBr3_obs()
     # Extract the ancillary values for these locations
-    obs_data_df = extract_ancillary_obs_from_COMPILED_file(df=df)
+    df = extract_ancillary_obs_from_COMPILED_file(df=df)
     # Save the intermediate file
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/'.format(target)
     filename = 's2s_{}_obs_ancillaries_v0_0_0_TEMP.csv'.format(target)
-    obs_data_df.to_csv(folder+filename, encoding='utf-8')
+    df.to_csv(folder+filename, encoding='utf-8')
 
 
 def get_processed_df_obs_mod(reprocess_params=False,
