@@ -20,7 +20,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
                                 save_model_to_disk=False, read_model_from_disk=True,
                                 target_name='Iodide', target='Iodide', model_names=None,
                                 delete_existing_model_files=False, rm_outliers=True,
-                                rm_Skagerrak_data=False, model_sub_dir='/TEMP_MODELS/',
+                                model_sub_dir='/TEMP_MODELS/',
                                 rm_LOD_filled_data=False, model_feature_dict=None,
                                 debug=False):
     """
@@ -35,8 +35,6 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
     target_name (str), Name of the target variable (e.g. iodide)
     model_names (list), List of model names to build/read
     delete_existing_model_files (boolean), delete the existing model binaries in folder?
-    rm_Skagerrak_data (boolean), Remove specific data
-    (above argument is a iodide specific option - remove this)
     rm_outliers (boolean), remove the outliers from the observational dataset
     rm_LOD_filled_data (boolean), remove the limit of detection (LOD) filled values?
     model_feature_dict (dict), dictionary of features used in each model

@@ -165,7 +165,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
 
 def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=False,
                                          file_and_path='./sparse2spatial.rc',
-                                         verbose=True):
+                                         target='Iodide', verbose=True):
     """
     Create a csv files of iodide observation and ancilllary observations
 
@@ -186,10 +186,10 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     # Add ancillary obs.
 #    obs_data_df = extract_ancillary_obs_from_RAW_external_files( \
 #        obs_data_df=obs_data_df, obs_metadata_df=obs_metadata_df )
-    obs_data_df = extract_ancillary_obs_from_COMPILED_file(
-        obs_data_df=obs_data_df, obs_metadata_df=obs_metadata_df)
+    obs_data_df = extract_ancillary_obs_from_COMPILED_file( df=obs_data_df )
     # Save the intermediate file
     folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/{}/'.format(target)
     filename = 'Iodine_obs_WOA_v8_5_1_TEMP_TEST.csv'
     obs_data_df.to_csv(folder+filename, encoding='utf-8')
     # - Add predicted iodide from MacDonald and Chance parameterisations
@@ -686,7 +686,7 @@ def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows = 1,
     return df
 
 
-def add_extra_vars_rm_some_data(df=None,
+def add_extra_vars_rm_some_data(df=None, target='Iodide',
                                 restrict_data_max=False, restrict_min_salinity=False,
                                 use_median_value_for_chlor_when_NaN=False,
                                 median_4MLD_when_NaN_or_less_than_0=False,
@@ -703,7 +703,7 @@ def add_extra_vars_rm_some_data(df=None,
 
     Returns
     -------
-    (tuple)
+    (pd.DataFrame)
 
     Notes
     -----
@@ -712,20 +712,20 @@ def add_extra_vars_rm_some_data(df=None,
     Shape0 = str(df.shape)
     N0 = df.shape[0]
     if rm_outliers:
-        bool = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
+        bool = df[target] < get_outlier_value(df=df, var2use=target)
         df_tmp = df.loc[bool]
-        prt_str = 'Removing outlier iodide values. (df {}=>{},{})'
+        prt_str = 'Removing outlier {} values. (df {}=>{},{})'
         N = int(df_tmp.shape[0])
         if verbose:
-            print(prt_str.format(Shape0, str(df_tmp.shape), N0-N))
+            print(prt_str.format(target, Shape0, str(df_tmp.shape), N0-N))
         df = df_tmp
     # - Remove the outliers (N=19 for v8.1)
     if restrict_data_max:
-        df_tmp = df[df['Iodide'] < 400.]  # updated on 180611 (& commented out)
-        prt_str = 'Restricting max iodide values. (df {}=>{},{})'
+        df_tmp = df[df[target] < 400.]  # updated on 180611 (& commented out)
+        prt_str = 'Restricting max {} values. (df {}=>{},{})'
         N = int(df_tmp.shape[0])
         if verbose:
-            print(prt_str.format(Shape0, str(df_tmp.shape), N0-N))
+            print(prt_str.format(target, Shape0, str(df_tmp.shape), N0-N))
         df = df_tmp
     # - Remove the Skagerrak data
     if rm_Skagerrak_data:

@@ -332,47 +332,6 @@ def main():
     pass
 
 
-def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
-                                       rm_LOD_filled_data=False,
-                                       rm_outliers=True,
-                                       rebuild=False ):
-    """
-    Wrapper call to build_or_get_current_models for sea-surface iodide
-    """
-    # Get the dictionary  of model names and features (specific to iodide)
-    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
-
-    # Get the observational dataset prepared for ML pipeline
-    df = get_dataset_processed4ML(
-        rm_Skagerrak_data=rm_Skagerrak_data,
-        rm_LOD_filled_data=rm_LOD_filled_data,
-        rm_outliers=rm_outliers,
-        )
-    #
-    if rm_Skagerrak_data:
-        model_sub_dir = '/TEMP_MODELS_No_Skagerrak/'
-#     elif rm_LOD_filled_data:
-#         temp_model_dir = wrk_dir+'/TEMP_MODELS_no_LOD_filled/'
-    else:
-        model_sub_dir = '/TEMP_MODELS/'
-
-    if rebuild:
-        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
-#                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df,
-                                    read_model_from_disk=False,
-                                    delete_existing_model_files=True )
-    else:
-        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
-#                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df,
-                                    read_model_from_disk=True,
-                                    delete_existing_model_files=False )
-    return RFR_dict
-
-
 def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
                                        testing_features=None, target='Iodide', df=None):
     """
@@ -1373,10 +1332,6 @@ def get_dataset_processed4ML(restrict_data_max=False,
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
-
     """
     from observations import add_extra_vars_rm_some_data
     from observations import get_processed_df_obs_mod
@@ -1403,13 +1358,13 @@ def get_dataset_processed4ML(restrict_data_max=False,
     df = add_extra_vars_rm_some_data(df=df,
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
-                                     add_modulus_of_lat=add_modulus_of_lat,
-                                     rm_Skagerrak_data=rm_Skagerrak_data,
+#                                     add_modulus_of_lat=add_modulus_of_lat,
+#                                     rm_Skagerrak_data=rm_Skagerrak_data,
                                      rm_outliers=rm_outliers,
                                      rm_LOD_filled_data=rm_LOD_filled_data,
-                  use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
-                  median_4MLD_when_NaN_or_less_than_0=median_4MLD_when_NaN_or_less_than_0,
-                      median_4depth_when_greater_than_0=median_4depth_when_greater_than_0,
+#                use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
+#                median_4MLD_when_NaN_or_less_than_0=median_4MLD_when_NaN_or_less_than_0,
+#                    median_4depth_when_greater_than_0=median_4depth_when_greater_than_0,
                                      )    # add
 
     # - Add test and training set assignment to columns
@@ -1432,7 +1387,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
         # Copy a df for splitting
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_ML_testing_and_training_set(df=df.copy(), target=target,
                                                     random_20_80_split=random_20_80_split,
                                                     random_strat_split=random_strat_split,
                                                     testing_features=df.columns.tolist(),
@@ -1451,6 +1406,47 @@ def get_dataset_processed4ML(restrict_data_max=False,
 # ---------------------------------------------------------------------------
 # ---------- Wrappers for s2s -------------
 # ---------------------------------------------------------------------------
+def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
+                                       rm_LOD_filled_data=False,
+                                       rm_outliers=True,
+                                       rebuild=False ):
+    """
+    Wrapper call to build_or_get_current_models for sea-surface iodide
+    """
+    # Get the dictionary  of model names and features (specific to iodide)
+    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+
+    # Get the observational dataset prepared for ML pipeline
+    df = get_dataset_processed4ML(
+        rm_Skagerrak_data=rm_Skagerrak_data,
+        rm_LOD_filled_data=rm_LOD_filled_data,
+        rm_outliers=rm_outliers,
+        )
+    #
+    if rm_Skagerrak_data:
+        model_sub_dir = '/TEMP_MODELS_No_Skagerrak/'
+#     elif rm_LOD_filled_data:
+#         temp_model_dir = wrk_dir+'/TEMP_MODELS_no_LOD_filled/'
+    else:
+        model_sub_dir = '/TEMP_MODELS/'
+
+    if rebuild:
+        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+#                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                    model_feature_dict=model_feature_dict,
+                                    df=df,
+                                    read_model_from_disk=False,
+                                    delete_existing_model_files=True )
+    else:
+        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+#                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                    model_feature_dict=model_feature_dict,
+                                    df=df,
+                                    read_model_from_disk=True,
+                                    delete_existing_model_files=False )
+    return RFR_dict
+
+
 def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
                                          random_strat_split=True, testing_features=None,
                                          random_state=42, random_20_80_split=False,

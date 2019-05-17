@@ -490,15 +490,13 @@ def mk_predictor_variable_csv(res='4x5', month=9,
 # ---------------------------------------------------------------------------
 # ------------------- Function to bulk extract ancillaries for NetCDF -------
 # ---------------------------------------------------------------------------
-def extract_ancillary_obs_from_COMPILED_file(obs_data_df=None,
-                                             obs_metadata_df=None, debug=False):
+def extract_ancillary_obs_from_COMPILED_file(df=None, debug=False):
     """
     Get ancillary data for each datapoint in observational dataset
 
     Parameters
     -------
-    obs_data_df (pd.DataFrame), DataFrame of observational data
-    obs_metadata_df (pd.DataFrame), DataFrame of metadata for observational data
+    df (pd.DataFrame), DataFrame of observational data
     debug (boolean), perform debugging and verbose printing?
 
     Returns
@@ -514,16 +512,16 @@ def extract_ancillary_obs_from_COMPILED_file(obs_data_df=None,
     dsA = xr.open_dataset(data_root + filename)
     # Get list of site IDs...
     # WARNING - if a new index axis is created, then the index info is lost!
-    Data_key_ID = obs_data_df['Data_Key_ID'].values
-    print(len(Data_key_ID), obs_data_df.shape)
+    Data_key_ID = df['Data_Key_ID'].values
+    print(len(Data_key_ID), df.shape)
     # for testing use only first few...
 #    Data_key_ID = Data_key_ID[:15]
     # initialise a DataFrame to sort ancillary data
-    df = pd.DataFrame()
+    dfA = pd.DataFrame()
     # Loop unique data indentifiers
     for n, Data_key_ID_ in enumerate(Data_key_ID):
         # --- Get Data_key location
-        tmp_df = obs_data_df[obs_data_df['Data_Key_ID'] == Data_key_ID_]
+        tmp_df = df[df['Data_Key_ID'] == Data_key_ID_]
         # Get Obs Lat
         tmp_lat = tmp_df['Latitude'].values[0]
         # Get Obs Lon
@@ -537,8 +535,11 @@ def extract_ancillary_obs_from_COMPILED_file(obs_data_df=None,
         except:
             # use annual mean
             tmp_month = 0
-        # Get Obs date
-        tmp_date = tmp_df['Date'].values[0]
+        # Get Obs date or datetime
+        try:
+            tmp_date = tmp_df['Date'].values[0]
+        except:
+            tmp_date = tmp_df['datetime'].values[0]
         # Pring to screen to debug...
         if debug:
             ptr_str = '{:<20} (Lon={:.2f},Lat={:.2f},month={},date={},'
@@ -559,26 +560,26 @@ def extract_ancillary_obs_from_COMPILED_file(obs_data_df=None,
         assert len(ds.time) == 1, 'Only 1 time should be selected!'
         ds = ds.mean(dim='time')
         # Convert to pandas series and achieve to DataFrame
-        df[Data_key_ID_] = ds.to_array().to_pandas()
+        dfA[Data_key_ID_] = ds.to_array().to_pandas()
     gc.collect()
     # --- construct into Dataframe and combine
-    df = df.T
-    df.to_csv('Extracted_ancillary_DATA.csv')
-    # also force "Data_key_ID" to be index of obs_data_df
+    dfA = dfA.T
+    dfA.to_csv('Extracted_ancillary_DATA.csv')
+    # also force "Data_key_ID" to be index of df
     # WARNING THIS WAS WRONG! (this was re-indexing obs to sorted Data_key_ID!)
     # Updated to use its own Data_key_ID list.
-#    obs_data_df.index = Data_key_ID
-    obs_data_df.index = obs_data_df['Data_Key_ID']
-    # Drop the 'Data_key_ID' from obs_data_df| to remove issues with indexing
-    obs_data_df = obs_data_df.drop(['Data_Key_ID'], axis=1)
+#    df.index = Data_key_ID
+    df.index = df['Data_Key_ID']
+    # Drop the 'Data_key_ID' from df| to remove issues with indexing
+    df = df.drop(['Data_Key_ID'], axis=1)
     # conbine new rows and old rows...
-    obs_data_df = pd.concat([df, obs_data_df], axis=1, join_axes=[df.index])
+    df = pd.concat([dfA, df], axis=1, join_axes=[dfA.index])
     # Restore the 'Data_key_ID' column for referencing...
-    obs_data_df['Data_Key_ID'] = obs_data_df.index
+    df['Data_Key_ID'] = df.index
     # Restore index to just be a list of numbers (to allow save out)
-    obs_data_df.index = list(range(len(obs_data_df)))
+    df.index = list(range(len(df)))
     # fill "--"/ error strings with NaNs.
-    return obs_data_df
+    return df
 
 
 def mk_array_of_indices4locations4res(res='4x5', df_lar_var='lat', df_lon_var='lon',

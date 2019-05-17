@@ -827,7 +827,7 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
     """
     # Check to make sure that the full observations are used to calc the outlier
     if check_full_df_used:
-        folder = get_file_locations('data_root')+
+        folder = get_file_locations('data_root')+'/{}/'.format(var2use)
         filename = 'Iodide_data_above_20m.csv'
         dfA = pd.read_csv(folder+filename)
         dfA = dfA.loc[np.isfinite(dfA[var2use]), :]
