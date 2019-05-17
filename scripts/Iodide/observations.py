@@ -438,13 +438,14 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     # Data submitted directly for preparation
     # (as publish by Chance et al (2014) )
     # New data, acquired since 2017
+    data_root = get_file_locations('data_root', file_and_path=file_and_path)
     if (not InChance2014):
-        folder = get_file_locations('new_data', file_and_path=file_and_path)
+        folder = data_root + '/new_data/'
     elif ((source == 's') or (source == 'bodc')) and (InChance2014):
-        folder = get_file_locations('submitted_data', file_and_path=file_and_path)
+        folder = data_root + '/submitted_data/'
     # Data digitalised for Chance et al (2014)
     elif (source == 'd') and (InChance2014):
-        folder = get_file_locations('digitised_data', file_and_path=file_and_path)
+        folder = data_root + '/digitised_data/'
     else:
         print("Source received ('') unknown?!".format(source))
         sys.exit()
@@ -692,7 +693,7 @@ def add_extra_vars_rm_some_data(df=None,
                                 median_4depth_when_greater_than_0=False,
                                 rm_LOD_filled_data=False,
                                 add_modulus_of_lat=False,
-                                rm_Skagerrak_data=False, rm_iodide_outliers=False,
+                                rm_Skagerrak_data=False, rm_outliers=False,
                                 verbose=True, debug=False):
     """
     Add, process, or remove (requested) derivative variables for use with ML code
@@ -710,7 +711,7 @@ def add_extra_vars_rm_some_data(df=None,
     # --- Apply choices & Make user aware of choices applied to data
     Shape0 = str(df.shape)
     N0 = df.shape[0]
-    if rm_iodide_outliers:
+    if rm_outliers:
         bool = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
         df_tmp = df.loc[bool]
         prt_str = 'Removing outlier iodide values. (df {}=>{},{})'

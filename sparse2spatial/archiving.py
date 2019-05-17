@@ -5,7 +5,7 @@ Make high-res and re-gridded data files for archiving with xESMF
 """
 
 
-def mk_NetCDF_files_for_data_archiving(target='iodide'):
+def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     """
     Make data into NetCDF files for archiving at a data centre
     """
@@ -84,7 +84,7 @@ def mk_NetCDF_files_for_data_archiving(target='iodide'):
     dsA2[standard_vars+topmodels].to_netcdf(name2save+'.nc')
 
 
-def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='iodide',
+def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
                                            rm_Skagerrak_data=False, dsA=None,
                                            just_1x1_grids=False, debug=False):
     """

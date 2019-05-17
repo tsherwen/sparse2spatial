@@ -225,7 +225,7 @@ def Convert_martins_productivity_file_into_a_NetCDF():
     import xarray as xr
     from time import gmtime, strftime
     # Location of data (update to use public facing host)
-    folder = '/work/home/ts551/data/iodide/Martin_Wadley/'
+    folder = get_file_locations('data_root') + '/Productivity/'
     # Which file to use?
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.csv'
     # Setup coordinates
@@ -378,4 +378,73 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
                                       filename='WOA94_MLD_1x1_{}'.format(var_),
                                       lons=lons,
                                       lats=lats)
+
+
+def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
+                       file_prefix='nature_run', doys_list=None, verbose=True,
+                       debug=False):
+    """
+    Download all data for a given species at a given resolution
+
+    NOTES:
+     - use level=71  for lowest level!
+     (NetCDF is ordered the oposite way, python 0-71. Xarray numbering makes
+     this level=72)
+     (or use dictionary through xarray)
+    """
+    # - local variables
+    # Where is the remote data?
+    root_url = 'https://opendap.nccs.nasa.gov/dods/OSSE/G5NR-Chem/Heracles/'
+#    url_str = root_url+'12.5km/{}_deg/inst/inst1_3d_TRC{}_Nv'.format(res,spec)
+    url_str = root_url+'12.5km/{}_deg/tavg/tavg1_2d_chm_Nx'.format(res)
+    # Where should i save the data?
+#    save_dir = '/work/home/ts551/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'
+    save_dir = get_file_locations('data_root' ) + '/NASA/LWI/'
+#    save_dir = '/shared/earth_home/ts551/'
+#    save_dir += '/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'
+    # - Open dataset via URL with xarray
+    # Using xarray (issues found with NASA OpenDAP data model - via PyDAP)
+    ds = xr.open_dataset(url_str)
+    if verbose:
+        print(ds, '\n\n\n')
+    # Get list of (all) doys to extract (unless provided as argv.)
+#    months_list = list(set(ds['time.month'].values))
+#    weeks_list = list(set(ds['time.week'].values))
+    if isinstance(doys_list, type(None)):
+        doys_list = list(set(ds['time.dayofyear'].values))
+    # Variable to extract?
+    var_name = '{}'.format(spec.lower())
+    # Just test a small extraction.
+    # if debug:
+    #    data = ds[var_name][:10, lev, :, :]
+    # select level and download all data
+    ds = ds[var_name][:, :, :]
+    # Make sure time is the dimension not module
+    time = ds.time
+    # - loop days of year (doy)
+    # Custom mask
+    def is_dayofyear(doy):
+        return (doy == doy_)
+    # Loop doys
+    for doy_ in doys_list[:4]:
+        try:
+            if verbose:
+                print(doy_, spec)
+            # Now select for month
+            ds_tmp = ds.sel(time=is_dayofyear(ds['time.dayofyear']))
+            # Save as NetCDF
+            year_ = list(set(ds_tmp['time.year'].values))[0]
+            # What is the filename?
+            file2save = '{}_lev_{}_res_{}_spec_{}_{}_{:0>3}_ctm.nc'\
+                .format(file_prefix, lev2use, res, spec, year_, str(doy_))
+            # Now save downloaded data as a NetCDF locally...
+            if verbose:
+                print(save_dir+file2save)
+            ds_tmp.to_netcdf(save_dir+file2save)
+            # Remove from memory
+            del ds_tmp
+        except RuntimeError:
+            err_str = 'TMS ERROR - FAIL for spec={} (doy={})'.format(
+                spec, doy_)
+            print(err_str)
 

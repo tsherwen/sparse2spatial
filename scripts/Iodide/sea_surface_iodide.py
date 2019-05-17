@@ -334,7 +334,7 @@ def main():
 
 def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
                                        rm_LOD_filled_data=False,
-                                       rm_iodide_outliers=True,
+                                       rm_outliers=True,
                                        rebuild=False ):
     """
     Wrapper call to build_or_get_current_models for sea-surface iodide
@@ -346,7 +346,7 @@ def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
     df = get_dataset_processed4ML(
         rm_Skagerrak_data=rm_Skagerrak_data,
         rm_LOD_filled_data=rm_LOD_filled_data,
-        rm_iodide_outliers=rm_iodide_outliers,
+        rm_outliers=rm_outliers,
         )
     #
     if rm_Skagerrak_data:
@@ -899,6 +899,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
         folder = get_file_locations('data_root')
+
     extr_str = '_INTERP_NEAREST_DERIVED'
     # Add lines to save strings
     if use_updated_predictor_NetCDF:
@@ -1247,9 +1248,6 @@ def make_table_of_point_for_point_performance(RFR_dict=None,
     stats.rename(index=rename_titles, inplace=True)
     # Set filename and save detail on models
     csv_name = 'Oi_prj_point_for_point_comp4tabale.csv'
-    earth0_data_root = get_file_locations(
-        'earth0_home_dir')+'data/iodide/'
-#    stats.round(2).to_csv( earth0_data_root+csv_name )
     stats.round(1).to_csv(csv_name)
 
 
@@ -1303,9 +1301,6 @@ def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
     stats.rename(index=rename_titles, inplace=True)
     # Set filename and save detail on models
     csv_name = 'Oi_prj_point_for_point_comp4tabale_TESTSET.csv'
-    earth0_data_root = get_file_locations(
-        'earth0_home_dir')+'data/iodide/'
-#    stats.round(2).to_csv( earth0_data_root+csv_name )
     stats.round(1).to_csv(csv_name)
 
 
@@ -1353,9 +1348,6 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
     stats.rename(index=rename_titles, inplace=True)
     # Set filename and save detail on models
     csv_name = 'Oi_prj_point_for_point_comp4tabale_ALL.csv'
-    earth0_data_root = get_file_locations(
-        'earth0_home_dir')+'data/iodide/'
-#    stats.round(2).to_csv( earth0_data_root+csv_name )
     stats.round(1).to_csv(csv_name)
     # also save a .csv of values without derived values
     index2use = [i for i in stats.index if all(
@@ -1371,7 +1363,7 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
 
 
 def get_dataset_processed4ML(restrict_data_max=False,
-                             rm_Skagerrak_data=False, rm_iodide_outliers=True,
+                             rm_Skagerrak_data=False, rm_outliers=True,
                              rm_LOD_filled_data=False):
     """
     Get dataset as a DataFrame with standard munging settings
@@ -1416,7 +1408,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
                                      restrict_min_salinity=restrict_min_salinity,
                                      add_modulus_of_lat=add_modulus_of_lat,
                                      rm_Skagerrak_data=rm_Skagerrak_data,
-                                     rm_iodide_outliers=rm_iodide_outliers,
+                                     rm_outliers=rm_outliers,
                                      rm_LOD_filled_data=rm_LOD_filled_data,
                   use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
                   median_4MLD_when_NaN_or_less_than_0=median_4MLD_when_NaN_or_less_than_0,

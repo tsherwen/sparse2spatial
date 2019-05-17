@@ -387,7 +387,6 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     """
     from sklearn.externals import joblib
     from sklearn.ensemble import RandomForestRegressor
-    # use_choosen_model=True; testset='Test set (strat. 20%)'; target_name=['Iodide']
     # Get data to test
     if isinstance(df, type(None)):
         #        df = get_dataset_processed4ML()
@@ -735,7 +734,7 @@ def define_hyperparameter_options2test(testing_features=None,
 
 def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
                                         models_dict=None, testing_features_dict=None,
-                                        RFR_dict=None, target='iodide',
+                                        RFR_dict=None, target='Iodide',
                                         stats=None, plot2check=False,
                                         rm_Skagerrak_data=False,
                                         debug=False):
@@ -804,7 +803,7 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     # Combine datasets
     ds = xr.merge(ds_l)
     # - Also get values for existing parameterisations
-    if target == 'iodide':
+    if target == 'Iodide':
         # Chance et al (2013)
         param = u'Chance2014_STTxx2_I'
         arr = calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
@@ -857,13 +856,8 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
         model = get_current_model(extr_str=extr_str)
     # Testing features to use
     if isinstance(testing_features, type(None)):
-        #         testing_features_dict = {
-        #         'TEMP+DEPTH+SAL' : ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO'],
-        #         }
-#        testing_features = get_model_testing_features_dict(model_name)
         func_name = 'get_model_predictions4obs_point'
         print( "The model's features must be provided to {}".format(func_name) )
-#        target_name = ['Iodide']
     # Now predict for the given testing features
     target_predictions = model.predict(df[testing_features])
     return target_predictions

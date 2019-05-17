@@ -272,7 +272,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
     # Formatted variable name for target
-    if target == 'iodide':
+    if target == 'Iodide':
         Iaq = '[I$^{-}_{aq}$]'
     else:
         Iaq = target
@@ -685,9 +685,6 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     df.rename(columns={'50%': 'median', 'std': 'std. dev.'})
     # Set filename and save detail on models
     csv_name = 'Oi_prj_models_built_stats_on_models_at_obs_points.csv'
-    earth0_data_root = get_file_locations(
-        'earth0_home_dir')+'data/iodide/'
-#    stats.round(2).to_csv( earth0_data_root+csv_name )
     stats.round(2).to_csv(csv_name)
     # Also print to screen
     if verbose:
@@ -820,8 +817,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
         ax.set_xticklabels(params2plot[::-1], rotation=90)
         plt.ylim(25, 85)
         plt.ylabel('RMSE (nM)',  color=CB_color_cycle[0])
-
-        # get std within testset
+        # get standard deviation within testset
         df_tmp = df.rename(columns=rename_titles)
         df_tmp = df_tmp.loc[df_tmp[testset] == True, :][params2plot+['Obs.']]
         var = df_tmp.var()[params2plot[::-1]]
@@ -861,7 +857,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     return stats
 
 
-def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='iodide',
+def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodide',
                                               use_annual_mean=True, filename=None,
                                               folder=None, just_return_df=False,
                                               ):
@@ -916,7 +912,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='iodi
 
 
 def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
-                                                     target='iodide',
+                                                     target='Iodide',
                                                      use_annual_mean=False, filename=None,
                                                      folder=None, ds=None,
                                                      debug=False):
@@ -980,7 +976,7 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
 
 
 def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
-                                             target='iodide',
+                                             target='Iodide',
                                              debug=False, res='0.125x0.125'):
     """ Evaluate the spatial predictions between models """
     # ----
@@ -1038,7 +1034,7 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
     return df
 
 
-def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='iodide',
+def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iodide',
                                                RFR_dict=None, ex_str='',
                                                just_return_df=False, folder=None,
                                                filename=None, rm_Skagerrak_data=False,
@@ -1180,7 +1176,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='iod
     a.close()
 
 
-def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='iodide',
+def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Iodide',
                                     stats=None, ds=None, topmodels=None,
                                     save2NetCDF=True):
     """ Plot up the ensemble average and std spatially  """
@@ -1236,10 +1232,8 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='io
         return ds
 
 
-def test_performance_of_params(target='Iodide'):
+def test_performance_of_params(target='Iodide', testing_features=None):
     """ Test the performance of the parameters """
-    testing_features = None
-    target = 'Iodide'
     # ---- get the data
     # get processed data
     # settings for incoming feature data

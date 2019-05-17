@@ -566,7 +566,7 @@ def get_plots_for_AGU_poster(res='4x5', extr_str='', target='Iodide'):
 # ---------------------------------------------------------------------------
 # ---------- Funcs. to process iodine obs/external data --------------------
 # ---------------------------------------------------------------------------
-def check_points_for_cruises(verbose=False, debug=False):
+def check_points_for_cruises(target='Iodide', verbose=False, debug=False):
     """ Check the cruise points for the new data (Liselotte, He, etc...)"""
     # Get the observational data
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
@@ -578,22 +578,22 @@ def check_points_for_cruises(verbose=False, debug=False):
     # Strings to format printing
     ptr_str_I = '- '*5 + 'Cruise: {:<20}'
     ptr_str_II = '(Source: {:<20}, Location: {:<15}, N: {}, N(Iodide): {})'
-    # print by cruise
+    # Print by cruise
     for data_key in set(df['Data_Key']):
         df_m_tmp = metadata_df[metadata_df['Data_Key'] == data_key]
         df_tmp = df[df['Data_Key'] == data_key]
-        # extract metadata
+        # Extract metadata
         Cruise = df_m_tmp['Cruise'].values[0]
         Source = df_m_tmp['Source'].values[0]
         Location = df_m_tmp['Location'].values[0]
         #
         N = df_tmp.shape[0]
-        N_I = df_tmp['Iodide'].dropna().shape[0]
+        N_I = df_tmp[target].dropna().shape[0]
         print(ptr_str_I.format(Cruise))
         print(ptr_str_II.format(Source, Location, N, N_I))
-    # points for all cruises
+    # Points for all cruises
     N = df.shape[0]
-    N_I = df['Iodide'].dropna().shape[0]
+    N_I = df[target].dropna().shape[0]
     print(ptr_str_I.format('ALL new data'))
     print(ptr_str_II.format('', '', N, N_I))
 

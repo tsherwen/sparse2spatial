@@ -44,10 +44,10 @@ def compare_emissions(wd_dict=None, inorg_emiss=None, specs=None):
 
 
 def get_emissions_testing_runs():
-    """ """
-    folder = get_file_locations('earth0_home_dir')
+    """ Get dictionary of emission model run locations """
+#    folder = get_file_locations('earth0_home_dir')
+    folder = ''
     folder += '/data/all_model_simulations/iodine_runs/iGEOSChem_4.0_v10/'
-
     #
     RFR_dir = 'run.XS.UPa.FP.EU.BC.II.FP.2014.NEW_OFFLINE_IODIDE.several_months/'
     Chance_dir = '/run.XS.UPa.FP.EU.BC.II.FP.2014.re_run4HEMCO_diag/'
@@ -87,29 +87,24 @@ def get_inorg_emissions_for_params(wd_dict=None, res='4x5'):
     return inorg_emiss, specs+['Inorg']
 
 
+# def get_inorganic_iodide_emissions():
+#     """ Get dictionary of emission model run locations """
+#     # Location of run data
+#     wd = get_file_locations('earth0_home_dir')
+#     wd += '/data/all_model_simulations/iodine_runs/iGEOSChem_4.0_v10/'
+#     #
+#     print('WARNING: Neither simulation used NEI2011 emissions!!')
+#     runs = {
+#         'MacDonald et al (2014)': wd + '/run.XS.UPa.FP.EU.BC.II.FP.2014/',
+#         'Chance et al (2014)': wd + 'run.XS.UPa.FP.EU.BC.II.FP.2014.Chance_iodide/',
+#     }
+#     # What are the O3 burdens for these runs?
+#     O3_burdens = dict([(i, AC.get_O3_burden(runs[i])) for i in runs.keys()])
 
 
-def get_inorganic_iodide_emissions():
-    """ Get emissions for """
-    # Location of run data
-    wd = get_file_locations('earth0_home_dir')
-    wd += '/data/all_model_simulations/iodine_runs/iGEOSChem_4.0_v10/'
-    #
-    print('WARNING: Neither simulation used NEI2011 emissions!!')
-    runs = {
-        'MacDonald et al (2014)': wd + '/run.XS.UPa.FP.EU.BC.II.FP.2014/',
-        'Chance et al (2014)': wd + 'run.XS.UPa.FP.EU.BC.II.FP.2014.Chance_iodide/',
-    }
-    # What are the O3 burdens for these runs?
-    O3_burdens = dict([(i, AC.get_O3_burden(runs[i])) for i in runs.keys()])
-
-
-
-
-
-def add_Inorg_and_Org_totals2array( ds, InOrgVar='Inorg_Total', OrgVar='Org_Total' ):
+def add_Inorg_and_Org_totals2array(ds, InOrgVar='Inorg_Total', OrgVar='Org_Total'):
     """
-    Add inorg. and org. sub totals to ds
+    Add inorganic and organic sub totals to dataset
     """
     # Add aggregated values to ds
     OrgVars = [
