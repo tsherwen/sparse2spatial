@@ -72,8 +72,8 @@ def process_obs_and_ancillaries_2_csv(target='CHBr3',
     # Extract the ancillary values for these locations
     df = extract_ancillary_obs_from_COMPILED_file(df=df)
     # Save the intermediate file
-    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
-    folder += '/{}/'.format(target)
+    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
+    folder += '/{}/inputs/'.format(target)
     filename = 's2s_{}_obs_ancillaries_v0_0_0_TEMP.csv'.format(target)
     df.to_csv(folder+filename, encoding='utf-8')
 
