@@ -1207,7 +1207,7 @@ def mk_table_of_point_for_point_performance_ALL(RFR_dict=None, df=None,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      target: 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+#                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     # Set the stats to use
     first_columns = [
@@ -1369,6 +1369,50 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
                                        read_model_from_disk=True,
                                        model_sub_dir=model_sub_dir,
                                        delete_existing_model_files=False)
+    return RFR_dict
+
+# ---------------------------------------------------------------------------
+# ---------- Wrappers for s2s -------------
+# ---------------------------------------------------------------------------
+
+def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
+                                       rm_LOD_filled_data=False,
+                                       rm_outliers=True,
+                                       rebuild=False ):
+    """
+    Wrapper call to build_or_get_current_models for sea-surface iodide
+    """
+    # Get the dictionary  of model names and features (specific to iodide)
+    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+
+    # Get the observational dataset prepared for ML pipeline
+    df = get_dataset_processed4ML(
+        rm_Skagerrak_data=rm_Skagerrak_data,
+        rm_LOD_filled_data=rm_LOD_filled_data,
+        rm_outliers=rm_outliers,
+        )
+    #
+    if rm_Skagerrak_data:
+        model_sub_dir = '/TEMP_MODELS_No_Skagerrak/'
+#     elif rm_LOD_filled_data:
+#         temp_model_dir = wrk_dir+'/TEMP_MODELS_no_LOD_filled/'
+    else:
+        model_sub_dir = '/TEMP_MODELS/'
+
+    if rebuild:
+        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+#                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                    model_feature_dict=model_feature_dict,
+                                    df=df,
+                                    read_model_from_disk=False,
+                                    delete_existing_model_files=True )
+    else:
+        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+#                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                    model_feature_dict=model_feature_dict,
+                                    df=df,
+                                    read_model_from_disk=True,
+                                    delete_existing_model_files=False )
     return RFR_dict
 
 
