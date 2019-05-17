@@ -1,0 +1,18 @@
+##################################################
+#                                                #
+#         Setup file for Sparse2Spatial          #
+#                                                #
+##################################################
+#
+# - Locations of input data and files used by s2s
+#
+data_root            : /users/ts551/scratch/data/s2s/data
+submitted_data       : /users/ts551/scratch/data/s2s/Iodide/submitted_data/
+digitised_data       : /users/ts551/scratch/data/s2s/Iodide/digitised_data/
+new_data             : /users/ts551/scratch/data/s2s/Iodide/iodide_data_recieved_post_Chance2014/
+NASA_data_dir        : /work/data//NASA/nature_run/
+root_data_dir        : /work/data/
+home_dir             : /users/ts551/scratch/
+earth0_home_dir      : /users/ts551/scratch/
+AC_tools             : /users/ts551/scratch//labbook/Python_progs/AC_tools/
+# End of file
