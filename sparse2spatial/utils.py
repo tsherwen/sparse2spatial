@@ -38,8 +38,6 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
     """
     Make a dataset of 3D predicted values from model
     """
-    # Local variables
-    target_name = target
     # Get feature values for resolution
     if isinstance(dsA, type(None)):
         data_root = get_file_locations('data_root')
@@ -354,56 +352,56 @@ def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
     plt.colorbar()
 
 
-def mk_uniform_2D_array(df_predictors=None, target_predictions=None,
-                        res='4x5', lon_var='Longitude', lat_var='Latitude',
-                        target_name=None,  debug=False):
-    """
-    Make a uniform 2D array from df containing some lat and lon values
-    """
-    # recombine into a 2D array
-    coord_vars = [df_predictors[i].values for i in (lat_var, lon_var)]
-    df_target = pd.DataFrame(coord_vars + [target_predictions]).T
-    df_target.columns = [lat_var, lon_var] + target_name
-
-    # --- Use pandas to stack array - FAILED due to double ups... - why?
-    # load an empty dataframe with (All!) lats and lons as columns
-#     df_template = AC.get_2D_df_of_lon_lats_and_time()
-#     # set values to nan
-#     fill_value = -999999.999
-#     df_template[target_name[0]] = fill_value
-#     df_template = df_template[columns]
-    # fill template with values
-#    df_template.update(df_target)
-#    df_target = pd.DataFrame( df_template[target_name[0]].values, \
-#        index=[df_template['lon'], df_template['lat'] ] )
-
-    # --- Manually build up 2D array instead
-    # Setup zero array to fill with target data
-    lons, lats, NIU = AC.get_latlonalt4res(res=res)
-    arr = np.zeros((len(lons), len(lats)))
-    # Loop months...
-#    months =
-#    for month_ in months
-#    ars = []
-    # Loop Lons
-    for lon_ in sorted(set(df_target[lon_var].values))[::-1]:
-        # Select values for lon_
-        sub_df = df_target[df_target[lon_var] == lon_]
-        # Get index for lon
-        lon_ind = AC.get_gc_lon(lon_, res=res)
-        if debug:
-            print(lon_, sub_df.shape, sub_df)
-        # Loop lats and Extract values
-        for lat_ in sorted(sub_df[lat_var].values)[::-1]:
-            # Get index for lon
-            lat_ind = AC.get_gc_lat(lat_, res=res)
-            # Select values for lon_
-            val = sub_df[sub_df[lat_var] == lat_][target_name[0]].values[0]
-            if debug:
-                print(lon_, lat_, lon_ind, lat_ind, val)
-            # Fill in value
-            arr[lon_ind, lat_ind] = val
-    return arr
+# def mk_uniform_2D_array(df_predictors=None, target_predictions=None,
+#                         res='4x5', lon_var='Longitude', lat_var='Latitude',
+#                         target_name=None,  debug=False):
+#     """
+#     Make a uniform 2D array from df containing some lat and lon values
+#     """
+#     # recombine into a 2D array
+#     coord_vars = [df_predictors[i].values for i in (lat_var, lon_var)]
+#     df_target = pd.DataFrame(coord_vars + [target_predictions]).T
+#     df_target.columns = [lat_var, lon_var] + target_name
+#
+#     # --- Use pandas to stack array - FAILED due to double ups... - why?
+#     # load an empty dataframe with (All!) lats and lons as columns
+# #     df_template = AC.get_2D_df_of_lon_lats_and_time()
+# #     # set values to nan
+# #     fill_value = -999999.999
+# #     df_template[target_name[0]] = fill_value
+# #     df_template = df_template[columns]
+#     # fill template with values
+# #    df_template.update(df_target)
+# #    df_target = pd.DataFrame( df_template[target_name[0]].values, \
+# #        index=[df_template['lon'], df_template['lat'] ] )
+#
+#     # --- Manually build up 2D array instead
+#     # Setup zero array to fill with target data
+#     lons, lats, NIU = AC.get_latlonalt4res(res=res)
+#     arr = np.zeros((len(lons), len(lats)))
+#     # Loop months...
+# #    months =
+# #    for month_ in months
+# #    ars = []
+#     # Loop Lons
+#     for lon_ in sorted(set(df_target[lon_var].values))[::-1]:
+#         # Select values for lon_
+#         sub_df = df_target[df_target[lon_var] == lon_]
+#         # Get index for lon
+#         lon_ind = AC.get_gc_lon(lon_, res=res)
+#         if debug:
+#             print(lon_, sub_df.shape, sub_df)
+#         # Loop lats and Extract values
+#         for lat_ in sorted(sub_df[lat_var].values)[::-1]:
+#             # Get index for lon
+#             lat_ind = AC.get_gc_lat(lat_, res=res)
+#             # Select values for lon_
+#             val = sub_df[sub_df[lat_var] == lat_][target_name[0]].values[0]
+#             if debug:
+#                 print(lon_, lat_, lon_ind, lat_ind, val)
+#             # Fill in value
+#             arr[lon_ind, lat_ind] = val
+#     return arr
 
 
 def transform_from_latlon(lat, lon):
@@ -1030,3 +1028,120 @@ def get_feature_variables_as_ds(res='4x5'):
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     return ds
+
+
+def get_model_testing_features_dict(model_name=None, rtn_dict=False):
+    """
+    return a dictionary of test variables to use
+    """
+    d = {
+        # (1 variable) all induvidual
+        'TEMP': ['WOA_TEMP_K', ],
+        'DEPTH': ['Depth_GEBCO', ],
+        'SAL': ['WOA_Salinity', ],
+        'NO3': ['WOA_Nitrate', ],
+        'SWrad': ['SWrad', ],
+        'DOC': ['DOC', ],
+        'DOCaccum': ['DOCaccum', ],
+        'Prod': ['Prod', ],
+        'ChlrA': ['SeaWIFs_ChlrA', ],
+        'Phos': ['WOA_Phosphate'],
+        'Sil': ['WOA_Silicate'],
+        'MLDpt': ['WOA_MLDpt', ],
+        'MLDvd': ['WOA_MLDvd', ],
+        'MLDpd': ['WOA_MLDpd', ],
+        'MLDpt_sum': ['WOA_MLDpt_sum', ],
+        'MLDpt_max': ['WOA_MLDpt_max', ],
+        'O2': ['WOA_Dissolved_O2'],
+        'MLDpd_sum': ['WOA_MLDpd_sum', ],
+        'MLDpd_max': ['WOA_MLDpd_max', ],
+        'MLDvd_sum': ['WOA_MLDvd_sum', ],
+        'MLDvd_max': ['WOA_MLDvd_max', ],
+        # 2 variables  induvidual
+        'TEMP+DEPTH': ['WOA_TEMP_K', 'Depth_GEBCO', ],
+        'TEMP+SAL': ['WOA_TEMP_K', 'WOA_Salinity', ],
+        'TEMP+NO3': ['WOA_TEMP_K', 'WOA_Nitrate', ],
+        'TEMP+DOC': ['WOA_TEMP_K', 'DOC', ],
+        'DEPTH+SAL': ['Depth_GEBCO', 'WOA_Salinity', ],
+        'DEPTH+DOC': ['Depth_GEBCO', 'DOC', ],
+        'SWrad+SAL': ['SWrad', 'WOA_Salinity', ],
+        'NO3+DOC': ['WOA_Nitrate', 'DOC', ],
+        'NO3+SWrad': ['SWrad', 'WOA_Nitrate', ],
+        'NO3+SAL': ['WOA_Salinity', 'WOA_Nitrate', ],
+        # 3 variables
+        'TEMP+DEPTH+DOC': ['WOA_TEMP_K', 'Depth_GEBCO', 'DOC', ],
+        'TEMP+DEPTH+SAL': ['WOA_TEMP_K', 'Depth_GEBCO', 'WOA_Salinity', ],
+        'TEMP+DEPTH+NO3': ['WOA_TEMP_K', 'Depth_GEBCO', u'WOA_Nitrate', ],
+        'TEMP+DEPTH+ChlrA': ['WOA_TEMP_K', 'Depth_GEBCO', u'SeaWIFs_ChlrA', ],
+        'TEMP+SAL+Prod': ['WOA_TEMP_K', 'WOA_Salinity', u'Prod', ],
+        'TEMP+SAL+NO3': ['WOA_TEMP_K', 'WOA_Salinity', u'WOA_Nitrate', ],
+        'TEMP+DOC+NO3': ['WOA_TEMP_K', 'DOC', u'WOA_Nitrate', ],
+        'TEMP+DOC+Phos': ['WOA_TEMP_K', 'DOC', u'WOA_Phosphate', ],
+        'NO3+DOC+Phos': [u'WOA_Nitrate', 'DOC', u'WOA_Phosphate', ],
+        'SWrad+SAL+Prod': ['SWrad', 'WOA_Salinity', u'Prod', ],
+        'SWrad+SAL+NO3': ['SWrad', 'WOA_Salinity', 'WOA_Nitrate', ],
+        'SWrad+SAL+DEPTH': ['SWrad', 'WOA_Salinity', 'Depth_GEBCO', ],
+        # 4 variables
+        'TEMP+DEPTH+SAL+NO3': [
+            'WOA_TEMP_K', 'Depth_GEBCO', 'WOA_Salinity', 'WOA_Nitrate',
+        ],
+        'TEMP+DEPTH+SAL+SWrad': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'SWrad',
+        ],
+        'TEMP+DEPTH+NO3+SWrad': [
+            'WOA_TEMP_K', 'WOA_Nitrate', 'Depth_GEBCO', u'SWrad',
+        ],
+        'TEMP+DEPTH+SAL+ChlrA': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'SeaWIFs_ChlrA',
+        ],
+        'TEMP+DEPTH+SAL+Phos': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'WOA_Phosphate',
+        ],
+        'TEMP+DEPTH+SAL+DOC': ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'DOC', ],
+        'TEMP+DEPTH+SAL+Prod': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'Prod',
+        ],
+        #     'MOD_LAT+NO3+MLD+SAL': [
+        #      'Latitude (Modulus)','WOA_Nitrate','WOA_MLDpt',
+        #      'WOA_Salinity'
+        #     ],
+        'TEMP+NO3+MLD+SAL': [
+            'WOA_TEMP_K', 'WOA_Nitrate', 'WOA_MLDpt', 'WOA_Salinity'
+        ],
+        #     'TEMP+MOD_LAT+MLD+SAL': [
+        #      'WOA_TEMP_K', 'Latitude (Modulus)','WOA_MLDpt', 'WOA_Salinity'
+        #     ],
+        #     'TEMP+MOD_LAT+NO3+MLD': [
+        #      'WOA_TEMP_K','Latitude (Modulus)','WOA_Nitrate','WOA_MLDpt',
+        #     ],
+        # 5 variables
+        'TEMP+DEPTH+SAL+SWrad+DOC': [
+            'WOA_TEMP_K', 'Depth_GEBCO', 'WOA_Salinity', 'SWrad', 'DOC',
+        ],
+        'TEMP+DEPTH+SAL+NO3+DOC': [
+            'WOA_TEMP_K', 'Depth_GEBCO', 'WOA_Salinity', 'WOA_Nitrate', 'DOC',
+        ],
+        'TEMP+SWrad+NO3+MLD+SAL': [
+            'WOA_TEMP_K', 'SWrad', 'WOA_Nitrate', 'WOA_MLDpt', 'WOA_Salinity'
+        ],
+        #     'TEMP+MOD_LAT+NO3+MLD+SAL': [
+        #      'WOA_TEMP_K', 'Latitude (Modulus)','WOA_Nitrate','WOA_MLDpt',
+        #      'WOA_Salinity'
+        #     ],
+        #    'ALL': [
+        #    'WOA_TEMP_K','WOA_Salinity', 'WOA_Nitrate', 'Depth_GEBCO','SeaWIFs_ChlrA',
+        #    'WOA_Phosphate',u'WOA_Silicate', u'DOC', u'Prod',u'SWrad', 'WOA_MLDpt',
+        #        u'DOCaccum',
+        #    ],
+    }
+    # Add RFR in front of all model names for clarity
+    modelnames = list(d.keys())
+    for modelname in modelnames:
+        d['RFR({})'.format(modelname)] = d[modelname]
+    # Then remove the existing name format
+    for modelname in modelnames:
+        d.pop(modelname)
+    if rtn_dict:
+        return d
+    else:
+        return d[model_name]

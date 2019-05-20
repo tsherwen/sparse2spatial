@@ -357,8 +357,6 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     strat_split_var = 'strat. 20%'
     # set a basis for filenames to saved as
     save_filename_str = 'Oi_prj_test_training_selection'
-    # set target_name variable from target
-    target_name = [target]
 #    random_states = [38, 39, 40, 41, 42, 43, 44 ]
 #    random_states = [36, 37, 38, 39, 40, 41, 42, ]
 #    random_states = np.arange(33, 43, 1)
@@ -544,9 +542,9 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
             train_features = df_tmp[testing_features].loc[train_set.index]
-            train_labels = df_tmp[target_name].loc[train_set.index]
+            train_labels = df_tmp[[target]].loc[train_set.index]
             test_features = df_tmp[testing_features].loc[test_set.index]
-            test_labels = df_tmp[target_name].loc[test_set.index]
+            test_labels = df_tmp[[target]].loc[test_set.index]
             # build the model - NOTE THIS MUST BE RE-DONE!
             # ( otherwise the model is being re-trained )
             model = RandomForestRegressor(random_state=random_state,
@@ -683,121 +681,6 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # save the plot
     plt.savefig(save_filename_str+'_sensitivity_violin.png', dpi=dpi)
     plt.close()
-
-
-def get_model_testing_features_dict(model_name=None, rtn_dict=False):
-    """
-    return a dictionary of test variables to use
-    """
-    d = {
-        #    'TEMP+DEPTH+SAL(N=100)': ['WOA_TEMP_K', 'WOA_Salinity','Depth_GEBCO',],
-        # (1 variable) all induvidual
-        'TEMP': ['WOA_TEMP_K', ],
-        'DEPTH': ['Depth_GEBCO', ],
-        'SAL': ['WOA_Salinity', ],
-        'NO3': ['WOA_Nitrate', ],
-        'SWrad': ['SWrad', ],
-        'DOC': ['DOC', ],
-        'DOCaccum': ['DOCaccum', ],
-        'Prod': ['Prod', ],
-        'ChlrA': ['SeaWIFs_ChlrA', ],
-        'Phos': ['WOA_Phosphate'],
-        'Sil': ['WOA_Silicate'],
-        'MLDpt': ['WOA_MLDpt', ],
-        'MLDvd': ['WOA_MLDvd', ],
-        'MLDpd': ['WOA_MLDpd', ],
-        'MLDpt_sum': ['WOA_MLDpt_sum', ],
-        'MLDpt_max': ['WOA_MLDpt_max', ],
-        'O2': ['WOA_Dissolved_O2'],
-        'MLDpd_sum': ['WOA_MLDpd_sum', ],
-        'MLDpd_max': ['WOA_MLDpd_max', ],
-        'MLDvd_sum': ['WOA_MLDvd_sum', ],
-        'MLDvd_max': ['WOA_MLDvd_max', ],
-        #    'MOD_LAT': ['MOD_LAT',],
-        # 2 variables  induvidual
-        'TEMP+DEPTH': ['WOA_TEMP_K', 'Depth_GEBCO', ],
-        'TEMP+SAL': ['WOA_TEMP_K', 'WOA_Salinity', ],
-        'TEMP+NO3': ['WOA_TEMP_K', 'WOA_Nitrate', ],
-        'TEMP+DOC': ['WOA_TEMP_K', 'DOC', ],
-        'DEPTH+SAL': ['Depth_GEBCO', 'WOA_Salinity', ],
-        'DEPTH+DOC': ['Depth_GEBCO', 'DOC', ],
-        'SWrad+SAL': ['SWrad', 'WOA_Salinity', ],
-        'NO3+DOC': ['WOA_Nitrate', 'DOC', ],
-        'NO3+SWrad': ['SWrad', 'WOA_Nitrate', ],
-        'NO3+SAL': ['WOA_Salinity', 'WOA_Nitrate', ],
-        # 3 variables
-        'TEMP+DEPTH+DOC': ['WOA_TEMP_K', 'Depth_GEBCO', 'DOC', ],
-        'TEMP+DEPTH+SAL': ['WOA_TEMP_K', 'Depth_GEBCO', 'WOA_Salinity', ],
-        'TEMP+DEPTH+NO3': ['WOA_TEMP_K', 'Depth_GEBCO', u'WOA_Nitrate', ],
-        'TEMP+DEPTH+ChlrA': ['WOA_TEMP_K', 'Depth_GEBCO', u'SeaWIFs_ChlrA', ],
-        'TEMP+SAL+Prod': ['WOA_TEMP_K', 'WOA_Salinity', u'Prod', ],
-        'TEMP+SAL+NO3': ['WOA_TEMP_K', 'WOA_Salinity', u'WOA_Nitrate', ],
-        'TEMP+DOC+NO3': ['WOA_TEMP_K', 'DOC', u'WOA_Nitrate', ],
-        'TEMP+DOC+Phos': ['WOA_TEMP_K', 'DOC', u'WOA_Phosphate', ],
-        'NO3+DOC+Phos': [u'WOA_Nitrate', 'DOC', u'WOA_Phosphate', ],
-        'SWrad+SAL+Prod': ['SWrad', 'WOA_Salinity', u'Prod', ],
-        'SWrad+SAL+NO3': ['SWrad', 'WOA_Salinity', 'WOA_Nitrate', ],
-        'SWrad+SAL+DEPTH': ['SWrad', 'WOA_Salinity', 'Depth_GEBCO', ],
-        # 4 variables
-        'TEMP+DEPTH+SAL+NO3': [
-            'WOA_TEMP_K', 'Depth_GEBCO', 'WOA_Salinity', 'WOA_Nitrate',
-        ],
-        'TEMP+DEPTH+SAL+SWrad': [
-            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'SWrad',
-        ],
-        'TEMP+DEPTH+NO3+SWrad': [
-            'WOA_TEMP_K', 'WOA_Nitrate', 'Depth_GEBCO', u'SWrad',
-        ],
-        'TEMP+DEPTH+SAL+ChlrA': [
-            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'SeaWIFs_ChlrA',
-        ],
-        'TEMP+DEPTH+SAL+Phos': [
-            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'WOA_Phosphate',
-        ],
-        'TEMP+DEPTH+SAL+DOC': ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'DOC', ],
-        'TEMP+DEPTH+SAL+Prod': [
-            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'Prod',
-        ],
-        #     'MOD_LAT+NO3+MLD+SAL': [
-        #      'Latitude (Modulus)','WOA_Nitrate','WOA_MLDpt',
-        #      'WOA_Salinity'
-        #     ],
-        'TEMP+NO3+MLD+SAL': [
-            'WOA_TEMP_K', 'WOA_Nitrate', 'WOA_MLDpt', 'WOA_Salinity'
-        ],
-        #     'TEMP+MOD_LAT+MLD+SAL': [
-        #      'WOA_TEMP_K', 'Latitude (Modulus)','WOA_MLDpt', 'WOA_Salinity'
-        #     ],
-        #     'TEMP+MOD_LAT+NO3+MLD': [
-        #      'WOA_TEMP_K','Latitude (Modulus)','WOA_Nitrate','WOA_MLDpt',
-        #     ],
-        # 5 variables
-        'TEMP+DEPTH+SAL+SWrad+DOC': [
-            'WOA_TEMP_K', 'Depth_GEBCO', 'WOA_Salinity', 'SWrad', 'DOC',
-        ],
-        'TEMP+DEPTH+SAL+NO3+DOC': [
-            'WOA_TEMP_K', 'Depth_GEBCO', 'WOA_Salinity', 'WOA_Nitrate', 'DOC',
-        ],
-        'TEMP+SWrad+NO3+MLD+SAL': [
-            'WOA_TEMP_K', 'SWrad', 'WOA_Nitrate', 'WOA_MLDpt', 'WOA_Salinity'
-        ],
-        #     'TEMP+MOD_LAT+NO3+MLD+SAL': [
-        #      'WOA_TEMP_K', 'Latitude (Modulus)','WOA_Nitrate','WOA_MLDpt',
-        #      'WOA_Salinity'
-        #     ],
-        #    'ALL': [
-        #    'WOA_TEMP_K','WOA_Salinity', 'WOA_Nitrate', 'Depth_GEBCO','SeaWIFs_ChlrA',
-        #    'WOA_Phosphate',u'WOA_Silicate', u'DOC', u'Prod',u'SWrad', 'WOA_MLDpt',
-        #        u'DOCaccum',
-        #    ],
-    }
-    # Add RFR in front of all model names for clarity
-    for key in d.keys():
-        d['RFR({})'.format(key)] = d.pop(key)
-    if rtn_dict:
-        return d
-    else:
-        return d[model_name]
 
 
 # ---------------------------------------------------------------------------
@@ -1338,7 +1221,6 @@ def get_dataset_processed4ML(restrict_data_max=False,
     # - Local variables
     testing_features = None
     target = 'Iodide'
-    target_name = target
     # - The following settings are set to False as default
     # settings for incoming feature data
     restrict_min_salinity = False
@@ -1371,7 +1253,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
 #    print( 'WARNING - What testing had been done on training set selection?!' )
     # Choose a sub set of data to exclude from the input data...
 #     from sklearn.model_selection import train_test_split
-#     targets = df[ target_name ]
+#     targets = df[ [target] ]
 #     # Use a standard 20% test set.
 #     train_set, test_set =  train_test_split( targets, test_size=0.2, \
 #         random_state=42 )

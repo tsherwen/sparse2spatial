@@ -18,9 +18,10 @@ import sparse2spatial.utils as utils
 
 def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
                                 save_model_to_disk=False, read_model_from_disk=True,
-                                target_name='Iodide', target='Iodide', model_names=None,
+                                target='Iodide', model_names=None,
                                 delete_existing_model_files=False, rm_outliers=True,
-                                model_sub_dir='/TEMP_MODELS/',
+#                                rm_Skagerrak_data=False,
+                                model_sub_dir='/TEMP_MODELS/', random_state=42,
                                 rm_LOD_filled_data=False, model_feature_dict=None,
                                 debug=False):
     """
@@ -32,8 +33,9 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
     testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
     save_model_to_disk (boolean), Save the models to disc as pickled binaries?
     read_model_from_disk (boolean), read the models from disc if they are already built?
-    target_name (str), Name of the target variable (e.g. iodide)
+    target (str), Name of the target variable (e.g. iodide)
     model_names (list), List of model names to build/read
+    random_state (int), the seed used by the random number generator
     delete_existing_model_files (boolean), delete the existing model binaries in folder?
     rm_outliers (boolean), remove the outliers from the observational dataset
     rm_LOD_filled_data (boolean), remove the limit of detection (LOD) filled values?
@@ -67,13 +69,13 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
         model_names = list(sorted(model_feature_dict.keys()))
     # Set a hyperparameter settings
     hyperparam_dict = utils.get_hyperparameter_dict()
-    # Setup dictionaries to save detail on models to
+    # Setup dictionaries to save model detail into
     N_testing_features = {}
     testing_features_dict = {}
     oob_scores = {}
     models_dict = {}
 
-    # - Loop and build models
+    # - Loop model input variable options and build models
     if not read_model_from_disk:
         for n_model_name, model_name in enumerate(model_names):
             print(n_model_name, model_name)
@@ -83,14 +85,14 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
             oob_score = hyperparam_dict['oob_score']
             # select and split variables in the training and test dataset
             train_set_tr = df.loc[df[testset] != True, testing_features]
-            train_set_tr_labels = df.loc[df[testset] != True, target_name]
+            train_set_tr_labels = df.loc[df[testset] != True, target]
             # Build model (Setup and fit)
-            model = RandomForestRegressor(random_state=42,
+            model = RandomForestRegressor(random_state=random_state,
                                           n_estimators=n_estimators,
                                           oob_score=oob_score,
                                           criterion='mse')
             # Provide the model with the features (testing_features) and
-            # The labels ( target_name, train_set_tr_labels)
+            # The labels ( target, train_set_tr_labels)
             model.fit(train_set_tr, train_set_tr_labels)
             # Save model in temporary folder?
             if save_model_to_disk:
@@ -198,11 +200,11 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
     Notes
     -----
     """
-    # get stats on models in RFR_dict
+    # Get stats on models in RFR_dict
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
     if isinstance(stats, type(None)):
-        stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+        stats = get_core_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
     # Don't count the Ensemble in the topten
     if exclude_ensemble:
         var_ = 'RFR(Ensemble)'
@@ -213,7 +215,7 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
         except:
             if verbose:
                 print('failed to remove {} from list'.format(var_))
-    # return the top model's names (with ot without derivative values)
+    # Return the top model's names (with ot without derivative values)
     if NO_DERIVED:
         params2inc = stats.T.columns
         params2inc = [i for i in params2inc if 'DOC' not in i]
@@ -367,7 +369,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
 
 def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
                               RFR_dict=None, df=None, cv=3,
-                              testset='Test set (strat. 20%)', target_name=['Iodide'],
+                              testset='Test set (strat. 20%)', target='Iodide',
                               testing_features=None, model_name=None,
                               save_best_estimator=True):
     """
@@ -405,9 +407,9 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     # also sub select all vectors for input data
     # ( Making sure to remove the target!!! )
     train_features = df[testing_features].loc[train_set.index]
-    train_labels = df[target_name].loc[train_set.index]
+    train_labels = df[[target]].loc[train_set.index]
     test_features = df[testing_features].loc[test_set.index]
-    test_labels = df[target_name].loc[test_set.index]
+    test_labels = df[[target]].loc[test_set.index]
 
     # - Make the base model for comparisons
     base_model = RandomForestRegressor(n_estimators=10, random_state=42,
@@ -868,10 +870,9 @@ def mk_ML_testing_and_training_set(df=None, target='Iodide',
     Notes
     -----
     """
-    # --- ------ make Test and
+    # - make Test and training set
     # to make this approach's output identical at every run
     np.random.seed(42)
-    target_name = [target]
     # --- Standard random selection:
     if random_20_80_split:
         from sklearn.model_selection import train_test_split
@@ -882,9 +883,9 @@ def mk_ML_testing_and_training_set(df=None, target='Iodide',
         # ( Making sure to remove the target!!! )
         train_set = df[testing_features].loc[train_set.index]
         test_set = df[testing_features].loc[test_set.index]
-        test_set_targets = df[target_name].loc[test_set.index]
+        test_set_targets = df[[target]].loc[test_set.index]
 
-    # ---
+    # - Use a random split
     if random_strat_split:
         from sklearn.model_selection import StratifiedShuffleSplit
         # Add in "SPLIT_GROUP" metric
@@ -916,7 +917,7 @@ def mk_ML_testing_and_training_set(df=None, target='Iodide',
         for train_index, test_index in split.split(df, df[SPLITvar]):
             train_set = df.loc[train_index]
             test_set = df.loc[test_index]
-            test_set_targets = df[target_name].loc[test_index]
+            test_set_targets = df[[target]].loc[test_index]
         # Gotcha for changes in array index
         Na = df[~df.index.isin(train_index.tolist() + test_index.tolist())]
 #        assert (Na.shape[0] < 0), 'WARING: thre now NaNs in the arrays! - {}'
