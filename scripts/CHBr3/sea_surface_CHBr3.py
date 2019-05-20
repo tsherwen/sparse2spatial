@@ -17,14 +17,13 @@ import pandas as pd
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 #import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
-a#import sparse2spatial.archiving as archiving
+#import sparse2spatial.archiving as archiving
+from sparse2spatial.RTRbuild import mk_ML_testing_and_training_set
 import sparse2spatial.RTRbuild as build
 import sparse2spatial.RFRanalysis as analysis
 from sparse2spatial.RTRbuild import build_or_get_current_models
 
 # Get iodide specific functions
-from observations import get_dataset_processed4ML
-
 
 def main():
     """
@@ -35,7 +34,14 @@ def main():
     target = 'CH3Br'
 
     # - Get the observations
+
+    # - build models with the observations
+    RFR_dict = build_or_get_current_models_CHBr3(rebuild=False)
     #
+
+    # Get stats ont these models
+    stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
+            target=target, verbose=True, debug=True)
 
 
 
@@ -50,12 +56,12 @@ def build_or_get_current_models_CHBr3(rm_Skagerrak_data=True, target='CH3Br',
     Wrapper call to build_or_get_current_models for sea-surface CHBr3
     """
     # Get the dictionary  of model names and features (specific to iodide)
-    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+    model_feature_dict = utils.get_model_testing_features_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
-    df = get_dataset_processed4ML(
+    df = get_dataset_processed4ML( target=target,
 #        rm_Skagerrak_data=rm_Skagerrak_data,
-        rm_LOD_filled_data=rm_LOD_filled_data,
+#        rm_LOD_filled_data=rm_LOD_filled_data,
         rm_outliers=rm_outliers,
         )
 
@@ -63,14 +69,14 @@ def build_or_get_current_models_CHBr3(rm_Skagerrak_data=True, target='CH3Br',
         RFR_dict = build_or_get_current_models(save_model_to_disk=True,
 #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                     model_feature_dict=model_feature_dict,
-                                    df=df,
+                                    df=df, target=target,
                                     read_model_from_disk=False,
                                     delete_existing_model_files=True )
     else:
         RFR_dict = build_or_get_current_models(save_model_to_disk=True,
 #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                     model_feature_dict=model_feature_dict,
-                                    df=df,
+                                    df=df, target=target,
                                     read_model_from_disk=True,
                                     delete_existing_model_files=False )
     return RFR_dict
@@ -126,6 +132,11 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH3Br',
                                      rm_outliers=rm_outliers,
 #                                     rm_LOD_filled_data=rm_LOD_filled_data,
                                      )    # add
+    # Re-index to a single contiguous index
+    df['Original Index' ] = df.index.copy()
+    N1 = df.shape[0]
+    df.index = np.arange( N1 )
+    print('WARNING: Reindexed to shape of DataFrame processed for ML ({})'.format(N1))
 
     # - Add test and training set assignment to columns
 #    print( 'WARNING - What testing had been done on training set selection?!' )
@@ -147,7 +158,8 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH3Br',
         # Copy a df for splitting
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_ML_testing_and_training_set(df=df.copy(),
+                                                    target=target,
                                                     random_20_80_split=random_20_80_split,
                                                     random_strat_split=random_strat_split,
                                                     testing_features=df.columns.tolist(),

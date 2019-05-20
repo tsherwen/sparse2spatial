@@ -74,11 +74,11 @@ def process_obs_and_ancillaries_2_csv(target='CHBr3',
     # Save the intermediate file
     folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder += '/{}/inputs/'.format(target)
-    filename = 's2s_{}_obs_ancillaries_v0_0_0_TEMP.csv'.format(target)
+    filename = 's2s_{}_obs_ancillaries_v0_0_0.csv'.format(target)
     df.to_csv(folder+filename, encoding='utf-8')
 
 
-def get_processed_df_obs_mod(reprocess_params=False,
+def get_processed_df_obs_mod(reprocess_params=False, target='CHBr3',
                              filename='s2s_CHBr3_obs_ancillaries.csv',
                              rm_Skagerrak_data=False,
                              file_and_path='./sparse2spatial.rc',
@@ -98,8 +98,8 @@ def get_processed_df_obs_mod(reprocess_params=False,
 
     """
     # Read in processed csv file
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
-    folder += '/{}/'.format(target)
+    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
+    folder += '/{}/inputs/'.format(target)
     filename = 's2s_{}_obs_ancillaries.csv'.format(target)
     df = pd.read_csv(folder+filename, encoding='utf-8')
     # Kludge (temporary) - make Chlorophyll values all floats
