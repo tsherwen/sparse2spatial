@@ -6,6 +6,7 @@ This includes presentation at conferences etc...
 
 """
 
+
 def main():
     """
     Run various misc. scripted tasks linked to the "iodide in the ocean" project
@@ -49,7 +50,7 @@ def main():
 # ---------- Functions to produce output for Iodide obs. paper -------------
 # ---------------------------------------------------------------------------
 def get_PDF_of_iodide_exploring_data_rootset(show_plot=False,
-                                               ext_str=None):
+                                             ext_str=None):
     """ Get PDF of plots exploring the iodide dataset """
     import seaborn as sns
     sns.set(color_codes=True)
@@ -294,7 +295,6 @@ def get_PDF_of_iodide_exploring_data_rootset(show_plot=False,
 
     # -- Save entire pdf
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
-
 
 
 # ---------------------------------------------------------------------------
@@ -562,7 +562,6 @@ def get_analysis_numbers_for_AGU17_poster():
 #     plt.close()
 
 
-
 # ---------------------------------------------------------------------------
 # ---------- Funcs. to process iodine obs/external data --------------------
 # ---------------------------------------------------------------------------
@@ -596,8 +595,6 @@ def check_points_for_cruises(target='Iodide', verbose=False, debug=False):
     N_I = df[target].dropna().shape[0]
     print(ptr_str_I.format('ALL new data'))
     print(ptr_str_II.format('', '', N, N_I))
-
-
 
 
 def plot_threshold_plus_SD_spatially(var=None, value=None, std=None, res='4x5',
@@ -809,7 +806,8 @@ def plot_up_ln_iodide_vs_salinity(show_plot=True):
     plt.close()
     # - Plot up all nitrate concentrations
     df_tmp = df[df['Salinity'] < 30]
-    df_tmp.plot(kind='scatter', x='Salinity', y='Iodide', marker='D', color='k')
+    df_tmp.plot(kind='scatter', x='Salinity',
+                y='Iodide', marker='D', color='k')
     plt.ylabel('LN[Iodide], nM')
     plt.xlabel('Salinity')
     plt.xlim(-2, AC.myround(max(df['Salinity']), 10, round_up=True))
@@ -818,7 +816,8 @@ def plot_up_ln_iodide_vs_salinity(show_plot=True):
     plt.close()
     # - Plot up all nitrate concentrations
     df_tmp = df[df['Salinity'] > 30]
-    df_tmp.plot(kind='scatter', x='Salinity', y='Iodide', marker='D', color='k')
+    df_tmp.plot(kind='scatter', x='Salinity',
+                y='Iodide', marker='D', color='k')
     plt.ylabel('LN[Iodide], nM')
     plt.xlabel('Salinity')
     plt.xlim(29, AC.myround(max(df['Salinity']), 10, round_up=True))
@@ -1175,7 +1174,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
 
 
 def explore_observational_data_in_Arctic_parameter_space(RFR_dict=None,
-                                                        plot_up_locations4var_conds=False,
+                                                         plot_up_locations4var_conds=False,
                                                          testset='Test set (strat. 20%)',
                                                          dpi=320):
     """ Analysis the input observational data for the Arctic and Antarctic """
@@ -2378,7 +2377,8 @@ def mk_X_Y_scatter_plot_param_vs_iodide(X=None, Y=None, iodide_var=None,
     plt.ylim(-(round_max_Y/40), round_max_Y)
     # Add an N value to plot
     alt_text = '(N={})'.format(len(X))
-    ax.annotate(alt_text, xy=(0.8, 0.10), textcoords='axes fraction', fontsize=10)
+    ax.annotate(alt_text, xy=(0.8, 0.10),
+                textcoords='axes fraction', fontsize=10)
     return ax
 
 
@@ -2782,6 +2782,7 @@ def compare_obs_ancillaries_with_extracted_values(df=None, save2pdf=True,
     if save2pdf:
         AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
+
 def plot_up_lat_STT_var(restrict_data_max=True, restrict_min_salinity=True):
     """
     Plot up a "pretty" plot of STT vs Lat, with scatter sizes and color by var.
@@ -2969,7 +2970,6 @@ def plot_current_parameterisations():
     # Plot up "Arrhenius" fit of iodide and temperature. ( MacDonald et al 2014)
     plot_macdonald_param(df=pro_df.copy(), data_str='Extracted data',
                          X_var='WOA_TEMP')
-
 
 
 # ---------------------------------------------------------------------------
@@ -3343,7 +3343,7 @@ def get_iodide_cruise_data_from_Anoop_txt_files(verbose=False):
     #	cruise_name = cruise_files.keys()[0]
         df = pd.read_excel(folder+cruise_files[cruise_name])
         names_dict = {
-        'Date': 'date', 'UTC': 'date', 'time (UTC)': 'time', 'lat': 'LAT', 'lon': 'LON'
+            'Date': 'date', 'UTC': 'date', 'time (UTC)': 'time', 'lat': 'LAT', 'lon': 'LON'
         }
         if verbose:
             print(df.head())
@@ -3635,9 +3635,6 @@ def get_test_plots_surface_pf_output(wd=None, name='Planeflight',
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi, no_dstr=True)
 
 
-
-
-
 def mk_datat_files4Rosie_surface_paper(res='0.125x0.125'):
     """ Make data files for Rosie's analysis on the surface data paper """
     AreasOfInterest = {
@@ -3763,56 +3760,56 @@ def Do_analysis_and_mk_plots_for_EGU19_poster():
     Check_global_statistics_on_emissions(dsDH=dsDH)
     # Look at differences in surface concentration.
     extra_str = 'EGU_runs_surface_Iy_stats_'
-    df = evalulate_burdens_and_surface_conc( run_dict=wds, extra_str=extra_str )
+    df = evalulate_burdens_and_surface_conc(run_dict=wds, extra_str=extra_str)
     # Get general statistics about the emissions vs. Macdoanld et al 2014
     REF1 = 'Macdonald2014'
-    extra_str = 'EGU_runs_general_stats_vs_{}_'.format( REF1 )
-    df = AC.get_general_stats4run_dict_as_df( run_dict=wds, REF1=REF1,
-                                            extra_str=extra_str)
+    extra_str = 'EGU_runs_general_stats_vs_{}_'.format(REF1)
+    df = AC.get_general_stats4run_dict_as_df(run_dict=wds, REF1=REF1,
+                                             extra_str=extra_str)
     # Get general statistics about the emissions vs. Macdoanld et al 2014
     REF1 = 'Chance2014'
-    extra_str = 'EGU_runs_general_stats_vs_{}_'.format( REF1 )
-    df = AC.get_general_stats4run_dict_as_df( run_dict=wds, REF1=REF1,
-                                            extra_str=extra_str)
+    extra_str = 'EGU_runs_general_stats_vs_{}_'.format(REF1)
+    df = AC.get_general_stats4run_dict_as_df(run_dict=wds, REF1=REF1,
+                                             extra_str=extra_str)
     # Get general statistics about the emissions vs. Macdoanld et al 2014
     REF1 = 'ML_Iodide'
-    extra_str = 'EGU_runs_general_stats_vs_{}_'.format( REF1 )
-    df = AC.get_general_stats4run_dict_as_df( run_dict=wds, REF1=REF1,
-                                            extra_str=extra_str)
+    extra_str = 'EGU_runs_general_stats_vs_{}_'.format(REF1)
+    df = AC.get_general_stats4run_dict_as_df(run_dict=wds, REF1=REF1,
+                                             extra_str=extra_str)
     # Get general statistics about the emissions vs. Macdoanld et al 2014
     REF1 = 'No_HOI_I2'
-    extra_str = 'EGU_runs_general_stats_vs_{}_'.format( REF1 )
-    df = AC.get_general_stats4run_dict_as_df( run_dict=wds, REF1=REF1,
-                                            extra_str=extra_str)
+    extra_str = 'EGU_runs_general_stats_vs_{}_'.format(REF1)
+    df = AC.get_general_stats4run_dict_as_df(run_dict=wds, REF1=REF1,
+                                             extra_str=extra_str)
 
     # --- Get spatial plots
     # plot up emissions
-    plot_up_surface_emissions( dsDH=dsDH )
+    plot_up_surface_emissions(dsDH=dsDH)
 
     # --- Do diferences plots
     # - look at the HOI/I2 surface values and IO.
     # species to look at?
-    specs = ['O3', 'NO2', 'IO', 'HOI', 'I2' ]
+    specs = ['O3', 'NO2', 'IO', 'HOI', 'I2']
     #  Chance vs. ML_iodide
-    AC.plot_up_surface_changes_between2runs( ds_dict=dsD, BASE='Chance2014',
-                                        NEW='ML_Iodide', specs=specs,
-                                        update_PyGChem_format2COARDS=True )
+    AC.plot_up_surface_changes_between2runs(ds_dict=dsD, BASE='Chance2014',
+                                            NEW='ML_Iodide', specs=specs,
+                                            update_PyGChem_format2COARDS=True)
     #  Macdonald vs. ML_iodide
-    AC.plot_up_surface_changes_between2runs( ds_dict=dsD, BASE='Macdonald2014',
-                                        NEW='ML_Iodide', specs=specs,
-                                        update_PyGChem_format2COARDS=True )
+    AC.plot_up_surface_changes_between2runs(ds_dict=dsD, BASE='Macdonald2014',
+                                            NEW='ML_Iodide', specs=specs,
+                                            update_PyGChem_format2COARDS=True)
     #  Macdonald vs. Chance
-    AC.plot_up_surface_changes_between2runs( ds_dict=dsD, BASE='Macdonald2014',
-                                        NEW='Chance2014', specs=specs,
-                                        update_PyGChem_format2COARDS=True )
+    AC.plot_up_surface_changes_between2runs(ds_dict=dsD, BASE='Macdonald2014',
+                                            NEW='Chance2014', specs=specs,
+                                            update_PyGChem_format2COARDS=True)
     #  Macdonald vs. No_HOI_I2
-    AC.plot_up_surface_changes_between2runs( ds_dict=dsD, BASE='Macdonald2014',
-                                        NEW='No_HOI_I2', specs=specs,
-                                        update_PyGChem_format2COARDS=True )
+    AC.plot_up_surface_changes_between2runs(ds_dict=dsD, BASE='Macdonald2014',
+                                            NEW='No_HOI_I2', specs=specs,
+                                            update_PyGChem_format2COARDS=True)
     #  ML_iodide vs. No_HOI_I2
-    AC.plot_up_surface_changes_between2runs( ds_dict=dsD, BASE='No_HOI_I2',
-                                        NEW='ML_Iodide', specs=specs,
-                                        update_PyGChem_format2COARDS=True )
+    AC.plot_up_surface_changes_between2runs(ds_dict=dsD, BASE='No_HOI_I2',
+                                            NEW='ML_Iodide', specs=specs,
+                                            update_PyGChem_format2COARDS=True)
 
 #    ds_dict=dsD.copy(); BASE='Macdonald2014'; NEW='ML_Iodide'
 
@@ -3821,17 +3818,16 @@ def Do_analysis_and_mk_plots_for_EGU19_poster():
 
     # emissions plots
     #
-    BASE='ML_Iodide'
-    DIFF1='Chance2014'
-    DIFF2='Macdonald2014'
-    plot_up_EGU_fig05_emiss_change( ds_dict=dsD, BASE=BASE, DIFF1=DIFF1, DIFF2=DIFF2,
-                                    update_PyGChem_format2COARDS=True)
-
+    BASE = 'ML_Iodide'
+    DIFF1 = 'Chance2014'
+    DIFF2 = 'Macdonald2014'
+    plot_up_EGU_fig05_emiss_change(ds_dict=dsD, BASE=BASE, DIFF1=DIFF1, DIFF2=DIFF2,
+                                   update_PyGChem_format2COARDS=True)
 
 
 def plot_up_EGU_fig05_emiss_change(ds_dict=None, levs=[1], specs=[],
-        BASE='', DIFF1='',  DIFF2='',prefix='IJ_AVG_S__',
-        update_PyGChem_format2COARDS=False):
+                                   BASE='', DIFF1='',  DIFF2='', prefix='IJ_AVG_S__',
+                                   update_PyGChem_format2COARDS=False):
     """
     """
     import cartopy.crs as ccrs
@@ -3840,17 +3836,17 @@ def plot_up_EGU_fig05_emiss_change(ds_dict=None, levs=[1], specs=[],
 #    import gcpy
     # Species to plot
     vars2use = [prefix+i for i in specs]
-    unit=None
+    unit = None
     PDFfilenameStr = 'Oi_surface_change_{}_vs_{}_lev_{:0>2}'
     # Set datasets to use and  Just include the variables to plot in the dataset
     title1 = BASE
     title2 = DIFF1
     title2 = DIFF2
-    ds1 = ds_dict[ BASE ][ vars2use ].copy()
-    ds2 = ds_dict[ DIFF1 ][ vars2use ].copy()
-    ds2 = ds_dict[ DIFF2 ][ vars2use ].copy()
+    ds1 = ds_dict[BASE][vars2use].copy()
+    ds2 = ds_dict[DIFF1][vars2use].copy()
+    ds2 = ds_dict[DIFF2][vars2use].copy()
     # Average over time
-    print( ds1, ds2, ds3 )
+    print(ds1, ds2, ds3)
     ds1 = ds1.mean(dim='time')
     ds2 = ds2.mean(dim='time')
     ds3 = ds3.mean(dim='time')
@@ -3858,10 +3854,10 @@ def plot_up_EGU_fig05_emiss_change(ds_dict=None, levs=[1], specs=[],
     # Remove vestigial coordinates.
     # (e.g. the time_0 coord... what is this?)
     vars2drop = ['time_0']
-    dsL = [ds1,ds2, ds3]
+    dsL = [ds1, ds2, ds3]
     for var2drop in vars2drop:
         for n, ds in enumerate(dsL):
-            CoordVars = [ i for i in ds.coords ]
+            CoordVars = [i for i in ds.coords]
             if var2drop in CoordVars:
                 ds = ds.drop(var2drop)
                 dsL[n] = ds
@@ -3880,22 +3876,20 @@ def plot_up_EGU_fig05_emiss_change(ds_dict=None, levs=[1], specs=[],
     vmax = 100
 
     # -  Add initial plot
-    axn=[1, 1, 1]
+    axn = [1, 1, 1]
     ax = fig.add_subplot(*axn, projection=ccrs.Robinson(), aspect='auto')
     ax.plot.imshow(x='lon', y='lat', ax=ax,
-                    vmin=vmin, vmax=vmax,
-                    transform=ccrs.PlateCarree())
+                   vmin=vmin, vmax=vmax,
+                   transform=ccrs.PlateCarree())
     plt.title(savename)
     plt.savefig(savename+'.png')
     plt.close()
 
 
-
-
 def evalulate_burdens_and_surface_conc(run_dict=None, extra_str='', REF1=None,
-                                     REF2=None, REF_wd=None, res='4x5', trop_limit=True,
-                                     save2csv=True, prefix='GC_', run_names=None,
-                                     debug=False):
+                                       REF2=None, REF_wd=None, res='4x5', trop_limit=True,
+                                       save2csv=True, prefix='GC_', run_names=None,
+                                       debug=False):
     """ Check Organo-halogen surface species """
     # Extract names and locations of data
     if isinstance(run_dict, type(None)):
@@ -3916,7 +3910,7 @@ def evalulate_burdens_and_surface_conc(run_dict=None, extra_str='', REF1=None,
         REF_wd = wds[0]
     # get time in the troposphere diagnostic
     t_p = AC.get_GC_output(wd=REF_wd, vars=[u'TIME_TPS__TIMETROP'],
-                        trop_limit=True)
+                           trop_limit=True)
     # Temperature
     K = AC.get_GC_output(wd=REF_wd, vars=[u'DAO_3D_S__TMPU'], trop_limit=True)
     # airmass
@@ -3981,7 +3975,6 @@ def evalulate_burdens_and_surface_conc(run_dict=None, extra_str='', REF1=None,
     for col_ in df.columns:
         if 'Tg' in col_:
             df.loc[:, col_] = df.loc[:, col_].values/mass_scale
-
 
     # ---- Surface concentrations?
     # Surface ozone

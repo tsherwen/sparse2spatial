@@ -20,7 +20,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
                                 save_model_to_disk=False, read_model_from_disk=True,
                                 target='Iodide', model_names=None,
                                 delete_existing_model_files=False, rm_outliers=True,
-#                                rm_Skagerrak_data=False,
+                                #                                rm_Skagerrak_data=False,
                                 model_sub_dir='/TEMP_MODELS/', random_state=42,
                                 rm_LOD_filled_data=False, model_feature_dict=None,
                                 debug=False):
@@ -52,7 +52,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
     import gc
     # - Get processed data
     if isinstance(df, type(None)):
-        print( 'Dictionary of model names and features must be provided!' )
+        print('Dictionary of model names and features must be provided!')
         sys.exit()
 
     # - Get local variables
@@ -63,7 +63,7 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
         print('Using models from {}'.format(folder))
     # Get details on model setups to use
     if isinstance(model_feature_dict, type(None)):
-        print( 'Dictionary of model names and features must be provided!' )
+        print('Dictionary of model names and features must be provided!')
         sys.exit()
     if isinstance(model_names, type(None)):
         model_names = list(sorted(model_feature_dict.keys()))
@@ -153,7 +153,6 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
     return RFR_dict
 
 
-
 def get_features_used_by_model_list(models_list=None, RFR_dict=None):
     """
     Get the (set of) features used by a list of models
@@ -204,7 +203,8 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_current_models()
     if isinstance(stats, type(None)):
-        stats = get_core_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+        stats = get_core_stats_on_current_models(
+            RFR_dict=RFR_dict, verbose=False)
     # Don't count the Ensemble in the topten
     if exclude_ensemble:
         var_ = 'RFR(Ensemble)'
@@ -422,8 +422,8 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
                                                  train_features=train_features,
                                                  train_labels=train_labels,
                                                  testing_features=testing_features
-#                                                 test_features=test_features,
-#                                                 test_labels=test_labels
+                                                 #                                                 test_features=test_features,
+                                                 #                                                 test_labels=test_labels
                                                  )
     # Check the performance by Random searching (RandomizedSearchCV)
     best_random = rf_random.best_estimator_
@@ -438,13 +438,13 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
         param_grid_based_on_RandomizedSearchCV=True)
     # Use GridSearchCV
     grid_search = use_GS_CV_to_tune_Hyperparams(cv=cv,
-                                               train_features=train_features,
-                                               param_grid=param_grid,
-                                               train_labels=train_labels,
-                                               testing_features=testing_features,
-#                                               test_features=test_features,
-#                                                test_labels=test_labels
-                                                           )
+                                                train_features=train_features,
+                                                param_grid=param_grid,
+                                                train_labels=train_labels,
+                                                testing_features=testing_features,
+                                                #                                               test_features=test_features,
+                                                #                                                test_labels=test_labels
+                                                )
     print(grid_search.best_params_)
     # Check the performance of grid seraching searching
     BEST_ESTIMATOR = grid_search.best_estimator_
@@ -524,7 +524,7 @@ def Use_RS_CV_to_explore_hyperparams(train_features=None,
 def use_GS_CV_to_tune_Hyperparams(param_grid=None,
                                   train_features=None, train_labels=None,
                                   testing_features=None, \
-#                                  test_features=None, test_labels=None
+                                  #                                  test_features=None, test_labels=None
                                   scoring='neg_mean_squared_error', cv=3,
                                   ):
     """
@@ -664,6 +664,7 @@ def define_hyperparameter_options2test(testing_features=None,
                 'bootstrap': [True],
             }
     # Check the number of variations being tested
+
     def prod(iterable):
         import operator
         return reduce(operator.mul, iterable, 1)
@@ -848,7 +849,7 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
     # Testing features to use
     if isinstance(testing_features, type(None)):
         func_name = 'get_model_predictions4obs_point'
-        print( "The model's features must be provided to {}".format(func_name) )
+        print("The model's features must be provided to {}".format(func_name))
     # Now predict for the given testing features
     target_predictions = model.predict(df[testing_features])
     return target_predictions
@@ -1009,4 +1010,3 @@ def mk_ML_testing_and_training_set(df=None, target='Iodide',
 #         df = df_dropped
 #     # Return DataFrane
 #     return df
-

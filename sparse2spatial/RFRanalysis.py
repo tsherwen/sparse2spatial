@@ -9,7 +9,6 @@ import numpy as np
 import xarray as xr
 
 
-
 def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
                                     testing_features=None, df=None, target='Iodide',
                                     verbose=False):
@@ -80,7 +79,7 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
         # Open the already built model model
         model_savename = "my_model_{}_{}.pkl".format(model_name, random_state)
         b_modelname = model_savename.split('my_model_')[-1][:-3]
-        loc2use = '{}/{}{}/'.format(folder,'/ENSEMBLE_REPEAT_BUILD', extr_str)
+        loc2use = '{}/{}{}/'.format(folder, '/ENSEMBLE_REPEAT_BUILD', extr_str)
         model = joblib.load(loc2use + model_savename)
         # Predict with model for the test conditions
         predictions = model.predict(test_features)
@@ -142,12 +141,12 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
     # Use different drivers depending on resolution
     if res == '0.125x0.125':
         df = get_stats_on_spatial_predictions_0125x0125(filename=filename,
-                                                         folder=folder,
+                                                        folder=folder,
                                                         just_return_df=True,
                                                         ex_str=model_name)
     else:
         df = get_stats_on_spatial_predictions_4x5_2x25(filename=filename,
-                                                        folder=folder,
+                                                       folder=folder,
                                                        just_return_df=True,
                                                        ex_str=model_name)
     # Remove the values that aren't for a specific model
@@ -192,9 +191,9 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # get processed data
     # Which "features" (variables) to use
     if isinstance(testing_features, type(None)):
-#        model_name = 'RFR(TEMP+DEPTH+SAL)'
-#        testing_features = get_model_testing_features_dict(model_name)
-        print( 'please provided testing_features to build_the_same_model_mulitple_times')
+        #        model_name = 'RFR(TEMP+DEPTH+SAL)'
+        #        testing_features = get_model_testing_features_dict(model_name)
+        print('please provided testing_features to build_the_same_model_mulitple_times')
         sys.exit()
     # dictionary of test set variables
     # NOTE: default increase of the base number of n_estimators from 10 to 500
@@ -325,13 +324,13 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             random_20_80_split = False
             # get the training and test set
             returned_vars = mk_ML_testing_and_training_set(df=df_tmp,
-                                                    random_20_80_split=random_20_80_split,
-                                                                random_state=random_state,
-                                                                  nsplits=TSETS_nsplits[
-                                                                      Tname],
-                                                    random_strat_split=random_strat_split,
-                                                    testing_features=testing_features,
-                                                                  )
+                                                           random_20_80_split=random_20_80_split,
+                                                           random_state=random_state,
+                                                           nsplits=TSETS_nsplits[
+                                                               Tname],
+                                                           random_strat_split=random_strat_split,
+                                                           testing_features=testing_features,
+                                                           )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
             train_features = df_tmp[testing_features].loc[train_set.index]
@@ -494,7 +493,7 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Io
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
     # Setup as pipeline (only one operation... so this is overkill ATM.)
-    num_pipeline = Pipeline([ ('std_scaler', StandardScaler()), ])
+    num_pipeline = Pipeline([('std_scaler', StandardScaler()), ])
     # not biniarisation or labels... so full_pipeline just equals pipeline
     full_pipeline = num_pipeline
     # transform data
@@ -578,12 +577,12 @@ def get_predictor_variable_importance(RFR_dict=None):
 
 
 def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
-                                target='Iodide', inc_ensemeble=False,
-                                save_CHOOSEN_MODEL=False, param_names=[],
-                                coastal_vs_non_coastal_analysis = False,
-                                plot_up_model_performance=True, RFR_dict=None,
-                                add_sklean_metrics=False, save2csv=True,
-                                verbose=True, debug=False):
+                                     target='Iodide', inc_ensemeble=False,
+                                     save_CHOOSEN_MODEL=False, param_names=[],
+                                     coastal_vs_non_coastal_analysis=False,
+                                     plot_up_model_performance=True, RFR_dict=None,
+                                     add_sklean_metrics=False, save2csv=True,
+                                     verbose=True, debug=False):
     """
     Get Core statistics on the models built
 
@@ -615,7 +614,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                                  param_names], dataset_str=testset,
                                        target=target,
                                        add_sklean_metrics=add_sklean_metrics).T
-    stats2concat = [ stats, stats_sub1]
+    stats2concat = [stats, stats_sub1]
     # Combine all stats (RMSE and general stats)
     stats = pd.concat([stats2concat])
     # Combine all stats (RMSE and general stats)
@@ -678,7 +677,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                 target='Iodide', inc_ensemeble=False,
                                 save_CHOOSEN_MODEL=False,
-                                coastal_vs_non_coastal_analysis = False,
+                                coastal_vs_non_coastal_analysis=False,
                                 plot_up_model_performance=True, RFR_dict=None,
                                 add_sklean_metrics=False, verbose=True, debug=False):
     """
@@ -699,9 +698,9 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     # Also evaluate parameterisations
     param_names = []
     if target == 'Iodide':
-        param_names += [ u'Chance2014_STTxx2_I',u'MacDonald2014_iodide',
-            #u'Chance2014_Multivariate',
-        ]
+        param_names += [u'Chance2014_STTxx2_I', u'MacDonald2014_iodide',
+                        # u'Chance2014_Multivariate',
+                        ]
     # Aslo include the ensemble parameters
     if inc_ensemeble:
         param_names += ['RFR(Ensemble)']
@@ -715,7 +714,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                                  param_names], dataset_str=testset,
                                        target=target,
                                        add_sklean_metrics=add_sklean_metrics).T
-    stats2concat = [ stats, stats_sub1]
+    stats2concat = [stats, stats_sub1]
     if coastal_vs_non_coastal_analysis:
         # Add testing on coastal
         dataset_split = 'Coastal'
@@ -750,7 +749,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Statistics to concat
-        stats2concat += [stats_sub2, stats_sub3, stats_sub4, stats_sub5,]
+        stats2concat += [stats_sub2, stats_sub3, stats_sub4, stats_sub5, ]
     # Combine all stats (RMSE and general stats)
     stats = pd.concat([stats2concat])
     # Add number of features too
@@ -1158,7 +1157,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
             extr_file_str = '_No_Skagerrak'
         else:
             extr_file_str = ''
-        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_file_str)
+        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
+            target, res, extr_file_str)
     if isinstance(folder, type(None)):
         s2s_root = utils.get_file_locations('s2s_root')
         folder = '{}/{}/'.format(s2s_root, target)
@@ -1217,7 +1217,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'Ensemble_Monthly_mean': 'RFR(Ensemble)',
                      'Iodide': 'Obs.',
-#                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+                     #                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     df.rename(columns=rename_titles,  inplace=True)
     # Sort the dataframe by the mean weighted vales
@@ -1289,7 +1289,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
 
 def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Iodide',
                                     stats=None, ds=None, topmodels=None,
-                                    var2template = 'Chance2014_STTxx2_I',
+                                    var2template='Chance2014_STTxx2_I',
                                     save2NetCDF=True):
     """
     Add ensemble average and std to dataset
@@ -1406,7 +1406,7 @@ def test_performance_of_params(target='Iodide', testing_features=None):
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
                                      add_modulus_of_lat=add_modulus_of_lat,
-                  use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
+                                     use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
                                      )    # add
     # add boolean for test and training dataset
     splits_dict = {
@@ -1419,10 +1419,10 @@ def test_performance_of_params(target='Iodide', testing_features=None):
         df_tmp = df[testing_features+['Iodide']].copy()
         #
         returned_vars = mk_ML_testing_and_training_set(df=df_tmp,
-                                                    random_20_80_split=random_20_80_split,
-                                                    random_strat_split=random_strat_split,
-                                                    testing_features=testing_features,
-                                                              )
+                                                       random_20_80_split=random_20_80_split,
+                                                       random_strat_split=random_strat_split,
+                                                       testing_features=testing_features,
+                                                       )
         train_set, test_set, test_set_targets = returned_vars
 
         dummy = np.zeros(df.shape[0])
@@ -1916,5 +1916,3 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
     dfn.sort_values(by=['node #'], ascending=True, inplace=True)
     filename = filename_str.format(model_name, depth2investigate, '', 'csv')
     dfn.to_csv(filename)
-
-

@@ -429,8 +429,6 @@ def rasterize(shapes, coords, fill=np.nan, **kwargs):
     return xray.DataArray(raster, coords=coords, dims=('lat', 'lon'))
 
 
-
-
 def update_time_in_NetCDF2save(ds, convert_time2dt=False):
     """
     Update time of monthly output to be in NetCDF saveable format
@@ -467,7 +465,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
                         add_global_attrs=True, add_varname_attrs=True,
                         update_varnames_to_remove_spaces=False,
                         global_attrs_dict={},
-                        convert2HEMCO_time=False ):
+                        convert2HEMCO_time=False):
     """
     Update attributes for iodide dataset saved as NetCDF
     """
@@ -476,8 +474,8 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
         # convert the units?
         if convert_to_kg_m3:
             # get surface array
-#            print('Update of units not implimented')
-#            sys.exit()
+            #            print('Update of units not implimented')
+            #            sys.exit()
             # Convert units from nM to kg/m3 (=> M => mass => /m3 => /kg)
             ds[varname] = ds[varname]/1E9 * 127 * 1E3 / 1E3
             # for variable
@@ -498,7 +496,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
     if update_varnames_to_remove_spaces:
         for var_ in ds.data_vars:
             if ' ' in var_:
-                print( 'removing spaces from {}'.format( var_ ) )
+                print('removing spaces from {}'.format(var_))
                 new_varname = var_.replace(' ', '_')
                 # make new var as a copy of the old one
                 ds[new_varname] = ds[var_].copy()
@@ -532,22 +530,21 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
             attrs_dict['units'] = 'hours since 2000-01-01 00:00:00'
             attrs_dict['calendar'] = 'standard'
             # Assume a generic year
-            REFdatetime = datetime.datetime( 2000, 1, 1 )
-            dts = [ datetime.datetime( 2000, i, 1 ) for i in range(1,13) ]
+            REFdatetime = datetime.datetime(2000, 1, 1)
+            dts = [datetime.datetime(2000, i, 1) for i in range(1, 13)]
             hours = [(i-REFdatetime).days*24. for i in dts]
 #            times = [ AC.add_months(REFdatetime, int(i) ) for i in range(13) ]
             ds['time'].values = hours
         ds['time'].attrs = attrs_dict
         # Add details to the global attribute dictionary
         History_str = 'Last Modified on: {}'
-        global_attrs_dict['History'] = History_str.format(strftime("%B %d %Y", gmtime()))
+        global_attrs_dict['History'] = History_str.format(
+            strftime("%B %d %Y", gmtime()))
         global_attrs_dict['Conventions'] = "COARDS"
         global_attrs_dict['Main parameterisation variable'] = varname
         global_attrs_dict['format'] = 'NetCDF-4'
         ds.attrs = global_attrs_dict
     return ds
-
-
 
 
 # ---------------------------------------------------------------------------
@@ -780,23 +777,23 @@ def convert_fullname_to_shortname(input=None, rtn_dict=False, invert=False):
         return name_dict[input]
 
 
-def read_settings_rc_file2dict( file_and_path ):
+def read_settings_rc_file2dict(file_and_path):
     """
     Read the settings file (e.g. './sparse2spatial.rc')
     """
     # Setup dictionary to store lines that have been read-in
     d = {}
     # Loop lines in file and read lines
-    with open( file_and_path, 'r') as file:
+    with open(file_and_path, 'r') as file:
         for line in file:
             if line.startswith("#"):
                 pass
             else:
                 try:
-                    key, value = line.split (' : ')
+                    key, value = line.split(' : ')
                     d[key.strip()] = value.strip()
                 except:
-                    print( 'failed to read line in *.rc file:{}'.format(line) )
+                    print('failed to read line in *.rc file:{}'.format(line))
     # Return the resultant dictionary
     return d
 

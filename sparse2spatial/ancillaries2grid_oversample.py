@@ -481,7 +481,7 @@ def mk_predictor_variable_csv(res='4x5', month=9,
     df = df[columns]
     # --- Extract Ancillary values for lat, lons, and times
     df = get_ancillary_values_for_df_of_values(df=df,
-                    get_vars4Rosies_multivariate_eqn=get_vars4Rosies_multivariate_eqn)
+                                               get_vars4Rosies_multivariate_eqn=get_vars4Rosies_multivariate_eqn)
     # --- Save csv
     filename = 'Oi_prj_predictor_values_{}_month_num_{}.csv'.format(res, month)
     df.to_csv(filename)
@@ -1843,7 +1843,7 @@ def get_RAD4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Directory?
-    folder = get_file_locations('data_root') +'/GFDL/'
+    folder = get_file_locations('data_root') + '/GFDL/'
     # File str
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # Open file
@@ -2186,7 +2186,6 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
     if file_data_ < 0:
         file_data_ = np.NaN
     return file_data_, flagged
-
 
 
 def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
@@ -3440,5 +3439,3 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
         return file_data_, flagged
     else:
         return file_data_
-
-

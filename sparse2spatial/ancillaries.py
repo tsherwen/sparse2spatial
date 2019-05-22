@@ -5,6 +5,7 @@ Processing scripts for ancillary data to used as dependent variable for preditio
 """
 import AC_tools as AC
 
+
 def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
                                           save2NetCDF=False):
     """
@@ -105,7 +106,6 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
     print('Interpolated variables at {}'.format(res))
     # return DataSet
     return ds
-
 
 
 def add_derivitive_variables(ds=None):
@@ -399,7 +399,7 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
     url_str = root_url+'12.5km/{}_deg/tavg/tavg1_2d_chm_Nx'.format(res)
     # Where should i save the data?
 #    save_dir = '/work/home/ts551/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'
-    save_dir = get_file_locations('data_root' ) + '/NASA/LWI/'
+    save_dir = get_file_locations('data_root') + '/NASA/LWI/'
 #    save_dir = '/shared/earth_home/ts551/'
 #    save_dir += '/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'
     # - Open dataset via URL with xarray
@@ -423,6 +423,7 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
     time = ds.time
     # - loop days of year (doy)
     # Custom mask
+
     def is_dayofyear(doy):
         return (doy == doy_)
     # Loop doys
@@ -447,4 +448,3 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
             err_str = 'TMS ERROR - FAIL for spec={} (doy={})'.format(
                 spec, doy_)
             print(err_str)
-

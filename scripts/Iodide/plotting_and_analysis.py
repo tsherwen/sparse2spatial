@@ -37,7 +37,8 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
         extr_str = '_No_Skagerrak'
     else:
         extr_str = ''
-    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res4param, extr_str)
+    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
+        target, res4param, extr_str)
 #    folder =  './'
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
@@ -137,7 +138,8 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
         extr_str = '_No_Skagerrak'
     else:
         extr_str = ''
-    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res4param, extr_str)
+    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
+        target, res4param, extr_str)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     # Set the variable to plot underneath observations
@@ -652,7 +654,7 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodi
                                                            plot_avg_as_median=False,
                                                            show_plot=False,
                                                            shade_std=True,
-                                                          just_plot_existing_params=False,
+                                                           just_plot_existing_params=False,
                                                            plot_up_param_iodide=True,
                                                            context="paper", ds=None,
                                                            rm_Skagerrak_data=False):
@@ -1614,6 +1616,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
 
     # close the file
     a.close()
+
 
 def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
                          testset='Test set (strat. 20%)', target_name='Iodide',
@@ -2645,8 +2648,6 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
     plt.close()
 
 
-
-
 def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
                                                  target='iodide',
                                                  stats=None, show_plot=False,
@@ -2948,6 +2949,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
 
     # Save entire pdf
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
+
 
 def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
                                         show_plot=False, save2png=True,
@@ -3485,7 +3487,7 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 
 
 def get_equiv_Chance_arr(df=None, target_predictions=None,
-                              testing_features=None, target_name=['Iodide'], res='4x5'):
+                         testing_features=None, target_name=['Iodide'], res='4x5'):
     """ Calculate Iodide from Chance parametistaion and input data"""
     # calculate dependency of iodide from Chance et al 2014
     C = (df['WOA_TEMP'].values)**2
@@ -3497,8 +3499,8 @@ def get_equiv_Chance_arr(df=None, target_predictions=None,
 
 
 def get_equiv_MacDonald_arr(df=None, target_predictions=None,
-                                 testing_features=None, target_name=['Iodide'],
-                                 res='4x5'):
+                            testing_features=None, target_name=['Iodide'],
+                            res='4x5'):
     """ Calculate Iodide from Chance parametistaion and input data"""
     # calculate dependency of iodide from MacDonald et al 2014
     # NOTE: conversion of M to nM of I-
@@ -3510,7 +3512,6 @@ def get_equiv_MacDonald_arr(df=None, target_predictions=None,
     arr = mk_uniform_2D_array(df_predictors=df, target_predictions=arr,
                               target_name=target_name, res=res)
     return arr
-
 
 
 def plot_up_surface_iodide(arr=None, res='4x5', title=None, plot4poster=False,
@@ -3643,8 +3644,6 @@ def get_ensemble_predicted_iodide(df=None,
     return df
 
 
-
-
 def plot_difference2_input_PDF_on_update_of_var(res='4x5'):
     """
     Set coordinates to use for plotting data spatially
@@ -3656,7 +3655,6 @@ def plot_difference2_input_PDF_on_update_of_var(res='4x5'):
         centre = False
 
     pass
-
 
 
 def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
@@ -3720,7 +3718,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
         # predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
                                                         dsA=dss[key_], RFR_dict=RFR_dict,
-                                                       use_updated_predictor_NetCDF=False,
+                                                        use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels)
         # add ensemble to ds
@@ -3915,7 +3913,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                           random_20_80_split=False,
                                                           random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                          testing_features=df.columns.tolist(),
                                                           )
     train_set, test_set, test_set_targets = returned_vars
     key_varname = 'Test set ({})'.format('strat. 20%')
@@ -3962,7 +3960,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                           random_20_80_split=False,
                                                           random_strat_split=True,
-                                                    testing_features=df.columns.tolist(),
+                                                          testing_features=df.columns.tolist(),
                                                           )
     train_set, test_set, test_set_targets = returned_vars
     key_varname = 'Test set ({})'.format('strat. 20%')
@@ -3998,95 +3996,95 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
     # --- Include options that didn't improve things in PDF
     if plt_option_tried_but_only_slightly_helped:
-#                 - no where obs where low temperature and coastal (NH)
-#                 VarName = '{} '.format( Iaq ) +'<98$^{th}$'
-#                 bool1 = dfA['Iodide'] > np.percentile( df['Iodide'].values, 98 )
-#                 index2drop = dfA.loc[ bool1, : ].index
-#                 df = dfA.drop( index2drop )
-#                 reset index of updated DataFrame (and save out the rm'd data prior)
-#                 df2plot = dfA.drop( df.index ).copy()
-#                 df.index = np.arange(df.shape[0])
-#                 Reset the training/withhel data split
-#                 returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-#                     random_20_80_split=False, random_strat_split=True,
-#                     testing_features=df.columns.tolist(),
-#                     )
-#                 train_set, test_set, test_set_targets = returned_vars
-#                 key_varname = 'Test set ({})'.format( 'strat. 20%' )
-#                 df[key_varname] =  False
-#                 df.loc[ test_set.index,key_varname ] = True
-#                 df.loc[ train_set.index, key_varname ] = False
-#                 print the size of the input set
-#                 N = float(df.shape[0])
-#                 Nvals[ VarName ] = N
-#                 prt_str =  "N={:.0f} ({:.2f} % of total) for '{}'"
-#                 if verbose: print( prt_str.format( N, N/NA*100,VarName ) )
-#                 Test the locations?
-#                 if plt_excluded_obs_locations:
-#                     import seaborn as sns
-#                     sns.reset_orig()
-#                     lats = df2plot['Latitude'].values
-#                     lons = df2plot['Longitude'].values
-#                     title4plt = "Points excluded (N={}) for \n '{}'".format( int(NA-N), VarName )
-#                     AC.plot_lons_lats_spatial_on_map( lats=lats, lons=lons, title=title4plt )
-#                     savestr = 'Oi_prj_locations4data_split_{}'.format( VarName )
-#                     savestr = AC.rm_spaces_and_chars_from_str( savestr )
-#                     plt.savefig( savestr, dpi=320 )
-#                     plt.close()
-#                 rebuild (just the top models)
-#                 RFR_dict_d[VarName] = build_or_get_current_models( df=df,
-#                     model_names = topmodels,
-#                     save_model_to_disk=False,
-#                     read_model_from_disk=False,
-#                     delete_existing_model_files=False
-#                 )
-#
-#                 - no where obs where low temperature and coastal (NH)
-#                 VarName = '{}  + \n No Skaggerak'.format( Iaq ) +'<98$^{th}$'
-#                 bool1 = dfA['Iodide'] > np.percentile( df['Iodide'].values, 98 )
-#                 bool2 = dfA['Data_Key'].values == 'Truesdale_2003_I'
-#                 index2drop = dfA.loc[ bool1 | bool2, : ].index
-#                 df = dfA.drop( index2drop )
-#                 reset index of updated DataFrame (and save out the rm'd data prior)
-#                 df2plot = dfA.drop( df.index ).copy()
-#                 df.index = np.arange(df.shape[0])
-#                 Reset the training/withhel data split
-#                 returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-#                     random_20_80_split=False, random_strat_split=True,
-#                     testing_features=df.columns.tolist(),
-#                     )
-#                 train_set, test_set, test_set_targets = returned_vars
-#                 key_varname = 'Test set ({})'.format( 'strat. 20%' )
-#                 df[key_varname] =  False
-#                 df.loc[ test_set.index,key_varname ] = True
-#                 df.loc[ train_set.index, key_varname ] = False
-#                 print the size of the input set
-#                 N = float(df.shape[0])
-#                 Nvals[ VarName ] = N
-#                 prt_str =  "N={:.0f} ({:.2f} % of total) for '{}'"
-#                 if verbose: print( prt_str.format( N, N/NA*100,VarName ) )
-#                 Test the locations?
-#                 if plt_excluded_obs_locations:
-#                     import seaborn as sns
-#                     sns.reset_orig()
-#                     lats = df2plot['Latitude'].values
-#                     lons = df2plot['Longitude'].values
-#                     title4plt = "Points excluded (N={}) for \n '{}'".format( int(NA-N), VarName )
-#                     AC.plot_lons_lats_spatial_on_map( lats=lats, lons=lons, title=title4plt )
-#                     savestr = 'Oi_prj_locations4data_split_{}'.format( VarName )
-#                     savestr = AC.rm_spaces_and_chars_from_str( savestr )
-#                     plt.savefig( savestr, dpi=320 )
-#                     plt.close()
-#                 rebuild (just the top models)
-#                 RFR_dict_d[VarName] = build_or_get_current_models( df=df,
-#                     model_names = topmodels,
-#                     save_model_to_disk=False,
-#                     read_model_from_disk=False,
-#                     delete_existing_model_files=False
-#                 )
-#
-#                 Clean memory
-#                 gc.collect()
+        #                 - no where obs where low temperature and coastal (NH)
+        #                 VarName = '{} '.format( Iaq ) +'<98$^{th}$'
+        #                 bool1 = dfA['Iodide'] > np.percentile( df['Iodide'].values, 98 )
+        #                 index2drop = dfA.loc[ bool1, : ].index
+        #                 df = dfA.drop( index2drop )
+        #                 reset index of updated DataFrame (and save out the rm'd data prior)
+        #                 df2plot = dfA.drop( df.index ).copy()
+        #                 df.index = np.arange(df.shape[0])
+        #                 Reset the training/withhel data split
+        #                 returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        #                     random_20_80_split=False, random_strat_split=True,
+        #                     testing_features=df.columns.tolist(),
+        #                     )
+        #                 train_set, test_set, test_set_targets = returned_vars
+        #                 key_varname = 'Test set ({})'.format( 'strat. 20%' )
+        #                 df[key_varname] =  False
+        #                 df.loc[ test_set.index,key_varname ] = True
+        #                 df.loc[ train_set.index, key_varname ] = False
+        #                 print the size of the input set
+        #                 N = float(df.shape[0])
+        #                 Nvals[ VarName ] = N
+        #                 prt_str =  "N={:.0f} ({:.2f} % of total) for '{}'"
+        #                 if verbose: print( prt_str.format( N, N/NA*100,VarName ) )
+        #                 Test the locations?
+        #                 if plt_excluded_obs_locations:
+        #                     import seaborn as sns
+        #                     sns.reset_orig()
+        #                     lats = df2plot['Latitude'].values
+        #                     lons = df2plot['Longitude'].values
+        #                     title4plt = "Points excluded (N={}) for \n '{}'".format( int(NA-N), VarName )
+        #                     AC.plot_lons_lats_spatial_on_map( lats=lats, lons=lons, title=title4plt )
+        #                     savestr = 'Oi_prj_locations4data_split_{}'.format( VarName )
+        #                     savestr = AC.rm_spaces_and_chars_from_str( savestr )
+        #                     plt.savefig( savestr, dpi=320 )
+        #                     plt.close()
+        #                 rebuild (just the top models)
+        #                 RFR_dict_d[VarName] = build_or_get_current_models( df=df,
+        #                     model_names = topmodels,
+        #                     save_model_to_disk=False,
+        #                     read_model_from_disk=False,
+        #                     delete_existing_model_files=False
+        #                 )
+        #
+        #                 - no where obs where low temperature and coastal (NH)
+        #                 VarName = '{}  + \n No Skaggerak'.format( Iaq ) +'<98$^{th}$'
+        #                 bool1 = dfA['Iodide'] > np.percentile( df['Iodide'].values, 98 )
+        #                 bool2 = dfA['Data_Key'].values == 'Truesdale_2003_I'
+        #                 index2drop = dfA.loc[ bool1 | bool2, : ].index
+        #                 df = dfA.drop( index2drop )
+        #                 reset index of updated DataFrame (and save out the rm'd data prior)
+        #                 df2plot = dfA.drop( df.index ).copy()
+        #                 df.index = np.arange(df.shape[0])
+        #                 Reset the training/withhel data split
+        #                 returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        #                     random_20_80_split=False, random_strat_split=True,
+        #                     testing_features=df.columns.tolist(),
+        #                     )
+        #                 train_set, test_set, test_set_targets = returned_vars
+        #                 key_varname = 'Test set ({})'.format( 'strat. 20%' )
+        #                 df[key_varname] =  False
+        #                 df.loc[ test_set.index,key_varname ] = True
+        #                 df.loc[ train_set.index, key_varname ] = False
+        #                 print the size of the input set
+        #                 N = float(df.shape[0])
+        #                 Nvals[ VarName ] = N
+        #                 prt_str =  "N={:.0f} ({:.2f} % of total) for '{}'"
+        #                 if verbose: print( prt_str.format( N, N/NA*100,VarName ) )
+        #                 Test the locations?
+        #                 if plt_excluded_obs_locations:
+        #                     import seaborn as sns
+        #                     sns.reset_orig()
+        #                     lats = df2plot['Latitude'].values
+        #                     lons = df2plot['Longitude'].values
+        #                     title4plt = "Points excluded (N={}) for \n '{}'".format( int(NA-N), VarName )
+        #                     AC.plot_lons_lats_spatial_on_map( lats=lats, lons=lons, title=title4plt )
+        #                     savestr = 'Oi_prj_locations4data_split_{}'.format( VarName )
+        #                     savestr = AC.rm_spaces_and_chars_from_str( savestr )
+        #                     plt.savefig( savestr, dpi=320 )
+        #                     plt.close()
+        #                 rebuild (just the top models)
+        #                 RFR_dict_d[VarName] = build_or_get_current_models( df=df,
+        #                     model_names = topmodels,
+        #                     save_model_to_disk=False,
+        #                     read_model_from_disk=False,
+        #                     delete_existing_model_files=False
+        #                 )
+        #
+        #                 Clean memory
+        #                 gc.collect()
 
         # - no where obs where low temperature and coastal (SH)
         VarName = 'No SH coastal <280K'
@@ -4106,7 +4104,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4138,7 +4136,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - where obs are n coastal
@@ -4150,7 +4148,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4168,7 +4166,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                         delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - no where obs where low temperature.
@@ -4180,7 +4178,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4198,7 +4196,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                         delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - no where obs where low temperature.
@@ -4214,7 +4212,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                    testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4246,7 +4244,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                      delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - no where obs where low temperature and coastal (NH)
@@ -4267,7 +4265,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4299,7 +4297,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - no where obs where low temperature and coastal (NH)
@@ -4321,7 +4319,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4353,7 +4351,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - Get just the obs above 65S
@@ -4365,7 +4363,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4383,7 +4381,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - Get all except the obs below 65S which are coastal
@@ -4398,7 +4396,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4416,7 +4414,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - Get just the obs above 55S
@@ -4428,7 +4426,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                    testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4446,7 +4444,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                         delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
         # - Get just the obs above 45S
         VarName = 'No <45S'
@@ -4457,7 +4455,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4475,7 +4473,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                    delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - Get just the obs above 45S
@@ -4490,7 +4488,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4508,7 +4506,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                    delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
     # --- Include options that didn't improve things in PDF
@@ -4522,7 +4520,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4540,7 +4538,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                    delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - no where obs where low temperature.
@@ -4552,7 +4550,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4570,7 +4568,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # where obs are low nitrate and low temperature.
@@ -4584,7 +4582,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                    testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4602,7 +4600,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - No cold of coastal
@@ -4616,7 +4614,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4634,7 +4632,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # - where obs are low nitrate
@@ -4646,7 +4644,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4664,7 +4662,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                         delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
         # Clean memory
@@ -4679,7 +4677,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
                                                               random_20_80_split=False,
                                                               random_strat_split=True,
-                                                     testing_features=df.columns.tolist(),
+                                                              testing_features=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4697,7 +4695,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
-                                                        delete_existing_model_files=False
+                                                          delete_existing_model_files=False
                                                           )
 
     # Clean memory
@@ -4716,7 +4714,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # Predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
                                                         dsA=ds, RFR_dict=RFR_dict_d[key_],
-                                                       use_updated_predictor_NetCDF=False,
+                                                        use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels,
                                                         models2compare=topmodels)
@@ -5063,7 +5061,7 @@ def explore_sensitivity_of_65N(res='4x5'):
         # predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
                                                         dsA=dss[key_], RFR_dict=RFR_dict,
-                                                       use_updated_predictor_NetCDF=False,
+                                                        use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels)
         # add ensemble to ds
@@ -5184,7 +5182,6 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
         plt.close()
 
 
-
 def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
                                            use_avg_at_lat=True, res='0.125x0.125',
                                            var2set=None,
@@ -5298,9 +5295,9 @@ def set_SAL_and_NIT_above_65N_to_avg(res='0.125x0.125'):
 
 
 def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodide',
-                                       months=None, var2extract='Ensemble_Monthly_mean',
-                                       rm_Skagerrak_data=False, verbose=True,
-                                       debug=False):
+                                              months=None, var2extract='Ensemble_Monthly_mean',
+                                              rm_Skagerrak_data=False, verbose=True,
+                                              debug=False):
     """
     Wrapper for extract4nearest_points_in_ds for iodide
     """
@@ -5314,7 +5311,5 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
     ds = xr.open_dataset(folder + filename)
     # Now extract the dataset
     extracted_vars = extract4nearest_points_in_ds(lons=lons, lats=lats, months=months,
-        var2extract=var2extract, verbose=verbose, debug=debug)
+                                                  var2extract=var2extract, verbose=verbose, debug=debug)
     return extracted_vars
-
-

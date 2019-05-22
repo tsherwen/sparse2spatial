@@ -2,7 +2,8 @@
 
 Functions for working with Longhurst provinces
 
-"""  
+"""
+
 
 def add_longhurst_raster_array_and_LWI_core_NetCDFs(target='Iodide'):
     """
@@ -79,7 +80,8 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
     if isinstance(ds, type(None)):
         ds = get_feature_variables_as_ds(res=res)
     # get dictionary of province numbers
-    Rnum2prov = RosieLonghurstProvinceFileNum2Province(None, invert=True, rtn_dict=True)
+    Rnum2prov = RosieLonghurstProvinceFileNum2Province(
+        None, invert=True, rtn_dict=True)
     # use an existing variables as a template
 #	var2use = 'WOA_TEMP'
 #	df = ds[var2use].mean(dim='time')
@@ -103,6 +105,7 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
     df[LonVar] = lons
 #	df[CoordVar] = coords
     # Add a single variable for the coordinate
+
     def f(x):
         return (x[LonVar], x[LatVar])
     df[CoordVar] = df.apply(f, axis=1)
@@ -379,15 +382,15 @@ def LonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
      - these are not the longhurst numbers (just number within MIT list)
     """
     num2prov = {
-    1: u'FKLD', 2: u'CHIL', 3: u'TASM', 4: u'BRAZ', 5: u'SATL', 6: u'EAFR', 7: u'AUSW',
-    8: u'AUSE', 9: u'ISSG', 10: u'BENG', 11: u'ARCH', 12: u'SUND', 13: u'GUIN',
-    14: u'PEQD', 15: u'MONS', 16: u'ETRA', 17: u'CNRY', 18: u'GUIA', 19: u'ARAB',
-    20: u'WTRA', 21: u'KURO', 22: u'NECS', 23: u'NASE', 24: u'PSAE', 25: u'CHIN',
-    26: u'INDE', 27: u'CAMR', 28: u'PNEC', 29: u'REDS', 30: u'INDW', 31: u'CARB',
-    32: u'NPTG', 33: u'NATR', 34: u'MEDI', 35: u'CCAL', 36: u'NWCS', 37: u'NASW',
-    38: u'GFST', 39: u'NADR', 40: u'ALSK', 41: u'ARCT', 42: u'SARC', 43: u'NEWZ',
-    44: u'SSTC', 45: u'SPSG', 46: u'PSAW', 47: u'BERS', 48: u'NPPF', 49: u'NPSW',
-    50: u'ANTA', 51: u'SANT', 52: u'WARM', 53: u'APLR', 54: u'BPLR'
+        1: u'FKLD', 2: u'CHIL', 3: u'TASM', 4: u'BRAZ', 5: u'SATL', 6: u'EAFR', 7: u'AUSW',
+        8: u'AUSE', 9: u'ISSG', 10: u'BENG', 11: u'ARCH', 12: u'SUND', 13: u'GUIN',
+        14: u'PEQD', 15: u'MONS', 16: u'ETRA', 17: u'CNRY', 18: u'GUIA', 19: u'ARAB',
+        20: u'WTRA', 21: u'KURO', 22: u'NECS', 23: u'NASE', 24: u'PSAE', 25: u'CHIN',
+        26: u'INDE', 27: u'CAMR', 28: u'PNEC', 29: u'REDS', 30: u'INDW', 31: u'CARB',
+        32: u'NPTG', 33: u'NATR', 34: u'MEDI', 35: u'CCAL', 36: u'NWCS', 37: u'NASW',
+        38: u'GFST', 39: u'NADR', 40: u'ALSK', 41: u'ARCT', 42: u'SARC', 43: u'NEWZ',
+        44: u'SSTC', 45: u'SPSG', 46: u'PSAW', 47: u'BERS', 48: u'NPPF', 49: u'NPSW',
+        50: u'ANTA', 51: u'SANT', 52: u'WARM', 53: u'APLR', 54: u'BPLR'
     }
     # Invert?
     if invert:
@@ -420,15 +423,15 @@ def MarineRegionsOrg_LonghurstProvinceFileNum2Province(input, invert=False,
     http://www.marineregions.org/sources.php#longhurst
     """
     num2prov = {
-    0: u'BPLR', 1: u'ARCT', 2: u'SARC', 3: u'NADR', 4: u'GFST', 5: u'NASW', 6: u'NATR',
-    7: u'WTRA', 8: u'ETRA', 9: u'SATL', 10: u'NECS', 11: u'CNRY', 12: u'GUIN',
-    13: u'GUIA', 14: u'NWCS', 15: u'MEDI', 16: u'CARB', 17: u'NASE', 18: u'BRAZ',
-    19: u'FKLD', 20: u'BENG', 21: u'MONS', 22: u'ISSG', 23: u'EAFR', 24: u'REDS',
-    25: u'ARAB', 26: u'INDE',27: u'INDW', 28: u'AUSW', 29: u'BERS', 30: u'PSAE',
-    31: u'PSAW', 32: u'KURO', 33: u'NPPF', 34: u'NPSW', 35: u'TASM', 36: u'SPSG',
-    37: u'NPTG', 38: u'PNEC', 39: u'PEQD', 40: u'WARM', 41: u'ARCH', 42: u'ALSK',
-    43: u'CCAL', 44: u'CAMR', 45: u'CHIL', 46: u'CHIN', 47: u'SUND', 48: u'AUSE',
-    49: u'NEWZ', 50: u'SSTC', 51: u'SANT', 52: u'ANTA', 53: u'APLR'
+        0: u'BPLR', 1: u'ARCT', 2: u'SARC', 3: u'NADR', 4: u'GFST', 5: u'NASW', 6: u'NATR',
+        7: u'WTRA', 8: u'ETRA', 9: u'SATL', 10: u'NECS', 11: u'CNRY', 12: u'GUIN',
+        13: u'GUIA', 14: u'NWCS', 15: u'MEDI', 16: u'CARB', 17: u'NASE', 18: u'BRAZ',
+        19: u'FKLD', 20: u'BENG', 21: u'MONS', 22: u'ISSG', 23: u'EAFR', 24: u'REDS',
+        25: u'ARAB', 26: u'INDE', 27: u'INDW', 28: u'AUSW', 29: u'BERS', 30: u'PSAE',
+        31: u'PSAW', 32: u'KURO', 33: u'NPPF', 34: u'NPSW', 35: u'TASM', 36: u'SPSG',
+        37: u'NPTG', 38: u'PNEC', 39: u'PEQD', 40: u'WARM', 41: u'ARCH', 42: u'ALSK',
+        43: u'CCAL', 44: u'CAMR', 45: u'CHIL', 46: u'CHIN', 47: u'SUND', 48: u'AUSE',
+        49: u'NEWZ', 50: u'SSTC', 51: u'SANT', 52: u'ANTA', 53: u'APLR'
     }
     # Invert?
     if invert:
@@ -459,15 +462,15 @@ def RosieLonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
      - these **are** the longhurst numbers (other funcs. give numbers used elsewhere)
     """
     Rnum2prov = {
-    1: 'BPLR', 2: 'ARCT', 3: 'SARC', 4: 'NADR', 5: 'GFST', 6: 'NASW', 7: 'NATR',
-    8: 'WTRA', 9: 'ETRA', 10: 'SATL', 11: 'NECS', 12: 'CNRY', 13: 'GUIN', 14: 'GUIA',
-    15: 'NWCS', 16: 'MEDI', 17: 'CARB', 18: 'NASE', 19: 'CHSB', 20: 'BRAZ', 21: 'FKLD',
-    22: 'BENG', 30: 'MONS', 31: 'ISSG', 32: 'EAFR', 33: 'REDS', 34: 'ARAB', 35: 'INDE',
-    36: 'INDW', 37: 'AUSW', 50: 'BERS', 51: 'PSAE', 52: 'PSAW', 53: 'KURO', 54: 'NPPF',
-    55: 'NPSE', 56: 'NPSW', 57: 'OCAL', 58: 'TASM', 59: 'SPSG', 60: 'NPTG', 61: 'PNEC',
-    62: 'PEQD', 63: 'WARM', 64: 'ARCH', 65: 'ALSK', 66: 'CCAL', 67: 'CAMR', 68: 'CHIL',
-    69: 'CHIN', 70: 'SUND', 71: 'AUSE', 72: 'NEWZ', 80: 'SSTC', 81: 'SANT', 82: 'ANTA',
-    83: 'APLR', 99: 'LAKE'
+        1: 'BPLR', 2: 'ARCT', 3: 'SARC', 4: 'NADR', 5: 'GFST', 6: 'NASW', 7: 'NATR',
+        8: 'WTRA', 9: 'ETRA', 10: 'SATL', 11: 'NECS', 12: 'CNRY', 13: 'GUIN', 14: 'GUIA',
+        15: 'NWCS', 16: 'MEDI', 17: 'CARB', 18: 'NASE', 19: 'CHSB', 20: 'BRAZ', 21: 'FKLD',
+        22: 'BENG', 30: 'MONS', 31: 'ISSG', 32: 'EAFR', 33: 'REDS', 34: 'ARAB', 35: 'INDE',
+        36: 'INDW', 37: 'AUSW', 50: 'BERS', 51: 'PSAE', 52: 'PSAW', 53: 'KURO', 54: 'NPPF',
+        55: 'NPSE', 56: 'NPSW', 57: 'OCAL', 58: 'TASM', 59: 'SPSG', 60: 'NPTG', 61: 'PNEC',
+        62: 'PEQD', 63: 'WARM', 64: 'ARCH', 65: 'ALSK', 66: 'CCAL', 67: 'CAMR', 68: 'CHIL',
+        69: 'CHIN', 70: 'SUND', 71: 'AUSE', 72: 'NEWZ', 80: 'SSTC', 81: 'SANT', 82: 'ANTA',
+        83: 'APLR', 99: 'LAKE'
     }
     # Invert?
     if invert:
@@ -552,4 +555,3 @@ def Get_LonghurstProvinceName4Num(input):
         'WTRA': 'WesternTropicalAtlanticProvince'
     }
     return LonghurstProvinceDict[input]
-

@@ -46,27 +46,29 @@ from sparse2spatial.RTRbuild import build_or_get_current_models
 # Get iodide specific functions
 #from observations import get_dataset_processed4ML
 
+
 def main():
     """
     Driver for module's man if run directly from command line. unhash
     functionalitliy to call.
     """
     model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
-    print( model_feature_dict )
-    print( model_feature_dict['NO3+DOC+Phos'] )
+    print(model_feature_dict)
+    print(model_feature_dict['NO3+DOC+Phos'])
     # ---- ---- Over-arching settings
     # General settings
     rm_Skagerrak_data = True
 #    rm_Skagerrak_data = False
     # Use top models from full dataset  ( now: nOutliers + nSkagerak
-    RFR_dict = build_or_get_current_models_iodide( rm_Skagerrak_data=rm_Skagerrak_data)
+    RFR_dict = build_or_get_current_models_iodide(
+        rm_Skagerrak_data=rm_Skagerrak_data)
 #    RFR_dict = build_or_get_current_models_iodide( rm_Skagerrak_data=False )
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
-    print( RFR_dict.keys )
-    print( topmodels )
+    print(RFR_dict.keys)
+    print(topmodels)
     # Check statistics on prediction
     stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=True)
-    print( stats )
+    print(stats)
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Evaluating input datasets
@@ -87,7 +89,6 @@ def main():
 
     # Check extracted data against observations.
 #    compare_obs_ancillaries_with_extracted_values()
-
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Build ancillary variable dataset file
@@ -118,7 +119,7 @@ def main():
     # extra strig for NetCDF save name
     xsave_str = ''
     # make NetCDF predictions from the main array
-    save2NetCDF=True
+    save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
     res = '0.125x0.125'
 #    res='4x5'
@@ -128,7 +129,6 @@ def main():
 #                                            rm_Skagerrak_data=rm_Skagerrak_data,
 #                                            topmodels=topmodels,
 #                                            xsave_str=xsave_str, add_ensemble2ds=True )
-
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Sensitive test the new iodide field (
@@ -240,9 +240,6 @@ def main():
 #    mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
 #        save_str='TEST_V' )
 
-
-
-
     # --- Point-for-point analysis
     # build ODR plots for obs. vs. model
 #    analyse_X_Y_correlations_ODR( RFR_dict=RFR_dict, context='poster' )
@@ -322,11 +319,8 @@ def main():
     # analysis of outputted trees
 #    analyse_nodes_in_models()
 
-
     # Now make Ensemble diagram
 #    mk_ensemble_diagram()
-
-
 
     # pass if no functions are uncommented
     pass
@@ -532,12 +526,12 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     #             random_20_80_split = True
             # get the training and test set
             returned_vars = mk_iodide_ML_testing_and_training_set(df=df_tmp,
-                                                random_20_80_split=random_20_80_split,
-                                                                random_state=random_state,
+                                                                  random_20_80_split=random_20_80_split,
+                                                                  random_state=random_state,
                                                                   nsplits=TSETS_nsplits[
                                                                       Tname],
-                                                    random_strat_split=random_strat_split,
-                                                        testing_features=testing_features,
+                                                                  random_strat_split=random_strat_split,
+                                                                  testing_features=testing_features,
                                                                   )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
@@ -1043,7 +1037,6 @@ def mk_ensemble_diagram(dpi=1000):
     plt.savefig('Oi_prj_ensemble_workflow_image.png', dpi=dpi)
 
 
-
 def make_table_of_point_for_point_performance(RFR_dict=None,
                                               testset='Test set (strat. 20%)',
                                               target='Iodide'):
@@ -1069,7 +1062,7 @@ def make_table_of_point_for_point_performance(RFR_dict=None,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      'Iodide': 'Obs.',
-#                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+                     #                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     # Set the stats to use
     first_columns = [
@@ -1171,7 +1164,7 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      target: 'Obs.',
-#                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     # Set the stats to use
     first_columns = [
@@ -1240,13 +1233,13 @@ def get_dataset_processed4ML(restrict_data_max=False,
     df = add_extra_vars_rm_some_data(df=df,
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
-#                                     add_modulus_of_lat=add_modulus_of_lat,
-#                                     rm_Skagerrak_data=rm_Skagerrak_data,
+                                     #                                     add_modulus_of_lat=add_modulus_of_lat,
+                                     #                                     rm_Skagerrak_data=rm_Skagerrak_data,
                                      rm_outliers=rm_outliers,
                                      rm_LOD_filled_data=rm_LOD_filled_data,
-#                use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
-#                median_4MLD_when_NaN_or_less_than_0=median_4MLD_when_NaN_or_less_than_0,
-#                    median_4depth_when_greater_than_0=median_4depth_when_greater_than_0,
+                                     #                use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
+                                     #                median_4MLD_when_NaN_or_less_than_0=median_4MLD_when_NaN_or_less_than_0,
+                                     #                    median_4depth_when_greater_than_0=median_4depth_when_greater_than_0,
                                      )    # add
 
     # - Add test and training set assignment to columns
@@ -1270,11 +1263,11 @@ def get_dataset_processed4ML(restrict_data_max=False,
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
         returned_vars = mk_ML_testing_and_training_set(df=df.copy(), target=target,
-                                                    random_20_80_split=random_20_80_split,
-                                                    random_strat_split=random_strat_split,
-                                                    testing_features=df.columns.tolist(),
-#                                                   testing_features=testing_features,
-                                                              )
+                                                       random_20_80_split=random_20_80_split,
+                                                       random_strat_split=random_strat_split,
+                                                       testing_features=df.columns.tolist(),
+                                                       #                                                   testing_features=testing_features,
+                                                       )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
         key_varname = 'Test set ({})'.format(key_)
@@ -1284,14 +1277,13 @@ def get_dataset_processed4ML(restrict_data_max=False,
     return df
 
 
-
 # ---------------------------------------------------------------------------
 # ---------- Wrappers for s2s -------------
 # ---------------------------------------------------------------------------
 def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
                                        rm_LOD_filled_data=False,
                                        rm_outliers=True,
-                                       rebuild=False ):
+                                       rebuild=False):
     """
     Wrapper call to build_or_get_current_models for sea-surface iodide
     """
@@ -1303,7 +1295,7 @@ def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
         rm_Skagerrak_data=rm_Skagerrak_data,
         rm_LOD_filled_data=rm_LOD_filled_data,
         rm_outliers=rm_outliers,
-        )
+    )
     #
     if rm_Skagerrak_data:
         model_sub_dir = '/TEMP_MODELS_No_Skagerrak/'
@@ -1314,25 +1306,25 @@ def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
 
     if rebuild:
         RFR_dict = build_or_get_current_models(save_model_to_disk=True,
-#                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df,
-                                    read_model_from_disk=False,
-                                    delete_existing_model_files=True )
+                                               #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                               model_feature_dict=model_feature_dict,
+                                               df=df,
+                                               read_model_from_disk=False,
+                                               delete_existing_model_files=True)
     else:
         RFR_dict = build_or_get_current_models(save_model_to_disk=True,
-#                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df,
-                                    read_model_from_disk=True,
-                                    delete_existing_model_files=False )
+                                               #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                               model_feature_dict=model_feature_dict,
+                                               df=df,
+                                               read_model_from_disk=True,
+                                               delete_existing_model_files=False)
     return RFR_dict
 
 
 def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
-                                         random_strat_split=True, testing_features=None,
-                                         random_state=42, random_20_80_split=False,
-                                         nsplits=4, verbose=True, debug=False):
+                                          random_strat_split=True, testing_features=None,
+                                          random_state=42, random_20_80_split=False,
+                                          nsplits=4, verbose=True, debug=False):
     """
     Wrapper for mk_ML_testing_and_training_set for iodide code
     """
@@ -1345,7 +1337,6 @@ def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
                                                    random_20_80_split=random_20_80_split,
                                                    verbose=verbose, debug=debug)
     return returned_vars
-
 
 
 def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
@@ -1362,24 +1353,22 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
     # Set global attribute dictionary variables
     title_str = "A parameterisation of sea-surface iodide on a monthly basis"
     global_attrs_dict = {
-    'Title': title_str,
-    'Author': 'Tomas Sherwen (tomas.sherwen@york.ac.uk)',
-    'Notes': 'This is a parameterisation of sea-surface iodide on a monthly basis. The NetCDF was made using xarray (xarray.pydata.org).',
-    'DOI': '10.5285/02c6f4eea9914e5c8a8390dd09e5709a.',
-    'Citation': "A machine learning based global sea-surface iodide distribution, T. Sherwen , et al., in review, 2019 ; Data reference: Sherwen, T., Chance, R., Tinel, L., Ellis, D., Evans, M., and Carpenter, L.: Global predicted sea-surface iodide concentrations v0.0.0., https://doi.org/10.5285/02c6f4eea9914e5c8a8390dd09e5709a., 2019.",
-    'references' : "Paper Reference: A machine learning based global sea-surface iodide distribution, T. Sherwen , et al., in review, 2019 ; Data reference: Sherwen, T., Chance, R., Tinel, L., Ellis, D., Evans, M., and Carpenter, L.: Global predicted sea-surface iodide concentrations v0.0.0., https://doi.org/10.5285/02c6f4eea9914e5c8a8390dd09e5709a., 2019.",
+        'Title': title_str,
+        'Author': 'Tomas Sherwen (tomas.sherwen@york.ac.uk)',
+        'Notes': 'This is a parameterisation of sea-surface iodide on a monthly basis. The NetCDF was made using xarray (xarray.pydata.org).',
+        'DOI': '10.5285/02c6f4eea9914e5c8a8390dd09e5709a.',
+        'Citation': "A machine learning based global sea-surface iodide distribution, T. Sherwen , et al., in review, 2019 ; Data reference: Sherwen, T., Chance, R., Tinel, L., Ellis, D., Evans, M., and Carpenter, L.: Global predicted sea-surface iodide concentrations v0.0.0., https://doi.org/10.5285/02c6f4eea9914e5c8a8390dd09e5709a., 2019.",
+        'references': "Paper Reference: A machine learning based global sea-surface iodide distribution, T. Sherwen , et al., in review, 2019 ; Data reference: Sherwen, T., Chance, R., Tinel, L., Ellis, D., Evans, M., and Carpenter, L.: Global predicted sea-surface iodide concentrations v0.0.0., https://doi.org/10.5285/02c6f4eea9914e5c8a8390dd09e5709a., 2019.",
     }
     #  Call s2s function
     ds = add_attrs2target_ds(ds, convert_to_kg_m3=False,
-                        attrs_dict=attrs_dict, global_attrs_dict=global_attrs_dict,
-                        varname='Ensemble_Monthly_mean',
-                        add_global_attrs=True, add_varname_attrs=True,
-                        update_varnames_to_remove_spaces=False,
-                        convert2HEMCO_time=False)
+                             attrs_dict=attrs_dict, global_attrs_dict=global_attrs_dict,
+                             varname='Ensemble_Monthly_mean',
+                             add_global_attrs=True, add_varname_attrs=True,
+                             update_varnames_to_remove_spaces=False,
+                             convert2HEMCO_time=False)
     return ds
 
 
 if __name__ == "__main__":
     main()
-
-

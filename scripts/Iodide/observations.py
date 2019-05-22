@@ -145,10 +145,10 @@ def get_processed_df_obs_mod(reprocess_params=False,
         NaN_months_df[month_var] = NaN_months_df.apply(lambda x:
                                                        set_backup_month_if_unkonwn(
                                                            lat=x['Latitude'],
-                                                           #main_var=var2use,
-                                                           #var2use=var2use,
+                                                           # main_var=var2use,
+                                                           # var2use=var2use,
                                                            #
-                                                           #Data_key_ID_=Data_key_ID_,
+                                                           # Data_key_ID_=Data_key_ID_,
                                                            debug=False), axis=1)
         # Add back into DataFrame
         df.loc[NaN_months_bool, month_var] = NaN_months_df[month_var].values
@@ -186,7 +186,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     # Add ancillary obs.
 #    obs_data_df = extract_ancillary_obs_from_RAW_external_files( \
 #        obs_data_df=obs_data_df, obs_metadata_df=obs_metadata_df )
-    obs_data_df = extract_ancillary_obs_from_COMPILED_file( df=obs_data_df )
+    obs_data_df = extract_ancillary_obs_from_COMPILED_file(df=obs_data_df)
     # Save the intermediate file
     folder = get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/'.format(target)
@@ -261,6 +261,7 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     # Just select core variables
     df = df[core_vars]
     # Remove datapoints that are not floats
+
     def make_sure_values_are_floats(x):
         """
         Some values in the dataframes are "nd" or "###?". remove these.
@@ -274,9 +275,9 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
 #    sub_set_no_hue = [ i for i in sub_set if (i != 'Data_Key') ]
     # this should be done more pythoncally!
     make_data_floats = [
-    'Ammonium', 'Chl-a', 'Iodate', 'Iodide', 'Latitude', 'Longitude', 'MLD',
-    'MLD(vd)', 'Month', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity',
-    'Temperature', 'Total-I'
+        'Ammonium', 'Chl-a', 'Iodate', 'Iodide', 'Latitude', 'Longitude', 'MLD',
+        'MLD(vd)', 'Month', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity',
+        'Temperature', 'Total-I'
     ]
     # 2nd iteration excludes 'MLD(vd)', so remove this.
     make_data_floats.pop(make_data_floats.index('MLD(vd)'))
@@ -479,6 +480,7 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     else:
         df = df.loc[df['Depth'] < limit_depth_to, :]  # only consider values
     # Add a column to be a unique identifier and column index
+
     def get_unique_Data_Key_label(x, Data_Key=Data_Key):
         # Use the index as the number (which now starts from 1)
         x = int(x)
@@ -658,7 +660,7 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows = 1,
+def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows=1,
                                file_and_path='./sparse2spatial.rc',):
     """
     To check on the correlations between the newly extract climatological
@@ -760,6 +762,7 @@ def add_extra_vars_rm_some_data(df=None, target='Iodide',
         # Average value
         avg = df['SeaWIFs_ChlrA'].median()
         # Function to map
+
         def swp_NaN4_median(input, avg=avg):
             """ swap NaNs for median """
             if np.isfinite(input):
@@ -789,6 +792,7 @@ def add_extra_vars_rm_some_data(df=None, target='Iodide',
             # Get the average
             avg = df[var_].median()
             # Function to map
+
             def swp_NaN4_median(input, avg=avg):
                 """ swap NaNs for median """
                 if np.isfinite(input):
@@ -814,6 +818,7 @@ def add_extra_vars_rm_some_data(df=None, target='Iodide',
         # Get the average
         avg = df[var_].median()
         # Function to map
+
         def swp_NaN4_median(input, avg=avg):
             """ swap NaNs for median """
             if np.isfinite(input):
@@ -875,6 +880,7 @@ def convert_old_Data_Key_names2new(df, var2use='Data_Key'):
     # Add the misspelling
     d['Elderfeild_T_1980'] = 'Elderfield_T_1980'
     # Setup as a mappable function
+
     def nename_col(input):
         if input in d.keys():
             return d[input]
@@ -952,7 +958,6 @@ def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
     return df
 
 
-
 def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
     """ Get predicted iodide from literature parametersations """
     # Set local variables
@@ -1002,11 +1007,11 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
     except KeyError:
         df[var2use] = df.apply(lambda x:
                                calc_iodide_chance2014_Multivariate(NO3=x[NO3_var],
-                                                                 sumMLDpt=x[sumMLDpt_var],
+                                                                   sumMLDpt=x[sumMLDpt_var],
                                                                    MOD_LAT=x[MOD_LAT_var],
                                                                    TEMP=x[TEMPvar],
-                                                                salinity=x[salinity_var]),
-                                                                   axis=1)
+                                                                   salinity=x[salinity_var]),
+                               axis=1)
     return df
 
 
