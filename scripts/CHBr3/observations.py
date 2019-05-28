@@ -11,6 +11,7 @@ import numpy as np
 
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillary_obs_from_COMPILED_file
 
+
 def get_CHBr3_obs(target='CHBr3', limit_depth_to=20,):
     """
     Get the raw observations from HalOcAt database

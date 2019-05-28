@@ -14,6 +14,7 @@ predictor = vector assigned to a target value
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 #import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
@@ -31,24 +32,44 @@ def main():
     functionalitliy to call.
     """
     # - Set core local variables
-    target = 'CH3Br'
+    target= 'CHBr3'
 
-    # - Get the observations
+    # - Get the observations? (Not needed for core workflow as also held in RFR_dict)
+#    df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
 
     # - build models with the observations
-    RFR_dict = build_or_get_current_models_CHBr3(rebuild=False)
+    RFR_dict = build_or_get_current_models_CHBr3(rebuild=False, target=target)
     #
 
     # Get stats ont these models
     stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
             target=target, verbose=True, debug=True)
 
+    # Get the top ten models
+    topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
+            NO_DERIVED=True, n=10)
+
+    # --- Predict values globally (only use 0.125)
+    # extra strig for NetCDF save name
+    xsave_str = '_TEST'
+    # make NetCDF predictions from the main array
+    save2NetCDF = True
+    # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
+    res = '0.125x0.125'
+#    res='4x5'
+    res='2x2.5'
+    mk_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
+                                    use_updated_predictor_NetCDF=False,
+                                    save2NetCDF=save2NetCDF, target=target,
+#                                           rm_Skagerrak_data=rm_Skagerrak_data,
+                                    models2compare=topmodels,
+                                    topmodels=topmodels,
+                                    xsave_str=xsave_str, add_ensemble2ds=True )
 
 
 
 
-
-def build_or_get_current_models_CHBr3(rm_Skagerrak_data=True, target='CH3Br',
+def build_or_get_current_models_CHBr3(rm_Skagerrak_data=True, target='CHBr3',
                                        rm_LOD_filled_data=False,
                                        rm_outliers=True,
                                        rebuild=False ):
@@ -59,11 +80,7 @@ def build_or_get_current_models_CHBr3(rm_Skagerrak_data=True, target='CH3Br',
     model_feature_dict = utils.get_model_testing_features_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
-    df = get_dataset_processed4ML( target=target,
-#        rm_Skagerrak_data=rm_Skagerrak_data,
-#        rm_LOD_filled_data=rm_LOD_filled_data,
-        rm_outliers=rm_outliers,
-        )
+    df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
 
     if rebuild:
         RFR_dict = build_or_get_current_models(save_model_to_disk=True,
@@ -73,7 +90,7 @@ def build_or_get_current_models_CHBr3(rm_Skagerrak_data=True, target='CH3Br',
                                     read_model_from_disk=False,
                                     delete_existing_model_files=True )
     else:
-        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+        RFR_dict = build_or_get_current_models(save_model_to_disk=False,
 #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                     model_feature_dict=model_feature_dict,
                                     df=df, target=target,
@@ -83,7 +100,7 @@ def build_or_get_current_models_CHBr3(rm_Skagerrak_data=True, target='CH3Br',
 
 
 
-def get_dataset_processed4ML(restrict_data_max=False, target='CH3Br',
+def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
                              rm_Skagerrak_data=False, rm_outliers=True,
                              rm_LOD_filled_data=False):
     """
@@ -172,6 +189,97 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH3Br',
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
     return df
+
+
+def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
+                                    models_dict=None, testing_features_dict=None,
+                                    stats=None, folder=None, target='Iodide',
+                                    use_updated_predictor_NetCDF=False,
+                                    save2NetCDF=False, plot2check=False,
+                                    models2compare=[], topmodels=None,
+#                                           rm_Skagerrak_data=False,
+                                    xsave_str='',
+                                    add_ensemble2ds=False,
+                                    verbose=True, debug=False):
+    """
+    Make a NetCDF file of predicted vairables for a given resolution
+    """
+    # Make sure the core dictionary is provided
+    assert (type(RFR_dict) == dict), 'Core variables must be provided as dict (RFR_dict)'
+    # Make sure a full list of models was provided
+    assert (len(models2compare) > 0), 'List of models to must be provided!'
+    # Inc. all the topmodels in the list of models to compare if they have been provided.
+    if isinstance(topmodels, type(list)):
+        models2compare += topmodels
+    # Remove any double ups in list of of models to predict
+    models2compare = list(set(models2compare))
+    # Get the variables required here
+    if isinstance(models_dict, type(None)):
+       models_dict = RFR_dict['models_dict']
+    if isinstance(testing_features_dict, type(None)):
+       testing_features_dict = RFR_dict['testing_features_dict']
+    # Get location to save file and set filename
+    if isinstance(folder, type(None)):
+        folder = utils.get_file_locations('data_root')
+    if isinstance(dsA, type(None)):
+        filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+        dsA = xr.open_dataset(folder + filename)
+    # - Make a dataset of predictions for each model
+    ds_l = []
+    for modelname in models2compare:
+        # get model
+        model = models_dict[modelname]
+        # get testinng features
+        testing_features = utils.get_model_testing_features_dict(modelname)
+        # Make a DataSet of predicted values
+        ds_tmp = utils.mk_da_of_predicted_values(dsA=dsA, model=model, res=res,
+                                                 modelname=modelname,
+                                                 testing_features=testing_features)
+        #  Add attributes to the prediction
+        ds_tmp = utils.add_attrs2target_ds(ds_tmp, add_global_attrs=False,
+                                           varname=modelname)
+        # Save to list
+        ds_l += [ds_tmp]
+    # Combine datasets
+    ds = xr.merge(ds_l)
+    # - Also get values for parameterisations
+    if target == 'Iodide':
+        # Chance et al (2013)
+        param = u'Chance2014_STTxx2_I'
+        arr = utils.calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        ds[param] = ds[modelname]  # use existing array as dummy to fill
+        ds[param].values = arr
+        # MacDonald et al (2013)
+        param = 'MacDonald2014_iodide'
+        arr = utils.calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+        ds[param] = ds[modelname]  # use existing array as dummy to fill
+        ds[param].values = arr
+    # Add ensemble to ds too
+    if add_ensemble2ds:
+        print('WARNING: Using topmodels for ensemble as calculated here')
+        var2template = list(ds.data_vars)[0]
+        ds = analysis.add_ensemble_avg_std_to_dataset(ds=ds, res=res, target=target,
+                                                      RFR_dict=RFR_dict,
+                                                      topmodels=topmodels,
+                                                      var2template=var2template,
+                                                      save2NetCDF=False)
+    # Do a quick diagnostic plot?
+    if plot2check:
+        for var_ in ds.data_vars:
+            # plot an annual average
+            arr = ds[var_].mean(dim='time')
+            AC.map_plot(arr, res=res)
+            plt.title(var_)
+            plt.show()
+    # Add global variables
+    ds = utils.add_attrs2target_ds(ds, add_varname_attrs=False)
+    # Save to NetCDF
+    if save2NetCDF:
+        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, xsave_str)
+        ds.to_netcdf(filename)
+    else:
+        return ds
+
 
 
 
