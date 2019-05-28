@@ -39,9 +39,9 @@ import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 import sparse2spatial.archiving as archiving
-import sparse2spatial.RTRbuild as build
+import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
-from sparse2spatial.RTRbuild import build_or_get_current_models
+from sparse2spatial.RFRbuild import build_or_get_current_models
 
 # Get iodide specific functions
 #from observations import get_dataset_processed4ML
@@ -1328,7 +1328,7 @@ def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
     """
     Wrapper for mk_ML_testing_and_training_set for iodide code
     """
-    from sparse2spatial.RTRbuild import mk_ML_testing_and_training_set
+    from sparse2spatial.RFRbuild import mk_ML_testing_and_training_set
     # Call the s2s function with some presets
     returned_vars = mk_ML_testing_and_training_set(df=df, target=target, nsplits=nsplits,
                                                    random_strat_split=random_strat_split,

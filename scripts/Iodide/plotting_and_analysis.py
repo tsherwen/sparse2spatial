@@ -149,7 +149,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
         ds = add_LWI2array(ds=ds, res=res4param, var2template=var2plot)
         #
         ds[var2plot] = ds[var2plot].where(ds['IS_WATER'] == True)
-    #    var2plot = 'RTR(TEMP+DEPTH+SAL)'
+    #    var2plot = 'RFR(TEMP+DEPTH+SAL)'
         arr = ds[var2plot].mean(dim='time', skipna=True).values
     # - Get the observations
     # select dataframe with observations and predictions in it
