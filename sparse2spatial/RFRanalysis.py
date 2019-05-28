@@ -2,11 +2,16 @@
 
 Analysis output from RandomForestRegressor algorithms
 
-
 """
 
 import numpy as np
 import xarray as xr
+import pandas as pd
+
+# Internal loads within s2s
+#from sparse2spatial.utils import *
+import sparse2spatial.utils as utils
+from sparse2spatial.utils import get_df_stats_MSE_RMSE
 
 
 def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
@@ -605,7 +610,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     N_testing_features = RFR_dict['N_testing_features']
     oob_scores = RFR_dict['oob_scores']
     # Calculate performance
-    stats = calculate_performance_of_params(df=df,
+    stats = calculate_performance_of_params(df=df, target=target,
                                             params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
@@ -616,9 +621,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                        add_sklean_metrics=add_sklean_metrics).T
     stats2concat = [stats, stats_sub1]
     # Combine all stats (RMSE and general stats)
-    stats = pd.concat([stats2concat])
-    # Combine all stats (RMSE and general stats)
-    stats = pd.concat([stats2concat])
+    stats = pd.concat(stats2concat)
     # Add number of features too
     stats = stats.T
     feats = pd.DataFrame(index=model_names)
@@ -751,7 +754,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
         # Statistics to concat
         stats2concat += [stats_sub2, stats_sub3, stats_sub4, stats_sub5, ]
     # Combine all stats (RMSE and general stats)
-    stats = pd.concat([stats2concat])
+    stats = pd.concat(stats2concat)
     # Add number of features too
     stats = stats.T
     feats = pd.DataFrame(index=model_names)
