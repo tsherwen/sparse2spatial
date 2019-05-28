@@ -3,6 +3,12 @@
 Processing scripts for ancillary data to used as dependent variable for predition
 
 """
+import xarray as xr
+import gc
+from multiprocessing import Pool
+from time import gmtime, strftime
+import time
+from functools import partial
 import AC_tools as AC
 
 
@@ -21,11 +27,6 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
     -------
     (xr.Dataset)
     """
-    import gc
-    from multiprocessing import Pool
-    from time import gmtime, strftime
-    import time
-    from functools import partial
     # Local variables
     months = np.arange(1, 13)
     # get Dataset?
@@ -127,7 +128,6 @@ def Convert_DOC_file_into_Standard_NetCDF():
     """
     Make DOC file(s) from UC-SB CF compliant
     """
-    import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
     folder = get_file_locations('DOC')
@@ -168,7 +168,6 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     """
     Convert Saeed Roshan's file into CF compliant format
     """
-    import xarray as xr
     # - conver the surface DOC file into a monthly average file
     # Directory?
     folder = get_file_locations('DOC')
@@ -222,8 +221,6 @@ def Convert_martins_productivity_file_into_a_NetCDF():
     """
     Convert productivity .csv file (Behrenfeld and Falkowski, 1997) into a NetCDF file
     """
-    import xarray as xr
-    from time import gmtime, strftime
     # Location of data (update to use public facing host)
     folder = get_file_locations('data_root') + '/Productivity/'
     # Which file to use?

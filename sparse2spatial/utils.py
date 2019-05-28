@@ -5,8 +5,9 @@ import getpass
 import platform
 import numpy as np
 import pandas as pd
+import xarray as xr
 from netCDF4 import Dataset
-
+from time import gmtime, strftime
 
 def mk_LWI_avg_array():
     """
@@ -37,6 +38,19 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
                               dsA=None, testing_features=None):
     """
     Make a dataset of 3D predicted values from model
+
+    Parameters
+    -------
+    model (RFR model), RandomForestRegressor model to make predictions with
+    modelname (str), Name of RandomForestRegressor model to use
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    target (str), name of target variable to be predict with features
+    dsA (xr.dataset), dataset of feature variables to use for prediction
+    testing_features (list), names of feature variables used by model to predict target
+
+    Returns
+    -------
+    (xr.dataset)
     """
     # Get feature values for resolution
     if isinstance(dsA, type(None)):
@@ -195,7 +209,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
 
 def add_units2ds(ds):
     """
-    Add input ancillary units
+    Add input ancillary units to xarray dataset
     """
     unit_dict = {
         u'DOC': 'ADD THIS',
@@ -248,26 +262,26 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
     # Select grid of interest
     subX = da['lon'].values
     subY = da['lat'].values
-    # construt into 2D DataFrame
+    # Construct into 2D DataFrame
     df = pd.DataFrame(arr_)
     df.index = subY
     df.columns = subX
-    # get just points that are known
+    # Get just points that are known
     df = df.unstack().dropna()
     df = df.reset_index(level=[0, 1])
-    # set the locations and data fro non-nan points
+    # Set the locations and data fro non-nan points
     x = df['level_0'].values
     y = df['level_1'].values
     z = df[0].values
-    # mesh grid to axes
-    # define grid.
+    # Define the grid to use
     xi = subX
     yi = subY
+    # Mesh grid to axes
     Xi, Yi = np.meshgrid(subX, subY)
     # grid the data. (using matplotlib.mlab's  griddata)
     # detail here: https://matplotlib.org/api/mlab_api.html#matplotlib.mlab.griddata
 #    zi = griddata(x, y, z, xi, yi, interp='linear')
-    # grid the data. (using scipys's  griddata)
+    # Grid the data and interpolate (using scipys's  griddata method)
     zi = griddata(zip(x, y), z, (Xi, Yi), method='nearest')
     # Overwrite values that are NaNs with interpolated values
     nans = np.isnan(arr_)
