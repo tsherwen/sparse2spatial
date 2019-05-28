@@ -19,10 +19,10 @@ import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 #import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 #import sparse2spatial.archiving as archiving
-from sparse2spatial.RTRbuild import mk_ML_testing_and_training_set
-import sparse2spatial.RTRbuild as build
+from sparse2spatial.RFRbuild import mk_ML_testing_and_training_set
+import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
-from sparse2spatial.RTRbuild import build_or_get_current_models
+from sparse2spatial.RFRbuild import build_or_get_current_models
 
 # Get iodide specific functions
 
