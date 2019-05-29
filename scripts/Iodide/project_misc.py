@@ -392,17 +392,17 @@ def get_analysis_numbers_for_AGU17_poster():
 #     # res='4x5'; extr_str='tree_X_K_JUST_TEMP_GEBCO_SALINTY'
 #     # Get the model
 #     model = get_current_model(extr_str=extr_str)
-#     testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
+#     features_used = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
 #     target_name = ['Iodide']
 #     # Initialise a dictionary to store data
 #     ars_dict = {}
 #     # get array of predictor for lats and lons (at res... )
 #     df_predictors = get_predict_lat_lon_array(res=res, month=9)
 #     # now make predictions for target ("y") from loaded predictors
-#     target_predictions = model.predict(df_predictors[testing_features])
+#     target_predictions = model.predict(df_predictors[features_used])
 #     # Convert output vector to 2D lon/lat array
 #     model_name = "RandomForestRegressor '{}'"
-#     model_name = model_name.format('+'.join(testing_features))
+#     model_name = model_name.format('+'.join(features_used))
 #     ars_dict[model_name] = mk_uniform_2D_array(df_predictors=df_predictors,
 #                                                target_name=target_name, res=res,
 #                                                target_predictions=target_predictions)
@@ -411,12 +411,12 @@ def get_analysis_numbers_for_AGU17_poster():
 #     ars_dict[param_name] = get_equiv_Chance_arr(res=res,
 #                                                     target_predictions=target_predictions,
 #                                                      df=df_predictors,
-#                                                      testing_features=testing_features)
+#                                                      features_used=features_used)
 #     param_name = 'MacDonald et al (2014)'
 #     ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
 #                                                     target_predictions=target_predictions,
 #                                                         df=df_predictors,
-#                                                         testing_features=testing_features)
+#                                                         features_used=features_used)
 #     # -- Also get the working output from processed file for obs.
 #     pro_df = pd.read_csv(get_file_locations(
 #         'data_root')+'Iodine_obs_WOA.csv')

@@ -41,7 +41,7 @@ import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 import sparse2spatial.archiving as archiving
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
-from sparse2spatial.RFRbuild import build_or_get_current_models
+from sparse2spatial.RFRbuild import build_or_get_models
 
 # Get iodide specific functions
 #from observations import get_dataset_processed4ML
@@ -52,7 +52,7 @@ def main():
     Driver for module's man if run directly from command line. unhash
     functionalitliy to call.
     """
-    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
     print(model_feature_dict)
     print(model_feature_dict['NO3+DOC+Phos'])
     # ---- ---- Over-arching settings
@@ -60,14 +60,14 @@ def main():
     rm_Skagerrak_data = True
 #    rm_Skagerrak_data = False
     # Use top models from full dataset  ( now: nOutliers + nSkagerak
-    RFR_dict = build_or_get_current_models_iodide(
+    RFR_dict = build_or_get_models_iodide(
         rm_Skagerrak_data=rm_Skagerrak_data)
-#    RFR_dict = build_or_get_current_models_iodide( rm_Skagerrak_data=False )
+#    RFR_dict = build_or_get_models_iodide( rm_Skagerrak_data=False )
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
     print(RFR_dict.keys)
     print(topmodels)
     # Check statistics on prediction
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=True)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=True)
     print(stats)
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
@@ -99,7 +99,7 @@ def main():
     # Get indicies to extract for variables in imported NetCDF
 #    mk_array_of_indices4locations4res( res=res )
     # Extract the variables to NetCDF
-#    extract_predictor_variables2NetCDF( res=res )
+#    extract_feature_variables2NetCDF( res=res )
     # Interpolate the fields at full resolution
 #    interpolate_NaNs_in_feature_variables( res=res )
 
@@ -108,7 +108,7 @@ def main():
     # ---
     # (Re-)Build all models
     # (random stats means this gives the same answer everytime)
-#    build_or_get_current_models_iodide(rebuild=True,
+#    build_or_get_models_iodide(rebuild=True,
 #                                       rm_Skagerrak_data=rm_Skagerrak_data )
 
     # --- Update the predictor array values
@@ -191,7 +191,7 @@ def main():
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Plots / Analsis for Oi! paper
     # Get shared data
-#    RFR_dict = build_or_get_current_models()
+#    RFR_dict = build_or_get_models()
 
     # --- 2D analysis
     # Plot up spatial comparison of obs. and params
@@ -249,10 +249,10 @@ def main():
 #    analyse_X_Y_correlations( RFR_dict=RFR_dict )
 
     # Get the importance of individual features for prediction
-#    get_predictor_variable_importance( RFR_dict=RFR_dict )
+#    get_feature_importance( RFR_dict=RFR_dict )
 
     # Get general stats on the current models
-#    get_stats_on_current_models( RFR_dict=RFR_dict )
+#    get_stats_on_models( RFR_dict=RFR_dict )
 
     # Get tabulated performance
     make_table_of_point_for_point_performance(RFR_dict=RFR_dict)
@@ -327,7 +327,7 @@ def main():
 
 
 def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
-                                       testing_features=None, target='Iodide', df=None):
+                                       features_used=None, target='Iodide', df=None):
     """
     Run tests on the sensitivity of model to test/training choices
     """
@@ -340,10 +340,10 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
         df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # ---- get the data
     # Which "features" (variables) to use
-    if isinstance(testing_features, type(None)):
+    if isinstance(features_used, type(None)):
         #        model_name = 'ALL'
         model_name = 'RFR(TEMP+DEPTH+SAL)'
-        testing_features = get_model_testing_features_dict(model_name)
+        features_used = get_model_features_used_dict(model_name)
 
     # --- local variables
     # dictionary of test set variables
@@ -363,25 +363,25 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     TSETS_nsplits = {}
     # - no vals above 400
     Tname = 'All'
-    tmp_ts = df[testing_features+[target]].copy()
+    tmp_ts = df[features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 4
     # - no vals above 400
 #     Tname = '{}<400'.format( Iaq )
-#     tmp_ts = df.loc[ df['Iodide']<400 ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ df['Iodide']<400 ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
 #     TSETS_nsplits[Tname] = 4
 #     # - no vals above 450
 #     Tname = '{}<450'.format( Iaq )
-#     tmp_ts = df.loc[ df['Iodide']<450 ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ df['Iodide']<450 ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
 #     TSETS_nsplits[Tname] = 4
     # - no vals above 350
 #     Tname = '{}<350'.format( Iaq )
-#     tmp_ts = df.loc[ df['Iodide']<350 ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ df['Iodide']<350 ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
 #     TSETS_nsplits[Tname] = 4
@@ -390,7 +390,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     bool1 = df['WOA_Salinity'] >= 30
     # also remove outliers
     bool2 = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
-    tmp_ts = df.loc[bool1 & bool2][testing_features+[target]].copy()
+    tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 4
@@ -399,7 +399,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     bool1 =  df['WOA_Salinity']>=30
 #     bool2 = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
 #     # also remove values where iodide <400
-#     tmp_ts = df.loc[ bool1 & bool2  ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ bool1 & bool2  ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
 #     TSETS_nsplits[Tname] = 4
@@ -408,7 +408,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     bool1 =  df['WOA_Salinity']>=30
 #     bool2 = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
 #     # also remove values where iodide <400
-#     tmp_ts = df.loc[ bool1 & bool2  ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ bool1 & bool2  ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
 #     TSETS_nsplits[Tname] = 4
@@ -417,7 +417,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     bool1 = df['Coastal'] == 1
     # also remove outliers
     bool2 = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
-    tmp_ts = df.loc[bool1 & bool2][testing_features+[target]].copy()
+    tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 4
@@ -426,7 +426,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     bool1 =  df['Coastal'] ==1
 #     # also remove values where iodide <98
 #     bool2 = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
-#     tmp_ts = df.loc[ bool1 & bool2  ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ bool1 & bool2  ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
 #     TSETS_nsplits[Tname] = 4
@@ -435,7 +435,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     bool1 = df['Coastal'] == 0
     # also remove outliers
     bool2 = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
-    tmp_ts = df.loc[bool1 & bool2][testing_features+[target]].copy()
+    tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 4
@@ -444,14 +444,14 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     bool1 =  df['Coastal'] == 0
 #     # also remove values where iodide <98
 #     bool2 = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
-#     tmp_ts = df.loc[ bool1 & bool2  ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ bool1 & bool2  ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
 #     TSETS_nsplits[Tname] = 4
     # - only that < 98th
 #     Tname = '{} '.format( Iaq ) +'<98$^{th}$'
 #     bool_ = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
-#     tmp_ts = df.loc[ bool_ ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ bool_ ][ features_used+[target] ].copy()
 #     # also remove values where iodide <400
 #     tmp_ts = tmp_ts.loc[ df['Iodide']<400  ]
 #     TSETS_N[Tname] = tmp_ts.shape[0]
@@ -460,7 +460,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - only that < 99th
 #     Tname = '{} '.format( Iaq ) + '<99$^{th}$'
 #     bool_ = df['Iodide'] >= np.percentile( df['Iodide'].values, 99 )
-#     tmp_ts = df.loc[ bool_ ][ testing_features+[target] ].copy()
+#     tmp_ts = df.loc[ bool_ ][ features_used+[target] ].copy()
 #     # also remove values where iodide <400
 #     tmp_ts = tmp_ts.loc[ df['Iodide']<400  ]
 #     TSETS_N[Tname] = tmp_ts.shape[0]
@@ -469,7 +469,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - No Skagerrak
 # 	Tname = 'No Skagerrak'
 # 	bool_ = df['Data_Key'].values != 'Truesdale_2003_I'
-# 	tmp_ts = df.loc[ bool_ ][ testing_features+[target] ].copy()
+# 	tmp_ts = df.loc[ bool_ ][ features_used+[target] ].copy()
 # 	# also remove values where iodide <400
 # 	TSETS_N[Tname] = tmp_ts.shape[0]
 # 	TSETS[Tname] = tmp_ts
@@ -479,7 +479,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     bool1 = df['Data_Key'].values == 'Truesdale_2003_I'
 #     bool2 = df['Iodide'] > np.percentile( df['Iodide'].values, 98 )
 #     index2drop = df.loc[ bool1 | bool2, : ].index
-#     tmp_ts = df.drop( index2drop )[ testing_features+[target] ].copy()
+#     tmp_ts = df.drop( index2drop )[ features_used+[target] ].copy()
     # also remove values where iodide <400
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
@@ -487,7 +487,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - No outliers
     Tname = 'No outliers'
     bool_ = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
-    tmp_ts = df.loc[bool_][testing_features+[target]].copy()
+    tmp_ts = df.loc[bool_][features_used+[target]].copy()
     # also remove values where iodide <400
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
@@ -497,7 +497,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     bool1 = df['Data_Key'].values == 'Truesdale_2003_I'
     bool2 = df['Iodide'] > get_outlier_value(df=df, var2use='Iodide')
     index2drop = df.loc[bool1 | bool2, :].index
-    tmp_ts = df.drop(index2drop)[testing_features+[target]].copy()
+    tmp_ts = df.drop(index2drop)[features_used+[target]].copy()
     # also remove values where iodide <400
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
@@ -519,25 +519,25 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
             df_tmp.index = range(df_tmp.shape[0])
             print(Tname, df_tmp.shape)
             # Stratified split by default, unless random var in name
-            random_strat_split = True
-            random_20_80_split = False
+            rand_strat = True
+            rand_20_80 = False
     #         if random_split_var in Tname:
-    #             random_strat_split = False
-    #             random_20_80_split = True
+    #             rand_strat = False
+    #             rand_20_80 = True
             # get the training and test set
             returned_vars = mk_iodide_ML_testing_and_training_set(df=df_tmp,
-                                                                  random_20_80_split=random_20_80_split,
+                                                                  rand_20_80=rand_20_80,
                                                                   random_state=random_state,
                                                                   nsplits=TSETS_nsplits[
                                                                       Tname],
-                                                                  random_strat_split=random_strat_split,
-                                                                  testing_features=testing_features,
+                                                                  rand_strat=rand_strat,
+                                                                  features_used=features_used,
                                                                   )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
-            train_features = df_tmp[testing_features].loc[train_set.index]
+            train_features = df_tmp[features_used].loc[train_set.index]
             train_labels = df_tmp[[target]].loc[train_set.index]
-            test_features = df_tmp[testing_features].loc[test_set.index]
+            test_features = df_tmp[features_used].loc[test_set.index]
             test_labels = df_tmp[[target]].loc[test_set.index]
             # build the model - NOTE THIS MUST BE RE-DONE!
             # ( otherwise the model is being re-trained )
@@ -547,7 +547,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
             # fit the model
             model.fit(train_features, train_labels)
             # predict the values
-            df_tmp[Tname] = model.predict(df_tmp[testing_features].values)
+            df_tmp[Tname] = model.predict(df_tmp[features_used].values)
             # get the stats against the test group
             df_tmp = df_tmp[[Tname, target]].loc[test_set.index]
             # get MSE and RMSE
@@ -681,7 +681,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 # ---------- Functions to generate/predict modelled field -------------------
 # ---------------------------------------------------------------------------
 def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
-                                           models_dict=None, testing_features_dict=None,
+                                           models_dict=None, features_used_dict=None,
                                            RFR_dict=None, dsA=None,
                                            stats=None, folder=None,
                                            use_updated_predictor_NetCDF=False,
@@ -694,7 +694,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     # --- local variables
     # extract the models...
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models(
+        RFR_dict = build_or_get_models(
             rm_Skagerrak_data=rm_Skagerrak_data
         )
     # set models to always predict values for
@@ -720,7 +720,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     if isinstance(topmodels, type(None)):
         # get stats on models in RFR_dict
         if isinstance(stats, type(None)):
-            stats = get_stats_on_current_models(RFR_dict=RFR_dict,
+            stats = get_stats_on_models(RFR_dict=RFR_dict,
                                                 verbose=False)
         topmodels = get_top_models(RFR_dict=RFR_dict, stats=stats,
                                    NO_DERIVED=True)
@@ -730,8 +730,8 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     # get the variables required here
     if isinstance(models_dict, type(None)):
         models_dict = RFR_dict['models_dict']
-    if isinstance(testing_features_dict, type(None)):
-        testing_features_dict = RFR_dict['testing_features_dict']
+    if isinstance(features_used_dict, type(None)):
+        features_used_dict = RFR_dict['features_used_dict']
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
         folder = get_file_locations('data_root')
@@ -752,10 +752,10 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
         # get model
         model = models_dict[modelname]
         # get testinng features
-        testing_features = get_model_testing_features_dict(modelname)
+        features_used = get_model_features_used_dict(modelname)
         # Make a DataSet of predicted values
         ds_tmp = mk_da_of_predicted_values(model=model, modelname=modelname,
-                                           res=res, testing_features=testing_features,
+                                           res=res, features_used=features_used,
                                            dsA=dsA)
         #  Add attributes to the prediction
         ds_tmp = add_attrs2iodide_ds(ds_tmp, add_global_attrs=False,
@@ -1054,9 +1054,9 @@ def make_table_of_point_for_point_performance(RFR_dict=None,
     """
     # def get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # Get stats on model tuns runs
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1103,12 +1103,12 @@ def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
     """
     # def get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # Just select the
     df = RFR_dict['df']
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, df=df,
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
                                         verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
@@ -1156,9 +1156,9 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
     """
     # def get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # Get stats on model tuns runs
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1212,7 +1212,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
     from observations import add_extra_vars_rm_some_data
     from observations import get_processed_df_obs_mod
     # - Local variables
-    testing_features = None
+    features_used = None
     target = 'Iodide'
     # - The following settings are set to False as default
     # settings for incoming feature data
@@ -1250,7 +1250,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
 #     # Use a standard 20% test set.
 #     train_set, test_set =  train_test_split( targets, test_size=0.2, \
 #         random_state=42 )
-    # standard split vars?  (values=  random_20_80_split, random_strat_split )
+    # standard split vars?  (values=  rand_20_80, rand_strat )
     ways2split_data = {
         'rn. 20%': (True, False),
         'strat. 20%': (False, True),
@@ -1258,15 +1258,15 @@ def get_dataset_processed4ML(restrict_data_max=False,
     # Loop training/test split methods
     for key_ in ways2split_data.keys():
         # Get settings
-        random_20_80_split, random_strat_split = ways2split_data[key_]
+        rand_20_80, rand_strat = ways2split_data[key_]
         # Copy a df for splitting
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
-        returned_vars = mk_ML_testing_and_training_set(df=df.copy(), target=target,
-                                                       random_20_80_split=random_20_80_split,
-                                                       random_strat_split=random_strat_split,
-                                                       testing_features=df.columns.tolist(),
-                                                       #                                                   testing_features=testing_features,
+        returned_vars = mk_testing_training_sets(df=df.copy(), target=target,
+                                                       rand_20_80=rand_20_80,
+                                                       rand_strat=rand_strat,
+                                                       features_used=df.columns.tolist(),
+                                                       #                                                   features_used=features_used,
                                                        )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
@@ -1280,15 +1280,15 @@ def get_dataset_processed4ML(restrict_data_max=False,
 # ---------------------------------------------------------------------------
 # ---------- Wrappers for s2s -------------
 # ---------------------------------------------------------------------------
-def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
+def build_or_get_models_iodide(rm_Skagerrak_data=True,
                                        rm_LOD_filled_data=False,
                                        rm_outliers=True,
                                        rebuild=False):
     """
-    Wrapper call to build_or_get_current_models for sea-surface iodide
+    Wrapper call to build_or_get_models for sea-surface iodide
     """
     # Get the dictionary  of model names and features (specific to iodide)
-    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(
@@ -1305,14 +1305,14 @@ def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
         model_sub_dir = '/TEMP_MODELS/'
 
     if rebuild:
-        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+        RFR_dict = build_or_get_models(save_model_to_disk=True,
                                                #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                                model_feature_dict=model_feature_dict,
                                                df=df,
                                                read_model_from_disk=False,
                                                delete_existing_model_files=True)
     else:
-        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+        RFR_dict = build_or_get_models(save_model_to_disk=True,
                                                #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                                model_feature_dict=model_feature_dict,
                                                df=df,
@@ -1322,19 +1322,19 @@ def build_or_get_current_models_iodide(rm_Skagerrak_data=True,
 
 
 def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
-                                          random_strat_split=True, testing_features=None,
-                                          random_state=42, random_20_80_split=False,
+                                          rand_strat=True, features_used=None,
+                                          random_state=42, rand_20_80=False,
                                           nsplits=4, verbose=True, debug=False):
     """
-    Wrapper for mk_ML_testing_and_training_set for iodide code
+    Wrapper for mk_testing_training_sets for iodide code
     """
-    from sparse2spatial.RFRbuild import mk_ML_testing_and_training_set
+    from sparse2spatial.RFRbuild import mk_testing_training_sets
     # Call the s2s function with some presets
-    returned_vars = mk_ML_testing_and_training_set(df=df, target=target, nsplits=nsplits,
-                                                   random_strat_split=random_strat_split,
-                                                   testing_features=testing_features,
+    returned_vars = mk_testing_training_sets(df=df, target=target, nsplits=nsplits,
+                                                   rand_strat=rand_strat,
+                                                   features_used=features_used,
                                                    random_state=random_state,
-                                                   random_20_80_split=random_20_80_split,
+                                                   rand_20_80=rand_20_80,
                                                    verbose=verbose, debug=debug)
     return returned_vars
 

@@ -54,10 +54,10 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
     # - Get the observations
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     df = RFR_dict['df']
     # get stats on models in RFR_dict
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # only consider that are not outliers.
     df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
 #    df.loc[ df['Iodide']<= 400., :]
@@ -154,10 +154,10 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     # - Get the observations
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     df = RFR_dict['df']
     # get stats on models in RFR_dict
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # only consider values below 400
 #   df = df.loc[ df['Iodide']<= 400., :]
     # only consider values that are not outliers
@@ -858,7 +858,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
     if isinstance(topmodels, type(None)):
         # Get RFR_dict if not provide
         if isinstance(RFR_dict, type(None)):
-            RFR_dict = build_or_get_current_models()
+            RFR_dict = build_or_get_models()
         topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
     params2plot = topmodels
     # assign colors
@@ -1189,7 +1189,7 @@ def test_model_sensitiivty2training_test_split(models2compare=None,
     # Get the unprocessed obs and variables as a DataFrame
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get variables to use for each model
-    model_feature_dict = get_model_testing_features_dict(rtn_dict=True)
+    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
     # setup a DataFrame to store statistics
     dfs = {}
     # Now models and assess the sensitivity to the training/test set
@@ -1218,13 +1218,13 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
         extr_str = ''
     # Get key data as a dictionary
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models(
+        RFR_dict = build_or_get_models(
             rm_Skagerrak_data=rm_Skagerrak_data,
         )
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
     # Also make a dictionary
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     # Get the names of the ensemble members (topten models )
     if isinstance(topmodels, type(None)):
         topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
@@ -1239,7 +1239,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     df = RFR_dict['df']
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
-    dfP = get_stats_on_current_models(RFR_dict=RFR_dict, df=df,
+    dfP = get_stats_on_models(RFR_dict=RFR_dict, df=df,
                                       verbose=False)
     # only consider topmodels
     dfP = dfP.T[topmodels].T
@@ -1319,13 +1319,13 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         extr_str = ''
     # Get key data as a dictionary
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models(
+        RFR_dict = build_or_get_models(
             rm_Skagerrak_data=rm_Skagerrak_data
         )
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
     # Also make a dictionary
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     # Get the names of the ensemble members (topten models )
     if isinstance(topmodels, type(None)):
         topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
@@ -1333,11 +1333,11 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     if rebuild_models:
         for model_name in topmodels:
             # get the training features for a given model
-            testing_features = testing_features_dict[model_name]
-            testing_features = testing_features.split('+')
+            features_used = features_used_dict[model_name]
+            features_used = features_used.split('+')
             # Now build 20 separate initiations of the model
             build_the_same_model_mulitple_times(model_name=model_name,
-                                                testing_features=testing_features, df=df,
+                                                features_used=features_used, df=df,
                                                 rm_Skagerrak_data=rm_Skagerrak_data
                                                 )
 
@@ -1372,12 +1372,12 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     dfs = {}
     for model_name in topmodels:
         # get the training features for a given model
-        testing_features = testing_features_dict[model_name]
-        testing_features = testing_features.split('+')
+        features_used = features_used_dict[model_name]
+        features_used = features_used.split('+')
         # Now build 20 separate initiations of the model
         dfs[model_name] = get_stats4mulitple_model_builds(
             model_name=model_name,
-            testing_features=testing_features, df=df,
+            features_used=features_used, df=df,
             RFR_dict=RFR_dict
         )
     # concatenate into a single dataframe
@@ -1623,10 +1623,10 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
                          target='Iodide', context="paper", dpi=720):
     """ Show the correlations between obs. and params. as window plot """
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
-        testing_features_dict = RFR_dict['testing_features_dict']
+        features_used_dict = RFR_dict['features_used_dict']
         models_dict = RFR_dict['models_dict']
     if isinstance(df, type(None)):
         df = RFR_dict['df']
@@ -1777,13 +1777,13 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
     """ Analyse the correlations between obs. and params. """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
     # get stats on models in RFR_dict
-#    stats = get_stats_on_current_models( RFR_dict=RFR_dict, verbose=False )
+#    stats = get_stats_on_models( RFR_dict=RFR_dict, verbose=False )
 
     # --- Evaluate model using various approaches
     import seaborn as sns
@@ -1889,13 +1889,13 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     """ Analyse the correlations between obs. and params. """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
     # get stats on models in RFR_dict
-    stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
 
     # --- Evaluate model using various approaches
     import seaborn as sns
@@ -2151,7 +2151,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
     """ Calculate the bias within the predictions """
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
         df = RFR_dict['df']
     # Select parameterisations
     models2compare = ['RFR(Ensemble)']
@@ -2248,7 +2248,7 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
     sns.set_context("paper", font_scale=0.75)
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
         df = RFR_dict['df']
     # Get a dictionary of different dataset splits
     dfs = {}
@@ -2398,7 +2398,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
     sns.set_context("paper", font_scale=0.75)
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
         df = RFR_dict['df']
     # Get a dictionary of different dataset splits
     dfs = {}
@@ -2960,7 +2960,7 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
     sns.reset_orig()
     # Get dictionary of shared data if not provided
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # get XR Dataset of data
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     folder = get_file_locations('data_root')
@@ -2974,7 +2974,7 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
     else:
         centre = False
     # variables to plot?
-    vars2plot = get_features_used_by_model_list(RFR_dict=RFR_dict)
+    vars2plot = get_features_used_by_model(RFR_dict=RFR_dict)
     # --- Now plot up concentrations spatially
     # as a mean
     for var in vars2plot:
@@ -3219,7 +3219,7 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 #     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
 #     # Get the model
 #     model = get_current_model(extr_str=extr_str)
-#     testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
+#     features_used = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
 #     target_name = [target]
 #     # Initialise a dictionary to store data
 #     ars_dict = {}
@@ -3227,10 +3227,10 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 #     # get array of predictor for lats and lons (at res... )
 #     df_predictors = get_predict_lat_lon_array(res=res)
 #     # now make predictions for target ("y") from loaded predictors
-#     target_predictions = model.predict(df_predictors[testing_features])
+#     target_predictions = model.predict(df_predictors[features_used])
 #     # Convert output vector to 2D lon/lat array
 #     model_name = "RandomForestRegressor '{}'"
-#     model_name = model_name.format('+'.join(testing_features))
+#     model_name = model_name.format('+'.join(features_used))
 #     ars_dict[model_name] = mk_uniform_2D_array(df_predictors=df_predictors,
 #                                                target_name=target_name, res=res,
 #                                                target_predictions=target_predictions)
@@ -3240,12 +3240,12 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 #     ars_dict[param_name] = get_equiv_Chance_arr(res=res,
 #                                                     target_predictions=target_predictions,
 #                                                      df=df_predictors,
-#                                                      testing_features=testing_features)
+#                                                      features_used=features_used)
 #     param_name = 'MacDonald et al (2014)'
 #     ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
 #                                                     target_predictions=target_predictions,
 #                                                         df=df_predictors,
-#                                                         testing_features=testing_features)
+#                                                         features_used=features_used)
 #     # -- Also get the working output from processed file for obs.
 #     pro_df = pd.read_csv(get_file_locations(
 #         'data_root')+'Iodine_obs_WOA.csv')
@@ -3259,7 +3259,7 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 #     # - Also build 2D arrays for input testing variables
 #     feature_dict = {}
 #     extras = [u'SeaWIFs_ChlrA', u'WOA_Nitrate']
-#     for feature in testing_features + extras:
+#     for feature in features_used + extras:
 #         feature_dict[feature] = mk_uniform_2D_array(
 #             df_predictors=df_predictors, target_name=target_name, res=res,
 #             target_predictions=df_predictors[feature])
@@ -3267,7 +3267,7 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 #     # - Also build 2D arrays for input testing point data
 # #     NOTE: This needs to be updates to consider overlapping data points.
 # #     point_dict_ars ={}
-# #     for feature in testing_features + extras + target_name:
+# #     for feature in features_used + extras + target_name:
 # #
 # #
 # #         point_dict_ars[feature] = mk_uniform_2D_array(
@@ -3487,7 +3487,7 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 
 
 def get_equiv_Chance_arr(df=None, target_predictions=None,
-                         testing_features=None, target_name=['Iodide'], res='4x5'):
+                         features_used=None, target_name=['Iodide'], res='4x5'):
     """ Calculate Iodide from Chance parametistaion and input data"""
     # calculate dependency of iodide from Chance et al 2014
     C = (df['WOA_TEMP'].values)**2
@@ -3499,7 +3499,7 @@ def get_equiv_Chance_arr(df=None, target_predictions=None,
 
 
 def get_equiv_MacDonald_arr(df=None, target_predictions=None,
-                            testing_features=None, target_name=['Iodide'],
+                            features_used=None, target_name=['Iodide'],
                             res='4x5'):
     """ Calculate Iodide from Chance parametistaion and input data"""
     # calculate dependency of iodide from MacDonald et al 2014
@@ -3574,12 +3574,12 @@ def get_ensemble_predicted_iodide(df=None,
     if isinstance(topmodels, type(None)):
         # extract the models...
         if isinstance(RFR_dict, type(None)):
-            RFR_dict = build_or_get_current_models(
+            RFR_dict = build_or_get_models(
                 rm_Skagerrak_data=rm_Skagerrak_data
             )
         # get stats on models in RFR_dict
         if isinstance(stats, type(None)):
-            stats = get_stats_on_current_models(RFR_dict=RFR_dict,
+            stats = get_stats_on_models(RFR_dict=RFR_dict,
                                                 verbose=False)
         # get list of
         topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
@@ -3669,10 +3669,10 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
     sns.set()
     # Get the dictionary of shared data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # Get the stats on the models built
     if isinstance(stats, type(None)):
-        stats = get_stats_on_current_models(RFR_dict=RFR_dict, verbose=False)
+        stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # Get the core input variables
     data_root = get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
@@ -3683,7 +3683,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
     dss['BASE'] = ds.copy()
     # Which variables should be plotted?
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
-    var2test = get_features_used_by_model_list(RFR_dict=RFR_dict,
+    var2test = get_features_used_by_model(RFR_dict=RFR_dict,
                                                models_list=topmodels)
 #	var2test =  ['WOA_Nitrate']  # for testing just change nitrate
     # perturb vars (e.g. by  by -/+ 10, 20, 30 % )
@@ -3836,7 +3836,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     ds = xr.open_dataset(data_root + filename)
     # Get the models
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
     topmodels = list(set(topmodels))
     # other local settings?
@@ -3868,8 +3868,8 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 #     df.index = np.arange(df.shape[0])
 #     # Reset the training/withhel data split
 #     returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-#         random_20_80_split=False, random_strat_split=True,
-#         testing_features=df.columns.tolist(),
+#         rand_20_80=False, rand_strat=True,
+#         features_used=df.columns.tolist(),
 #         )
 #     train_set, test_set, test_set_targets = returned_vars
 #     key_varname = 'Test set ({})'.format( 'strat. 20%' )
@@ -3894,7 +3894,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 #         plt.savefig( savestr, dpi=320 )
 #         plt.close()
 #     # rebuild (just the top models)
-#     RFR_dict_d[VarName] = build_or_get_current_models( df=df,
+#     RFR_dict_d[VarName] = build_or_get_models( df=df,
 #         model_names = topmodels,
 #         save_model_to_disk=False,
 #         read_model_from_disk=False,
@@ -3911,9 +3911,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     df.index = np.arange(df.shape[0])
     # Reset the training/withhel data split
     returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                          random_20_80_split=False,
-                                                          random_strat_split=True,
-                                                          testing_features=df.columns.tolist(),
+                                                          rand_20_80=False,
+                                                          rand_strat=True,
+                                                          features_used=df.columns.tolist(),
                                                           )
     train_set, test_set, test_set_targets = returned_vars
     key_varname = 'Test set ({})'.format('strat. 20%')
@@ -3940,7 +3940,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plt.savefig(savestr, dpi=320)
         plt.close()
     # rebuild (just the top models)
-    RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+    RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                       model_names=topmodels,
                                                       save_model_to_disk=False,
                                                       read_model_from_disk=False,
@@ -3958,9 +3958,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     df.index = np.arange(df.shape[0])
     # Reset the training/withhel data split
     returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                          random_20_80_split=False,
-                                                          random_strat_split=True,
-                                                          testing_features=df.columns.tolist(),
+                                                          rand_20_80=False,
+                                                          rand_strat=True,
+                                                          features_used=df.columns.tolist(),
                                                           )
     train_set, test_set, test_set_targets = returned_vars
     key_varname = 'Test set ({})'.format('strat. 20%')
@@ -3987,7 +3987,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plt.savefig(savestr, dpi=320)
         plt.close()
     # rebuild (just the top models)
-    RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+    RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                       model_names=topmodels,
                                                       save_model_to_disk=False,
                                                       read_model_from_disk=False,
@@ -4006,8 +4006,8 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                 df.index = np.arange(df.shape[0])
         #                 Reset the training/withhel data split
         #                 returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-        #                     random_20_80_split=False, random_strat_split=True,
-        #                     testing_features=df.columns.tolist(),
+        #                     rand_20_80=False, rand_strat=True,
+        #                     features_used=df.columns.tolist(),
         #                     )
         #                 train_set, test_set, test_set_targets = returned_vars
         #                 key_varname = 'Test set ({})'.format( 'strat. 20%' )
@@ -4032,7 +4032,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                     plt.savefig( savestr, dpi=320 )
         #                     plt.close()
         #                 rebuild (just the top models)
-        #                 RFR_dict_d[VarName] = build_or_get_current_models( df=df,
+        #                 RFR_dict_d[VarName] = build_or_get_models( df=df,
         #                     model_names = topmodels,
         #                     save_model_to_disk=False,
         #                     read_model_from_disk=False,
@@ -4050,8 +4050,8 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                 df.index = np.arange(df.shape[0])
         #                 Reset the training/withhel data split
         #                 returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-        #                     random_20_80_split=False, random_strat_split=True,
-        #                     testing_features=df.columns.tolist(),
+        #                     rand_20_80=False, rand_strat=True,
+        #                     features_used=df.columns.tolist(),
         #                     )
         #                 train_set, test_set, test_set_targets = returned_vars
         #                 key_varname = 'Test set ({})'.format( 'strat. 20%' )
@@ -4076,7 +4076,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                     plt.savefig( savestr, dpi=320 )
         #                     plt.close()
         #                 rebuild (just the top models)
-        #                 RFR_dict_d[VarName] = build_or_get_current_models( df=df,
+        #                 RFR_dict_d[VarName] = build_or_get_models( df=df,
         #                     model_names = topmodels,
         #                     save_model_to_disk=False,
         #                     read_model_from_disk=False,
@@ -4102,9 +4102,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4132,7 +4132,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4146,9 +4146,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4162,7 +4162,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4176,9 +4176,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4192,7 +4192,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4210,9 +4210,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4240,7 +4240,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4263,9 +4263,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4293,7 +4293,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4317,9 +4317,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4347,7 +4347,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4361,9 +4361,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4377,7 +4377,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4394,9 +4394,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4410,7 +4410,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4424,9 +4424,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4440,7 +4440,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4453,9 +4453,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4469,7 +4469,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4486,9 +4486,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4502,7 +4502,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4518,9 +4518,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4534,7 +4534,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4548,9 +4548,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4564,7 +4564,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4580,9 +4580,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4596,7 +4596,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4612,9 +4612,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4628,7 +4628,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4642,9 +4642,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4658,7 +4658,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4675,9 +4675,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
-                                                              random_20_80_split=False,
-                                                              random_strat_split=True,
-                                                              testing_features=df.columns.tolist(),
+                                                              rand_20_80=False,
+                                                              rand_strat=True,
+                                                              features_used=df.columns.tolist(),
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
@@ -4691,7 +4691,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_current_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models(df=df,
                                                           model_names=topmodels,
                                                           save_model_to_disk=False,
                                                           read_model_from_disk=False,
@@ -4777,7 +4777,7 @@ def explore_sensitivity_of_65N(res='4x5'):
     ds = xr.open_dataset(data_root + filename)
     # Get the models
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
 
     # set up a dictionary for different dataset splits
@@ -5112,7 +5112,7 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
     sns.set_context("paper", font_scale=0.75)
     # Get RFR_dict if not provide
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # Get predicted values
     if isinstance(folder, type(None)):
         folder = get_file_locations('data_root')

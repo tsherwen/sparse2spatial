@@ -217,7 +217,7 @@ def mk_RAD_NetCDF_monthly():
     ds.to_netcdf(folder+newfile_str)
 
 
-def Convert_martins_productivity_file_into_a_NetCDF():
+def mk_NetCDF_from_productivity_data():
     """
     Convert productivity .csv file (Behrenfeld and Falkowski, 1997) into a NetCDF file
     """

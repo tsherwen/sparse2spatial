@@ -9,6 +9,7 @@ import xarray as xr
 from netCDF4 import Dataset
 from time import gmtime, strftime
 
+
 def mk_LWI_avg_array():
     """
     Make an array of average Land Water Ice (LWI) indices from NASA "nature run" output
@@ -35,7 +36,7 @@ def mk_LWI_avg_array():
 
 
 def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iodide',
-                              dsA=None, testing_features=None):
+                              dsA=None, features_used=None):
     """
     Make a dataset of 3D predicted values from model
 
@@ -46,7 +47,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
     res (str), horizontal resolution of dataset (e.g. 4x5)
     target (str), name of target variable to be predict with features
     dsA (xr.dataset), dataset of feature variables to use for prediction
-    testing_features (list), names of feature variables used by model to predict target
+    features_used (list), names of feature variables used by model to predict target
 
     Returns
     -------
@@ -72,7 +73,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
         ds = ds.mean(dim='time')
         # Extract feature variables to 2D DataFrame
         df = pd.DataFrame()
-        for fvar in testing_features:
+        for fvar in features_used:
             #
             df_tmp = pd.DataFrame(ds[fvar].values)
             df_tmp.columns = lon
@@ -80,7 +81,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
             # construct Series by unstacking
             df[fvar] = df_tmp.unstack()
         # Now predict values with feature variables
-        df[target] = model.predict(df[testing_features].values)
+        df[target] = model.predict(df[features_used].values)
         # Now re-build into a 3D dataset
         df = df[target].unstack()
         # Sort lat to be -90 to 90
@@ -113,7 +114,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
 #         'Chance2014': calc_iodide_chance2014_STTxx2_I,
 #     }
 #     # Get the model
-#     testing_features = ['WOA_TEMP']
+#     features_used = ['WOA_TEMP']
 #     # Initialise a dictionary to store data
 #     ars_dict = {}
 #     months = np.arange(1, 13)
@@ -121,7 +122,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
 #         # get array of predictor for lats and lons (at res... )
 #         df_predictors = get_predict_lat_lon_array(res=res, month=month)
 #         # now make predictions for target ("y") from loaded predictors
-#         TEMP = df_predictors[testing_features].values
+#         TEMP = df_predictors[features_used].values
 #         target_predictions = cal_dict[param](TEMP)
 #         # Save values
 #         ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
@@ -160,7 +161,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
 #     from time import gmtime, strftime
 #     # Get the model
 #     model = get_current_model(extr_str=extr_str)
-#     testing_features = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
+#     features_used = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
 #
 #     # Initialise a dictionary to store data
 #     ars_dict = {}
@@ -169,10 +170,10 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
 #         # get array of predictor for lats and lons (at res... )
 #         df_predictors = get_predict_lat_lon_array(res=res, month=month)
 #         # now make predictions for target ("y") from loaded predictors
-#         target_predictions = model.predict(df_predictors[testing_features])
+#         target_predictions = model.predict(df_predictors[features_used])
 #         # Convert output vector to 2D lon/lat array
 #         model_name = "RandomForestRegressor '{}'"
-#         model_name = model_name.format('+'.join(testing_features))
+#         model_name = model_name.format('+'.join(features_used))
 #         ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
 #                                               target_name=[target], res=res,
 #                                               target_predictions=target_predictions)
@@ -1041,7 +1042,7 @@ def get_feature_variables_as_ds(res='4x5'):
     return ds
 
 
-def get_model_testing_features_dict(model_name=None, rtn_dict=False):
+def get_model_features_used_dict(model_name=None, rtn_dict=False):
     """
     return a dictionary of test variables to use
     """

@@ -28,7 +28,7 @@ from sparse2spatial.utils import get_file_locations
 from sparse2spatial.utils import set_backup_month_if_unkonwn
 from sparse2spatial.utils import get_outlier_value
 from sea_surface_iodide import mk_iodide_ML_testing_and_training_set
-from sparse2spatial.ancillaries2grid_oversample import extract_ancillary_obs_from_COMPILED_file
+from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
 from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
 from sparse2spatial.utils import calc_iodide_chance2014_Multivariate
 from sparse2spatial.utils import calc_iodide_MacDonald2014
@@ -184,9 +184,9 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     # Get iodide observations (as a dictionary/DataFrame)
     obs_data_df, obs_metadata_df = get_iodide_obs()
     # Add ancillary obs.
-#    obs_data_df = extract_ancillary_obs_from_RAW_external_files( \
+#    obs_data_df = extract_ancillaries_from_external_files( \
 #        obs_data_df=obs_data_df, obs_metadata_df=obs_metadata_df )
-    obs_data_df = extract_ancillary_obs_from_COMPILED_file(df=obs_data_df)
+    obs_data_df = extract_ancillaries_from_compiled_file(df=obs_data_df)
     # Save the intermediate file
     folder = get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/'.format(target)
@@ -197,7 +197,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     # - Add ensemble prediction by averaging predictions at obs. locations.?
     if add_ensemble:
         print('NOTE - models must have already been provided via RFR_dict')
-        RFR_dict = build_or_get_current_models(
+        RFR_dict = build_or_get_models(
             rm_Skagerrak_data=rm_Skagerrak_data,
         )
         # Now extract for
