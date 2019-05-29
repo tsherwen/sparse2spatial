@@ -56,8 +56,8 @@ def main():
     save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
     res = '0.125x0.125'
-#    res='4x5'
-    res='2x2.5'
+#    res='4x5
+#    res='2x2.5'
     mk_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
                                     use_updated_predictor_NetCDF=False,
                                     save2NetCDF=save2NetCDF, target=target,
