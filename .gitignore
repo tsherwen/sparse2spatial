@@ -117,3 +117,6 @@ venv.bak/
 
 # Do not include bash scripts 
 *.sh
+
+# exclude slurm scripts
+*.sbatch
