@@ -1,18 +1,27 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """
 processing/analysis functions for 'example' observations
 """
-
-import sparse2spatial.utils as utils
-import sparse2spatial as s2s
 import pandas as pd
 import numpy as np
+import sparse2spatial as s2s
+import sparse2spatial.utils as utils
+import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 
-from sparse2spatial.ancillaries2grid_oversample import extract_ancillary_obs_from_COMPILED_file
 
-
-def get_example_obs(target='example', limit_depth_to=20,):
+def get_example_obs(target='example', limit_depth_to=20):
     """
     Get the raw sparse observations from a database...
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    limit_depth_to (float), depth from sea surface to include data (metres)
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
     # File to use (example name string...)
     filename = 'HC_seawater_concs_above_{}m.csv'.format(limit_depth_to)
@@ -33,7 +42,7 @@ def get_example_obs(target='example', limit_depth_to=20,):
     def get_month(x):
         return x.month
     df[month_var] = df['datetime'].map(get_month)
-    # make sure all values are numeric
+    # Make sure all values are numeric
     for var in [Varname]+[LatVar1, LonVar1]:
         df.loc[:, var] = pd.to_numeric(df[var].values, errors='coerce')
         # replace flagged values with NaN
@@ -47,11 +56,11 @@ def get_example_obs(target='example', limit_depth_to=20,):
     df = df[cols2use].rename(columns=name_dict)
     # Add a unique identifier
     df['NEW_INDEX'] = range(1, df.shape[0]+1 )
-    # Kludge for now to just a name then number
+    # Set to a unique string instead of a number
     def get_unique_Data_Key_ID(x):
         return 'HC_{:0>6}'.format( int(x) )
     df['Data_Key_ID'] = df['NEW_INDEX'].map(get_unique_Data_Key_ID)
-    # Remove all the NaNs
+    # Remove all the NaNs and print to screen the change in dataset size
     t0_shape = df.shape[0]
     df = df.dropna()
     if t0_shape != df.shape[0]:
@@ -64,11 +73,21 @@ def process_obs_and_ancillaries_2_csv(target='example', version='v0_0_0'
                                       file_and_path='./sparse2spatial.rc'):
     """
     Process the observations and extract ancillary variables for these locations
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    version (str), version name/number (e.g. semantic version - https://semver.org/)
+    file_and_path (str), folder and filename with location settings as single str
+
+    Returns
+    -------
+    (None)
     """
-    # Get the bass observations
+    # Get the base observations
     df = get_example_obs()
     # Extract the ancillary values for these locations
-    df = extract_ancillary_obs_from_COMPILED_file(df=df)
+    df = ancillaries2grid.extract_ancillary_obs_from_COMPILED_file(df=df)
     # Save the intermediate file
     folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder += '/{}/inputs/'.format(target)
@@ -76,23 +95,23 @@ def process_obs_and_ancillaries_2_csv(target='example', version='v0_0_0'
     df.to_csv(folder+filename, encoding='utf-8')
 
 
-def get_processed_df_obs_mod(reprocess_params=False, target='example',
-                             filename='s2s_example_obs_ancillaries.csv',
-                             rm_Skagerrak_data=False,
-                             file_and_path='./sparse2spatial.rc',
-                             verbose=True, debug=False):
+def get_processed_df_obs_mod(target='example',file_and_path='./sparse2spatial.rc'):
     """
     Get the processed observation and model output
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    file_and_path (str), folder and filename with location settings as single str
+
     Returns
     -------
     (pd.DataFrame)
+
     Notes
     -----
     """
-    # Read in processed csv file
+    # Read in processed csv file of observations and ancillaries
     folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder += '/{}/inputs/'.format(target)
     filename = 's2s_{}_obs_ancillaries.csv'.format(target)
@@ -103,14 +122,17 @@ def get_processed_df_obs_mod(reprocess_params=False, target='example',
     return df
 
 
-def add_extra_vars_rm_some_data(df=None, target='example',
-                                restrict_data_max=False, restrict_min_salinity=False,
-                                rm_outliers=False, verbose=True, debug=False):
+def add_extra_vars_rm_some_data(df=None, target='example', rm_outliers=False,
+                                verbose=True, debug=False):
     """
     Add, process, or remove (requested) derivative variables for use with ML code
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    rm_outliers (bool), remove all the observational points above outlier definition
+
+
     Returns
     -------
     (pd.DataFrame)
