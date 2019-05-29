@@ -1010,3 +1010,106 @@ def mk_ML_testing_and_training_set(df=None, target='Iodide',
 #         df = df_dropped
 #     # Return DataFrane
 #     return df
+
+
+def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
+                                    models_dict=None, testing_features_dict=None,
+                                    stats=None, folder=None, target='Iodide',
+                                    use_updated_predictor_NetCDF=False,
+                                    save2NetCDF=False, plot2check=False,
+                                    models2compare=[], topmodels=None,
+                                    xsave_str='',
+                                    add_ensemble2ds=False,
+                                    verbose=True, debug=False):
+    """
+    Make a NetCDF file of predicted target from feature variables for a given resolution
+
+    Parameters
+    ----------
+    dsA (xr.Dataset), dataset object with variables to interpolate
+    RFR_dict (dict), dictionary of core variables and data
+    res (res), horizontal resolution (e.g. 4x5) of Dataset
+    save2NetCDF (boolean), save interpolated Dataset to as a NetCDF?
+    testing_features_dict (dict), dictionary of feature variables in models
+    models_dict (dict), dictionary of RFR models and there names
+    stats (pd.DataFrame), dataframe of statistics on models in models_dict
+    folder (str), location of NetCDF file of feature variables
+    target (str), name of the species being predicted
+    models2compare (list), list of models to make spatial predictions for (rm: double up?)
+    topmodels (list), list of models to make spatial predictions for
+    xsave_str (str), string to include as suffix in filename used for saved NetCDF
+    add_ensemble2ds (boolean), calculate std. dev. and mean for list of topmodels
+    verbose (boolean), print out verbose output?
+    debug (boolean), print out debugging output?
+
+    Returns
+    -------
+    (xr.Dataset)
+    """
+    # Make sure the core dictionary is provided
+    assert (type(RFR_dict) == dict), 'Core variables must be provided as dict (RFR_dict)'
+    # Make sure a full list of models was provided
+    assert (len(models2compare) > 0), 'List of models to must be provided!'
+    # Inc. all the topmodels in the list of models to compare if they have been provided.
+    if isinstance(topmodels, type(list)):
+        models2compare += topmodels
+    # Remove any double ups in list of of models to predict
+    models2compare = list(set(models2compare))
+    # Get the variables required here
+    if isinstance(models_dict, type(None)):
+       models_dict = RFR_dict['models_dict']
+    if isinstance(testing_features_dict, type(None)):
+       testing_features_dict = RFR_dict['testing_features_dict']
+    # Get location to save file and set filename
+    if isinstance(folder, type(None)):
+        folder = utils.get_file_locations('data_root')
+    if isinstance(dsA, type(None)):
+        filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+        dsA = xr.open_dataset(folder + filename)
+    # - Make a dataset of predictions for each model
+    ds_l = []
+    for modelname in models2compare:
+        # get model
+        model = models_dict[modelname]
+        # get testinng features
+        testing_features = utils.get_model_testing_features_dict(modelname)
+        # Make a DataSet of predicted values
+        ds_tmp = utils.mk_da_of_predicted_values(dsA=dsA, model=model, res=res,
+                                                 modelname=modelname,
+                                                 testing_features=testing_features)
+        #  Add attributes to the prediction
+        ds_tmp = utils.add_attrs2target_ds(ds_tmp, add_global_attrs=False,
+                                           varname=modelname)
+        # Save to list
+        ds_l += [ds_tmp]
+    # Combine datasets
+    ds = xr.merge(ds_l)
+    # - Also get values for parameterisations
+    if target == 'Iodide':
+        # Chance et al (2013)
+        param = u'Chance2014_STTxx2_I'
+        arr = utils.calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        ds[param] = ds[modelname]  # use existing array as dummy to fill
+        ds[param].values = arr
+        # MacDonald et al (2013)
+        param = 'MacDonald2014_iodide'
+        arr = utils.calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+        ds[param] = ds[modelname]  # use existing array as dummy to fill
+        ds[param].values = arr
+    # Add ensemble to ds too
+    if add_ensemble2ds:
+        print('WARNING: Using topmodels for ensemble as calculated here')
+        var2template = list(ds.data_vars)[0]
+        ds = analysis.add_ensemble_avg_std_to_dataset(ds=ds, res=res, target=target,
+                                                      RFR_dict=RFR_dict,
+                                                      topmodels=topmodels,
+                                                      var2template=var2template,
+                                                      save2NetCDF=False)
+    # add global attributes
+    ds = utils.add_attrs2target_ds(ds, add_varname_attrs=False)
+    # Save to NetCDF
+    if save2NetCDF:
+        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, xsave_str)
+        ds.to_netcdf(filename)
+    else:
+        return ds
