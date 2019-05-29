@@ -59,7 +59,6 @@ def main():
     res='4x5'
 #    res='2x2.5'
     build.mk_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
-                                         use_updated_predictor_NetCDF=False,
                                          save2NetCDF=save2NetCDF, target=target,
                                          models2compare=topmodels,
                                          topmodels=topmodels,
@@ -91,15 +90,12 @@ def build_or_get_current_models_example(target='example', rm_outliers=True,
     return RFR_dict
 
 
-def get_dataset_processed4ML(restrict_data_max=False, target='example',
-                             rm_outliers=True):
+def get_dataset_processed4ML(target='example', rm_outliers=True):
     """
     Get dataset as a DataFrame with standard munging settings
 
-
     Parameters
     -------
-    restrict_data_max (bool): restrict the obs. data to a maximum value?
     rm_outliers (boolean): remove outliers from the input data
 
     Returns
