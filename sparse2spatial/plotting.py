@@ -13,14 +13,16 @@ import xarray as xr
 import pandas as pd
 import cartopy
 import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
 
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
+import sparse2spatial.RFRanalysis as analysis
 
 
 def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'):
     """
-    Plot up the annual averages of the predictions
+    Wrapper to plot up the annual averages of the predictions
 
     Parameters
     -------
@@ -40,33 +42,6 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
     # Now plot
     plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version, target=target,
         title=title)
-
-
-def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
-                            res='0.125x0.125', file_and_path='./sparse2spatial.rc'):
-    """
-    Get the predicted target values from saved NetCDF
-
-    Parameters
-    ------- 
-    ds (xr.dataset), 3D dataset contraining variable of interest on monthly basis
-    target (str), Name of the target variable (e.g. iodide)
-    version (str), Version number or string (present in NetCDF names etc)
-    file_and_path (str), folder and filename with location settings as single str
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-
-    Returns
-    -------                                                                                                                                                     
-    (xr.Dataset) 
-    """
-    # Location of data
-    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
-    folder += '/{}/outputs/'.format(target)
-    # Get file namec
-    filename = 'Oi_prj_predicted_{}_{}_{}.nc'.format(target, res, version)
-    ds = xr.open_dataset(folder+filename)
-    return ds
-
 
 
 def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
