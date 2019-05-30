@@ -1240,7 +1240,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
     dfP = get_stats_on_models(RFR_dict=RFR_dict, df=df,
-                                      verbose=False)
+                              verbose=False)
     # only consider topmodels
     dfP = dfP.T[topmodels].T
 
@@ -3580,7 +3580,7 @@ def get_ensemble_predicted_iodide(df=None,
         # get stats on models in RFR_dict
         if isinstance(stats, type(None)):
             stats = get_stats_on_models(RFR_dict=RFR_dict,
-                                                verbose=False)
+                                        verbose=False)
         # get list of
         topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
 
@@ -3684,7 +3684,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
     # Which variables should be plotted?
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
     var2test = get_features_used_by_model(RFR_dict=RFR_dict,
-                                               models_list=topmodels)
+                                          models_list=topmodels)
 #	var2test =  ['WOA_Nitrate']  # for testing just change nitrate
     # perturb vars (e.g. by  by -/+ 10, 20, 30 % )
 #	perturb_by_mutiple = False
@@ -3941,11 +3941,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plt.close()
     # rebuild (just the top models)
     RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                      model_names=topmodels,
-                                                      save_model_to_disk=False,
-                                                      read_model_from_disk=False,
-                                                      delete_existing_model_files=False
-                                                      )
+                                              model_names=topmodels,
+                                              save_model_to_disk=False,
+                                              read_model_from_disk=False,
+                                              delete_existing_model_files=False
+                                              )
 
     # - No outliers or skaggerak
     VarName = 'No outliers \or Skagerrak'
@@ -3988,11 +3988,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plt.close()
     # rebuild (just the top models)
     RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                      model_names=topmodels,
-                                                      save_model_to_disk=False,
-                                                      read_model_from_disk=False,
-                                                      delete_existing_model_files=False
-                                                      )
+                                              model_names=topmodels,
+                                              save_model_to_disk=False,
+                                              read_model_from_disk=False,
+                                              delete_existing_model_files=False
+                                              )
 
     # --- Include options that didn't improve things in PDF
     if plt_option_tried_but_only_slightly_helped:
@@ -4133,11 +4133,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.close()
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - where obs are n coastal
         VarName = 'No Coastal'
@@ -4163,11 +4163,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - no where obs where low temperature.
         VarName = 'No <280K'
@@ -4193,11 +4193,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - no where obs where low temperature.
         VarName = 'No coastal <280K'
@@ -4241,11 +4241,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.close()
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - no where obs where low temperature and coastal (NH)
         VarName = 'No NH coastal <280K'
@@ -4294,11 +4294,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.close()
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - no where obs where low temperature and coastal (NH)
         VarName = 'No NH coastal <280K, Salinity <30'
@@ -4348,11 +4348,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.close()
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - Get just the obs above 65S
         VarName = 'No <65S'
@@ -4378,11 +4378,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - Get all except the obs below 65S which are coastal
         VarName = 'No coastal <65S'
@@ -4411,11 +4411,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - Get just the obs above 55S
         VarName = 'No <55S'
@@ -4441,11 +4441,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
         # - Get just the obs above 45S
         VarName = 'No <45S'
         df = dfA.loc[dfA['Latitude'].values >= -45, :]
@@ -4470,11 +4470,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - Get just the obs above 45S
         VarName = 'No coastal <45S'
@@ -4503,11 +4503,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
     # --- Include options that didn't improve things in PDF
     if plt_option_tired_but_didnt_help:
@@ -4535,11 +4535,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - no where obs where low temperature.
         VarName = 'No <17.4C'
@@ -4565,11 +4565,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # where obs are low nitrate and low temperature.
         VarName = 'No <17.4C & no<0.15 Nitrate'
@@ -4597,11 +4597,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - No cold of coastal
         VarName = 'No <17.4C & no coastal'
@@ -4629,11 +4629,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # - where obs are low nitrate
         VarName = 'No <0.5 Nitrate'
@@ -4659,11 +4659,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
         # Clean memory
         gc.collect()
@@ -4692,11 +4692,11 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
         RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                                          model_names=topmodels,
-                                                          save_model_to_disk=False,
-                                                          read_model_from_disk=False,
-                                                          delete_existing_model_files=False
-                                                          )
+                                                  model_names=topmodels,
+                                                  save_model_to_disk=False,
+                                                  read_model_from_disk=False,
+                                                  delete_existing_model_files=False
+                                                  )
 
     # Clean memory
     gc.collect()

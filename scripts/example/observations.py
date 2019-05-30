@@ -28,7 +28,7 @@ def get_example_obs(target='example', limit_depth_to=20):
     # Where is the file?
     s2s_root = utils.get_file_locations('s2s_root')
     folder = '{}/{}/inputs/'.format(s2s_root, target)
-    df = pd.read_csv( folder+filename )
+    df = pd.read_csv(folder+filename)
     # Variable name?
     Varname = 'example (pM)'
     # Assume using coord variables for now
@@ -37,8 +37,10 @@ def get_example_obs(target='example', limit_depth_to=20):
     # Add time
     TimeVar1 = 'native Date and time (UTC)'
     month_var = 'Month'
-    dt = pd.to_datetime(df[TimeVar1], format='%Y-%m-%d %H:%M:%S', errors='coerce' )
+    dt = pd.to_datetime(
+        df[TimeVar1], format='%Y-%m-%d %H:%M:%S', errors='coerce')
     df['datetime'] = dt
+
     def get_month(x):
         return x.month
     df[month_var] = df['datetime'].map(get_month)
@@ -46,26 +48,27 @@ def get_example_obs(target='example', limit_depth_to=20):
     for var in [Varname]+[LatVar1, LonVar1]:
         df.loc[:, var] = pd.to_numeric(df[var].values, errors='coerce')
         # replace flagged values with NaN
-        df.replace(999,np.NaN, inplace=True)
-        df.replace(-999,np.NaN, inplace=True)
+        df.replace(999, np.NaN, inplace=True)
+        df.replace(-999, np.NaN, inplace=True)
     # Update names to use
-    cols2use = ['datetime', 'Month', LatVar1, LonVar1, Varname ]
+    cols2use = ['datetime', 'Month', LatVar1, LonVar1, Varname]
     name_dict = {
-    LatVar1: 'Latitude', LonVar1: 'Longitude', month_var: 'Month', Varname: target
+        LatVar1: 'Latitude', LonVar1: 'Longitude', month_var: 'Month', Varname: target
     }
     df = df[cols2use].rename(columns=name_dict)
     # Add a unique identifier
-    df['NEW_INDEX'] = range(1, df.shape[0]+1 )
+    df['NEW_INDEX'] = range(1, df.shape[0]+1)
     # Set to a unique string instead of a number
+
     def get_unique_Data_Key_ID(x):
-        return 'HC_{:0>6}'.format( int(x) )
+        return 'HC_{:0>6}'.format(int(x))
     df['Data_Key_ID'] = df['NEW_INDEX'].map(get_unique_Data_Key_ID)
     # Remove all the NaNs and print to screen the change in dataset size
     t0_shape = df.shape[0]
     df = df.dropna()
     if t0_shape != df.shape[0]:
         pstr = 'WARNING: Dropped obs. (#={}), now have #={} (had #={})'
-        print( pstr.format(t0_shape-df.shape[0], df.shape[0], t0_shape) )
+        print(pstr.format(t0_shape-df.shape[0], df.shape[0], t0_shape))
     return df
 
 
@@ -95,7 +98,7 @@ def process_obs_and_ancillaries_2_csv(target='example', version='v0_0_0'
     df.to_csv(folder+filename, encoding='utf-8')
 
 
-def get_processed_df_obs_mod(target='example',file_and_path='./sparse2spatial.rc'):
+def get_processed_df_obs_mod(target='example', file_and_path='./sparse2spatial.rc'):
     """
     Get the processed observation and model output
 
@@ -142,7 +145,8 @@ def add_extra_vars_rm_some_data(df=None, target='example', rm_outliers=False,
     N0 = df.shape[0]
     # remove the outlier values
     if rm_outliers:
-        Outlier = utils.get_outlier_value(df, var2use=target, check_full_df_used=False)
+        Outlier = utils.get_outlier_value(
+            df, var2use=target, check_full_df_used=False)
         bool = df[target] < Outlier
         df_tmp = df.loc[bool]
         prt_str = 'Removing outlier {} values. (df {}=>{},{})'

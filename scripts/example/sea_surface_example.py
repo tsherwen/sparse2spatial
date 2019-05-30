@@ -43,11 +43,11 @@ def main():
 
     # Get stats ont these models
     stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-            target=target, verbose=True, debug=True)
+                                                      target=target, verbose=True, debug=True)
 
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
-            NO_DERIVED=True, n=10)
+                                     NO_DERIVED=True, n=10)
 
     # - Predict values globally (only use 0.125)
     # extra strig for NetCDF save name
@@ -56,17 +56,17 @@ def main():
     save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
 #    res = '0.125x0.125'
-    res='4x5'
+    res = '4x5'
 #    res='2x2.5'
     build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
                                          save2NetCDF=save2NetCDF, target=target,
                                          models2compare=topmodels,
                                          topmodels=topmodels,
-                                         xsave_str=xsave_str, add_ensemble2ds=True )
+                                         xsave_str=xsave_str, add_ensemble2ds=True)
 
 
 def build_or_get_models_example(target='example', rm_outliers=True,
-                                       rebuild=False ):
+                                       rebuild=False):
     """
     Wrapper call to build_or_get_models for sea-surface example
     """
@@ -77,16 +77,16 @@ def build_or_get_models_example(target='example', rm_outliers=True,
     # load the models or build them from scratch
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df, target=target,
-                                    read_model_from_disk=False,
-                                    delete_existing_model_files=True )
+                                       model_feature_dict=model_feature_dict,
+                                       df=df, target=target,
+                                       read_model_from_disk=False,
+                                       delete_existing_model_files=True)
     else:
         RFR_dict = build_or_get_models(save_model_to_disk=False,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df, target=target,
-                                    read_model_from_disk=True,
-                                    delete_existing_model_files=False )
+                                       model_feature_dict=model_feature_dict,
+                                       df=df, target=target,
+                                       read_model_from_disk=True,
+                                       delete_existing_model_files=False)
     return RFR_dict
 
 
@@ -119,11 +119,12 @@ def get_dataset_processed4ML(target='example', rm_outliers=True):
     # Get observational and ancillary data as a single DataFrame
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Add extra vairables and remove some data.
-    df = add_extra_vars_rm_some_data(df=df, target=target,rm_outliers=rm_outliers)
+    df = add_extra_vars_rm_some_data(
+        df=df, target=target, rm_outliers=rm_outliers)
     # Re-index to a single contiguous index
     df['Original Index'] = df.index.copy()
     N1 = df.shape[0]
-    df.index = np.arange( N1 )
+    df.index = np.arange(N1)
     print('WARNING: Reindexed to shape of DataFrame processed for ML ({})'.format(N1))
     # - Add test and training set assignment to columns
     # Add both random and standard stratified split for nows
@@ -138,11 +139,11 @@ def get_dataset_processed4ML(target='example', rm_outliers=True):
         rand_20_80, rand_strat = ways2split_data[key_]
         # Now split using existing function
         returned_vars = mk_testing_training_sets(df=df.copy(),
-                                                    target=target,
-                                                    rand_20_80=rand_20_80,
-                                                    rand_strat=rand_strat,
-                                                    features_used=df.columns.tolist(),
-                                                              )
+                                                 target=target,
+                                                 rand_20_80=rand_20_80,
+                                                 rand_strat=rand_strat,
+                                                 features_used=df.columns.tolist(),
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
         key_varname = 'Test set ({})'.format(key_)

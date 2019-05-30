@@ -122,13 +122,13 @@ def main():
     save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
 #    res = '0.125x0.125'
-    res='4x5'
+    res = '4x5'
     mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
-                                            use_updated_predictor_NetCDF=False,
-                                            save2NetCDF=save2NetCDF,
-                                            rm_Skagerrak_data=rm_Skagerrak_data,
-                                            topmodels=topmodels,
-                                            xsave_str=xsave_str, add_ensemble2ds=True )
+                                           use_updated_predictor_NetCDF=False,
+                                           save2NetCDF=save2NetCDF,
+                                           rm_Skagerrak_data=rm_Skagerrak_data,
+                                           topmodels=topmodels,
+                                           xsave_str=xsave_str, add_ensemble2ds=True)
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Sensitive test the new iodide field (
@@ -721,7 +721,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
         # get stats on models in RFR_dict
         if isinstance(stats, type(None)):
             stats = get_stats_on_models(RFR_dict=RFR_dict,
-                                                verbose=False)
+                                        verbose=False)
         topmodels = get_top_models(RFR_dict=RFR_dict, stats=stats,
                                    NO_DERIVED=True)
     models2compare += topmodels
@@ -1109,7 +1109,7 @@ def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
     stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
-                                        verbose=False)
+                                verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1263,11 +1263,11 @@ def get_dataset_processed4ML(restrict_data_max=False,
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
         returned_vars = mk_testing_training_sets(df=df.copy(), target=target,
-                                                       rand_20_80=rand_20_80,
-                                                       rand_strat=rand_strat,
-                                                       features_used=df.columns.tolist(),
-                                                       #                                                   features_used=features_used,
-                                                       )
+                                                 rand_20_80=rand_20_80,
+                                                 rand_strat=rand_strat,
+                                                 features_used=df.columns.tolist(),
+                                                 #                                                   features_used=features_used,
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
         key_varname = 'Test set ({})'.format(key_)
@@ -1281,9 +1281,9 @@ def get_dataset_processed4ML(restrict_data_max=False,
 # ---------- Wrappers for s2s -------------
 # ---------------------------------------------------------------------------
 def build_or_get_models_iodide(rm_Skagerrak_data=True,
-                                       rm_LOD_filled_data=False,
-                                       rm_outliers=True,
-                                       rebuild=False):
+                               rm_LOD_filled_data=False,
+                               rm_outliers=True,
+                               rebuild=False):
     """
     Wrapper call to build_or_get_models for sea-surface iodide
     """
@@ -1306,18 +1306,18 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
 
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
-                                               #                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                               model_feature_dict=model_feature_dict,
-                                               df=df,
-                                               read_model_from_disk=False,
-                                               delete_existing_model_files=True)
+                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                       model_feature_dict=model_feature_dict,
+                                       df=df,
+                                       read_model_from_disk=False,
+                                       delete_existing_model_files=True)
     else:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
-                                               #                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                               model_feature_dict=model_feature_dict,
-                                               df=df,
-                                               read_model_from_disk=True,
-                                               delete_existing_model_files=False)
+                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                       model_feature_dict=model_feature_dict,
+                                       df=df,
+                                       read_model_from_disk=True,
+                                       delete_existing_model_files=False)
     return RFR_dict
 
 
@@ -1331,11 +1331,11 @@ def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
     from sparse2spatial.RFRbuild import mk_testing_training_sets
     # Call the s2s function with some presets
     returned_vars = mk_testing_training_sets(df=df, target=target, nsplits=nsplits,
-                                                   rand_strat=rand_strat,
-                                                   features_used=features_used,
-                                                   random_state=random_state,
-                                                   rand_20_80=rand_20_80,
-                                                   verbose=verbose, debug=debug)
+                                             rand_strat=rand_strat,
+                                             features_used=features_used,
+                                             random_state=random_state,
+                                             rand_20_80=rand_20_80,
+                                             verbose=verbose, debug=debug)
     return returned_vars
 
 
