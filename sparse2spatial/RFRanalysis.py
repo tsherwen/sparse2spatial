@@ -66,12 +66,12 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
         # set the training and test sets
         # Stratified split by default, unless random var in name
         returned_vars = mk_testing_training_sets(df=df,
-                                                       rand_20_80=False,
-                                                       features_used=features_used,
-                                                       random_state=random_state,
-                                                       rand_strat=True,
-                                                       nsplits=4,
-                                                       )
+                                                 rand_20_80=False,
+                                                 features_used=features_used,
+                                                 random_state=random_state,
+                                                 rand_strat=True,
+                                                 nsplits=4,
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # Set the training and test sets
         train_features = df[features_used].loc[train_set.index]
@@ -217,12 +217,12 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         # set the training and test sets
         # Stratified split by default, unless random var in name
         returned_vars = mk_testing_training_sets(df=df,
-                                                       rand_20_80=False,
-                                                       features_used=features_used,
-                                                       random_state=random_state,
-                                                       rand_strat=True,
-                                                       nsplits=4,
-                                                       )
+                                                 rand_20_80=False,
+                                                 features_used=features_used,
+                                                 random_state=random_state,
+                                                 rand_strat=True,
+                                                 nsplits=4,
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # set the training and test sets
         train_features = df[features_used].loc[train_set.index]
@@ -329,13 +329,13 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             rand_20_80 = False
             # get the training and test set
             returned_vars = mk_testing_training_sets(df=df_tmp,
-                                                           rand_20_80=rand_20_80,
-                                                           random_state=random_state,
-                                                           nsplits=TSETS_nsplits[
-                                                               Tname],
-                                                           rand_strat=rand_strat,
-                                                           features_used=features_used,
-                                                           )
+                                                     rand_20_80=rand_20_80,
+                                                     random_state=random_state,
+                                                     nsplits=TSETS_nsplits[
+                                                         Tname],
+                                                     rand_strat=rand_strat,
+                                                     features_used=features_used,
+                                                     )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
             train_features = df_tmp[features_used].loc[train_set.index]
@@ -611,7 +611,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     oob_scores = RFR_dict['oob_scores']
     # Calculate performance
     stats = calc_performance_of_params(df=df, target=target,
-                                            params=param_names+model_names)
+                                       params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
     stats_sub1 = get_df_stats_MSE_RMSE(params=param_names+model_names,
@@ -678,11 +678,11 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 
 
 def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
-                                target='Iodide', inc_ensemeble=False,
-                                save_CHOOSEN_MODEL=False,
-                                coastal_vs_non_coastal_analysis=False,
-                                plot_up_model_performance=True, RFR_dict=None,
-                                add_sklean_metrics=False, verbose=True, debug=False):
+                        target='Iodide', inc_ensemeble=False,
+                        save_CHOOSEN_MODEL=False,
+                        coastal_vs_non_coastal_analysis=False,
+                        plot_up_model_performance=True, RFR_dict=None,
+                        add_sklean_metrics=False, verbose=True, debug=False):
     """
     Analyse the stats on of params and obs.
     """
@@ -709,7 +709,7 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
         param_names += ['RFR(Ensemble)']
     # Calculate performance
     stats = calc_performance_of_params(df=df,
-                                            params=param_names+model_names)
+                                       params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
     stats_sub1 = get_df_stats_MSE_RMSE(params=param_names+model_names,
@@ -1319,7 +1319,7 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
         # Get stats on models in RFR_dict
         if isinstance(stats, type(None)):
             stats = get_stats_on_models(RFR_dict=RFR_dict,
-                                                verbose=False)
+                                        verbose=False)
         # Get list of
         topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
     # Now get average concentrations and std dev. per month
@@ -1422,10 +1422,10 @@ def test_performance_of_params(target='Iodide', features_used=None):
         df_tmp = df[features_used+['Iodide']].copy()
         #
         returned_vars = mk_testing_training_sets(df=df_tmp,
-                                                       rand_20_80=rand_20_80,
-                                                       rand_strat=rand_strat,
-                                                       features_used=features_used,
-                                                       )
+                                                 rand_20_80=rand_20_80,
+                                                 rand_strat=rand_strat,
+                                                 features_used=features_used,
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
 
         dummy = np.zeros(df.shape[0])
@@ -1439,7 +1439,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
 
     # --------  Get stats on whole dataset?
     stats = calc_performance_of_params(df=df,
-                                            params=param_names+model_names)
+                                       params=param_names+model_names)
 
     # -------- get stats for model on just its test set dataset
     model_stats = []

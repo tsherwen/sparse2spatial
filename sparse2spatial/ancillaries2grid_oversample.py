@@ -12,9 +12,9 @@ import gc
 
 
 def extract_ancillaries_from_external_files(obs_data_df=None,
-                                                  obs_metadata_df=None,
-                                                  fill_error_strings_with_NaNs=True,
-                                                  buffer_CORDS=3, debug=False):
+                                            obs_metadata_df=None,
+                                            fill_error_strings_with_NaNs=True,
+                                            buffer_CORDS=3, debug=False):
     """
     Get ancillary data for each datapoint in observational dataset - REDUNDENT
 
@@ -388,9 +388,9 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
 
 
 def get_ancillaries4df_locs(df=None,
-                                          get_vars4Rosies_multivariate_eqn=False,
-                                          df_lar_var='lat', df_lon_var='lon',
-                                          df_time_var='month'):
+                            get_vars4Rosies_multivariate_eqn=False,
+                            df_lar_var='lat', df_lon_var='lon',
+                            df_time_var='month'):
     """
     Extract ancillary variables for a given lat, lon, and time
 
@@ -481,7 +481,7 @@ def mk_predictor_variable_csv(res='4x5', month=9,
     df = df[columns]
     # --- Extract Ancillary values for lat, lons, and times
     df = get_ancillaries4df_locs(df=df,
-                                               get_vars4Rosies_multivariate_eqn=get_vars4Rosies_multivariate_eqn)
+                                 get_vars4Rosies_multivariate_eqn=get_vars4Rosies_multivariate_eqn)
     # --- Save csv
     filename = 'Oi_prj_predictor_values_{}_month_num_{}.csv'.format(res, month)
     df.to_csv(filename)
@@ -1203,8 +1203,8 @@ def get_DOC_accum_1x1_indices(var2use='DOCaccum_avg', lons=None, lats=None,
 
 
 def extract_feature_variables2NetCDF(res='4x5',
-                                       interpolate_nans=True,
-                                       add_derivative_vars=True):
+                                     interpolate_nans=True,
+                                     add_derivative_vars=True):
     """
     Construct a NetCDF of feature variables for testing
 
@@ -3302,7 +3302,7 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
 
 
 def get_WOA_Dissolved_O2_4indices(lat_idx=None, lon_idx=None, month=None,
-                                 var2use='o_an', verbose=True, debug=False):
+                                  var2use='o_an', verbose=True, debug=False):
     """
     Extract Wold ocean atlas (WOA) climatology value for dissolved O2
 

@@ -17,13 +17,13 @@ import sparse2spatial.utils as utils
 
 
 def build_or_get_models(df=None, testset='Test set (strat. 20%)',
-                                save_model_to_disk=False, read_model_from_disk=True,
-                                target='Iodide', model_names=None,
-                                delete_existing_model_files=False, rm_outliers=True,
-                                #                                rm_Skagerrak_data=False,
-                                model_sub_dir='/TEMP_MODELS/', random_state=42,
-                                rm_LOD_filled_data=False, model_feature_dict=None,
-                                debug=False):
+                        save_model_to_disk=False, read_model_from_disk=True,
+                        target='Iodide', model_names=None,
+                        delete_existing_model_files=False, rm_outliers=True,
+                        #                                rm_Skagerrak_data=False,
+                        model_sub_dir='/TEMP_MODELS/', random_state=42,
+                        rm_LOD_filled_data=False, model_feature_dict=None,
+                        debug=False):
     """
     Build (or read from disc) various models (diff. features) to test comparisons
 
@@ -1013,14 +1013,14 @@ def mk_testing_training_sets(df=None, target='Iodide',
 
 
 def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
-                                    models_dict=None, features_used_dict=None,
-                                    stats=None, folder=None, target='Iodide',
-                                    use_updated_predictor_NetCDF=False,
-                                    save2NetCDF=False, plot2check=False,
-                                    models2compare=[], topmodels=None,
-                                    xsave_str='',
-                                    add_ensemble2ds=False,
-                                    verbose=True, debug=False):
+                                   models_dict=None, features_used_dict=None,
+                                   stats=None, folder=None, target='Iodide',
+                                   use_updated_predictor_NetCDF=False,
+                                   save2NetCDF=False, plot2check=False,
+                                   models2compare=[], topmodels=None,
+                                   xsave_str='',
+                                   add_ensemble2ds=False,
+                                   verbose=True, debug=False):
     """
     Make a NetCDF file of predicted target from feature variables for a given resolution
 
@@ -1047,7 +1047,8 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     (xr.Dataset)
     """
     # Make sure the core dictionary is provided
-    assert (type(RFR_dict) == dict), 'Core variables must be provided as dict (RFR_dict)'
+    assert (type(RFR_dict) ==
+            dict), 'Core variables must be provided as dict (RFR_dict)'
     # Make sure a full list of models was provided
     assert (len(models2compare) > 0), 'List of models to must be provided!'
     # Inc. all the topmodels in the list of models to compare if they have been provided.
@@ -1057,9 +1058,9 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     models2compare = list(set(models2compare))
     # Get the variables required here
     if isinstance(models_dict, type(None)):
-       models_dict = RFR_dict['models_dict']
+        models_dict = RFR_dict['models_dict']
     if isinstance(features_used_dict, type(None)):
-       features_used_dict = RFR_dict['features_used_dict']
+        features_used_dict = RFR_dict['features_used_dict']
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
         folder = utils.get_file_locations('data_root')
