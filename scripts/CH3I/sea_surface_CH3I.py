@@ -25,6 +25,7 @@ from sparse2spatial.RFRbuild import build_or_get_models
 
 # Get iodide specific functions
 
+
 def main():
     """
     Driver for module's man if run directly from command line. unhash
@@ -44,11 +45,11 @@ def main():
 
     # Get stats ont these models
     stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-            target=target, verbose=True, debug=True)
+                                                      target=target, verbose=True, debug=True)
 
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
-            NO_DERIVED=True, n=10)
+                                     NO_DERIVED=True, n=10)
 
     # --- Predict values globally (only use 0.125)
     # Extra string for NetCDF save name
@@ -57,18 +58,18 @@ def main():
     save2NetCDF = True
     # Resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
 #    res = '0.125x0.125'
-    res='4x5'
+    res = '4x5'
     build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
-                                    save2NetCDF=save2NetCDF, target=target,
-                                    models2compare=topmodels,
-                                    topmodels=topmodels,
-                                    xsave_str=xsave_str, add_ensemble2ds=True )
+                                         save2NetCDF=save2NetCDF, target=target,
+                                         models2compare=topmodels,
+                                         topmodels=topmodels,
+                                         xsave_str=xsave_str, add_ensemble2ds=True)
 
 
 def build_or_get_models_CH3I(rm_Skagerrak_data=True, target='CH3I',
-                                       rm_LOD_filled_data=False,
-                                       rm_outliers=True,
-                                       rebuild=False ):
+                             rm_LOD_filled_data=False,
+                             rm_outliers=True,
+                             rebuild=False):
     """
     Wrapper call to build_or_get_models for sea-surface CH3I
     """
@@ -80,20 +81,19 @@ def build_or_get_models_CH3I(rm_Skagerrak_data=True, target='CH3I',
 
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
-#                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df, target=target,
-                                    read_model_from_disk=False,
-                                    delete_existing_model_files=True )
+                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                       model_feature_dict=model_feature_dict,
+                                       df=df, target=target,
+                                       read_model_from_disk=False,
+                                       delete_existing_model_files=True)
     else:
         RFR_dict = build_or_get_models(save_model_to_disk=False,
-#                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df, target=target,
-                                    read_model_from_disk=True,
-                                    delete_existing_model_files=False )
+                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                       model_feature_dict=model_feature_dict,
+                                       df=df, target=target,
+                                       read_model_from_disk=True,
+                                       delete_existing_model_files=False)
     return RFR_dict
-
 
 
 def get_dataset_processed4ML(restrict_data_max=False, target='CH3I',
@@ -139,9 +139,9 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH3I',
                                      rm_outliers=rm_outliers,
                                      )    # add
     # Re-index to a single contiguous index
-    df['Original Index' ] = df.index.copy()
+    df['Original Index'] = df.index.copy()
     N1 = df.shape[0]
-    df.index = np.arange( N1 )
+    df.index = np.arange(N1)
     print('WARNING: Reindexed to shape of DataFrame processed for ML ({})'.format(N1))
 
     # - Add test and training set assignment to columns
@@ -158,11 +158,11 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH3I',
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
         returned_vars = mk_testing_training_sets(df=df.copy(),
-                                                    target=target,
-                                                    rand_20_80=rand_20_80,
-                                                    rand_strat=rand_strat,
-                                                    features_used=df.columns.tolist(),
-                                                              )
+                                                 target=target,
+                                                 rand_20_80=rand_20_80,
+                                                 rand_strat=rand_strat,
+                                                 features_used=df.columns.tolist(),
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
         key_varname = 'Test set ({})'.format(key_)
