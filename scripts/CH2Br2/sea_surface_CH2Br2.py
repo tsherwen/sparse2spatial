@@ -26,13 +26,14 @@ from sparse2spatial.RFRbuild import build_or_get_models
 
 # Get iodide specific functions
 
+
 def main():
     """
     Driver for module's man if run directly from command line. unhash
     functionalitliy to call.
     """
     # - Set core local variables
-    target= 'CH2Br2'
+    target = 'CH2Br2'
 
     # - Get the observations? (Not needed for core workflow as also held in RFR_dict)
     # (This processese the observations and only needs to be done once)
@@ -44,11 +45,11 @@ def main():
 
     # Get stats ont these models
     stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-            target=target, verbose=True, debug=True)
+                                                      target=target, verbose=True, debug=True)
 
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
-            NO_DERIVED=True, n=10)
+                                     NO_DERIVED=True, n=10)
 
     # --- Predict values globally (only use 0.125)
     # extra strig for NetCDF save name
@@ -56,22 +57,22 @@ def main():
     # make NetCDF predictions from the main array
     save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
-    res = '0.125x0.125'
-#    res='4x5'
-    res='2x2.5'
+#    res = '0.125x0.125'
+    res = '4x5'
+#    res='2x2.5'
     mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
-                                    use_updated_predictor_NetCDF=False,
-                                    save2NetCDF=save2NetCDF, target=target,
-#                                           rm_Skagerrak_data=rm_Skagerrak_data,
-                                    models2compare=topmodels,
-                                    topmodels=topmodels,
-                                    xsave_str=xsave_str, add_ensemble2ds=True )
+                                   use_updated_predictor_NetCDF=False,
+                                   save2NetCDF=save2NetCDF, target=target,
+                                   #                                           rm_Skagerrak_data=rm_Skagerrak_data,
+                                   models2compare=topmodels,
+                                   topmodels=topmodels,
+                                   xsave_str=xsave_str, add_ensemble2ds=True)
 
 
 def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
-                                       rm_LOD_filled_data=False,
-                                       rm_outliers=True,
-                                       rebuild=False ):
+                               rm_LOD_filled_data=False,
+                               rm_outliers=True,
+                               rebuild=False):
     """
     Wrapper call to build_or_get_models for sea-surface CH2Br2
     """
@@ -83,20 +84,19 @@ def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
 
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
-#                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df, target=target,
-                                    read_model_from_disk=False,
-                                    delete_existing_model_files=True )
+                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                       model_feature_dict=model_feature_dict,
+                                       df=df, target=target,
+                                       read_model_from_disk=False,
+                                       delete_existing_model_files=True)
     else:
         RFR_dict = build_or_get_models(save_model_to_disk=False,
-#                                    rm_Skagerrak_data=rm_Skagerrak_data,
-                                    model_feature_dict=model_feature_dict,
-                                    df=df, target=target,
-                                    read_model_from_disk=True,
-                                    delete_existing_model_files=False )
+                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+                                       model_feature_dict=model_feature_dict,
+                                       df=df, target=target,
+                                       read_model_from_disk=True,
+                                       delete_existing_model_files=False)
     return RFR_dict
-
 
 
 def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
@@ -142,9 +142,9 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
                                      rm_outliers=rm_outliers,
                                      )    # add
     # Re-index to a single contiguous index
-    df['Original Index' ] = df.index.copy()
+    df['Original Index'] = df.index.copy()
     N1 = df.shape[0]
-    df.index = np.arange( N1 )
+    df.index = np.arange(N1)
     print('WARNING: Reindexed to shape of DataFrame processed for ML ({})'.format(N1))
 
     # - Add test and training set assignment to columns
@@ -161,11 +161,11 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
         returned_vars = mk_testing_training_sets(df=df.copy(),
-                                                    target=target,
-                                                    rand_20_80=rand_20_80,
-                                                    rand_strat=rand_strat,
-                                                    features_used=df.columns.tolist(),
-                                                              )
+                                                 target=target,
+                                                 rand_20_80=rand_20_80,
+                                                 rand_strat=rand_strat,
+                                                 features_used=df.columns.tolist(),
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
         key_varname = 'Test set ({})'.format(key_)
@@ -176,20 +176,21 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
 
 
 def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
-                                    models_dict=None, features_used_dict=None,
-                                    stats=None, folder=None, target='Iodide',
-                                    use_updated_predictor_NetCDF=False,
-                                    save2NetCDF=False, plot2check=False,
-                                    models2compare=[], topmodels=None,
-#                                           rm_Skagerrak_data=False,
-                                    xsave_str='',
-                                    add_ensemble2ds=False,
-                                    verbose=True, debug=False):
+                                   models_dict=None, features_used_dict=None,
+                                   stats=None, folder=None, target='Iodide',
+                                   use_updated_predictor_NetCDF=False,
+                                   save2NetCDF=False, plot2check=False,
+                                   models2compare=[], topmodels=None,
+                                   #                                           rm_Skagerrak_data=False,
+                                   xsave_str='',
+                                   add_ensemble2ds=False,
+                                   verbose=True, debug=False):
     """
     Make a NetCDF file of predicted vairables for a given resolution
     """
     # Make sure the core dictionary is provided
-    assert (type(RFR_dict) == dict), 'Core variables must be provided as dict (RFR_dict)'
+    assert (type(RFR_dict) ==
+            dict), 'Core variables must be provided as dict (RFR_dict)'
     # Make sure a full list of models was provided
     assert (len(models2compare) > 0), 'List of models to must be provided!'
     # Inc. all the topmodels in the list of models to compare if they have been provided.
@@ -199,9 +200,9 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     models2compare = list(set(models2compare))
     # Get the variables required here
     if isinstance(models_dict, type(None)):
-       models_dict = RFR_dict['models_dict']
+        models_dict = RFR_dict['models_dict']
     if isinstance(features_used_dict, type(None)):
-       features_used_dict = RFR_dict['features_used_dict']
+        features_used_dict = RFR_dict['features_used_dict']
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
         folder = utils.get_file_locations('data_root')
@@ -263,8 +264,6 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
         ds.to_netcdf(filename)
     else:
         return ds
-
-
 
 
 if __name__ == "__main__":
