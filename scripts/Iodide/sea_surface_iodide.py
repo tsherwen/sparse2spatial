@@ -121,14 +121,14 @@ def main():
     # make NetCDF predictions from the main array
     save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
-    res = '0.125x0.125'
-#    res='4x5'
-#     mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
-#                                            use_updated_predictor_NetCDF=False,
-#                                            save2NetCDF=save2NetCDF,
-#                                            rm_Skagerrak_data=rm_Skagerrak_data,
-#                                            topmodels=topmodels,
-#                                            xsave_str=xsave_str, add_ensemble2ds=True )
+#    res = '0.125x0.125'
+    res='4x5'
+    mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
+                                            use_updated_predictor_NetCDF=False,
+                                            save2NetCDF=save2NetCDF,
+                                            rm_Skagerrak_data=rm_Skagerrak_data,
+                                            topmodels=topmodels,
+                                            xsave_str=xsave_str, add_ensemble2ds=True )
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Sensitive test the new iodide field (
