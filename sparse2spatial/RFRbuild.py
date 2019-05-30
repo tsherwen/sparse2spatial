@@ -16,7 +16,7 @@ import glob
 import sparse2spatial.utils as utils
 
 
-def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
+def build_or_get_models(df=None, testset='Test set (strat. 20%)',
                                 save_model_to_disk=False, read_model_from_disk=True,
                                 target='Iodide', model_names=None,
                                 delete_existing_model_files=False, rm_outliers=True,
@@ -70,8 +70,8 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
     # Set a hyperparameter settings
     hyperparam_dict = utils.get_hyperparameter_dict()
     # Setup dictionaries to save model detail into
-    N_testing_features = {}
-    testing_features_dict = {}
+    N_features_used = {}
+    features_used_dict = {}
     oob_scores = {}
     models_dict = {}
 
@@ -80,18 +80,18 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
         for n_model_name, model_name in enumerate(model_names):
             print(n_model_name, model_name)
             # Get testing features and hyperparameters to build model
-            testing_features = model_feature_dict[model_name]
+            features_used = model_feature_dict[model_name]
             n_estimators = hyperparam_dict['n_estimators']
             oob_score = hyperparam_dict['oob_score']
             # select and split variables in the training and test dataset
-            train_set_tr = df.loc[df[testset] != True, testing_features]
+            train_set_tr = df.loc[df[testset] != True, features_used]
             train_set_tr_labels = df.loc[df[testset] != True, target]
             # Build model (Setup and fit)
             model = RandomForestRegressor(random_state=random_state,
                                           n_estimators=n_estimators,
                                           oob_score=oob_score,
                                           criterion='mse')
-            # Provide the model with the features (testing_features) and
+            # Provide the model with the features (features_used) and
             # The labels ( target, train_set_tr_labels)
             model.fit(train_set_tr, train_set_tr_labels)
             # Save model in temporary folder?
@@ -122,8 +122,8 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
     # If time to make models too great, then read-in here and 'rm' from above
     for n_model_name, model_name in enumerate(model_names):
         # Get testing features and hyperparameters to build model
-        testing_features = model_feature_dict[model_name]
-        print(n_model_name, model_name, testing_features)
+        features_used = model_feature_dict[model_name]
+        print(n_model_name, model_name, features_used)
         # read from disk
         if (not save_model_to_disk) and (read_model_from_disk):
             model_savename = "my_model_{:0>4}.pkl".format(n_model_name)
@@ -132,10 +132,10 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
         else:
             model = models_dict[model_name]
         # Predict target for all observation locations
-        df[model_name] = model.predict(df[testing_features].values)
+        df[model_name] = model.predict(df[features_used].values)
         # Save number of features used too
-        N_testing_features[model_name] = len(testing_features)
-        testing_features_dict[model_name] = '+'.join(testing_features)
+        N_features_used[model_name] = len(features_used)
+        features_used_dict[model_name] = '+'.join(features_used)
         try:
             oob_scores[model_name] = model.oob_score_
         except:
@@ -147,13 +147,13 @@ def build_or_get_current_models(df=None, testset='Test set (strat. 20%)',
     RFR_dict['models_dict'] = models_dict
     RFR_dict['model_names'] = model_names
     RFR_dict['df'] = df
-    RFR_dict['testing_features_dict'] = testing_features_dict
-    RFR_dict['N_testing_features'] = N_testing_features
+    RFR_dict['features_used_dict'] = features_used_dict
+    RFR_dict['N_features_used'] = N_features_used
     RFR_dict['oob_scores'] = oob_scores
     return RFR_dict
 
 
-def get_features_used_by_model_list(models_list=None, RFR_dict=None):
+def get_features_used_by_model(models_list=None, RFR_dict=None):
     """
     Get the (set of) features used by a list of models
 
@@ -170,15 +170,15 @@ def get_features_used_by_model_list(models_list=None, RFR_dict=None):
     """
     # Get dictionary of shared data if not provided
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # get models to use (assume top models, if not provided)
     if isinstance(models_list, type(None)):
         models_list = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
     # now plot up in input variables
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     vars2use = []
     for model_name in models_list:
-        vars2use += [testing_features_dict[model_name].split('+')]
+        vars2use += [features_used_dict[model_name].split('+')]
     # remove double ups
     vars2use = [j for i in vars2use for j in i]
     return list(set(vars2use))
@@ -201,7 +201,7 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
     """
     # Get stats on models in RFR_dict
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     if isinstance(stats, type(None)):
         stats = get_core_stats_on_current_models(
             RFR_dict=RFR_dict, verbose=False)
@@ -225,36 +225,36 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
         return list(stats.head(n).index)
 
 
-def get_choosen_model_from_features_selection(rtn_features=True):
-    """
-    Load choosen model and retrieve its testing features
-
-    Parameters
-    -------
-
-    Returns
-    -------
-
-    Notes
-    -----
-    """
-    from sklearn.externals import joblib
-    import glob
-    # load best estimator model
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/models/LIVE/CHOOSEN_MODEL/'.format(s2s_root, target)
-    prefix = 'my_model_'
-    model_savename = glob.glob(folder+prefix+"*.pkl")
-    N = len(model_savename)
-    assert N == 1, 'There should be only one choosen model! Not {}'.format(N)
-    model_savename = model_savename[0]
-    name = model_savename.split(prefix)[1][:-4]
-    model = joblib.load(model_savename)
-    # Return model and variables as dict
-    mdict = {'model': model, 'name': name}
-    if rtn_features:
-        mdict['testing_features'] = get_model_testing_features_dict(name)
-    return mdict
+# def get_choosen_model_from_features_selection(rtn_features=True):
+#     """
+#     Load choosen model and retrieve its testing features
+#
+#     Parameters
+#     -------
+#
+#     Returns
+#     -------
+#
+#     Notes
+#     -----
+#     """
+#     from sklearn.externals import joblib
+#     import glob
+#     # load best estimator model
+#     s2s_root = utils.get_file_locations('s2s_root')
+#     folder = '{}/{}/models/LIVE/CHOOSEN_MODEL/'.format(s2s_root, target)
+#     prefix = 'my_model_'
+#     model_savename = glob.glob(folder+prefix+"*.pkl")
+#     N = len(model_savename)
+#     assert N == 1, 'There should be only one choosen model! Not {}'.format(N)
+#     model_savename = model_savename[0]
+#     name = model_savename.split(prefix)[1][:-4]
+#     model = joblib.load(model_savename)
+#     # Return model and variables as dict
+#     mdict = {'model': model, 'name': name}
+#     if rtn_features:
+#         mdict['features_used'] = get_model_features_used_dict(name)
+#     return mdict
 
 
 def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
@@ -274,11 +274,11 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
     from sklearn.externals import joblib
     # Get the data for the models
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # Set models to optimise
     models2compare = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
     # Get variables needed from core dictionary
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
     # Set folder to use for optimised models
     s2s_root = utils.get_file_locations('s2s_root')
@@ -292,12 +292,12 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
         # Get model
         model = models_dict[model_name]
         # get testing features
-        testing_features = testing_features_dict[model_name].split('+')
+        features_used = features_used_dict[model_name].split('+')
         # Tune parameters
         BE = Hyperparameter_Tune_model(model=model, use_choosen_model=False,
                                        save_best_estimator=True, model_name=model_name,
                                        RFR_dict=RFR_dict,
-                                       testing_features=testing_features, cv=cv)
+                                       features_used=features_used, cv=cv)
 
     # - Test the tuned models against the test set
     test_the_tuned_models = False
@@ -312,12 +312,12 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
             # - Get existing model
             model = models_dict[model_name]
             # Get testing features
-            testing_features = testing_features_dict[model_name].split('+')
+            features_used = features_used_dict[model_name].split('+')
             # -  Get the data
             # ( Making sure to remove the target!!! )
-    #        train_features = df[testing_features].loc[ train_set.index  ]
+    #        train_features = df[features_used].loc[ train_set.index  ]
     #        train_labels = df[[target]].loc[ train_set.index  ]
-            test_features = df[testing_features].loc[test_set.index]
+            test_features = df[features_used].loc[test_set.index]
             test_labels = df[[target]].loc[test_set.index]
             # - test the existing model
             print(' ---------------- '*3)
@@ -344,12 +344,12 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
             # - Get existing model
             model = models_dict[model_name]
             # get testing features
-            testing_features = testing_features_dict[model_name].split('+')
+            features_used = features_used_dict[model_name].split('+')
             # -  Get the data
             # ( Making sure to remove the target!!! )
-            train_features = df[testing_features].loc[train_set.index]
+            train_features = df[features_used].loc[train_set.index]
             train_labels = df[[target]].loc[train_set.index]
-#            test_features = df[testing_features].loc[ test_set.index ]
+#            test_features = df[features_used].loc[ test_set.index ]
 #            test_labels = df[[target]].loc[ test_set.index ]
             # - test the existing model
             print(' ---------------- '*3)
@@ -370,7 +370,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
 def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
                               RFR_dict=None, df=None, cv=3,
                               testset='Test set (strat. 20%)', target='Iodide',
-                              testing_features=None, model_name=None,
+                              features_used=None, model_name=None,
                               save_best_estimator=True):
     """
     Driver to tune hyperparmeters of model
@@ -397,7 +397,7 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
         assert isinstance(model, type(None)), assert_str
         # select a single chosen model
         mdict = get_choosen_model_from_features_selection()
-        testing_features = mdict['testing_features']
+        features_used = mdict['features_used']
         model = mdict['model']
         model_name = mdict['name']
 
@@ -406,9 +406,9 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     train_set = df.loc[df[testset] == False, :]
     # also sub select all vectors for input data
     # ( Making sure to remove the target!!! )
-    train_features = df[testing_features].loc[train_set.index]
+    train_features = df[features_used].loc[train_set.index]
     train_labels = df[[target]].loc[train_set.index]
-    test_features = df[testing_features].loc[test_set.index]
+    test_features = df[features_used].loc[test_set.index]
     test_labels = df[[target]].loc[test_set.index]
 
     # - Make the base model for comparisons
@@ -421,7 +421,7 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     rf_random = Use_RS_CV_to_explore_hyperparams(cv=cv,
                                                  train_features=train_features,
                                                  train_labels=train_labels,
-                                                 testing_features=testing_features
+                                                 features_used=features_used
                                                  #                                                 test_features=test_features,
                                                  #                                                 test_labels=test_labels
                                                  )
@@ -434,14 +434,14 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     # - Now do a more focused optimisation
     # get the parameters based on the RandomizedSearchCV output
     param_grid = define_hyperparameter_options2test(
-        testing_features=testing_features, best_params_=best_params_,
+        features_used=features_used, best_params_=best_params_,
         param_grid_based_on_RandomizedSearchCV=True)
     # Use GridSearchCV
     grid_search = use_GS_CV_to_tune_Hyperparams(cv=cv,
                                                 train_features=train_features,
                                                 param_grid=param_grid,
                                                 train_labels=train_labels,
-                                                testing_features=testing_features,
+                                                features_used=features_used,
                                                 #                                               test_features=test_features,
                                                 #                                                test_labels=test_labels
                                                 )
@@ -462,7 +462,7 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
 
 def Use_RS_CV_to_explore_hyperparams(train_features=None,
                                      train_labels=None,
-                                     testing_features=None,
+                                     features_used=None,
                                      test_features=None,
                                      test_labels=None,
                                      scoring='neg_mean_squared_error',
@@ -487,9 +487,9 @@ def Use_RS_CV_to_explore_hyperparams(train_features=None,
     # Number of features to consider at every split
 #    max_features = ['auto', 'sqrt']
     max_features = range(1, 30)
-    if not isinstance(testing_features, type(None)):
+    if not isinstance(features_used, type(None)):
         max_features = [i for i in max_features if
-                        i <= len(testing_features)]
+                        i <= len(features_used)]
     # Maximum number of levels in tree
     max_depth = [int(x) for x in np.linspace(10, 110, num=11)]
     max_depth.append(None)
@@ -523,7 +523,7 @@ def Use_RS_CV_to_explore_hyperparams(train_features=None,
 
 def use_GS_CV_to_tune_Hyperparams(param_grid=None,
                                   train_features=None, train_labels=None,
-                                  testing_features=None, \
+                                  features_used=None, \
                                   #                                  test_features=None, test_labels=None
                                   scoring='neg_mean_squared_error', cv=3,
                                   ):
@@ -568,7 +568,7 @@ def quick_model_evaluation(model, test_features, test_labels):
     return RMSE
 
 
-def define_hyperparameter_options2test(testing_features=None,
+def define_hyperparameter_options2test(features_used=None,
                                        param_grid_based_on_RandomizedSearchCV=True,
                                        best_params_=None,
                                        param_grid_based_on_intial_guesses=True,
@@ -670,11 +670,11 @@ def define_hyperparameter_options2test(testing_features=None,
         return reduce(operator.mul, iterable, 1)
     len_of_values = [len(vals2test[i]) for i in vals2test.keys()]
     print('WARNING: # of variations undertest = {}'.format(prod(len_of_values)))
-    # Make sure the max features isn't set to more testing_features that known
-    if not isinstance(testing_features, type(None)):
+    # Make sure the max features isn't set to more features_used that known
+    if not isinstance(features_used, type(None)):
         max_features = vals2test['max_features']
         max_features = [i for i in max_features if
-                        i <= len(testing_features)]
+                        i <= len(features_used)]
         vals2test['max_features'] = max_features
     # --- Setup a parameter grid for testings
     param_grid = [
@@ -733,13 +733,13 @@ def define_hyperparameter_options2test(testing_features=None,
 
 
 def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
-                                        models_dict=None, testing_features_dict=None,
+                                        models_dict=None, features_used_dict=None,
                                         RFR_dict=None, target='Iodide',
                                         stats=None, plot2check=False,
                                         rm_Skagerrak_data=False,
                                         debug=False):
     """
-    Make a NetCDF file of predicted vairables for a given resolution
+    Make a NetCDF file of predicted variables for a given resolution
 
     Parameters
     -------
@@ -756,12 +756,12 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     # - local variables
     # extract the models...
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models(
+        RFR_dict = build_or_get_models(
             rm_Skagerrak_data=rm_Skagerrak_data
         )
     # Get the variables required here
-    if isinstance(testing_features_dict, type(None)):
-        testing_features_dict = RFR_dict['testing_features_dict']
+    if isinstance(features_used_dict, type(None)):
+        features_used_dict = RFR_dict['features_used_dict']
     # Set the extr_str if rm_Skagerrak_data set to True
     if rm_Skagerrak_data:
         extr_str = '_No_Skagerrak'
@@ -794,11 +794,11 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
         # Load the model
         model = joblib.load(builds4model[n_modelname])
         # Get testinng features
-        testing_features = testing_features_dict[model2use].split('+')
+        features_used = features_used_dict[model2use].split('+')
         # Make a DataSet of predicted values
         ds_l += [mk_da_of_predicted_values(model=model, res=res, dsA=dsA,
                                            modelname=b_modelname,
-                                           testing_features=testing_features)]
+                                           features_used=features_used)]
         # Force local tidy of garbage
         gc.collect()
     # Combine datasets
@@ -829,7 +829,7 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
 
 
 def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
-                                    model=None, testing_features=None):
+                                    model=None, features_used=None):
     """
     Get model predictions for all observed points
 
@@ -847,18 +847,18 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
         print('Model now must be provided get_model_predictions4obs_point')
         sys.exit()
     # Testing features to use
-    if isinstance(testing_features, type(None)):
+    if isinstance(features_used, type(None)):
         func_name = 'get_model_predictions4obs_point'
         print("The model's features must be provided to {}".format(func_name))
     # Now predict for the given testing features
-    target_predictions = model.predict(df[testing_features])
+    target_predictions = model.predict(df[features_used])
     return target_predictions
 
 
-def mk_ML_testing_and_training_set(df=None, target='Iodide',
-                                   random_strat_split=True, testing_features=None,
-                                   random_state=42, random_20_80_split=False,
-                                   nsplits=4, verbose=True, debug=False):
+def mk_testing_training_sets(df=None, target='Iodide',
+                             rand_strat=True, features_used=None,
+                             random_state=42, rand_20_80=False,
+                             nsplits=4, verbose=True, debug=False):
     """
     Make a test and training dataset for ML algorithms
 
@@ -875,19 +875,19 @@ def mk_ML_testing_and_training_set(df=None, target='Iodide',
     # to make this approach's output identical at every run
     np.random.seed(42)
     # --- Standard random selection:
-    if random_20_80_split:
+    if rand_20_80:
         from sklearn.model_selection import train_test_split
         # Use a standard 20% test set.
         train_set, test_set = train_test_split(df, test_size=0.2,
                                                random_state=random_state)
         # also sub select all vectors for input data
         # ( Making sure to remove the target!!! )
-        train_set = df[testing_features].loc[train_set.index]
-        test_set = df[testing_features].loc[test_set.index]
+        train_set = df[features_used].loc[train_set.index]
+        test_set = df[features_used].loc[test_set.index]
         test_set_targets = df[[target]].loc[test_set.index]
 
     # - Use a random split
-    if random_strat_split:
+    if rand_strat:
         from sklearn.model_selection import StratifiedShuffleSplit
         # Add in "SPLIT_GROUP" metric
         SPLITvar = 'SPLIT_GROUP'
@@ -1012,8 +1012,8 @@ def mk_ML_testing_and_training_set(df=None, target='Iodide',
 #     return df
 
 
-def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
-                                    models_dict=None, testing_features_dict=None,
+def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
+                                    models_dict=None, features_used_dict=None,
                                     stats=None, folder=None, target='Iodide',
                                     use_updated_predictor_NetCDF=False,
                                     save2NetCDF=False, plot2check=False,
@@ -1030,7 +1030,7 @@ def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
     RFR_dict (dict), dictionary of core variables and data
     res (res), horizontal resolution (e.g. 4x5) of Dataset
     save2NetCDF (boolean), save interpolated Dataset to as a NetCDF?
-    testing_features_dict (dict), dictionary of feature variables in models
+    features_used_dict (dict), dictionary of feature variables in models
     models_dict (dict), dictionary of RFR models and there names
     stats (pd.DataFrame), dataframe of statistics on models in models_dict
     folder (str), location of NetCDF file of feature variables
@@ -1058,8 +1058,8 @@ def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
     # Get the variables required here
     if isinstance(models_dict, type(None)):
        models_dict = RFR_dict['models_dict']
-    if isinstance(testing_features_dict, type(None)):
-       testing_features_dict = RFR_dict['testing_features_dict']
+    if isinstance(features_used_dict, type(None)):
+       features_used_dict = RFR_dict['features_used_dict']
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
         folder = utils.get_file_locations('data_root')
@@ -1072,11 +1072,11 @@ def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
         # get model
         model = models_dict[modelname]
         # get testinng features
-        testing_features = utils.get_model_testing_features_dict(modelname)
+        features_used = utils.get_model_features_used_dict(modelname)
         # Make a DataSet of predicted values
         ds_tmp = utils.mk_da_of_predicted_values(dsA=dsA, model=model, res=res,
                                                  modelname=modelname,
-                                                 testing_features=testing_features)
+                                                 features_used=features_used)
         #  Add attributes to the prediction
         ds_tmp = utils.add_attrs2target_ds(ds_tmp, add_global_attrs=False,
                                            varname=modelname)

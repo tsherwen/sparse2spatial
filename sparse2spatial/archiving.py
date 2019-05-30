@@ -35,8 +35,8 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     except KeyError:
         pass
     # ( now: nOutliers + nSkagerak )
-    RFR_dict = build_or_get_current_models(rm_Skagerrak_data=rm_Skagerrak_data)
-#    RFR_dict = build_or_get_current_models( rm_Skagerrak_data=False )
+    RFR_dict = build_or_get_models(rm_Skagerrak_data=rm_Skagerrak_data)
+#    RFR_dict = build_or_get_models( rm_Skagerrak_data=False )
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
     # hardcore v0.0.0 / v0.0.1 models (as saved as Python 2 pickles. )
 #    topmodels = ['RFR(TEMP+DEPTH+SAL+Phos)', 'RFR(TEMP+DEPTH+NO3+SWrad)', 'RFR(TEMP+DEPTH+SAL+NO3)', 'RFR(TEMP+DEPTH+SAL+SWrad)', 'RFR(TEMP+DEPTH+SAL+ChlrA)', 'RFR(TEMP+DEPTH+SAL)', 'RFR(TEMP+SWrad+NO3+MLD+SAL)', 'RFR(TEMP+NO3+MLD+SAL)', 'RFR(TEMP+DEPTH+NO3)', 'RFR(TEMP+DEPTH+ChlrA)']

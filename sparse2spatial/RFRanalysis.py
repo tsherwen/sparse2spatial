@@ -15,7 +15,7 @@ from sparse2spatial.utils import get_df_stats_MSE_RMSE
 
 
 def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
-                                    testing_features=None, df=None, target='Iodide',
+                                    features_used=None, df=None, target='Iodide',
                                     verbose=False):
     """
     Get stats on performance of mutliple model builds on obs. testset
@@ -36,15 +36,15 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
     # Get unprocessed input data at observation points
     if isinstance(df, type(None)):
         if isinstance(RFR_dict, type(None)):
-            RFR_dict = build_or_get_current_models()
+            RFR_dict = build_or_get_models()
         df = RFR_dict['df']
     # - Get the data
     # get processed data
     # Which "features" (variables) to use
-    if isinstance(testing_features, type(None)):
+    if isinstance(features_used, type(None)):
         #        model_name = 'ALL'
         #        model_name = 'RFR(TEMP+DEPTH+SAL)'
-        testing_features = get_model_testing_features_dict(model_name)
+        features_used = get_model_features_used_dict(model_name)
     # Fix the extra_str variable for now
     extr_str = ''
 
@@ -65,18 +65,18 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
             print(prt_str.format(random_state, model_name))
         # set the training and test sets
         # Stratified split by default, unless random var in name
-        returned_vars = mk_ML_testing_and_training_set(df=df,
-                                                       random_20_80_split=False,
-                                                       testing_features=testing_features,
+        returned_vars = mk_testing_training_sets(df=df,
+                                                       rand_20_80=False,
+                                                       features_used=features_used,
                                                        random_state=random_state,
-                                                       random_strat_split=True,
+                                                       rand_strat=True,
                                                        nsplits=4,
                                                        )
         train_set, test_set, test_set_targets = returned_vars
         # Set the training and test sets
-        train_features = df[testing_features].loc[train_set.index]
+        train_features = df[features_used].loc[train_set.index]
         train_labels = df[[target]].loc[train_set.index]
-        test_features = df[testing_features].loc[test_set.index]
+        test_features = df[features_used].loc[test_set.index]
         test_labels = df[[target]].loc[test_set.index]
         # Get testset
         # build the model - NOTE THIS MUST BE RE-DONE!
@@ -123,7 +123,7 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
     """
     # Get key data as a dictionary
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
         # set the extr_str if rm_Skagerrak_data set to True
     if rm_Skagerrak_data:
         extr_str = '_No_Skagerrak'
@@ -161,7 +161,7 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
 
 
 def build_the_same_model_mulitple_times(model_name, n_estimators=500,
-                                        testing_features=None, target='Iodide', df=None,
+                                        features_used=None, target='Iodide', df=None,
                                         RFR_dict=None,
                                         testset='Test set (strat. 20%)',
                                         rm_Skagerrak_data=False):
@@ -182,7 +182,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # ----- Local variables
     # Get unprocessed input data at observation points
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models(
+        RFR_dict = build_or_get_models(
             rm_Skagerrak_data=rm_Skagerrak_data
         )
     if isinstance(df, type(None)):
@@ -195,10 +195,10 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # ---- get the data
     # get processed data
     # Which "features" (variables) to use
-    if isinstance(testing_features, type(None)):
+    if isinstance(features_used, type(None)):
         #        model_name = 'RFR(TEMP+DEPTH+SAL)'
-        #        testing_features = get_model_testing_features_dict(model_name)
-        print('please provided testing_features to build_the_same_model_mulitple_times')
+        #        features_used = get_model_features_used_dict(model_name)
+        print('please provided features_used to build_the_same_model_mulitple_times')
         sys.exit()
     # dictionary of test set variables
     # NOTE: default increase of the base number of n_estimators from 10 to 500
@@ -216,18 +216,18 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         print(prt_str.format(random_state, model_name))
         # set the training and test sets
         # Stratified split by default, unless random var in name
-        returned_vars = mk_ML_testing_and_training_set(df=df,
-                                                       random_20_80_split=False,
-                                                       testing_features=testing_features,
+        returned_vars = mk_testing_training_sets(df=df,
+                                                       rand_20_80=False,
+                                                       features_used=features_used,
                                                        random_state=random_state,
-                                                       random_strat_split=True,
+                                                       rand_strat=True,
                                                        nsplits=4,
                                                        )
         train_set, test_set, test_set_targets = returned_vars
         # set the training and test sets
-        train_features = df[testing_features].loc[train_set.index]
+        train_features = df[features_used].loc[train_set.index]
         train_labels = df[[target]].loc[train_set.index]
-        test_features = df[testing_features].loc[test_set.index]
+        test_features = df[features_used].loc[test_set.index]
         test_labels = df[[target]].loc[test_set.index]
         # Get testset
         # build the model - NOTE THIS MUST BE RE-DONE!
@@ -245,7 +245,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
 
 
 def run_tests_on_testing_dataset_split_quantiles(model_name=None,
-                                                 testing_features=None, target='Iodide',
+                                                 features_used=None, target='Iodide',
                                                  df=None,
                                                  n_estimators=500):
     """
@@ -269,10 +269,10 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     # ---- get the data
     # get processed data
     # Which "features" (variables) to use
-    if isinstance(testing_features, type(None)):
+    if isinstance(features_used, type(None)):
         #        model_name = 'ALL'
         model_name = 'RFR(TEMP+DEPTH+SAL)'
-        testing_features = get_model_testing_features_dict(model_name)
+        features_used = get_model_features_used_dict(model_name)
 
     # --- local variables
     # dictionary of test set variables
@@ -293,7 +293,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     TSETS_nsplits = {}
     # - no vals above 400
     Tname = '{}<400'.format(Iaq)
-    tmp_ts = df.loc[df[target] < 400][testing_features+[target]].copy()
+    tmp_ts = df.loc[df[target] < 400][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 5
@@ -325,22 +325,22 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             df_tmp.index = range(df_tmp.shape[0])
             print(Tname, df_tmp.shape)
             # Stratified split by default, unless random var in name
-            random_strat_split = True
-            random_20_80_split = False
+            rand_strat = True
+            rand_20_80 = False
             # get the training and test set
-            returned_vars = mk_ML_testing_and_training_set(df=df_tmp,
-                                                           random_20_80_split=random_20_80_split,
+            returned_vars = mk_testing_training_sets(df=df_tmp,
+                                                           rand_20_80=rand_20_80,
                                                            random_state=random_state,
                                                            nsplits=TSETS_nsplits[
                                                                Tname],
-                                                           random_strat_split=random_strat_split,
-                                                           testing_features=testing_features,
+                                                           rand_strat=rand_strat,
+                                                           features_used=features_used,
                                                            )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
-            train_features = df_tmp[testing_features].loc[train_set.index]
+            train_features = df_tmp[features_used].loc[train_set.index]
             train_labels = df_tmp[[target]].loc[train_set.index]
-            test_features = df_tmp[testing_features].loc[test_set.index]
+            test_features = df_tmp[features_used].loc[test_set.index]
             test_labels = df_tmp[[target]].loc[test_set.index]
             # build the model - NOTE THIS MUST BE RE-DONE!
             # ( otherwise the model is being re-trained )
@@ -350,7 +350,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             # fit the model
             model.fit(train_features, train_labels)
             # predict the values
-            df_tmp[Tname] = model.predict(df_tmp[testing_features].values)
+            df_tmp[Tname] = model.predict(df_tmp[features_used].values)
             # get the stats against the test group
             df_tmp = df_tmp[[Tname, target]].loc[test_set.index]
             # get MSE and RMSE
@@ -450,7 +450,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
 
 def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Iodide',
                                      testset='Test set (strat. 20%)',
-                                     testing_features=None,
+                                     features_used=None,
                                      model_name='TEST_MODEL'):
     """
     Test feature and hyperparameter options for model
@@ -473,23 +473,23 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Io
     # Use the model selected from the feature testing
     if use_choosen_model:
         mdict = get_choosen_model_from_features_selection()
-        testing_features = mdict['testing_features']
+        features_used = mdict['features_used']
         model = mdict['model']
         model_name = mdict['name']
     # Which "features" (variables) to use
-    if isinstance(testing_features, type(None)):
+    if isinstance(features_used, type(None)):
         model_name = 'ALL'
-        testing_features = get_model_testing_features_dict(model_name)
+        features_used = get_model_features_used_dict(model_name)
     # Select just the testing features, target, and  testset split
-    df = df[testing_features+[target, testset]]
+    df = df[features_used+[target, testset]]
     # - Select training dataset
     test_set = df.loc[df[testset] == True, :]
     train_set = df.loc[df[testset] == False, :]
     # also sub select all vectors for input data
     # ( Making sure to remove the target!!! )
-    train_set_full = df[testing_features].loc[train_set.index]
+    train_set_full = df[features_used].loc[train_set.index]
     train_set_targets = df[target].loc[train_set.index]
-    test_set_full = df[testing_features].loc[test_set.index]
+    test_set_full = df[features_used].loc[test_set.index]
     test_set_targets = df[target].loc[test_set.index]
 
     # - Preparing input data for ML algorythm
@@ -515,7 +515,7 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Io
     from sklearn.model_selection import GridSearchCV
     # Get the param_grid (with params to test)
     param_grid = define_hyperparameter_options2test(
-        testing_features=testing_features)
+        features_used=features_used)
     # initialise RFR (using a fixed random state)
     forest_reg = RandomForestRegressor(random_state=42, criterion='mse')
     # train across 5 folds, that's a total of (12+6)*5=90 rounds of training
@@ -550,7 +550,7 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Io
         df[model_name] = get_model_predictions4obs_point(model=model)
 
 
-def get_predictor_variable_importance(RFR_dict=None):
+def get_feature_importance(RFR_dict=None):
     """
     Get the feature variable inmportance for current models
     """
@@ -560,10 +560,10 @@ def get_predictor_variable_importance(RFR_dict=None):
     models2compare = topmodels
     # Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
     # - Print feature importances to screen
     df_feats = pd.DataFrame()
@@ -573,9 +573,9 @@ def get_predictor_variable_importance(RFR_dict=None):
         # Get feature importance
         feature_importances = model.feature_importances_
         # Get testing features
-        testing_features = testing_features_dict[modelname].split('+')
+        features_used = features_used_dict[modelname].split('+')
         #
-        s = pd.Series(dict(zip(testing_features, feature_importances)))
+        s = pd.Series(dict(zip(features_used, feature_importances)))
         df_feats[modelname] = s
     # Save as .csv
     df_feats.T.to_csv('Oi_prj_feature_importances.csv')
@@ -600,17 +600,17 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # select dataframe with observations and predictions in it
     if isinstance(df, type(None)):
         df = RFR_dict['df']
     # model names
     model_names = RFR_dict['model_names']
-    testing_features_dict = RFR_dict['testing_features_dict']
-    N_testing_features = RFR_dict['N_testing_features']
+    features_used_dict = RFR_dict['features_used_dict']
+    N_features_used = RFR_dict['N_features_used']
     oob_scores = RFR_dict['oob_scores']
     # Calculate performance
-    stats = calculate_performance_of_params(df=df, target=target,
+    stats = calc_performance_of_params(df=df, target=target,
                                             params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
@@ -626,10 +626,10 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     stats = stats.T
     feats = pd.DataFrame(index=model_names)
     N_feat_Var = '# features'
-    feats[N_feat_Var] = [N_testing_features[i] for i in model_names]
+    feats[N_feat_Var] = [N_features_used[i] for i in model_names]
     # and the feature names
-    feat_Var = 'testing_features'
-    feats[feat_Var] = [testing_features_dict[i] for i in model_names]
+    feat_Var = 'features_used'
+    feats[feat_Var] = [features_used_dict[i] for i in model_names]
     # and the oob score
     feats['OOB score'] = [oob_scores[i] for i in model_names]
     # combine with the rest of the stats
@@ -665,7 +665,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     if verbose:
         print(stats[vars2inc])
     # Without testing features
-    vars2inc.pop(vars2inc.index('testing_features'))
+    vars2inc.pop(vars2inc.index('features_used'))
     if verbose:
         print(stats[vars2inc])
     if verbose:
@@ -677,7 +677,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     return stats
 
 
-def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
+def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
                                 target='Iodide', inc_ensemeble=False,
                                 save_CHOOSEN_MODEL=False,
                                 coastal_vs_non_coastal_analysis=False,
@@ -688,14 +688,14 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # select dataframe with observations and predictions in it
     if isinstance(df, type(None)):
         df = RFR_dict['df']
     # model names
     model_names = RFR_dict['model_names']
-    testing_features_dict = RFR_dict['testing_features_dict']
-    N_testing_features = RFR_dict['N_testing_features']
+    features_used_dict = RFR_dict['features_used_dict']
+    N_features_used = RFR_dict['N_features_used']
     oob_scores = RFR_dict['oob_scores']
     # - Evaluate performance of models (e.g. Root Mean Square Error (RMSE) )
     # Also evaluate parameterisations
@@ -708,7 +708,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     if inc_ensemeble:
         param_names += ['RFR(Ensemble)']
     # Calculate performance
-    stats = calculate_performance_of_params(df=df,
+    stats = calc_performance_of_params(df=df,
                                             params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
@@ -759,10 +759,10 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     stats = stats.T
     feats = pd.DataFrame(index=model_names)
     N_feat_Var = '# features'
-    feats[N_feat_Var] = [N_testing_features[i] for i in model_names]
+    feats[N_feat_Var] = [N_features_used[i] for i in model_names]
     # and the feature names
-    feat_Var = 'testing_features'
-    feats[feat_Var] = [testing_features_dict[i] for i in model_names]
+    feat_Var = 'features_used'
+    feats[feat_Var] = [features_used_dict[i] for i in model_names]
     # and the oob score
     feats['OOB score'] = [oob_scores[i] for i in model_names]
     # combine with the rest of the stats
@@ -797,7 +797,7 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     if verbose:
         print(stats[vars2inc])
     # Without testing features
-    vars2inc.pop(vars2inc.index('testing_features'))
+    vars2inc.pop(vars2inc.index('features_used'))
     if verbose:
         print(stats[vars2inc])
     if verbose:
@@ -838,8 +838,8 @@ def get_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
         model_savename = "my_model_{}.pkl".format(CHOOSEN_MODEL_NAME)
         joblib.dump(CHOOSEN_MODEL, wrk_dir+'/CHOOSEN_MODEL/' + model_savename)
         # Print detail on choosen model
-        testing_features = model_feature_dict[CHOOSEN_MODEL_NAME]
-        zip(testing_features, CHOOSEN_MODEL.feature_importances_)
+        features_used = model_feature_dict[CHOOSEN_MODEL_NAME]
+        zip(features_used, CHOOSEN_MODEL.feature_importances_)
 
     # --- plot up model performance against the testset
     if plot_up_model_performance:
@@ -1315,10 +1315,10 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
     if isinstance(topmodels, type(None)):
         # extract the models...
         if isinstance(RFR_dict, type(None)):
-            RFR_dict = build_or_get_current_models()
+            RFR_dict = build_or_get_models()
         # Get stats on models in RFR_dict
         if isinstance(stats, type(None)):
-            stats = get_stats_on_current_models(RFR_dict=RFR_dict,
+            stats = get_stats_on_models(RFR_dict=RFR_dict,
                                                 verbose=False)
         # Get list of
         topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
@@ -1354,7 +1354,7 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
         return ds
 
 
-def test_performance_of_params(target='Iodide', testing_features=None):
+def test_performance_of_params(target='Iodide', features_used=None):
     """ Test the performance of the parameters """
     # ---- get the data
     # get processed data
@@ -1368,8 +1368,8 @@ def test_performance_of_params(target='Iodide', testing_features=None):
     # just use the forest out comes
     use_forest_without_optimising = True
     # Which "features" (variables) to use
-    if isinstance(testing_features, type(None)):
-        testing_features = [
+    if isinstance(features_used, type(None)):
+        features_used = [
             #        u'Longitude',
             #       'Latitude',
             'WOA_TEMP_K',
@@ -1417,14 +1417,14 @@ def test_performance_of_params(target='Iodide', testing_features=None):
     }
     # Loop test sets
     for test_split in splits_dict.keys():
-        random_20_80_split, random_strat_split = splits_dict[test_split]
+        rand_20_80, rand_strat = splits_dict[test_split]
         #
-        df_tmp = df[testing_features+['Iodide']].copy()
+        df_tmp = df[features_used+['Iodide']].copy()
         #
-        returned_vars = mk_ML_testing_and_training_set(df=df_tmp,
-                                                       random_20_80_split=random_20_80_split,
-                                                       random_strat_split=random_strat_split,
-                                                       testing_features=testing_features,
+        returned_vars = mk_testing_training_sets(df=df_tmp,
+                                                       rand_20_80=rand_20_80,
+                                                       rand_strat=rand_strat,
+                                                       features_used=features_used,
                                                        )
         train_set, test_set, test_set_targets = returned_vars
 
@@ -1438,7 +1438,7 @@ def test_performance_of_params(target='Iodide', testing_features=None):
                                                          model_name=model_name)
 
     # --------  Get stats on whole dataset?
-    stats = calculate_performance_of_params(df=df,
+    stats = calc_performance_of_params(df=df,
                                             params=param_names+model_names)
 
     # -------- get stats for model on just its test set dataset
@@ -1450,7 +1450,7 @@ def test_performance_of_params(target='Iodide', testing_features=None):
         print(modelname, test_set, dataset_str)
 #        test_var_= 'test ({})'.format(test_split)
         df_tmp = df.loc[df[dataset_str] == True]
-#        model_stat_dfs.append( calculate_performance_of_params( df=df_tmp, \
+#        model_stat_dfs.append( calc_performance_of_params( df=df_tmp, \
 #            params=[modelname])
         print(df_tmp.shape, df_tmp[target].mean())
         model_stats.append(get_df_stats_MSE_RMSE(
@@ -1495,7 +1495,7 @@ def test_performance_of_params(target='Iodide', testing_features=None):
     # --------  AGU poster table.
 
 
-def calculate_performance_of_params(df=None, target='Iodide', params=[]):
+def calc_performance_of_params(df=None, target='Iodide', params=[]):
     """
     Calculate stats on performance of parameters in DataFrame
     """
@@ -1532,7 +1532,7 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
     """
     # Get the dictionary
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # Get the top model names
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
     # Set the folder
@@ -1542,25 +1542,25 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
     modelnames = glob.glob(folder+'*.pkl')
     modelname_d = dict(zip(RFR_dict['model_names'], modelnames))
     # Get testing features dictionary
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     # Loop by model and
     for modelname in topmodels:
         if verbose:
             print(modelname)
         # Get name of model's file (ex. directory)  and testing features
         model_filename = modelname_d[modelname].split('/')[-1]
-        testing_features = testing_features_dict[modelname].split('+')
+        features_used = features_used_dict[modelname].split('+')
         # Extract the trees to dot files
         extract_trees_to_dot_files(folder=folder,
                                    model_filename=model_filename,
                                    N_trees2output=N_trees2output,
                                    ouput_random_tree_numbers=ouput_random_tree_numbers,
                                    max_depth=max_depth,
-                                   extr_str=modelname, testing_features=testing_features)
+                                   extr_str=modelname, features_used=features_used)
 
 
 def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide',
-                               testing_features=None, N_trees2output=10, max_depth=7,
+                               features_used=None, N_trees2output=10, max_depth=7,
                                ouput_random_tree_numbers=False, extr_str=''):
     """
     Extract individual model trees to .dot files to be plotted in d3
@@ -1587,8 +1587,8 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
     if isinstance(model_filename, type(None)):
         model_filename = "my_model_{}.pkl".format(extr_str)
     # Provide feature names?
-    if isinstance(testing_features, type(None)):
-        testing_features = [
+    if isinstance(features_used, type(None)):
+        features_used = [
             #        u'Longitude',
             #       'Latitude',
             'WOA_TEMP_K',
@@ -1618,7 +1618,7 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
             print("Saving {} for '{}' in '{}'".format(n, extr_str, out_file))
             tree.export_graphviz(rf_unit, out_file=out_file,
                                  max_depth=max_depth,
-                                 feature_names=testing_features)
+                                 feature_names=features_used)
     # Also plot up?
 #    os.system('dot -Tpng tree.dot -o tree.png')
 
@@ -1642,7 +1642,7 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
     # ---
     # get dictionary of data if not provided as arguement
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # models to analyse?
     models2compare = []
     topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
@@ -1711,14 +1711,14 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
     import os
     # get dictionary of data if not provided as arguement
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_current_models()
+        RFR_dict = build_or_get_models()
     # extra variables needed from RFR_dict
     models_dict = RFR_dict['models_dict']
-    testing_features_dict = RFR_dict['testing_features_dict']
+    features_used_dict = RFR_dict['features_used_dict']
     # Extract model from dictionary
     model = models_dict[model_name]
     # Get training_features
-    training_features = testing_features_dict[model_name].split('+')
+    training_features = features_used_dict[model_name].split('+')
     # Core string for saving data to.
     filename_str = 'Oi_prj_features_of_{}_for_depth_{}{}.{}'
     # Intialise a DataFrame to store values in

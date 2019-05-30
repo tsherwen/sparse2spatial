@@ -87,7 +87,7 @@ def process_obs_and_ancillaries_2_csv(target='example', version='v0_0_0'
     # Get the base observations
     df = get_example_obs()
     # Extract the ancillary values for these locations
-    df = ancillaries2grid.extract_ancillary_obs_from_COMPILED_file(df=df)
+    df = ancillaries2grid.extract_ancillaries_from_compiled_file(df=df)
     # Save the intermediate file
     folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder += '/{}/inputs/'.format(target)
