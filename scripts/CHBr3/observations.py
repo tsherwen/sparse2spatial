@@ -9,7 +9,7 @@ import sparse2spatial as s2s
 import pandas as pd
 import numpy as np
 
-from sparse2spatial.ancillaries2grid_oversample import extract_ancillary_obs_from_COMPILED_file
+from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
 
 
 def get_CHBr3_obs(target='CHBr3', limit_depth_to=20,):
@@ -71,7 +71,7 @@ def process_obs_and_ancillaries_2_csv(target='CHBr3',
     # Get the bass observations
     df = get_CHBr3_obs()
     # Extract the ancillary values for these locations
-    df = extract_ancillary_obs_from_COMPILED_file(df=df)
+    df = extract_ancillaries_from_compiled_file(df=df)
     # Save the intermediate file
     folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder += '/{}/inputs/'.format(target)

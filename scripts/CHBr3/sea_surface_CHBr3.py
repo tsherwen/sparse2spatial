@@ -19,10 +19,10 @@ import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 #import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 #import sparse2spatial.archiving as archiving
-from sparse2spatial.RFRbuild import mk_ML_testing_and_training_set
+from sparse2spatial.RFRbuild import mk_testing_training_sets
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
-from sparse2spatial.RFRbuild import build_or_get_current_models
+from sparse2spatial.RFRbuild import build_or_get_models
 
 # Get iodide specific functions
 
@@ -38,7 +38,7 @@ def main():
 #    df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
 
     # - build models with the observations
-    RFR_dict = build_or_get_current_models_CHBr3(rebuild=False, target=target)
+    RFR_dict = build_or_get_models_CHBr3(rebuild=False, target=target)
     #
 
     # Get stats ont these models
@@ -58,7 +58,7 @@ def main():
     res = '0.125x0.125'
 #    res='4x5'
 #    res='2x2.5'
-    mk_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
+    mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
                                     use_updated_predictor_NetCDF=False,
                                     save2NetCDF=save2NetCDF, target=target,
 #                                           rm_Skagerrak_data=rm_Skagerrak_data,
@@ -69,28 +69,28 @@ def main():
 
 
 
-def build_or_get_current_models_CHBr3(rm_Skagerrak_data=True, target='CHBr3',
+def build_or_get_models_CHBr3(rm_Skagerrak_data=True, target='CHBr3',
                                        rm_LOD_filled_data=False,
                                        rm_outliers=True,
                                        rebuild=False ):
     """
-    Wrapper call to build_or_get_current_models for sea-surface CHBr3
+    Wrapper call to build_or_get_models for sea-surface CHBr3
     """
     # Get the dictionary  of model names and features (specific to iodide)
-    model_feature_dict = utils.get_model_testing_features_dict(rtn_dict=True)
+    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
 
     if rebuild:
-        RFR_dict = build_or_get_current_models(save_model_to_disk=True,
+        RFR_dict = build_or_get_models(save_model_to_disk=True,
 #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                     model_feature_dict=model_feature_dict,
                                     df=df, target=target,
                                     read_model_from_disk=False,
                                     delete_existing_model_files=True )
     else:
-        RFR_dict = build_or_get_current_models(save_model_to_disk=False,
+        RFR_dict = build_or_get_models(save_model_to_disk=False,
 #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                     model_feature_dict=model_feature_dict,
                                     df=df, target=target,
@@ -122,7 +122,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
     from observations import add_extra_vars_rm_some_data
     from observations import get_processed_df_obs_mod
     # - Local variables
-    testing_features = None
+    features_used = None
     target = 'CHBr3'
     target_name = [target]
     # - The following settings are set to False as default
@@ -163,7 +163,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
 #     # Use a standard 20% test set.
 #     train_set, test_set =  train_test_split( targets, test_size=0.2, \
 #         random_state=42 )
-    # standard split vars?  (values=  random_20_80_split, random_strat_split )
+    # standard split vars?  (values=  rand_20_80, rand_strat )
     ways2split_data = {
         'rn. 20%': (True, False),
         'strat. 20%': (False, True),
@@ -171,16 +171,16 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
     # Loop training/test split methods
     for key_ in ways2split_data.keys():
         # Get settings
-        random_20_80_split, random_strat_split = ways2split_data[key_]
+        rand_20_80, rand_strat = ways2split_data[key_]
         # Copy a df for splitting
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
-        returned_vars = mk_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_testing_training_sets(df=df.copy(),
                                                     target=target,
-                                                    random_20_80_split=random_20_80_split,
-                                                    random_strat_split=random_strat_split,
-                                                    testing_features=df.columns.tolist(),
-#                                                   testing_features=testing_features,
+                                                    rand_20_80=rand_20_80,
+                                                    rand_strat=rand_strat,
+                                                    features_used=df.columns.tolist(),
+#                                                   features_used=features_used,
                                                               )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
@@ -191,8 +191,8 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
     return df
 
 
-def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
-                                    models_dict=None, testing_features_dict=None,
+def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
+                                    models_dict=None, features_used_dict=None,
                                     stats=None, folder=None, target='Iodide',
                                     use_updated_predictor_NetCDF=False,
                                     save2NetCDF=False, plot2check=False,
@@ -216,8 +216,8 @@ def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
     # Get the variables required here
     if isinstance(models_dict, type(None)):
        models_dict = RFR_dict['models_dict']
-    if isinstance(testing_features_dict, type(None)):
-       testing_features_dict = RFR_dict['testing_features_dict']
+    if isinstance(features_used_dict, type(None)):
+       features_used_dict = RFR_dict['features_used_dict']
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
         folder = utils.get_file_locations('data_root')
@@ -230,11 +230,11 @@ def mk_predictions_from_ancillaries(dsA=None, RFR_dict=None, res='4x5',
         # get model
         model = models_dict[modelname]
         # get testinng features
-        testing_features = utils.get_model_testing_features_dict(modelname)
+        features_used = utils.get_model_features_used_dict(modelname)
         # Make a DataSet of predicted values
         ds_tmp = utils.mk_da_of_predicted_values(dsA=dsA, model=model, res=res,
                                                  modelname=modelname,
-                                                 testing_features=testing_features)
+                                                 features_used=features_used)
         #  Add attributes to the prediction
         ds_tmp = utils.add_attrs2target_ds(ds_tmp, add_global_attrs=False,
                                            varname=modelname)
