@@ -34,10 +34,10 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
     -------
     (None)
     """
-    # get annual average
+    # Get annual average of the variable in the dataset
     var2plot = 'Ensemble_Monthly_mean'
     ds = ds[[var2plot]].mean(dim='time')
-    # Set a title
+    # Set a title for the plot
     title = "Annual average ensemble prediction for '{}' (pM)".format(target)
     # Now plot
     plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version, target=target,
@@ -59,7 +59,7 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
     -------
     (None)
     """
-    # Get annual average
+    # Which variable to plot?
     var2plot = 'Ensemble_Monthly_mean'
     # Get average by season
     ds = ds.groupby('time.season').mean(dim='time')

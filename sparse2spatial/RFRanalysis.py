@@ -1356,12 +1356,12 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
 
 def test_performance_of_params(target='Iodide', features_used=None):
     """ Test the performance of the parameters """
-    # ---- get the data
+    # - Get the data
     # get processed data
     # settings for incoming feature data
     restrict_data_max = False
     restrict_min_salinity = False
-    use_median_value_for_chlor_when_NaN = True
+    use_median4chlr_a_NaNs = True
     add_modulus_of_lat = False
     # apply transforms to  data?
     do_not_transform_feature_data = True
@@ -1370,23 +1370,12 @@ def test_performance_of_params(target='Iodide', features_used=None):
     # Which "features" (variables) to use
     if isinstance(features_used, type(None)):
         features_used = [
-            #        u'Longitude',
-            #       'Latitude',
             'WOA_TEMP_K',
             'WOA_Salinity',
-            #       'WOA_Nitrate',
             'Depth_GEBCO',
-            #       'SeaWIFs_ChlrA',
-            #       'WOA_Phosphate',
-            #       u'WOA_Silicate',
-            #        u'DOC',
-            #        u'DOCaccum',
-            #        u'Prod',
-            #        u'SWrad',
-            #     u'month',
         ]
 
-    # --- local variables
+    # - local variables
     param_rename_dict = {
         u'Chance2014_STTxx2_I': 'Chance2014',
         u'MacDonald2014_iodide': 'MacDonald2014',
@@ -1409,7 +1398,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
                                      add_modulus_of_lat=add_modulus_of_lat,
-                                     use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
+                                     use_median4chlr_a_NaNs=use_median4chlr_a_NaNs,
                                      )    # add
     # add boolean for test and training dataset
     splits_dict = {
@@ -1418,40 +1407,36 @@ def test_performance_of_params(target='Iodide', features_used=None):
     # Loop test sets
     for test_split in splits_dict.keys():
         rand_20_80, rand_strat = splits_dict[test_split]
-        #
+        # Select just the features used and the target variable
         df_tmp = df[features_used+['Iodide']].copy()
-        #
+        # split into the training and test sets
         returned_vars = mk_testing_training_sets(df=df_tmp,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
                                                  features_used=features_used,
                                                  )
         train_set, test_set, test_set_targets = returned_vars
-
+        # Add this to the dataframe using the passed shape as a template
         dummy = np.zeros(df.shape[0])
         dummy[test_set.index] = True
         df['test ({})'.format(test_split)] = dummy
 
-    # add model predictions
+    # Add model predictions
     for model_name in model_names:
         df[model_name] = get_model_predictions4obs_point(df=df,
                                                          model_name=model_name)
 
-    # --------  Get stats on whole dataset?
+    # - Get stats on whole dataset?
     stats = calc_performance_of_params(df=df,
                                        params=param_names+model_names)
 
-    # -------- get stats for model on just its test set dataset
+    # - Get stats for model on just its test set dataset
     model_stats = []
     for modelname in model_names:
         test_set = model_names_dict[modelname]
-#        test_split = 'test ({})'.format(test_set)
         dataset_str = 'test ({})'.format(test_set)
         print(modelname, test_set, dataset_str)
-#        test_var_= 'test ({})'.format(test_split)
         df_tmp = df.loc[df[dataset_str] == True]
-#        model_stat_dfs.append( calc_performance_of_params( df=df_tmp, \
-#            params=[modelname])
         print(df_tmp.shape, df_tmp[target].mean())
         model_stats.append(get_df_stats_MSE_RMSE(
             df=df_tmp[[target, modelname]+param_names],
@@ -1460,9 +1445,8 @@ def test_performance_of_params(target='Iodide', features_used=None):
     # Add these to core dataset
     stats = pd.concat([stats] + model_stats)
 
-    # -------- get stats for coastal values
+    # - get stats for coastal values
     # Just ***NON*** coastal values
-
     df_tmp = df.loc[df['coastal_flagged'] == False]
     test_set = '>30 Salinty'
     print(df_tmp.shape)
@@ -1483,7 +1467,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
     # Add these to core dataset
     stats = pd.concat([stats] + [stats_coastal, stats_open_ocean])
 
-    # -------- Minor processing and save
+    # - Minor processing and save
     # rename the columns for re-abliiity
     stats.rename(columns=param_rename_dict, inplace=True)
     # round the columns to one dp.
@@ -1491,8 +1475,6 @@ def test_performance_of_params(target='Iodide', features_used=None):
     print(stats)
     # Save as a csv
     stats.to_csv('Oi_prj_param_performance.csv')
-
-    # --------  AGU poster table.
 
 
 def calc_performance_of_params(df=None, target='Iodide', params=[]):
@@ -1502,12 +1484,12 @@ def calc_performance_of_params(df=None, target='Iodide', params=[]):
     # Initialise with generic stats
     stats = [df[i].describe() for i in params + [target]]
     stats = pd.DataFrame(stats).T
-    # --- Now add own stats
+    # - Now add own stats
     new_stats = get_df_stats_MSE_RMSE(df=df, target=target, params=params,
                                       dataset_str='all')
-    # add new stats to standard stats
-    stats = pd.concat([stats, new_stats.T])  # ,axis=1)
-    # ---- other? (mean, standard deviation )
+    # Add new stats to standard stats
+    stats = pd.concat([stats, new_stats.T])
+    # - add other stats? (mean, standard deviation )
     return stats
 
 
@@ -1532,7 +1514,7 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
     # Location of data
     folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder += '/{}/outputs/'.format(target)
-    # Get file namec
+    # Set filename string, then open the NetCDF
     filename = 'Oi_prj_predicted_{}_{}_{}.nc'.format(target, res, version)
     ds = xr.open_dataset(folder+filename)
     return ds
@@ -1633,7 +1615,6 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
         my_list = list(np.arange(0, 500))
         np.random.shuffle(my_list)
         nums2plot = my_list[:N_trees2output]
-#        nums2plot = np.random.randint(0, high=500, size=N_trees2output, dtype='l')
     else:
         nums2plot = np.arange(len(rf))
     # Save all trees to disk
@@ -1719,19 +1700,19 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
      https://github.com/wolfiex/TreeSurgeon
      - Details on unfold approach
     link: http://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html
-# The decision estimator has an attribute called tree_  which stores the entire
-# tree structure and allows access to low level attributes. The binary tree
-# tree_ is represented as a number of parallel arrays. The i-th element of each
-# array holds information about the node `i`. Node 0 is the tree's root. NOTE:
-# Some of the arrays only apply to either leaves or split nodes, resp. In this
-# case the values of nodes of the other type are arbitrary!
-#
-# Among those arrays, we have:
-#   - left_child, id of the left child of the node
-#   - right_child, id of the right child of the node
-#   - feature, feature used for splitting the node
-#   - threshold, threshold value at the node
-#
+    # The decision estimator has an attribute called tree_  which stores the entire
+    # tree structure and allows access to low level attributes. The binary tree
+    # tree_ is represented as a number of parallel arrays. The i-th element of each
+    # array holds information about the node `i`. Node 0 is the tree's root. NOTE:
+    # Some of the arrays only apply to either leaves or split nodes, resp. In this
+    # case the values of nodes of the other type are arbitrary!
+    #
+    # Among those arrays, we have:
+    #   - left_child, id of the left child of the node
+    #   - right_child, id of the right child of the node
+    #   - feature, feature used for splitting the node
+    #   - threshold, threshold value at the node
+    #
     """
     from sklearn.externals import joblib
     from sklearn import tree
@@ -1774,7 +1755,7 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
                 stack.append((children_right[node_id], parent_depth + 1))
             else:
                 is_leaves[node_id] = True
-        # - work out which nodes are required.
+        # - Work out which nodes are required.
         # NOTE: numbering is 1=># of nodes (zero is the first node)
         # add the initial node to a dictionary
         nodes2save = {}
@@ -1837,7 +1818,7 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
     # Save the core data on the estimators
     filename = filename_str.format(model_name, depth2investigate, '_ALL', '')
     df.to_csv(filename+'csv')
-    # --- Print a summary to a file screen
+    # - Print a summary to a file screen
     dfs = {}
     for node_num in sorted(num2node.keys()):
         # get index of node of interest
@@ -1893,7 +1874,7 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
         df_tmp['std'] = s_std
         df_tmp['median'] = s_median
         df_tmp['mean'] = s_mean
-        # set the depth value for each node_num
+        # Set the depth value for each node_num
         if node_num == 0:
             depth = node_num
         elif node_num in range(1, 3):
@@ -1923,7 +1904,7 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
         df_tmp.index = range(len(df_tmp.index))
         # Save to main DataFrame
         dfs[node_num] = df_tmp.copy()
-    # loop and save info to files
+    # Loop and save info to files
     filename = filename_str.format(model_name, depth2investigate, '', 'txt')
     a = open(filename, 'w')
     for depth in range(depth2investigate):
@@ -1935,9 +1916,9 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
         # save
         print(header, file=a)
         print(dfs[depth], file=a)
-    # close file to save data
+    # Close file to save data
     a.close()
-    # --- Build a DataFrame with details on a node by node basis
+    # - Build a DataFrame with details on a node by node basis
     # combine by node
     keys = sorted(dfs.keys())
     dfn = dfs[keys[0]].append([dfs[i] for i in keys[1:]])

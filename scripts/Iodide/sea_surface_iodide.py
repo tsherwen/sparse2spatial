@@ -1217,7 +1217,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
     # - The following settings are set to False as default
     # settings for incoming feature data
     restrict_min_salinity = False
-    use_median_value_for_chlor_when_NaN = False
+    use_median4chlr_a_NaNs = False
     add_modulus_of_lat = False
     # Apply transforms to data?
     do_not_transform_feature_data = True
@@ -1237,7 +1237,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
                                      #                                     rm_Skagerrak_data=rm_Skagerrak_data,
                                      rm_outliers=rm_outliers,
                                      rm_LOD_filled_data=rm_LOD_filled_data,
-                                     #                use_median_value_for_chlor_when_NaN=use_median_value_for_chlor_when_NaN,
+                                     #                use_median4chlr_a_NaNs=use_median4chlr_a_NaNs,
                                      #                median_4MLD_when_NaN_or_less_than_0=median_4MLD_when_NaN_or_less_than_0,
                                      #                    median_4depth_when_greater_than_0=median_4depth_when_greater_than_0,
                                      )    # add

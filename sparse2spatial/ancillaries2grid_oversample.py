@@ -35,8 +35,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
      - This function is redundant. Ancillaries should just be extracted directly from
        the ancillary NetCDF. use "extract_ancillaries_from_compiled_file" instead!
     """
-    # Get list of unique data point identifiers - WHY?! hashed this out
-    # WARNING - if a new index axis is created, then the index info is lost!
+    # NOTE: If a new index axis is created, then the index info is lost
 #    Data_key_ID = list(set(obs_data_df[ u'Data_Key_ID']))
     Data_key_ID = obs_data_df['Data_Key_ID'].values
     print(len(Data_key_ID), obs_data_df.shape)
@@ -46,7 +45,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
     master_l = []
     # Loop unique data indentifiers
     for n, Data_key_ID_ in enumerate(Data_key_ID):
-        # --- Get Data_key location
+        # - Get Data_key location
         tmp_df = obs_data_df[obs_data_df['Data_Key_ID'] == Data_key_ID_]
         # Get Obs Lat
         tmp_lat = tmp_df['Latitude'].values[0]
@@ -71,13 +70,12 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
             )
             ptr_str += '%=({:.2f}))'.format(((n+1.)/len(Data_key_ID))*100)
             print(ptr_str)
-        # --- Now extract Ancillary data
+        # - Now extract Ancillary data
         sub_l = []
         labels = []
         var_ex_str = '>'*5 + ' Getting {} for {}'
         var_st_str = '-'*5 + ' Status of {} extraction: flagged={}'
         # Get surface ocean temperature from WOA climatology
-        #
         var_ = 'WOA_TEMP'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -90,8 +88,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, flagged))
-        # - Get Nitrate from WOA climatology
-        #
+        # Get Nitrate from WOA climatology
         var_ = 'WOA_Nitrate'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -105,8 +102,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, flagged))
-        # - Get Salinity from WOA climatology
-        #
+        # Get Salinity from WOA climatology
         var_ = 'WOA_Salinity'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -120,8 +116,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, flagged))
-        # - Get Dissolved O2 from WOA climatology
-        #
+        # Get Dissolved O2 from WOA climatology
         var_ = 'WOA_Dissolved_O2'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -135,8 +130,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, flagged))
-        # - Get Phosphate from WOA climatology
-        #
+        # Get Phosphate from WOA climatology
         var_ = 'WOA_Phosphate'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -150,8 +144,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, flagged))
-        # - Get Silicate from WOA climatology
-        #
+        # Get Silicate from WOA climatology
         var_ = 'WOA_Silicate'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -163,8 +156,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_]
         sub_l += [flagged]
         labels += [var_+'_flagged']
-        # - Get Bathymetry values from GEBCO (annual avg., accessed via BODC)
-        #
+        # Get Bathymetry values from GEBCO (annual avg., accessed via BODC)
         var_ = 'Depth_GEBCO'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -178,8 +170,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, flagged))
-        # - Get SeaWIFs/NASA (Oceancolor) climatological values for Chlorophyll
-        #
+        # Get SeaWIFs/NASA (Oceancolor) climatological values for Chlorophyll
         var_ = 'SeaWIFs_ChlrA'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -193,8 +184,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, flagged))
-        # - Get (monthly) MLD (pt) values from WOA climatology
-        #
+        # Get (monthly) MLD (pt) values from WOA climatology
         var_ = 'WOA_MLDpt'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -262,7 +252,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_sum_flagged']
         if debug:
             print(var_st_str.format(var_, 'list:'), listed_output)
-        # - Get MLD (vd) values from WOA climatology
+        # Get MLD (vd) values from WOA climatology
         var_ = 'WOA_MLDvd'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -294,7 +284,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_sum_flagged']
         if debug:
             print(var_st_str.format(var_, 'list:'), listed_output)
-        # - Get DOC values from WOA climatology
+        # Get DOC values from WOA climatology
         var_ = 'DOC'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -308,7 +298,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, Data_key_ID_))
-        # - Get DOC values from WOA climatology
+        # Get DOC values from WOA climatology
         var_ = 'DOCaccum'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -322,7 +312,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, Data_key_ID_))
-        # - Get Productivity values from WOA climatology
+        # Get Productivity values from WOA climatology
         var_ = 'Prod'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -336,7 +326,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, Data_key_ID_))
-        # - Get Productivity values from WOA climatology
+        # Get Productivity values from WOA climatology
         var_ = 'SWrad'
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
@@ -350,30 +340,27 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         labels += [var_+'_flagged']
         if debug:
             print(var_st_str.format(var_, Data_key_ID_))
-        # --- To extract other database... just add here with a label
+        # - To extract other database... just add here with a label
         # NOTE: lists (label, sub_l) must be the same length for pd processing.
-        # --- Add databases to list...
+        # - Add databases to list...
         # save sub_l to master list
         master_l += [sub_l]
         # Garbage collect
         gc.collect()
     # Garbage collect
     gc.collect()
-    # --- construct into Dataframe and combine
+    # - Construct into Dataframe and combine
     df = pd.DataFrame(master_l)
     df.columns = labels
     df = df.T
     df.columns = Data_key_ID
     df = df.T
     df.to_csv('Extracted_ancillary_DATA.csv')
-    # also force "Data_key_ID" to be index of obs_data_df
-    # WARNING THIS WAS WRONG! (this was re-indexing obs to sorted Data_key_ID!)
-    # Updated to use its own Data_key_ID list.
-#    obs_data_df.index = Data_key_ID
+    # Use the dataframe's own Data_key_ID list.
     obs_data_df.index = obs_data_df['Data_Key_ID']
     # Drop the 'Data_key_ID' from obs_data_df| to remove issues with indexing
     obs_data_df = obs_data_df.drop(['Data_Key_ID'], axis=1)
-    # conbine new rows and old rows...
+    # Combine new rows and old rows...
     obs_data_df = pd.concat([df, obs_data_df], axis=1, join_axes=[df.index])
     # Restore the 'Data_key_ID' column for referencing...
     obs_data_df['Data_Key_ID'] = obs_data_df.index
@@ -388,7 +375,7 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
 
 
 def get_ancillaries4df_locs(df=None,
-                            get_vars4Rosies_multivariate_eqn=False,
+                            get_Chance_multi_vars=False,
                             df_lar_var='lat', df_lon_var='lon',
                             df_time_var='month'):
     """
@@ -397,7 +384,7 @@ def get_ancillaries4df_locs(df=None,
     Parameters
     -------
     df (pd.DataFrame), DataFrame of observational data
-    get_vars4Rosies_multivariate_eqn (boolean), get the extra ancillary values needed?
+    get_Chance_multi_vars (boolean), get the extra ancillary values needed?
     fill_error_strings_with_NaNs (boolean), fill the error strings with NaNs?
     df_lar_var (str), variable name in DataFrame for latitude
     df_lon_var (str), variable name in DataFrame for longitude
@@ -408,10 +395,10 @@ def get_ancillaries4df_locs(df=None,
     (pd.DataFrame)
     """
     # To extract ancillary variables only lat, lon, and time needed
-    # --- Local variables
+    # -- Local variables
     TEMP_K_var = 'WOA_TEMP_K'
     TEMP_var = 'WOA_TEMP'
-    # --- Map function to extract each required variable
+    # - Map function to extract each required variable
     # dictionary of functions and names
     funcs2cycle = {
         TEMP_var: get_WOA_TEMP_4_loc,
@@ -443,14 +430,14 @@ def get_ancillaries4df_locs(df=None,
 
 def mk_predictor_variable_csv(res='4x5', month=9,
                               df_lar_var='lat', df_lon_var='lon', df_time_var='month',
-                              get_vars4Rosies_multivariate_eqn=False):
+                              get_Chance_multi_vars=False):
     """
     Make a predictor array to pass as input for a statistical model
 
     Parameters
     -------
     df (pd.DataFrame), DataFrame of observational data
-    get_vars4Rosies_multivariate_eqn (boolean), get the extra ancillary values needed?
+    get_Chance_multi_vars (boolean), get the extra ancillary values needed?
     fill_error_strings_with_NaNs (boolean), fill the error strings with NaNs?
     df_lar_var (str), variable name in DataFrame for latitude
     df_lon_var (str), variable name in DataFrame for longitude
@@ -462,13 +449,12 @@ def mk_predictor_variable_csv(res='4x5', month=9,
     -------
     (pd.DataFrame)
     """
-    # res='4x5'; month=9; df_lar_var='lat'; df_lon_var='lon'; df_time_var='month'
-    # --- Local variables
+    # - Local variables
     # Make array of lon, lat, time
     df = AC.get_2D_df_of_lon_lats_and_time(df_lar_var=df_lar_var, res=res,
                                            df_lon_var=df_lon_var, df_time_var=df_time_var,
                                            month=month)
-    # --- Ocean consider ocean grid boxes (e.g. mask for values not in ocean )
+    # - Ocean consider ocean grid boxes (e.g. mask for values not in ocean )
     # get Land / Water /Ice fraction
     df['LWI'] = df.apply(lambda x: AC.get_LWI(lat=x[df_lar_var],
                                               lon=x[df_lon_var], date=x[df_time_var],
@@ -479,10 +465,10 @@ def mk_predictor_variable_csv(res='4x5', month=9,
     columns = list(df.columns)
     columns.pop(columns.index('LWI'))
     df = df[columns]
-    # --- Extract Ancillary values for lat, lons, and times
+    # - Extract Ancillary values for lat, lons, and times
     df = get_ancillaries4df_locs(df=df,
-                                 get_vars4Rosies_multivariate_eqn=get_vars4Rosies_multivariate_eqn)
-    # --- Save csv
+                                 get_Chance_multi_vars=get_Chance_multi_vars)
+    # - Save csv
     filename = 'Oi_prj_predictor_values_{}_month_num_{}.csv'.format(res, month)
     df.to_csv(filename)
 
@@ -505,22 +491,21 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
     """
     # --- local variables
     # file ancillary data as a xarray Dataset
-#    res= '4x5' # use 4x5 for testing
     res = '0.125x0.125'  # Use Nature res. run for analysis
     data_root = get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     dsA = xr.open_dataset(data_root + filename)
     # Get list of site IDs...
-    # WARNING - if a new index axis is created, then the index info is lost!
+    # NOTE: if a new index axis is created, then the index info is lost
     Data_key_ID = df['Data_Key_ID'].values
     print(len(Data_key_ID), df.shape)
     # for testing use only first few...
 #    Data_key_ID = Data_key_ID[:15]
-    # initialise a DataFrame to sort ancillary data
+    # Initialise a DataFrame to sort ancillary data
     dfA = pd.DataFrame()
     # Loop unique data indentifiers
     for n, Data_key_ID_ in enumerate(Data_key_ID):
-        # --- Get Data_key location
+        # - Get Data_key location
         tmp_df = df[df['Data_Key_ID'] == Data_key_ID_]
         # Get Obs Lat
         tmp_lat = tmp_df['Latitude'].values[0]
@@ -540,7 +525,7 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
             tmp_date = tmp_df['Date'].values[0]
         except:
             tmp_date = tmp_df['datetime'].values[0]
-        # Pring to screen to debug...
+        # Print to screen to if debugging...
         if debug:
             ptr_str = '{:<20} (Lon={:.2f},Lat={:.2f},month={},date={},'
             ptr_str = ptr_str.format(
@@ -548,31 +533,28 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
             )
             ptr_str += '%=({:.2f}))'.format(((n+1.)/len(Data_key_ID))*100)
             print(ptr_str)
-        # --- Now extract Ancillary data
+        # - Now extract Ancillary data
         # use the mid season month if not provided
         if tmp_month == 0:
             tmp_month = set_backup_month_if_unkonwn(lat=tmp_lat,)
         # Select data for month
         ds = dsA.sel(time=(dsA['time.month'] == tmp_month))
-        # select for location
+        # Select for location
         ds = ds.sel(lon=tmp_lon, lat=tmp_lat, method='nearest')
-        # remove time (all values have only 1 time (confirm with asssert)
+        # Remove time (all values have only 1 time (confirm with asssert)
         assert len(ds.time) == 1, 'Only 1 time should be selected!'
         ds = ds.mean(dim='time')
         # Convert to pandas series and achieve to DataFrame
         dfA[Data_key_ID_] = ds.to_array().to_pandas()
     gc.collect()
-    # --- construct into Dataframe and combine
+    # - Construct into Dataframe and combine
     dfA = dfA.T
     dfA.to_csv('Extracted_ancillary_DATA.csv')
-    # also force "Data_key_ID" to be index of df
-    # WARNING THIS WAS WRONG! (this was re-indexing obs to sorted Data_key_ID!)
-    # Updated to use its own Data_key_ID list.
-#    df.index = Data_key_ID
+    # Use dataframe's own Data_key_ID list.
     df.index = df['Data_Key_ID']
     # Drop the 'Data_key_ID' from df| to remove issues with indexing
     df = df.drop(['Data_Key_ID'], axis=1)
-    # conbine new rows and old rows...
+    # combine new rows and old rows...
     df = pd.concat([dfA, df], axis=1, join_axes=[dfA.index])
     # Restore the 'Data_key_ID' column for referencing...
     df['Data_Key_ID'] = df.index
@@ -599,7 +581,6 @@ def mk_array_of_indices4locations4res(res='4x5', df_lar_var='lat', df_lon_var='l
     -------
     (None)
     """
-    # df_lar_var='lat'; df_lon_var='lon'; df_time_var='month'
     # - Get all locations to extract for
     if res == '0.5x0.5':
         lons, lats, alt = AC.get_latlonalt4res(wd=wd, res=res,
@@ -672,8 +653,7 @@ def get_WOA_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     -------
     (None)
     """
-    #
-    # Set directory files are in (using nitrate arrays)
+    # Set folder that files are in (using nitrate arrays)
     folder = get_file_locations('WOA_2013') + '/Nitrate_1x1/'
     # Select the correct file (abituaryily using September )
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
@@ -731,12 +711,12 @@ def get_GEBCO_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     # var2use='elevation'; buffer_CORDS=2; rtn_flag=True; debug=True
     # Directory?
     folder = get_file_locations('data_root') + '/BODC/'
-    # file str
+    # Filename as string
     filename = 'GRIDONE_2D.nc'
-    # --- Extract data
+    # - Extract data
     # Open file
     with Dataset(folder+filename, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #        file_latc = rootgrp['lat']+(latitude_step/2)
@@ -777,7 +757,7 @@ def get_WOA_array_025x025_indices(lons=None, lats=None, month=9, debug=False):
     Notes
     -----
     """
-    # Set directory files are in (using temperatures arrays)
+    # Set folder that files are in (using temperatures arrays)
     folder = get_file_locations('WOA_2013') + '/Temperature_025x025/'
     # Select the correct file (abituaryily using September )
     # (The file below is a decadal average ("decav"))
@@ -833,12 +813,12 @@ def get_RAD_array_1_9x1_9_indices(lons=None, lats=None, month=9, debug=False):
     """
     # Directory?
     folder = get_file_locations('data_root') + '/GFDL/'
-    # file str
+    # Filename as string
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - Cet indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         # NOTE: latitude is -90 to 90
         # (this doesn't effect nearest point extraction approach taken here)
@@ -887,9 +867,9 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
 
     Notes
     -----
-     - using 9km files. 4km files are availilbe.
+     - Using 9km files. 4km files are available.
     """
-    # ---  Extract files
+    # - Extract files
     # Detail on naming convention of files:
     # For a Level-3 binned data product, the form of the name of the main file
     # is iyyyydddyyyyddd.L3b_ttt, where where i is the instrument identifier
@@ -911,7 +891,7 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
         month_ = month
     # Directory?
     folder = get_file_locations('data_root') + '/SeaWIFS/'
-    # file str
+    # Filename as string
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
     files = glob.glob(folder+file_Str)
@@ -934,11 +914,11 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
     dates = dates_for_files
     months = [i[0].month for i in dates_for_files]
     dict_month2filename = dict(list(zip(months, files)))
-    # --- Extract data for correct month.
+    # - Extract data for correct month.
     filename = dict_month2filename[month_]
     # Open file
     with Dataset(filename, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        file_latc = rootgrp['lat']+(rootgrp.latitude_step/2)
         # Use lower-left coordinate system
@@ -980,14 +960,14 @@ def get_DOC_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     """
     # Directory?
     folder = get_file_locations('data_root') + '/DOC/'
-    # file str
+    # Filename as string
 #    file_str = 'DOCmodelSR.nc'
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
 #    print folder+file_str
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #        file_latc = rootgrp['lat']+(latitude_step/2)
@@ -1040,9 +1020,9 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     """
     # Directory?
     folder = get_file_locations('data_root') + '/Productivity/'
-    # file str
+    # Filename as string
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
-    # --- Extract data
+    # - Extract data
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
@@ -1052,7 +1032,7 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
         month_ = month
     # Open file
     with Dataset(folder+filename, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #        file_latc = rootgrp['lat']+(latitude_step/2)
@@ -1100,13 +1080,13 @@ def get_WOA_MLD_array_1x1_indices(var2use='pt', lons=None, lats=None, month=9,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/WOA_1994/'
-    # file str
+    # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
 #    print folder+file_str
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #        file_latc = rootgrp['lat']+(latitude_step/2)
@@ -1164,14 +1144,14 @@ def get_DOC_accum_1x1_indices(var2use='DOCaccum_avg', lons=None, lats=None,
     month_ = 0
     # Directory?
     folder = get_file_locations('data_root') + '/DOC/'
-    # file str
+    # Filename as string
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
     if debug:
         print(folder+file_str)
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #        file_latc = rootgrp['lat']+(latitude_step/2)
@@ -1427,9 +1407,9 @@ def get_Prod4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/Productivity/'
-    # file str
+    # Filename as string
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
-    # --- Extract data
+    # - Extract data
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
@@ -1474,9 +1454,9 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/Productivity/'
-    # file str
+    # Filename as string
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
-    # --- Extract data
+    # - Extract data
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
@@ -1486,7 +1466,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
         month_ = month
     # Open file
     with Dataset(folder+filename, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #        file_latc = rootgrp['lat']+(latitude_step/2)
@@ -1505,7 +1485,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
         # NOTE: pythonic index starts at 0, therefore month index = n_month-1
         file_data = rootgrp[var2use][month_-1, ...]
         file_data_ = file_data[lat_ind, lon_ind]
-        # --- Return value if present, else interpolate from nearby values...
+        # - Return value if present, else interpolate from nearby values...
         if isinstance(file_data_, np.ma.core.MaskedConstant):
             ptr_str = 'interpolating to get {} for {} (buffer_CORDS={})'
             if verbose:
@@ -1566,11 +1546,11 @@ def get_DOC4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/DOC/'
-    # file str
+    # Filename as string
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
     if debug:
         print(folder+file_str)
-    # --- Open file
+    # - Open file
     with Dataset(folder+file_str, 'r') as rootgrp:
         # Now extract data (dims: depth, lon, lat)
         file_data = rootgrp[var2use][:][depth, ...]
@@ -1607,14 +1587,14 @@ def get_DOC_4_loc(var2use='DOCmdl_avg', lat=None, lon=None, month=None,
     month_ = 0
     # Directory?
     folder = get_file_locations('data_root') + '/DOC/'
-    # file str
+    # Filename as string
 #    file_str = 'DOCmodelSR.nc'
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
 #    print folder+file_str
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #         latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #         file_latc = rootgrp['lat']+(latitude_step/2)
@@ -1639,7 +1619,7 @@ def get_DOC_4_loc(var2use='DOCmdl_avg', lat=None, lon=None, month=None,
             print(rootgrp[var2use].shape,  lat_ind, lon_ind, depth)
         file_data = rootgrp[var2use][:][depth, ...]
         file_data_ = file_data[lon_ind, lat_ind]
-        # --- Return value if present, else interpolate from nearby values...
+        # - Return value if present, else interpolate from nearby values...
         if isinstance(file_data_, np.ma.core.MaskedConstant):
             ptr_str = 'interpolating to get {} for {} (buffer_CORDS={})'
             if verbose:
@@ -1700,7 +1680,7 @@ def get_DOC_accum4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/DOC/'
-    # File str
+    # Filename as string
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
     if debug:
         print(folder+file_str)
@@ -1741,13 +1721,13 @@ def get_DOC_accum_4_loc(var2use='DOCaccum_avg', lat=None, lon=None, month=None,
     month_ = 0
     # Directory?
     folder = get_file_locations('data_root') + '/DOC/'
-    # file str
+    # Filename as string
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
 #    print folder+file_str
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #        file_latc = rootgrp['lat']+(latitude_step/2)
@@ -1772,7 +1752,7 @@ def get_DOC_accum_4_loc(var2use='DOCaccum_avg', lat=None, lon=None, month=None,
 #        file_data = np.ma.array(file_data, mask=(file_data == '--') )
         # Select location
         file_data_ = file_data[lon_ind, lat_ind]
-        # --- Return value if present, else interpolate from nearby values...
+        # - Return value if present, else interpolate from nearby values...
         if isinstance(file_data_, np.ma.core.MaskedConstant):
             # also this dataset's file are lat numebered -90=>90
             # shouldn't this be 90=>-90 according to CF standard?
@@ -1844,7 +1824,7 @@ def get_RAD4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/GFDL/'
-    # File str
+    # Filename as string
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # Open file
     with Dataset(folder+file_str, 'r') as rootgrp:
@@ -1880,19 +1860,19 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/GFDL/'
-    # file str
+    # Filename as string
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
-    # --- which month to use?
+    # - Which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         # NOTE: latitude is -90 to 90
         # (this doesn't effect nearest point extraction approach taken here)
@@ -1920,7 +1900,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
         # NOTE: pythonic index starts at 0, therefore month index = n_month-1
         file_data = rootgrp[var2use][:][month_-1, ...]
         file_data_ = file_data[lat_ind, lon_ind]
-        # --- Return value if present, else interpolate from nearby values...
+        # - Return value if present, else interpolate from nearby values...
         if isinstance(file_data_, np.ma.core.MaskedConstant):
             ptr_str = 'interpolating to get {} for {} (buffer_CORDS={})'
             if verbose:
@@ -2046,11 +2026,11 @@ def extract_MLD_file4indices(var2use='pt', lat_idx=None, lon_idx=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/WOA_1994/'
-    # file str
+    # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     if debug:
         print(folder+file_str)
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
         # NOTE: pythonic index starts at 0, therefore month index = n_month-1
@@ -2085,13 +2065,12 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/WOA_1994/'
-    # file str
+    # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
-#    print folder+file_str
-    # --- Open file
+    # - Open file
     # Using compiled NetCDFs (data was only available as csv.)
     with Dataset(folder+file_str, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         file_latc = rootgrp['lat']+(latitude_step/2)
@@ -2100,21 +2079,21 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
         # Get index of cell mid point closest to obs lon
         longitude_step = abs(rootgrp['lon'][-1])-abs(rootgrp['lon'][-2])
         file_lonc = rootgrp['lon']+(longitude_step/2)
-        # adjust "file_loncs" to actual values (e.g. 0=>360, to -180=>180)
+        # Adjust "file_loncs" to actual values (e.g. 0=>360, to -180=>180)
         adj_f_lonc = file_lonc-180
         adj_f_lonc[adj_f_lonc > 180] = adj_f_lonc[adj_f_lonc > 180] - 360
         lon_ind = AC.find_nearest_value(adj_f_lonc, lon)
-        # now extract data  (CF array dims, lat, lon)
+        # Now extract data  (CF array dims, lat, lon)
         if debug:
             print(rootgrp[var2use].shape,  lat_ind, lon_ind)
         # NOTE: pythonic index starts at 0, therefore month index = n_month-1
         file_data = rootgrp[var2use][month-1, ...]
         file_data_ = file_data[lat_ind, lon_ind]
-        # round up value ( to remove noise )
+        # Round up value ( to remove noise )
         file_data_rounded_ = AC.myround(file_data_, 0.1, integer=False)
-        # setup a mask for the data
+        # Setup a mask for the data
         file_data = np.ma.array(file_data, mask=file_data < 0)
-        # --- Return value if present, else interpolate from nearby values...
+        # - Return value if present, else interpolate from nearby values...
         if isinstance(file_data_, np.ma.core.MaskedConstant) or  \
                 (file_data_rounded_ == _fill_value):
             ptr_str = 'interpolating to get {} for {} (buffer_CORDS={})'
@@ -2207,9 +2186,9 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
 
     NOTES
     ---
-    using 9km files. 4km files are availilbe.
+     - Using 9km files. 4km files are available.
     """
-    # ---  Extract files
+    # - Extract files
     # Detail on naming convention of files:
     # For a Level-3 binned data product, the form of the name of the main file
     # is iyyyydddyyyyddd.L3b_ttt, where where i is the instrument identifier
@@ -2231,7 +2210,7 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
         month_ = month
     # Directory?
     folder = get_file_locations('data_root') + '/SeaWIFS/'
-    # file str
+    # Filename as string
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
     files = glob.glob(folder+file_Str)
@@ -2255,7 +2234,7 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
     dates = dates_for_files
     months = [i[0].month for i in dates_for_files]
     dict_month2filename = dict(list(zip(months, files)))
-    # --- Extract data for correct month.
+    # - Extract data for correct month.
     filename = dict_month2filename[month_]
     # Open file
     with Dataset(filename, 'r') as rootgrp:
@@ -2293,7 +2272,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     ---
     using 9km files. 4km files are available.
     """
-    # ---  Extract files
+    # - Extract files
     # Detail on naming convention of files:
     # For a Level-3 binned data product, the form of the name of the main file
     # is iyyyydddyyyyddd.L3b_ttt, where where i is the instrument identifier
@@ -2315,7 +2294,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
         month_ = month
     # Directory?
     folder = get_file_locations('data_root') + '/SeaWIFS/'
-    # file str
+    # Filename as string
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
     files = glob.glob(folder+file_Str)
@@ -2337,11 +2316,11 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     dates = dates_for_files
     months = [i[0].month for i in dates_for_files]
     dict_month2filename = dict(list(zip(months, files)))
-    # --- Extract data for correct month.
+    # - Extract data for correct month.
     filename = dict_month2filename[month_]
     # Open file
     with Dataset(filename, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        file_latc = rootgrp['lat']+(rootgrp.latitude_step/2)
         #        lat_ind = AC.find_nearest_value( file_latc, lat )
@@ -2361,7 +2340,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
             print(lat, file_latc[lat_ind], lon, file_lonc[lon_ind])
         file_data = rootgrp[var2use][:]
         file_data_ = file_data[lat_ind, lon_ind]
-        # --- Return value if present, else interpolate from nearby values...
+        # - Return value if present, else interpolate from nearby values...
         if isinstance(file_data_, np.ma.core.MaskedConstant):
             ptr_str = 'interpolating to get {} for {} (buffer_CORDS={})'
             if verbose:
@@ -2459,7 +2438,7 @@ def get_Depth_GEBCO4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # Directory?
     folder = get_file_locations('data_root') + '/BODC/'
-    # file str
+    # Filename as string
     filename = 'GRIDONE_2D.nc'
     # Open file and extract data
     with Dataset(folder+filename, 'r') as rootgrp:
@@ -2501,12 +2480,12 @@ def get_GEBCO_depth_4_loc(lat=None, lon=None, month=None,
     # var2use='elevation'; buffer_CORDS=2; rtn_flag=True; debug=True
     # Directory?
     folder = get_file_locations('data_root') + '/BODC/'
-    # file str
+    # Filename as string
     filename = 'GRIDONE_2D.nc'
-    # --- Extract data
+    # - Extract data
     # Open file
     with Dataset(folder+filename, 'r') as rootgrp:
-        # --- get indices of the data array for the provided lat and lon
+        # - get indices of the data array for the provided lat and lon
         # Get index of cell mid point closest to obs lat
         #        latitude_step = abs(rootgrp['lat'][-1])-abs(rootgrp['lat'][-2])
         #        file_latc = rootgrp['lat']+(latitude_step/2)
@@ -2526,7 +2505,7 @@ def get_GEBCO_depth_4_loc(lat=None, lon=None, month=None,
             print(rootgrp[var2use].shape,  lat_ind, lon_ind)
         file_data = rootgrp[var2use][:]
         file_data_ = file_data[lat_ind, lon_ind]
-        # --- Return value if present, else interpolate from nearby values...
+        # - Return value if present, else interpolate from nearby values...
         if isinstance(file_data_, np.ma.core.MaskedConstant) or (file_data_ > 0):
             ptr_str = 'interpolating to get {} for {} (buffer_CORDS={})'
             if verbose:
@@ -2611,7 +2590,7 @@ def get_WOA_TEMP4indices(lat_idx=None, lon_idx=None, month=None,
       standard depth level for sea_water_temperature in each grid-square which
        contain at least one measurement." ;
     """
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
@@ -2665,7 +2644,7 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
     """
     if debug:
         print(locals())
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
@@ -2768,7 +2747,7 @@ def get_WOA_Nitrate4indices(lat_idx=None, lon_idx=None, month=None,
      moles_concentration_of_nitrate_in_sea_water at standard depth levels."
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
@@ -2820,7 +2799,7 @@ def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
      moles_concentration_of_nitrate_in_sea_water at standard depth levels."
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
@@ -2906,7 +2885,7 @@ def get_WOA_Salinity4indices(lat_idx=None, lon_idx=None, month=None,
     -------
     (array)
     """
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
@@ -2955,7 +2934,7 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
      sea_water_salinity at standard depth levels." ;
     """
 #    debug=True
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
@@ -3052,7 +3031,7 @@ def get_WOA_Silicate4indices(lat_idx=None, lon_idx=None, month=None,
      moles_concentration_of_silicate_in_sea_water in each grid-square which
      contain at least one measurement." ;
     """
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
@@ -3101,8 +3080,7 @@ def get_WOA_Silicate_4_loc(lat=None, lon=None, month=None, var2use='i_an',
      moles_concentration_of_silicate_in_sea_water in each grid-square which
      contain at least one measurement." ;
     """
-#    debug=True
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
@@ -3185,7 +3163,7 @@ def get_WOA_Phosphate4indices(lat_idx=None, lon_idx=None, month=None,
     -------
     (array)
     """
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
@@ -3235,7 +3213,7 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
     standard depth level for moles_concentration_of_phosphate_in_sea_water
     in each grid-square which contain at least one measurement." ;
     """
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
@@ -3327,7 +3305,7 @@ def get_WOA_Dissolved_O2_4indices(lat_idx=None, lon_idx=None, month=None,
     standard depth level for volume_fraction_of_oxygen_in_sea_water in each
     grid-square which contain at least one measurement." ;
     """
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
@@ -3375,7 +3353,7 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
     standard depth level for volume_fraction_of_oxygen_in_sea_water in each
     grid-square which contain at least one measurement." ;
     """
-    # Set directory files are in
+    # Set folder that files are in
     folder = get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)

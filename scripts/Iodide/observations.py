@@ -35,7 +35,7 @@ from sparse2spatial.utils import get_outlier_value
 from sea_surface_iodide import mk_iodide_ML_testing_and_training_set
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
 from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
-from sparse2spatial.utils import calc_iodide_chance2014_Multivariate
+from sparse2spatial.utils import calc_i_chance2014_multivar
 from sparse2spatial.utils import calc_iodide_MacDonald2014
 # iodide specific functions (move these to this directory?)
 #from sparse2spatial.utils import get_literature_predicted_iodide
@@ -657,7 +657,7 @@ def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows=1,
 
 def add_extra_vars_rm_some_data(df=None, target='Iodide',
                                 restrict_data_max=False, restrict_min_salinity=False,
-                                use_median_value_for_chlor_when_NaN=False,
+                                use_median4chlr_a_NaNs=False,
                                 median_4MLD_when_NaN_or_less_than_0=False,
                                 median_4depth_when_greater_than_0=False,
                                 rm_LOD_filled_data=False,
@@ -671,7 +671,7 @@ def add_extra_vars_rm_some_data(df=None, target='Iodide',
     -------
     restrict_data_max (bool): restrict the obs. data to a maximum value?
     restrict_min_salinity (bool): restrict the obs. data to a minimum value of salinity?
-    use_median_value_for_chlor_when_NaN (bool): use median values for Chl-a if it is a NaN
+    use_median4chlr_a_NaNs (bool): use median values for Chl-a if it is a NaN
     median_4depth_when_greater_than_0 (bool): use median values for depth if it is <0
     median_4MLD_when_NaN_or_less_than_0 (bool): use median values for MLD if it is <0
     rm_LOD_filled_data (bool): remove the observational values below LOD
@@ -736,7 +736,7 @@ def add_extra_vars_rm_some_data(df=None, target='Iodide',
             print(prt_str.format(str(df.shape), str(df.shape)))
         df = df_tmp
     # - Chlorophyll arrays are prone to NaNs...
-    if use_median_value_for_chlor_when_NaN:
+    if use_median4chlr_a_NaNs:
         # Average value
         avg = df['SeaWIFs_ChlrA'].median()
         # Function to map
@@ -979,7 +979,7 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
         df[var2use]
     except KeyError:
         df[var2use] = df.apply(lambda x:
-                               calc_iodide_chance2014_Multivariate(NO3=x[NO3_var],
+                               calc_i_chance2014_multivar(NO3=x[NO3_var],
                                                                  sumMLDpt=x[sumMLDpt_var],
                                                                    MOD_LAT=x[MOD_LAT_var],
                                                                    TEMP=x[TEMPvar],

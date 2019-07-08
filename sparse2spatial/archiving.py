@@ -25,7 +25,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     # Make sure there are not spaces in variable names
     dsA = add_attrs2target_ds(dsA, add_varname_attrs=False, add_global_attrs=False,
                               update_varnames_to_remove_spaces=True)
-    # remove existing parameters if they are there
+    # Remove existing parameters if they are there
     try:
         del dsA['Chance2014_STTxx2_I']
     except KeyError:
@@ -49,7 +49,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
         del dsA['LWI'].attrs['_FillValue']
     except:
         pass
-    # what are the variables that should be in all files?
+    # What are the variables that should be in all files?
     standard_vars = ['Ensemble_Monthly_mean', 'Ensemble_Monthly_std', 'LWI']
     # Also save the main file with just the main prediction
     name2save = 'predicted_{}_0.125x0.125_Ns_Just_Ensemble'.format(target)
@@ -62,7 +62,6 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
 
     # - Also save out the file that is inc. excluded data.
     name2save = 'predicted_{}_0.125x0.125_All_Ensemble_members'.format(target)
-    #
     ext_str = ''
     file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(
         target, ext_str)
@@ -72,7 +71,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     dsA2 = add_attrs2target_ds(dsA2, add_varname_attrs=False,
                                add_global_attrs=False,
                                update_varnames_to_remove_spaces=True)
-    # Add LWI to array
+    # Add land-water-ice (LWI) indices to array
     try:
         dsA2['LWI']
     except KeyError:
@@ -137,7 +136,7 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
                     if debug:
                         print('Deleting var:',  var2use,
                               vars2regrid.index(var2use))
-        # Now remove by pop
+        # Now remove using pop method
         [vars2regrid.pop(i) for i in sorted(vars2pop)[::-1]]
 
     # Regrid output
@@ -150,27 +149,25 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
         })
         # Create a regidder (to be reused )
         regridder = xe.Regridder(dsA, ds_out, 'bilinear', reuse_weights=True)
-#		regridder  # print basic regridder information.
-        # loop and regrid variables
+        # Loop and regrid variables
         ds_l = []
         for var2use in vars2regrid:
-            # create a dataset to re-grid into
+            # Create a dataset to re-grid into
             ds_out = xr.Dataset({
                 #				'time': ( ['time'], dsA['time'] ),
                 'lat': (['lat'], grids[grid]['lat']),
                 'lon': (['lon'], grids[grid]['lon']),
             })
-            # get a DataArray
+            # Get a DataArray
             dr = dsA[var2use]
-            # build regridder
+            # Build regridder
             dr_out = regridder(dr)
             # Important note: Extra dimensions must be on the left, i.e. (time, lev, lat, lon) is correct but (lat, lon, time, lev) would not work. Most data sets should have (lat, lon) on the right (being the fastest changing dimension in the memory). If not, use DataArray.transpose or numpy.transpose to preprocess the data.
-            # exactly the same as input
+            # Exactly the same as input?
             xr.testing.assert_identical(dr_out['time'], dsA['time'])
-            # save variable
+            # Save variable
             ds_l += [dr_out]
         # Combine variables
-#        ds = xr.concat( ds_l )
         ds = xr.Dataset()
         for n, var2use in enumerate(vars2regrid):
             ds[var2use] = ds_l[n]
@@ -185,7 +182,7 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
                 attrs['long_name'] = 'Land/Water/Ice index'
                 attrs['Detail'] = 'A Land-Water-Ice mask. It is 1 over continental areas, 0 over open ocean, and 2 over seaice covered ocean.'
                 ds['LWI'].attrs = attrs
-        # clean up
+        # Clean up
         regridder.clean_weight_file()
         # Make sure the file has appropriate attributes
         ds = add_attrs2target_ds(ds, add_varname_attrs=False)

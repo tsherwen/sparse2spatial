@@ -24,7 +24,6 @@ def mk_LWI_avg_array():
     ds.to_netcdf(savename)
     savename = 'nature_run_lev_72_res_0.125_spec_LWI_avg_ctm.nc'
     ds.mean(dim='time').to_netcdf(savename)
-    #
     folder = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
     files = glob.glob(folder+'*nc')
     dates = [(int(i[-14:-14+4]), int(i[-9:-9+2]), 1) for i in files]
@@ -84,11 +83,8 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
         df[target] = model.predict(df[features_used].values)
         # Now re-build into a 3D dataset
         df = df[target].unstack()
-        # Sort lat to be -90 to 90
-#        df = df[lat]
         # Extract array to be included in dataset
         arr = df.values.T[None, ...]
-#        df = pd.DataFrame( df_tmp, index=[lat,lon] ).unstack()
         # Convert to Dataset
         date = dates[n_month]
         da_l += [
@@ -101,113 +97,6 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
     return ds
 
 
-# def mk_NetCDF_of_surface_target_by_month4param(res='4x5', target='iodide',
-#                                                param='Chance2014'):
-#     """
-#     Make a NetCDF of (monthly) target fields from previous params
-#     """
-#     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
-#     import xarray as xr
-#     from time import gmtime, strftime
-#     cal_dict = {
-#         'Macdonald2014': calc_iodide_MacDonald2014,
-#         'Chance2014': calc_iodide_chance2014_STTxx2_I,
-#     }
-#     # Get the model
-#     features_used = ['WOA_TEMP']
-#     # Initialise a dictionary to store data
-#     ars_dict = {}
-#     months = np.arange(1, 13)
-#     for month in months:
-#         # get array of predictor for lats and lons (at res... )
-#         df_predictors = get_predict_lat_lon_array(res=res, month=month)
-#         # now make predictions for target ("y") from loaded predictors
-#         TEMP = df_predictors[features_used].values
-#         target_predictions = cal_dict[param](TEMP)
-#         # Save values
-#         ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
-#                                               target_name=[target], res=res,
-#                                               target_predictions=target_predictions)
-#     # Get coordinates
-#     lon, lat, alt = AC.get_latlonalt4res(res=res)
-#     # Make a dataset of arrays
-#     da_l = []
-#     for month in months:
-#         arr = ars_dict[month].T[None, ...]
-#         da_l += [xr.Dataset(
-#             data_vars={target: (['time', 'lat', 'lon', ], arr)},
-#             coords={'lat': lat, 'lon': lon, 'time': [month]})]
-#     # Concatenate to a single dataset
-#     ds = xr.concat(da_l, dim='time')
-#     # Update time ...
-#     ds = update_time_in_NetCDF2save(ds)
-#     # Add attributes for target variable and global variables
-#     ds = add_attrs2target_ds(ds, varname=target)
-#     # Add units etc for all of the dataset variables
-#     for var2use in ds.data_vars:
-#         ds = add_attrs2target_ds(ds, add_global_attrs=False,
-#                                  varname=var2use)
-#     # save to NetCDF
-#     filename = 'Oi_prj_{}_monthly_param_{}_{}.nc'.format(target, res, param)
-#     ds.to_netcdf(filename, unlimited_dims={'time': True})
-
-
-# def mk_NetCDF_of_surface_target_by_month(res='4x5', extr_str='', target='iodide'):
-#     """
-#     Make a NetCDF of predicted data fields by month
-#     """
-#     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
-#     import xarray as xr
-#     from time import gmtime, strftime
-#     # Get the model
-#     model = get_current_model(extr_str=extr_str)
-#     features_used = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
-#
-#     # Initialise a dictionary to store data
-#     ars_dict = {}
-#     months = np.arange(1, 13)
-#     for month in months:
-#         # get array of predictor for lats and lons (at res... )
-#         df_predictors = get_predict_lat_lon_array(res=res, month=month)
-#         # now make predictions for target ("y") from loaded predictors
-#         target_predictions = model.predict(df_predictors[features_used])
-#         # Convert output vector to 2D lon/lat array
-#         model_name = "RandomForestRegressor '{}'"
-#         model_name = model_name.format('+'.join(features_used))
-#         ars_dict[month] = mk_uniform_2D_array(df_predictors=df_predictors,
-#                                               target_name=[target], res=res,
-#                                               target_predictions=target_predictions)
-#     # Get coordinates
-#     lon, lat, alt = AC.get_latlonalt4res(res=res)
-#     # Make a dataset of arrays
-#     da_l = []
-#     for month in months:
-#         arr = ars_dict[month].T[None, ...]
-#         da_l += [xr.Dataset(
-#             data_vars={target: (['time', 'lat', 'lon', ], arr)},
-#             coords={'lat': lat, 'lon': lon, 'time': [month]})]
-#     # Concatenate to a single dataset
-#     ds = xr.concat(da_l, dim='time')
-#     # Update time ...
-# #    sdate = datetime.datetime(1970, 1, 1) # Unix time
-# #    da['time'] = [ AC.add_months( sdate, i-1) for i in months ]
-#     sdate = datetime.datetime(1985, 1, 1)  # Climate model tiem
-#     ds['time'] = [AC.add_months(sdate, i-1) for i in months]
-#     # Update to hours since X
-#     hours = [(AC.dt64_2_dt([i])[0] - sdate).days *
-#              24. for i in ds['time'].values]
-#     ds['time'] = hours
-#     # Now turn into a DataArray?
-# #    ds = da.to_dataset()
-#     attrs_dict = {'units': 'hours since 1985-01-01 00:00:00'}
-#     ds['time'].attrs = attrs_dict
-#     # Add attributes
-#     ds = add_attrs2target_ds(ds, varname=extr_str, convert_to_kg_m3=True)
-#     # Save to NetCDF
-#     filename = 'Oi_prj_{}_monthly_param_{}.nc'.format(target, res)
-#     ds.to_netcdf(filename, unlimited_dims={'time': True})
-
-
 def add_units2ds(ds):
     """
     Add input ancillary units to xarray dataset
@@ -215,7 +104,7 @@ def add_units2ds(ds):
     unit_dict = {
         u'DOC': 'ADD THIS',
         u'DOCaccum': 'ADD THIS',
-        u'Depth_GEBCO': 'ADD THIS',
+        u'Depth_GEBCO': 'm',
         u'Prod': 'ADD THIS',
         u'SWrad': 'ADD THIS',
         u'SeaWIFs_ChlrA': "mg m$^{-3}$",
@@ -255,7 +144,6 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
     import gc
     from time import gmtime, strftime
     import time
-#    from matplotlib.mlab import griddata
     from scipy.interpolate import griddata
     # Print timings
     time_now = strftime("%c", gmtime())
@@ -279,7 +167,7 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
     yi = subY
     # Mesh grid to axes
     Xi, Yi = np.meshgrid(subX, subY)
-    # grid the data. (using matplotlib.mlab's  griddata)
+    # Grid the data. (using matplotlib.mlab's  griddata)
     # detail here: https://matplotlib.org/api/mlab_api.html#matplotlib.mlab.griddata
 #    zi = griddata(x, y, z, xi, yi, interp='linear')
     # Grid the data and interpolate (using scipys's  griddata method)
@@ -297,19 +185,22 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
 
 
 def interpolate_array_with_RBF(arr_, subX=None, subY=None):
+    """
+    Interpolate an array with the Radial bivariate function
+    """
     import gc
     from time import gmtime, strftime
     import time
     # Print timings
     time_now = strftime("%c", gmtime())
     print('Started intpolating @ {}'.format(time_now))
-    # mesh grid to axes
+    # Mesh grid to axes
     rr, cc = np.meshgrid(subX, subY)
     # Fill masked values with nans
     M = np.ma.filled(arr_, fill_value=np.nan)
-    # only consider non nan values as values to interpolate with
+    # Only consider non nan values as values to interpolate with
     vals = ~np.isnan(M)
-    # interpolate
+    # Interpolate
     f = interpolate.Rbf(rr[vals], cc[vals], M[vals], function='linear')
     # Extract interpolation...
     interpolated = f(rr, cc)
@@ -320,24 +211,26 @@ def interpolate_array_with_RBF(arr_, subX=None, subY=None):
     # Print timings
     time_now = strftime("%c", gmtime())
     print('finished intpolating @ {}'.format(time_now))
-    # return the array
+    # Return the array
     return arr_
 
 
 def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
                                 Z_data=None):
-    """ Make a 2D interpolation using RadialBasisFunctions """
+    """
+    Make a 2D interpolation using RadialBasisFunctions
+    """
     import numpy as np
     from scipy.interpolate import Rbf
     import matplotlib.pyplot as plt
-    # --- Process dataframe here for now
+    # - Process dataframe here for now
     X_locs = df['Longitude'].values
     Y_locs = df['Latitude'].values
     Z_data = df['Iodide'].values
-    # --- Degrade resolution
+    # - Degrade resolution
     if res == '1x1':
         X_COORDS, Y_COORDS, NIU = AC.get_latlonalt4res(res=res)
-    # --- Remove double ups in data for now...
+    # - Remove double ups in data for now...
     print([len(i) for i in (X_locs, Y_locs)])
     # Degrade to 1x1 resolution...
     X_locs = [int(i) for i in X_locs]
@@ -349,9 +242,9 @@ def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
     Z_data = [Z_dict[i] for i in locs]
     X_locs, Y_locs = list(zip(*locs))
     print([len(i) for i in (X_locs, Y_locs)])
-    # ---  Setup meshgrid...
+    # - Setup meshgrid...
     XI, YI = np.meshgrid(X_COORDS, Y_COORDS)
-    # --- interpolate onto this...
+    # - interpolate onto this...
     # Creating the interpolation function and populating the output matrix value
     rbf = Rbf(X_locs, Y_locs, Z_data, function='inverse')
     ZI = rbf(XI, YI)
@@ -365,58 +258,6 @@ def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
     plt.xlim(-180, 180)
     plt.ylim(-90, 90)
     plt.colorbar()
-
-
-# def mk_uniform_2D_array(df_predictors=None, target_predictions=None,
-#                         res='4x5', lon_var='Longitude', lat_var='Latitude',
-#                         target_name=None,  debug=False):
-#     """
-#     Make a uniform 2D array from df containing some lat and lon values
-#     """
-#     # recombine into a 2D array
-#     coord_vars = [df_predictors[i].values for i in (lat_var, lon_var)]
-#     df_target = pd.DataFrame(coord_vars + [target_predictions]).T
-#     df_target.columns = [lat_var, lon_var] + target_name
-#
-#     # --- Use pandas to stack array - FAILED due to double ups... - why?
-#     # load an empty dataframe with (All!) lats and lons as columns
-# #     df_template = AC.get_2D_df_of_lon_lats_and_time()
-# #     # set values to nan
-# #     fill_value = -999999.999
-# #     df_template[target_name[0]] = fill_value
-# #     df_template = df_template[columns]
-#     # fill template with values
-# #    df_template.update(df_target)
-# #    df_target = pd.DataFrame( df_template[target_name[0]].values, \
-# #        index=[df_template['lon'], df_template['lat'] ] )
-#
-#     # --- Manually build up 2D array instead
-#     # Setup zero array to fill with target data
-#     lons, lats, NIU = AC.get_latlonalt4res(res=res)
-#     arr = np.zeros((len(lons), len(lats)))
-#     # Loop months...
-# #    months =
-# #    for month_ in months
-# #    ars = []
-#     # Loop Lons
-#     for lon_ in sorted(set(df_target[lon_var].values))[::-1]:
-#         # Select values for lon_
-#         sub_df = df_target[df_target[lon_var] == lon_]
-#         # Get index for lon
-#         lon_ind = AC.get_gc_lon(lon_, res=res)
-#         if debug:
-#             print(lon_, sub_df.shape, sub_df)
-#         # Loop lats and Extract values
-#         for lat_ in sorted(sub_df[lat_var].values)[::-1]:
-#             # Get index for lon
-#             lat_ind = AC.get_gc_lat(lat_, res=res)
-#             # Select values for lon_
-#             val = sub_df[sub_df[lat_var] == lat_][target_name[0]].values[0]
-#             if debug:
-#                 print(lon_, lat_, lon_ind, lat_ind, val)
-#             # Fill in value
-#             arr[lon_ind, lat_ind] = val
-#     return arr
 
 
 def transform_from_latlon(lat, lon):
@@ -484,7 +325,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
     """
     Update attributes for iodide dataset saved as NetCDF
     """
-    # --- Coordinate and global values
+    # - Coordinate and global values
     if add_varname_attrs:
         # convert the units?
         if convert_to_kg_m3:
@@ -507,7 +348,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
         attrs_dict['_FillValue'] = float(-1e-32)
         ds[varname].attrs = attrs_dict
 
-    # --- Update Name for use in external NetCDFs
+    # - Update Name for use in external NetCDFs
     if update_varnames_to_remove_spaces:
         for var_ in ds.data_vars:
             if ' ' in var_:
@@ -520,7 +361,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
             else:
                 pass
 
-    # --- Coordinate and global values
+    # - Coordinate and global values
     if add_global_attrs:
         # for lat...
         attrs_dict = ds['lat'].attrs
@@ -600,10 +441,8 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
     """
     Add Land/Water/Ice (LWI) values to xr.DataArray
     """
-#    folderLWI = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
-#    filenameLWI = 'nature_run_lev_72_res_0.125_spec_LWI_monthly_ctm.nc'
     folderLWI = get_file_locations('AC_tools')
-    folderLWI += '/data/LM/TEMP_NASA_Nature_run/'
+    folderLWI += '/data/LM/LANDMAP_LWI_ctm_0125x0125/'
     filenameLWI = 'ctm.nc'
     LWI = xr.open_dataset(folderLWI+filenameLWI)
     # updates dates (to be Jan=>Dec)
@@ -611,7 +450,6 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
     LWI.time.values = new_dates
     # Sort by new dates
     LWI = LWI.loc[{'time': sorted(LWI.coords['time'].values)}]
-#    LWI = AC.get_land_map(res=res)[...,0]
     if inc_booleans_and_area:
         ds['IS_WATER'] = ds[var2template].copy()
         ds['IS_WATER'].values = (LWI['LWI'] == 0)
@@ -653,7 +491,7 @@ def add_LWI2ds_2x25_4x5(ds, var2template='Chance2014_STTxx2_I',
     -------
     (xr.Dataset)
     """
-    # add LWI to array
+    # Add LWI to array
     LWI = AC.get_land_map(res=res)[..., 0]
     LWI = np.array([LWI.T]*12)
     print(LWI.shape,  ds[var2template].shape)
@@ -706,7 +544,7 @@ def calc_iodide_chance2014_STTxx2_I(TEMP):
     return (0.225*(TEMP**2)) + 19.0
 
 
-def calc_iodide_chance2014_Multivariate(TEMP=None, MOD_LAT=None, NO3=None,
+def calc_i_chance2014_multivar(TEMP=None, MOD_LAT=None, NO3=None,
                                         sumMLDpt=None, salinity=None):
     """
     Take variable and returns multivariate parameterised iodide from Chance2014
@@ -962,7 +800,6 @@ def add_sklean_metrics2df(df=None, stats=None, target='Iodide',
     from sklearn.metrics import r2_score
     from sklearn.metrics import explained_variance_score as EVS
     from sklearn.metrics import median_absolute_error as MAE
-
     # Add explained_variance_score
     EVS_varname = 'EVS ({})'.format(dataset_str)
     EVS = [EVS(df[target], df[param_]) for param_ in params]

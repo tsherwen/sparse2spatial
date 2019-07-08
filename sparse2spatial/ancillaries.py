@@ -13,7 +13,7 @@ import AC_tools as AC
 
 
 def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
-                                          save2NetCDF=False):
+                                          save2NetCDF=False, debug=False):
     """
     Interpolate the NaNs in 2D arrarys of feature variables
 
@@ -29,7 +29,7 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
     """
     # Local variables
     months = np.arange(1, 13)
-    # get Dataset?
+    # Get Dataset?
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     if isinstance(ds, type(None)):
         ds = xr.open_dataset(filename)
@@ -44,9 +44,6 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
         # (only depths < 0 are of interest)
         if var == 'Depth_GEBCO':
             arr[arr >= -1.] = np.NaN
-#            arr.mask = [ arr >=-100. ]
-#            arr.mask = [ arr >=0. ]
-#            arr = np.array(arr)
         # If World ocean atlas, set 0 values as NaNs (to be interpolated later)
         # A handful of values are 0,  but not masked
         # (only MLD depths > 0 are of interest )
@@ -63,12 +60,8 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
                 months_eq = ds['time.month'].values == months
                 assert months_eq.all(), 'Months not in order!'
                 ars = [arr[i, ...] for i in range(len(months))]
-#                ars_dict = dict( zip( months, ars ) )
             else:
                 ars = [arr]
-#                ars_dict = dict( ('Annual', arr) )
-            # convert ars_dict to list
-#            ars = [ars_dict[i] for i in sorted( ars_dict.keys() ) ]
             # Select grid of interest
             subX = da['lon'].values
             subY = da['lat'].values
@@ -76,20 +69,17 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
             # MOVED TO OUTSIDE FUNCTION
             # Initialise pool to parrellise over
             p = Pool(12)
-#            keys = list( sorted(ars_dict.keys()) )
-            #
-#            print( [(i.shape, i.mean(), i.max(), i.min()) for i in ars ] )
-            print(ars[0][:5, :5])
-            # Use RBF
+            if debug:
+                print(ars[0][:5, :5])
+            # Use Radial basis functions (RBF) for interpolation (hashed out)
 #             ars = p.map( partial(interpolate_array_with_RBF, subX=subX,
 #                subY=subY, ), ars )
-            # Use interpolation of nearest on a grid
+            # Use interpolation of nearest on a grid (default)
             ars = p.map(partial(interpolate_array_with_GRIDDATA, da=da), ars)
             # close the pool
             p.close()
             # Now overwrite the values in the array
             if 'time' in coords:
-                #                da.values = np.ma.array( [ars_dict[i] in range(len(months)) ] )
                 da.values = np.ma.array(ars)
             else:
                 da.values = ars[0]
@@ -97,7 +87,6 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
         ds[var] = da.copy()
         # Clean memory
         gc.collect()
-#        del da
         # Then apply LWI mask again
         # ( ONLY FOR 100% boxes that are not islands... )
     # Now save the updated file
@@ -128,29 +117,29 @@ def Convert_DOC_file_into_Standard_NetCDF():
     """
     Make DOC file(s) from UC-SB CF compliant
     """
-    # - conver the surface DOC file into a monthly average file
+    # - convert the surface DOC file into a monthly average file
     # Directory?
     folder = get_file_locations('DOC')
-    # file str
+    # Filename as a string
     file_str = 'DOCmodelSR.nc'
     # Open dataset
     ds = xr.open_dataset(folder+file_str)
-    # ---  Force use of coordinate variables in netCDF
+    # - Force use of coordinate variables in netCDF
     ds['latitude'] = ds['LAT'][0, 0, :].values
     ds['latitude'].attrs = ds['LAT'].attrs
     ds['longitude'] = ds['LON'][0, :, 0].values
     ds['longitude'] .attrs = ds['LON'].attrs
-    # copy across depth variable and attributes
+    # Copy across depth variable and attributes
     ds['depth'] = ds['DEPTH'][:, 0, 0].values
     ds['depth'] .attrs = ds['DEPTH'].attrs
-    # --- Rename dimensions
+    # - Rename dimensions
     dims_dict = {'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
     dims = dims_dict.values()
     ds.rename(dims_dict, inplace=True)
-    # --- Only keep the variables of interest
+    # - Only keep the variables of interest
     var2keep = [u'Area', u'Vol', u'DOCmdl_avg', u'DOCmdl_std', ]
     ds = ds.drop(labels=[i for i in ds.variables if i not in var2keep+dims])
-    # --- Add history to attirubtes
+    # - Add history to attirubtes
     d = ds.attrs
     date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     hst_str = 'File structure/variables updated to CF by TMS ({}) on {}'
@@ -159,7 +148,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     d['Editting author'] = 'TMS - (tomas.sherwen@york.ac.uk)'
     d['Citation'] = 'doi.org/10.1038/s41467-017-02227-3'
     ds.attrs = d
-    # --- Save the new NetCDF file
+    # - Save the new NetCDF file
     newfile_str = file_str.split('.nc')[0]+'_TMS_EDIT.nc'
     ds.to_netcdf(folder + newfile_str)
 
@@ -168,26 +157,26 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     """
     Convert Saeed Roshan's file into CF compliant format
     """
-    # - conver the surface DOC file into a monthly average file
+    # - convert the surface DOC file into a monthly average file
     # Directory?
     folder = get_file_locations('DOC')
-    # file str
+    # Filename as a string
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
     ds = xr.open_dataset(folder+file_str)
-    # ---  Force use of coordinate variables in netCDF
+    # - Force use of coordinate variables in netCDF
     ds['latitude'] = ds['lat'][0, :].values
     ds['latitude'].attrs = ds['lat'].attrs
     ds['longitude'] = ds['lon'][:, 0].values
     ds['longitude'] .attrs = ds['lon'].attrs
-    # --- Rename dimensions
+    # - Rename dimensions
     dims_dict = {'latitude': 'lat', 'longitude': 'lon'}
     # - Only keep the variables of interest
     var2keep = [u'DOCaccum_avg', u'DOCaccum_std', ]
     var2keep += dims_dict.keys()
     ds = ds.drop(labels=[i for i in ds.variables if i not in var2keep])
     ds.rename(dims_dict, inplace=True)
-    # --- Add history to attirubtes
+    # - Add history to attirubtes
     d = ds.attrs
     date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     hst_str = 'File structure/variables updated to CF by TMS ({}) on {}'
@@ -196,7 +185,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     d['Editting author'] = 'TMS - (tomas.sherwen@york.ac.uk)'
     d['Citation'] = 'doi.org/10.1038/s41467-017-02227-3'
     ds.attrs = d
-    # --- Save the new NetCDF file
+    # - Save the new NetCDF file
     newfile_str = file_str.split('.nc')[0]+'_TMS_EDIT.nc'
     ds.to_netcdf(folder + newfile_str)
 
@@ -207,7 +196,7 @@ def mk_RAD_NetCDF_monthly():
     """
     # Directory?
     folder = get_file_locations('GFDL')
-    # File str
+    # Filename as a string
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
     # Resample to monthly
@@ -240,10 +229,6 @@ def mk_NetCDF_from_productivity_data():
     for n in range(12):
         # Assume the data is in blocks by longitude?
         arr = df.values[:, n*1081: (n+1)*1081].T[None, ...]
-        # Assume the data is in blocks by month
-        #  Not the case!
-#        arr = df.values[:,n::12] # Not the case!
-#        arr = arr.T[None,...] # Not the case!
         print(arr.shape)
         da_l += [xr.Dataset(
             data_vars={varname: (['time', 'lat', 'lon', ], arr)},
@@ -274,7 +259,7 @@ def mk_NetCDF_from_productivity_data():
         "axis": "Y",
     }
     ds['lat'].attrs = attrs_dict
-    # and longitude...
+    # And longitude...
     attrs_dict = {
         'long_name': "longitude",
         'units': "degrees_east",
@@ -324,21 +309,21 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     # variables for
     MLD_vars = ['pt', 'pd', 'vd']
     folder = get_file_locations('WOA_1994')
-    # --- loop MLD variables.
+    # - Loop MLD variables
     for var_ in MLD_vars:
         file_str = 'mld*{}*'.format(var_)
         files = sorted(glob.glob(folder+file_str))
         print(files)
-        # loop files and extract data as an arrayu
+        # Loop files and extract data as an arrayu
         ars = []
         for file in files:
             # values are assume to have been outputed in a row major way
             # e.g. (lon, lat)
             # open
             with open(file, 'rb') as file_:
-                # extract all values.
+                # Extract all values
                 lines = [i.split() for i in file_]
-                # convert to floats (and masked values (e.g. "-") to NaN ),
+                # Convert to floats (and masked values (e.g. "-") to NaN ),
                 # the concatenate to "big" list
                 big = []
                 for n, line in enumerate(lines):
@@ -348,28 +333,26 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
                         except ValueError:
                             value = np.NaN
                         big += [value]
-            # now reshape
+            # Now reshape
             ars += [np.ma.array(big).reshape((180, 360)).T]
             # Debug (?) by showing 2D grid
             if debug:
                 plt.pcolor(np.arange(0, 360), np.arange(0, 180),  ars[0])
                 plt.colorbar()
                 plt.show()
-#                sys.exit()
-        # force to be in COARDS format? (e.g. lat, lon) instead of (lon, lat)
+        # Force to be in COARDS format? (e.g. lat, lon) instead of (lon, lat)
         ars = [i.T for i in ars]
-        # fill nans with _fill_value,
+        # Fill nans with _fill_value,
         ars = [np.ma.filled(i, fill_value=_fill_value) for i in ars]
-        # then convert to numpy array...
+        # Then convert to numpy array...
         ars = [np.array(i) for i in ars]
         print([type(i) for i in ars])
-        # force dates
+        # Force dates
         dates = [datetime.datetime(1985, 1, i+1) for i in range(12)]
-#        lons = np.arange(-180+0.5, 180+0.5,1)
         lons = np.arange(0+0.5, 360+0.5, 1)
         lats = np.arange(-90+0.5, 90+0.5, 1)
         res = '1x1'
-        # save to NetCDF
+        # Save to NetCDF
         AC.save_2D_arrays_to_3DNetCDF(ars=ars, dates=dates, varname=var_,
                                       res=res,
                                       filename='WOA94_MLD_1x1_{}'.format(var_),
@@ -384,7 +367,7 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
     Download all data for a given species at a given resolution
 
     NOTES:
-     - use level=71  for lowest level!
+     - use level=71 for lowest level
      (NetCDF is ordered the oposite way, python 0-71. Xarray numbering makes
      this level=72)
      (or use dictionary through xarray)
@@ -395,18 +378,13 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
 #    url_str = root_url+'12.5km/{}_deg/inst/inst1_3d_TRC{}_Nv'.format(res,spec)
     url_str = root_url+'12.5km/{}_deg/tavg/tavg1_2d_chm_Nx'.format(res)
     # Where should i save the data?
-#    save_dir = '/work/home/ts551/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'
     save_dir = get_file_locations('data_root') + '/NASA/LWI/'
-#    save_dir = '/shared/earth_home/ts551/'
-#    save_dir += '/YARCC_TEMP_DIR_ON_EARTH0/data/NASA/LWI/'
     # - Open dataset via URL with xarray
     # Using xarray (issues found with NASA OpenDAP data model - via PyDAP)
     ds = xr.open_dataset(url_str)
     if verbose:
         print(ds, '\n\n\n')
     # Get list of (all) doys to extract (unless provided as argv.)
-#    months_list = list(set(ds['time.month'].values))
-#    weeks_list = list(set(ds['time.week'].values))
     if isinstance(doys_list, type(None)):
         doys_list = list(set(ds['time.dayofyear'].values))
     # Variable to extract?
@@ -420,7 +398,6 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
     time = ds.time
     # - loop days of year (doy)
     # Custom mask
-
     def is_dayofyear(doy):
         return (doy == doy_)
     # Loop doys

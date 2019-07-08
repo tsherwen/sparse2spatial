@@ -83,7 +83,7 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
             features_used = model_feature_dict[model_name]
             n_estimators = hyperparam_dict['n_estimators']
             oob_score = hyperparam_dict['oob_score']
-            # select and split variables in the training and test dataset
+            # Select and split variables in the training and test dataset
             train_set_tr = df.loc[df[testset] != True, features_used]
             train_set_tr_labels = df.loc[df[testset] != True, target]
             # Build model (Setup and fit)
@@ -107,7 +107,7 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
                     assert Npkls == 0, 'WARNING: model files exist!'
                 else:
                     pass
-                # Save models...
+                # Save models as pickles
                 model_savename = "my_model_{:0>4}.pkl".format(n_model_name)
                 try:
                     joblib.dump(model, folder+model_savename)
@@ -118,13 +118,13 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
             # force local tidy of garbage
             gc.collect()
 
-    # -  Loop model and predict for all values
+    # - Loop model and predict for all values
     # If time to make models too great, then read-in here and 'rm' from above
     for n_model_name, model_name in enumerate(model_names):
         # Get testing features and hyperparameters to build model
         features_used = model_feature_dict[model_name]
         print(n_model_name, model_name, features_used)
-        # read from disk
+        # Read models from disk?
         if (not save_model_to_disk) and (read_model_from_disk):
             model_savename = "my_model_{:0>4}.pkl".format(n_model_name)
             model = joblib.load(folder+model_savename)
@@ -171,15 +171,15 @@ def get_features_used_by_model(models_list=None, RFR_dict=None):
     # Get dictionary of shared data if not provided
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
-    # get models to use (assume top models, if not provided)
+    # Get models to use (assume top models, if not provided)
     if isinstance(models_list, type(None)):
         models_list = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
-    # now plot up in input variables
+    # Now plot up in input variables
     features_used_dict = RFR_dict['features_used_dict']
     vars2use = []
     for model_name in models_list:
         vars2use += [features_used_dict[model_name].split('+')]
-    # remove double ups
+    # Remove double ups
     vars2use = [j for i in vars2use for j in i]
     return list(set(vars2use))
 
@@ -223,38 +223,6 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
         return list(stats.T[params2inc].T.head(n).index)
     else:
         return list(stats.head(n).index)
-
-
-# def get_choosen_model_from_features_selection(rtn_features=True):
-#     """
-#     Load choosen model and retrieve its testing features
-#
-#     Parameters
-#     -------
-#
-#     Returns
-#     -------
-#
-#     Notes
-#     -----
-#     """
-#     from sklearn.externals import joblib
-#     import glob
-#     # load best estimator model
-#     s2s_root = utils.get_file_locations('s2s_root')
-#     folder = '{}/{}/models/LIVE/CHOOSEN_MODEL/'.format(s2s_root, target)
-#     prefix = 'my_model_'
-#     model_savename = glob.glob(folder+prefix+"*.pkl")
-#     N = len(model_savename)
-#     assert N == 1, 'There should be only one choosen model! Not {}'.format(N)
-#     model_savename = model_savename[0]
-#     name = model_savename.split(prefix)[1][:-4]
-#     model = joblib.load(model_savename)
-#     # Return model and variables as dict
-#     mdict = {'model': model, 'name': name}
-#     if rtn_features:
-#         mdict['features_used'] = get_model_features_used_dict(name)
-#     return mdict
 
 
 def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
@@ -314,7 +282,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
             # Get testing features
             features_used = features_used_dict[model_name].split('+')
             # -  Get the data
-            # ( Making sure to remove the target!!! )
+            # ( Make sure to remove the target )
     #        train_features = df[features_used].loc[ train_set.index  ]
     #        train_labels = df[[target]].loc[ train_set.index  ]
             test_features = df[features_used].loc[test_set.index]
@@ -333,7 +301,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
                 quick_model_evaluation(OPmodel, test_features, test_labels)
             except:
                 pass
-    # - Test the tuned models against the training set
+        # - Test the tuned models against the training set
         # Get the core data
         df = RFR_dict['df']
         # get the data
@@ -664,7 +632,6 @@ def define_hyperparameter_options2test(features_used=None,
                 'bootstrap': [True],
             }
     # Check the number of variations being tested
-
     def prod(iterable):
         import operator
         return reduce(operator.mul, iterable, 1)
@@ -775,7 +742,7 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     s2s_root = utils.get_file_locations('s2s_root')
     folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
     folder = folder_str.format(s2s_root, target, extr_str)
-    # - Make a da for each model
+    # - Make a dataset for each model
     ds_l = []
     # Get list of twenty models built
     models_str = folder + '*{}*.pkl'.format(model2use)
@@ -874,7 +841,7 @@ def mk_testing_training_sets(df=None, target='Iodide',
     # - make Test and training set
     # to make this approach's output identical at every run
     np.random.seed(42)
-    # --- Standard random selection:
+    # - Standard random selection:
     if rand_20_80:
         from sklearn.model_selection import train_test_split
         # Use a standard 20% test set.
@@ -902,7 +869,7 @@ def mk_testing_training_sets(df=None, target='Iodide',
             df[SPLITvar] = ceil_ln_limited
         else:
             # Use decals and put the bins with high values to together
-            # NOTE: use quartile cut! (pd.qcut, not pd.cut)
+            # NOTE: use quartile cut (pd.qcut, not pd.cut)
             #            df[SPLITvar] = pd.cut(df[target].values,10).codes.astype(int)
             # Combine the lesser populated higher 5 bins into the 5th bin
             #            df.loc[ df[SPLITvar] >= 4, SPLITvar ] = 4
@@ -921,7 +888,6 @@ def mk_testing_training_sets(df=None, target='Iodide',
             test_set_targets = df[[target]].loc[test_index]
         # Gotcha for changes in array index
         Na = df[~df.index.isin(train_index.tolist() + test_index.tolist())]
-#        assert (Na.shape[0] < 0), 'WARING: thre now NaNs in the arrays! - {}'
         if (Na.shape[0] < 0):
             print('WARNING'*20)
             print(Na)
@@ -948,68 +914,6 @@ def mk_testing_training_sets(df=None, target='Iodide',
 #        print('select a method for making the test dataset')
 #        sys.exit()
     return train_set, test_set, test_set_targets
-
-
-# def get_current_model(dir=None, extr_str=''):
-#     """
-#     Load the saved model being used by this work - REDUNDENT
-#     """
-#     from sklearn.externals import joblib
-#     # Get the location of the saved model and load it
-#     if isinstance(dir, type(None)):
-#         s2s_root = utils.get_file_locations('s2s_root')
-#         folder = '{}/{}/models/'.format(s2s_root, target)
-#     model_savename = "my_model_{}.pkl".format(extr_str)
-#     return joblib.load(folder+model_savename)
-
-
-# def get_predict_lat_lon_array(res='4x5', month=9):
-#     """
-#     Load extracted predictor array - REDUNDENT
-#
-#     Parameters
-#     -------
-#     res (str), horizontal resolution of dataset (e.g. 4x5)
-#     month (int), integer month between 1 (Jan) and 12 (Dec)
-#
-#     Returns
-#     -------
-#     (pd.DataFrame)
-#     """
-#     # get file of predictor values for res and month
-#     filename = 'Oi_prj_predictor_values_{}_month_num_{}'.format(res, month)
-#     if res == '4x5':
-#         filename += '_TEST'
-#     filename += '.csv'
-#     folder = utils.get_file_locations('data_root')
-#     folder += 'Oi_prj_predictor_files_by_month_{}/'.format(res)
-#     df = pd.read_csv(folder+filename)
-#     # make sure the variables have the same names
-#     rename_dict = {'lat': 'Latitude', 'lon': 'Longitude'}
-#     df.rename(columns=rename_dict, inplace=True)
-#     # Make sure the input variables are numeric
-#     num_params = ['WOA_Nitrate', 'WOA_Salinity', 'WOA_TEMP', 'SeaWIFs_ChlrA']
-#     for param in num_params:
-#         df[param] = pd.to_numeric(df[param].values, errors='coerce')
-#     # Add modulus if not in array
-#     mod_var = 'Latitude (MOD)'
-#     if not (mod_var in df.columns):
-#         df[mod_var] = (df[u'Latitude']**2)**0.5
-#     # Add TEMP_K if not in array
-#     TEMP_var = 'WOA_TEMP'
-#     if not (TEMP_var+'_K' in df.columns):
-#         df[TEMP_var+'_K'] = df[TEMP_var].values + 273.15
-#     # Force values to be numerics
-#     for col in df.columns:
-#         df[col] = pd.to_numeric(df[col], errors='coerce')
-#     # Drop NaNs (e.g. bits over land...
-#     df_dropped = df.dropna()
-#     if (df.shape != df_dropped.shape):
-#         ptr_str = 'WARNING droppped values {} => {}'
-#         print(ptr_str.format(df.shape, df_dropped.shape))
-#         df = df_dropped
-#     # Return DataFrane
-#     return df
 
 
 def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',

@@ -42,7 +42,7 @@ def add_Longhurst_Province_raster_to_array(ds):
     ds_tmp = ds[list(ds.data_vars)[0]].copy().mean(dim='time')
     # Add raster the provinces onto this
     ds_tmp['LonghurstProvince'] = rasterize(shapes, ds_tmp.coords)
-    # Then
+    # Then update the variable
     ds['LonghurstProvince'] = ds_tmp['LonghurstProvince']
     # Add Some attributes
     attrs = {
@@ -82,13 +82,9 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
     # get dictionary of province numbers
     Rnum2prov = RosieLonghurstProvinceFileNum2Province(
         None, invert=True, rtn_dict=True)
-    # use an existing variables as a template
-#	var2use = 'WOA_TEMP'
-#	df = ds[var2use].mean(dim='time')
-#	df = ds[var2use].mean(dim='time').to_pandas()
-    # get lats
+    # Get latitudes
     DSlats = ds[LatVar].values
-    # get lons
+    # Get longitudes
     DSlons = ds[LonVar].values
     # Get all lats and make a long form of the coords.
     lats = []
@@ -98,70 +94,55 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
         for lon in DSlons:
             lats += [lat]
             lons += [lon]
-#			coords += [ (lon,lat) ]
-    # make into a DataFrame
+    # Make into a DataFrame
     df = pd.DataFrame()
     df[LatVar] = lats
     df[LonVar] = lons
-#	df[CoordVar] = coords
     # Add a single variable for the coordinate
-
     def f(x):
         return (x[LonVar], x[LatVar])
     df[CoordVar] = df.apply(f, axis=1)
     # map the calculation of provinces
-
     def GetProv(x):
         return Get_LonghurstProvince4coord(x[CoordVar], provinces=provinces,
                                            num2prov=Rnum2prov, tree=tree, verbose=False)
     df[CoordVar] = df.apply(GetProv, axis=1)
-    # kludge test
-    df.to_csv('Intial_test_{}_{}.csv'.format(res, ExStr))
-
-    # construct DataFrame by unstacking
+    # Construct DataFrame by unstacking
     lat = df[LatVar].values
     lon = df[LonVar].values
     vals = df[CoordVar].values
     df = pd.DataFrame(vals, index=[lat, lon]).unstack()
     df.to_csv('Intial_test_{}_processed_{}.csv'.format(res, ExStr))
-
-    # convert to Dataset
-#	ds[CoordVar] = df.values
-#	ds[CoordVar]
+    # Convert to Dataset
     ds = xr.Dataset(data_vars={CoordVar: (['lat', 'lon', ], df.values)},
                     coords={'lat': DSlats, 'lon': DSlons, })
 
-    # Just
-#	ds = ds[ [CoordVar] ]
+    # Save as NetCDF file
     ds.to_netcdf('Intial_test_{}_netCDF_{}.nc'.format(res, ExStr))
-    # save without time dimension
 
 
 def add_LonghurstProvince2table(df, LatVar='Latitude', LonVar='Longitude'):
-    """ Add numbers for Longhurst provenience to DataFrame """
+    """
+    Add numbers for Longhurst provenience to DataFrame
+    """
     # Get xml data  for provinces
     provinces, tree = ParseLonghurstProvinceFile()
     # Get the observational data
     if isinstance(df, type(None)):
         df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
-#	num2prov = LonghurstProvinceFileNum2Province( None, invert=True, rtn_dict=True )
     Rnum2prov = RosieLonghurstProvinceFileNum2Province(
         None, invert=True, rtn_dict=True)
-
     # - Work with the provinces
     # Add a single variable for the coordinate
     CoordVar = 'Coord'
-
     def f(x):
         return (x[LonVar], x[LatVar])
     df[CoordVar] = df.apply(f, axis=1)
     # map the calculation of provinces
-
     def GetProv(x):
         return Get_LonghurstProvince4coord(x[CoordVar], provinces=provinces,
                                            num2prov=Rnum2prov, tree=tree, verbose=False)
     df['MIT Province'] = df.apply(GetProv, axis=1)
-
     # Provence name
     df['PName (R)'] = df['Province'].map(
         RosieLonghurstProvinceFileNum2Province)
@@ -169,7 +150,7 @@ def add_LonghurstProvince2table(df, LatVar='Latitude', LonVar='Longitude'):
         RosieLonghurstProvinceFileNum2Province)
 
     # - Check the assignment
-    # how many are just the same?
+    # How many are just the same?
     bool = df['MIT Province'] == df['Province']
     PrtStr = '#={}  ({:.2f}%) are the calculated to be the same thing '
     Ns = float(df.loc[bool, :].shape[0])
@@ -179,7 +160,7 @@ def add_LonghurstProvince2table(df, LatVar='Latitude', LonVar='Longitude'):
     Nnan = float(df['Province'].dropna().shape[0])
     PrtStr = 'The % non matching, observations without provinces #={} ({:.2f}%)'
     print(PrtStr.format(N-Nnan, (N-Nnan)/N*100))
-    # the locations where both assignments have been made?
+    # The locations where both assignments have been made?
     dfT = df.loc[np.isfinite(df['Province']), :]
     # For certain points the new approach failed.
     tmp = dfT.loc[~np.isfinite(dfT['MIT Province']), :]
@@ -194,138 +175,23 @@ def add_LonghurstProvince2table(df, LatVar='Latitude', LonVar='Longitude'):
     # What data sets contribute to this
     PrtStr = 'Datasets contributing to these numbers: {}'
     print(PrtStr.format(', '.join(set(tmp['Data_Key']))))
-
-    # for others, the assigned provinces differed
+    # For others, the assigned provinces differed
     bool = dfT['MIT Province'] != dfT['Province']
     vars2use = [u'Data_Key', 'MIT Province',
                 'Province', 'PName (MIT)', 'PName (R)']
     tmp = dfT.loc[bool, :][vars2use].dropna()
-    #
+    # Print the differences to screen
     print("When assignment differs - The MIT method gives:")
     PrtStr = "MIT:'{}' ({}), but R gives '{}' ({})"
-
     for prov in list(set(tmp['PName (R)'])):
         tmp_ = tmp.loc[tmp['PName (R)'] == prov, :]
         for idx in tmp_.index:
             MITp_ = tmp_.loc[tmp_.index == idx, :]['PName (MIT)'].values[0]
             print(PrtStr.format(MITp_, Get_LonghurstProvinceName4Num(MITp_),
                                 prov, Get_LonghurstProvinceName4Num(prov)))
-
     # What data sets contribute to this
     PrtStr = 'Datasets contributing to these numbers: {}'
     print(PrtStr.format(', '.join(set(tmp['Data_Key']))))
-
-
-# def Get_LonghurstProvince4coord(coords, myLon=None, myLat=None,  provinces=None,
-#                                 tree=None, num2prov=None, verbose=False):
-#     """
-#     Get the Longhurst Province - REDUNDENT AND NOT IN USE
-#
-#     Notes
-#     -----
-#
-#     coords (tuple), (LON, LAT) Easterly longitude ranging from -180 to 180,
-#     Northerly latitude ranging from -90 to 90
-#
-#     Note orginal code is from X.
-#      -  code hosted as below
-#     https://github.com/thechisholmlab/Longhurst-Province-Finder
-#      - original documentation for COORDS2LONGHURST
-#     This script takes as input latitude and longitude coordinates and returns the
-#     Longhurst Province where the coordinate is found.  It works by parsing a file that
-#     contains lat/long coordinates that bound each province and performing the Crossings Test
-#     on each province.  The Crossings Test is used in computer graphics to quickly
-#     determine if a point is within or outside a polygon by "drawing" a line east from the
-#     input coordinate and seeing how many crossings the line makes with the polygon border.
-#     If there is an odd number of crossings, the point is within the polygon, otherwise the
-#     point is outside the polygon.
-#
-#     """
-#     from xml.dom.minidom import parse, parseString
-#
-#     # - Get lat and lon from coords tuple if not provided individual
-#     if isinstance(myLon, type(None)) or isinstance(myLat, type(None)):
-#         myLon, myLat = coords
-#     # Parse GML data from longhurst.xml - if not provided
-#     if isinstance(provinces, type(None)):
-#         provinces, tree = ParseLonghurstProvinceFile()
-#     # Find which candidate provinces our coordinates come from.
-#     inProvince = {}
-#     for p in provinces:
-#         inLat = 0
-#         inLon = 0
-#         if (myLat >= provinces[p]['y1'] and myLat <= provinces[p]['y2']):
-#             inLat = 1
-#         if (myLon >= provinces[p]['x1'] and myLon <= provinces[p]['x2']):
-#             inLon = 1
-#         if inLat and inLon:
-#             inProvince[p] = True
-#
-#     # Perform Crossings Test on each candidate province.
-#     for node in tree.getElementsByTagName('MarineRegions:longhurst'):
-#         fid = node.getAttribute("fid")
-#         if inProvince.get(fid):
-#             crossings = 0
-#             # 1. Get all coordinate pairs for this province.
-#             geom = node.getElementsByTagName('MarineRegions:the_geom')
-#             for g in geom:
-#                 c = g.getElementsByTagName('gml:coordinates')
-#                 for i in c:
-#                     ii = i.childNodes
-#                     coordStr = ii[0].data  # <--- contains coordinate strings
-#                     P = coordStr.split(' ')
-#                     pairs = []
-#                     for p in P:
-#                         [lon, lat] = p.split(',')
-#                         pairs.append([float(lon), float(lat)])
-#                     # 2. Use pair p and p+1 to perform Crossings Test.
-#                     for i in range(len(pairs)-1):
-#                         # test latitude
-#                         passLat = (pairs[i][1] >= myLat and pairs[i+1][1] <= myLat) or (
-#                             pairs[i][1] <= myLat and pairs[i+1][1] >= myLat)
-#                         # test longitude
-#                         passLon = (myLon <= pairs[i+1][0])
-#                         if passLon and passLat:
-#                             crossings += 1
-#             if crossings % 2 == 1:
-#                 inProvince[fid] = True
-#             else:
-#                 inProvince[fid] = False
-#
-#     # Confirm the solution
-#     solution = []
-#     for i in inProvince:
-#         if inProvince[i] == True:
-#             solution.append([provinces[i]['provCode'],
-#                              provinces[i]['provName']])
-#     # No solutions?
-#     if len(solution) == 0:
-#         if verbose:
-#             print()
-#             print('No province found matching ', myLat, 'N, ', myLon, 'E.  ')
-#             print('This coordinate is either on land or it could be in one of these... ')
-#             for i in inProvince:
-#                 print(provinces[i]['provCode'], '\t', provinces[i]['provName'])
-#             print()
-#         return np.NaN
-#     # one solution
-#     elif len(solution) == 1:
-#         if verbose:
-#             print()
-#             print(myLat, 'N, ', myLon, 'E -->  ',
-#                   solution[0][0], '\t', solution[0][1])
-#             print()
-# #		return solution[0][0]
-#         return num2prov[solution[0][0]]
-#     # mutiple solutions
-#     elif len(solution) > 1:
-#         if verbose:
-#             print()
-#             print('Conflict between these provinces... ')
-#             for i in solution:
-#                 print(solution[0][0], '\t', solution[0][1])
-#             print()
-#         return np.NaN
 
 
 def ParseLonghurstProvinceFile():
@@ -337,7 +203,6 @@ def ParseLonghurstProvinceFile():
      - This code is copied from elsewhere and not used...
     Original code: https://github.com/thechisholmlab/Longhurst-Province-Finder
     """
-#	from xml.dom.minidom
     from xml.dom.minidom import parse, parseString
     provinces = {}
     tree = parse('longhurst.xml')
@@ -382,7 +247,8 @@ def LonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
      - these are not the longhurst numbers (just number within MIT list)
     """
     num2prov = {
-        1: u'FKLD', 2: u'CHIL', 3: u'TASM', 4: u'BRAZ', 5: u'SATL', 6: u'EAFR', 7: u'AUSW',
+        1: u'FKLD', 2: u'CHIL', 3: u'TASM', 4: u'BRAZ', 5: u'SATL', 6: u'EAFR',
+        7: u'AUSW',
         8: u'AUSE', 9: u'ISSG', 10: u'BENG', 11: u'ARCH', 12: u'SUND', 13: u'GUIN',
         14: u'PEQD', 15: u'MONS', 16: u'ETRA', 17: u'CNRY', 18: u'GUIA', 19: u'ARAB',
         20: u'WTRA', 21: u'KURO', 22: u'NECS', 23: u'NASE', 24: u'PSAE', 25: u'CHIN',
@@ -423,7 +289,8 @@ def MarineRegionsOrg_LonghurstProvinceFileNum2Province(input, invert=False,
     http://www.marineregions.org/sources.php#longhurst
     """
     num2prov = {
-        0: u'BPLR', 1: u'ARCT', 2: u'SARC', 3: u'NADR', 4: u'GFST', 5: u'NASW', 6: u'NATR',
+        0: u'BPLR', 1: u'ARCT', 2: u'SARC', 3: u'NADR', 4: u'GFST', 5: u'NASW',
+        6: u'NATR',
         7: u'WTRA', 8: u'ETRA', 9: u'SATL', 10: u'NECS', 11: u'CNRY', 12: u'GUIN',
         13: u'GUIA', 14: u'NWCS', 15: u'MEDI', 16: u'CARB', 17: u'NASE', 18: u'BRAZ',
         19: u'FKLD', 20: u'BENG', 21: u'MONS', 22: u'ISSG', 23: u'EAFR', 24: u'REDS',
@@ -464,12 +331,18 @@ def RosieLonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
     Rnum2prov = {
         1: 'BPLR', 2: 'ARCT', 3: 'SARC', 4: 'NADR', 5: 'GFST', 6: 'NASW', 7: 'NATR',
         8: 'WTRA', 9: 'ETRA', 10: 'SATL', 11: 'NECS', 12: 'CNRY', 13: 'GUIN', 14: 'GUIA',
-        15: 'NWCS', 16: 'MEDI', 17: 'CARB', 18: 'NASE', 19: 'CHSB', 20: 'BRAZ', 21: 'FKLD',
-        22: 'BENG', 30: 'MONS', 31: 'ISSG', 32: 'EAFR', 33: 'REDS', 34: 'ARAB', 35: 'INDE',
-        36: 'INDW', 37: 'AUSW', 50: 'BERS', 51: 'PSAE', 52: 'PSAW', 53: 'KURO', 54: 'NPPF',
-        55: 'NPSE', 56: 'NPSW', 57: 'OCAL', 58: 'TASM', 59: 'SPSG', 60: 'NPTG', 61: 'PNEC',
-        62: 'PEQD', 63: 'WARM', 64: 'ARCH', 65: 'ALSK', 66: 'CCAL', 67: 'CAMR', 68: 'CHIL',
-        69: 'CHIN', 70: 'SUND', 71: 'AUSE', 72: 'NEWZ', 80: 'SSTC', 81: 'SANT', 82: 'ANTA',
+        15: 'NWCS', 16: 'MEDI', 17: 'CARB', 18: 'NASE', 19: 'CHSB', 20: 'BRAZ',
+        21: 'FKLD',
+        22: 'BENG', 30: 'MONS', 31: 'ISSG', 32: 'EAFR', 33: 'REDS', 34: 'ARAB',
+        35: 'INDE',
+        36: 'INDW', 37: 'AUSW', 50: 'BERS', 51: 'PSAE', 52: 'PSAW', 53: 'KURO',
+        54: 'NPPF',
+        55: 'NPSE', 56: 'NPSW', 57: 'OCAL', 58: 'TASM', 59: 'SPSG', 60: 'NPTG',
+        61: 'PNEC',
+        62: 'PEQD', 63: 'WARM', 64: 'ARCH', 65: 'ALSK', 66: 'CCAL', 67: 'CAMR',
+        68: 'CHIL',
+        69: 'CHIN', 70: 'SUND', 71: 'AUSE', 72: 'NEWZ', 80: 'SSTC', 81: 'SANT',
+        82: 'ANTA',
         83: 'APLR', 99: 'LAKE'
     }
     # Invert?
