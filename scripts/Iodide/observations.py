@@ -13,9 +13,12 @@ python observations.py
 Citations
 -------
 
+ - Data descriptor paper on sea-surface observations
 “Global sea-surface iodide observations, 1967-2018”, R. J. Chance, L. Tinel, T. Sherwen , et al., in review, 2019
 
-Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data Discuss., https://doi.org/10.5194/essd-2019-40, in review, 2019.
+ - observational data archived at British Oceanographic Data Centre (BODC)
+Chance R.; Tinel L.; Sherwen T.; Baker A.; Bell T.; Brindle J.; Campos M.L.A.M.; Croot P.; Ducklow H.; He P.; Hoogakker B.; Hopkins F.E.; Hughes C.; Jickells T.; Loades D.; Reyes Macaya D.A.; Mahajan A.S.; Malin G.; Phillips D.P.; Sinha A.K.; Sarkar A.; Roberts I.J.; Roy R.; Song X.; Winklebauer H.A.; Wuttig K.; Yang M.; Zhou P.; Carpenter L.J.(2019). Global sea-surface iodide observations, 1967-2018. British Oceanographic Data Centre - Natural Environment Research Council, UK. doi:10/czhx.
+
 
 Notes
 -------
@@ -74,40 +77,6 @@ def main(add_ancillaries=True):
 
 
 
-# def get_coastal_flag(df=None, Salinity_var='WOA_Salinity',
-#                      coastal_flag='coastal_flagged'):
-#     """
-#     Flag data if coastal (Chance et al 2014)
-#
-#     Parameters
-#     -------
-#
-#     Returns
-#     -------
-#     (pd.DataFrame)
-#
-#     Notes
-#     -----
-#      - This function is redundent. All values in data files now have a coastal flag.
-#     """
-#     # Setup a flag
-#     df[coastal_flag] = 0
-#     # For Chance et al data use coastal flag
-# #    Chance_flagged = np.isfinite( df['Coastal'] )
-# #    df.loc[ Chance_flagged, coastal_flag] = df['Coastal'].values
-#     df[coastal_flag] = df['Coastal'].values
-#     # for new data use Chance et al rule
-#     meta_df = get_iodide_obs_metadata()
-#     New_datasets = meta_df.loc[meta_df['In Chance2014?'] == 'N'].Data_Key
-#     n_bool = df['Data_Key'].isin(New_datasets)
-#     S_bool = df[Salinity_var] < 30
-#     # Set values to non-coastal as default
-#     df.loc[n_bool, coastal_flag] = 0
-#     # Where values are New and high salinity, set to coastal
-#     df.loc[n_bool & S_bool, coastal_flag] = 1.0
-#     return df
-
-
 def get_processed_df_obs_mod(reprocess_params=False,
                              filename='Iodine_obs_WOA.csv',
                              rm_Skagerrak_data=False,
@@ -121,7 +90,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
     file_and_path (str): folder and filename with location settings as single str
     rm_Skagerrak_data (boolean): remove the single data from the Skagerrak region
     reprocess_params (bool):
-    filename (str):
+    filename (str): name of the input file of processed observational data
     verbose (bool): print verbose statements
     debug (bool): print debug statements
 
@@ -137,10 +106,6 @@ def get_processed_df_obs_mod(reprocess_params=False,
     # Add SST in Kelvin too
     if 'WOA_TEMP_K' not in df.columns:
         df['WOA_TEMP_K'] = df['WOA_TEMP_K'].values + 273.15
-    # Add a flag for coastal values
-#     coastal_flagged = 'coastal_flagged'
-#     if coastal_flagged not in df.columns:
-#         df = get_coastal_flag(df=df)
     # Make sure month is numeric (if not given)
     month_var = 'Month'
     NaN_months_bool = ~np.isfinite(df[month_var].values)
@@ -231,10 +196,6 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
         print('File saved to: ', folder+filename)
 
 
-# ---------------------------------------------------------------------------
-# ---------------- Iodide obs. processing/extraction/input testing ----------
-# ---------------------------------------------------------------------------
-
 def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     """
     Get Rosies observation data
@@ -242,7 +203,7 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     Parameters
     -------
     file_and_path (str): folder and filename with location settings as single str
-    debug (bool): print debug statements
+    debug (bool): print debugging to screen
 
     Returns
     -------
@@ -253,14 +214,14 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
      - This assumes that core data is "surface data" above 20m
      - only considers rows of csv where there is iodine data.
     """
-    # ---- get file
-    # directory to use?
+    # - Get file observational file
+    # Directory to use?
     folder = get_file_locations('data_root', file_and_path=file_and_path)
-    # filename for <20m iodide data?
+    # Filename for <20m iodide data?
     f = 'Iodide_data_above_20m.csv'
-    # Get data as DataFrame
+    # Open data as DataFrame
     df = pd.read_csv(folder+f)
-    # ---- process
+    # - Process the input observational data
     # list of core variables
     core_vars = [
         'Ammonium', 'Chl-a', 'Cruise', 'Data_Key', 'Data_Key_ID', 'Date', 'Day',
@@ -276,7 +237,6 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     # Just select core variables
     df = df[core_vars]
     # Remove datapoints that are not floats
-
     def make_sure_values_are_floats(x):
         """
         Some values in the dataframes are "nd" or "###?". remove these.
@@ -286,9 +246,7 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
         except:
             x = np.NaN
         return x
-    # Loop none Hue columns
-#    sub_set_no_hue = [ i for i in sub_set if (i != 'Data_Key') ]
-    # this should be done more pythoncally!
+    # TODO: Make this more pythonic
     make_data_floats = [
         'Ammonium', 'Chl-a', 'Iodate', 'Iodide', 'Latitude', 'Longitude', 'MLD',
         'MLD(vd)', 'Month', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity',
@@ -305,9 +263,6 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     # Only consider rows where there is iodide data (of values from <20m N=930)
     if debug:
         print('I- df shape (inc. NaNs): {}'.format(str(df.shape)))
-#    df = df[ df['Iodide'] != np.NaN ]
-#    df[0, 'Iodide'] = df['Iodide'].astype(np.float)
-#    df = df[ df['Iodide'] == float   ]
     df = df[np.isfinite(df['Iodide'])]
     if debug:
         print("I- df post rm'ing NaNs: {}".format(str(df.shape)))
@@ -338,6 +293,14 @@ def get_iodide_obs(just_use_submitted_data=False,
 
     Parameters
     -------
+    just_use_submitted_data (bool), just use the data submitted for Chance et al 2014
+    just_rosie_core_data (bool), just use the code data in Chance et al 2014's analysis
+    analyse_iodide_values2drop (bool), check which values should be removed
+    process_new_iodide_obs_file (bool), make a new iodide obs. file?
+    file_and_path (str), folder and filename with location settings as single str
+    limit_depth_to (float), depth (m) to limit inclusion of data to
+    verbose (bool): print verbose statements to screen
+    debug (bool): print debugging statements to screen
 
     Returns
     -------
@@ -350,11 +313,11 @@ def get_iodide_obs(just_use_submitted_data=False,
     data_root = get_file_locations('data_root', file_and_path=file_and_path)
     # Name to save file as
     filename = 'Iodide_data_above_20m.csv'
-    # --- Get Metadata (and keep as a seperate DataFrame )
+    # - Get Metadata (and keep as a seperate DataFrame )
     metadata_df = get_iodide_obs_metadata()
     # Process new iodide obs. (data) file?
     if process_new_iodide_obs_file:
-        # --- Extract data?
+        # - Extract data?
         # To test processing... just use submitted data?
         if just_use_submitted_data:
             Data_Keys = metadata_df['Data_Key'][metadata_df['source'] == 's']
@@ -369,7 +332,7 @@ def get_iodide_obs(just_use_submitted_data=False,
             print(Data_Keys)
         else:  # use all data
             Data_Keys = metadata_df['Data_Key']
-        # --- Loop Data_Keys
+        # - Loop by the datasets ("Data_Keys")
         # Setup list to store dataframes
         dfs = []
         # Loop data keys for sites
@@ -437,14 +400,14 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     filename (str), name of the csv file or archived data from BODC
     limit_depth_to (float), depth (m) to limit inclusion of data to
     use_inclusive_limit (bool), limit depth (limit_depth_to) in a inclusive way
-    debug (bool), print debug statements
+    debug (bool), print debugging statements to screen
 
     Returns
     -------
     (pd.DataFrame)
     """
     # limit_depth_to=20; Data_Key=None; metadata_df=None; debug=False
-    # ---  Get file details
+    # -  Get file details
     # Load metadata file as a DataFrame
     Data_Key_meta = metadata_df[metadata_df.Data_Key == Data_Key]
     # Use TMS updated variable for filename
@@ -478,18 +441,18 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     # Force use of 'Index' column as index to preserve ordering.
     df.index = df['Index'].values
     # Only consider values with a depth value lower than x (e.g. 100m)
-# From Chance et al (2014): On ship-based campaigns, ‘surface’ water is
-# usually collected from an underway pumped seawater inlet
-# (typically at a depth of around 6 m on a 100 m length research
-# ship), and/or sampling bottles mounted on a CTD rosette and
-# closed within a few metres of the sea surface, but during some
-# eld campaigns (e.g. winter samples in the Antarctic73), only
-# data from 15 m depth was available. In most cases, the water
-# column is thought to be sufficiently homogenous between 0 and
-# 20 m that this choice of depth can be assumed to be representative
-# of concentrations in the top few metres of the water
-# column (see Section 3.4 for a description of the changes in
-# iodine speciation with depth).
+    # From Chance et al (2014): On ship-based campaigns, ‘surface’ water is
+    # usually collected from an underway pumped seawater inlet
+    # (typically at a depth of around 6 m on a 100 m length research
+    # ship), and/or sampling bottles mounted on a CTD rosette and
+    # closed within a few metres of the sea surface, but during some
+    # eld campaigns (e.g. winter samples in the Antarctic73), only
+    # data from 15 m depth was available. In most cases, the water
+    # column is thought to be sufficiently homogenous between 0 and
+    # 20 m that this choice of depth can be assumed to be representative
+    # of concentrations in the top few metres of the water
+    # column (see Section 3.4 for a description of the changes in
+    # iodine speciation with depth).
     if verbose:
         print(df.columns)
     if use_inclusive_limit:
@@ -513,15 +476,9 @@ def read_csv_settings_4_data_key_file(Data_Key=None):
     """
     get skiprows/extension of observational excel files
 
-    Parameters
-    -------
-
     Returns
     -------
     (tuple)
-
-    Notes
-    -----
     """
     # Dictionary values: Data Key : ( skiprows, file extension)
     d = {
@@ -595,13 +552,8 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
 
     Parameters
     -------
-    show_plot (bool):
-    dpi (int):
-
-    Returns
-    -------
-    (tuple)
-
+    show_plot (bool): show the plot on screen
+    dpi (int): dots per inch of saved plot
     """
     import seaborn as sns
     sns.set(color_codes=True)
@@ -613,7 +565,7 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
     metadata_df = get_iodide_obs_metadata()
     # Get the processed obs+extracted data ...
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
-    # use the 'unique ID' variable (not unique!) to map Data_Key_ID to obs. data
+    # Use the 'unique ID' variable (not unique!) to map Data_Key_ID to obs. data
     var2map = 'Unique id'
     TMS_ID_KEY = u'Data_Key_ID'
     mapping_dict = dict(zip(df[var2map].values, df[TMS_ID_KEY].values))
@@ -630,7 +582,7 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
         u'Longitude': 'Longitude',
         #    u'Coastal':'Coastal',
     }
-    # rename the variables that share names
+    # Rename the variables that share names
     EXCEL_names = list(sorted(vars_dict.keys()))
     NEW_names = [vars_dict[i] for i in EXCEL_names]
     UPDATED_EXCEL_names = [i+' (Chance2014)' for i in NEW_names]
@@ -638,9 +590,9 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
     UPDATED_EXCEL_names_d = dict(zip(EXCEL_names, UPDATED_EXCEL_names))
     df_obs.rename(columns=UPDATED_EXCEL_names_d, inplace=True)
     vars2plot = vars_dict.keys()
-    # reindex df to use df_obs
+    # Reindex df to use df_obs
     df_obs.index = df_obs[TMS_ID_KEY].values
-    # select data keys inDataFrame that are not duplicated
+    # Select data keys inDataFrame that are not duplicated
     Data_Key_IDs = df_obs[TMS_ID_KEY].drop_duplicates(keep=False)
     df_obs = df_obs.loc[df_obs[TMS_ID_KEY].isin(Data_Key_IDs), :]
     df_obs.index = df_obs[TMS_ID_KEY].values
@@ -693,13 +645,11 @@ def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows=1,
     Notes
     -----
     """
-    # location and filename?
+    # Location and filename?
     filename = 'Iodide_correlations_310114_MASTER_TMS_EDIT.xlsx'
     folder = get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/RJC_spreadsheets/'
-    # Extract Rosies MASTER excel sheet (for values with depth <20m)
-#    sheetname='<20 m all data', \
-    # Extract Rosies MASTER excel sheet (for values with salinity >30)
+    # Extract Rosies MASTER excel sheet
     df = pd.read_excel(folder+filename, sheetname=sheetname, skiprows=skiprows)
     return df
 
@@ -718,6 +668,17 @@ def add_extra_vars_rm_some_data(df=None, target='Iodide',
 
     Parameters
     -------
+    restrict_data_max (bool): restrict the obs. data to a maximum value?
+    restrict_min_salinity (bool): restrict the obs. data to a minimum value of salinity?
+    use_median_value_for_chlor_when_NaN (bool): use median values for Chl-a if it is a NaN
+    median_4depth_when_greater_than_0 (bool): use median values for depth if it is <0
+    median_4MLD_when_NaN_or_less_than_0 (bool): use median values for MLD if it is <0
+    rm_LOD_filled_data (bool): remove the observational values below LOD
+    add_modulus_of_lat (bool): add the modulus of lat to dataframe
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    rm_outliers (bool): remove the observational outliers from the dataframe
+    verbose (bool): print verbose statements to screen
+    debug (bool): print debugging statements to screen
 
     Returns
     -------
@@ -874,15 +835,9 @@ def convert_old_Data_Key_names2new(df, var2use='Data_Key'):
     """
     Convert Data_Keys in old files to be sama as data desp. paper
 
-    Parameters
-    -------
-
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
     """
     # Variables for version v8.3
     NIU, md_df = get_iodide_obs()
@@ -895,8 +850,7 @@ def convert_old_Data_Key_names2new(df, var2use='Data_Key'):
     d = dict(zip(Data_Keys_8_2, Data_Keys_8_5_1))
     # Add the misspelling
     d['Elderfeild_T_1980'] = 'Elderfield_T_1980'
-    # Setup as a mappable function
-
+    # Setup as a mappable function to update columns
     def nename_col(input):
         if input in d.keys():
             return d[input]
@@ -936,7 +890,7 @@ def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
         'NO3': 'WOA_Nitrate',
         'Salinity': 'WOA_Salinity',
     }
-    # --- Loop parameterisation and add to data frame
+    # - Loop parameterisations and add to dataframe
     for param in param_df['TMS ID'].values:
         sub_df = param_df[param_df['TMS ID'] == param]
         if debug:
@@ -975,7 +929,9 @@ def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
 
 
 def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
-    """ Get predicted iodide from literature parametersations """
+    """
+    Get predicted iodide from literature parametersations
+    """
     # Set local variables
     TEMPvar = 'WOA_TEMP'  # temperature
     # Add temperature in Kelvin to array
@@ -996,7 +952,7 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
     NO3_var = u'WOA_Nitrate'
     sumMLDpt_var = 'WOA_MLDpt_sum'
     salinity_var = u'WOA_Salinity'
-    # --- Function to calculate Chance et al. (2014) correlation
+    # - Function to calculate Chance et al. (2014) correlation
     # functions to calculate (main) Chance et al correlation
     # In order of table 2 from Chance et al. (2014)
     # Add two main parameterisations to dataframe
