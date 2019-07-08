@@ -4,6 +4,8 @@ Process input data (sea-surface iodide) to a DataFrame for modelling.
 
 This file is intended to run as a standard alone script. It generates the file of observational data used both in the paper that describes the sea-surface iodide observations [Chance et al 2019] and the work that uses this to build a monthly sea-surface field [Sherwen et al 2019].
 
+To add new observations to the compiled BODC dataset, please use the process_new_observations.py script and follow the instructions there.
+
 e.g.
 
 python observations.py
@@ -48,49 +50,62 @@ def main(add_ancillaries=True):
     -------
     (None)
     """
+    # - Below lines are to update the BODC iodide dataset to include new obs.
+    # Get the latest data from BODC
+    df = get_iodide_data_from_BODC()
+    # Extract any new files of iodide (excel files)
+
+    # process these to contain all of the information of the BODC file
+
+    # Combine with existing BODC sea-surface iodide file
+
+    # Save this new combined file as a .csv
+
+
+    # - Below lines are only to be used for processing initial file
     # Get iodide observations? (if already processed)
 #    get_iodide_obs()
     # Re-process observations file?
-    get_iodide_obs(process_new_iodide_obs_file=True)
+#    get_iodide_obs(process_new_iodide_obs_file=True)
     # Add ancillaries variables to core file for observation locations?
-    if add_ancillaries:
+#    if add_ancillaries:
         # Re-process ancillaries file?
-        process_iodide_obs_ancillaries_2_csv()
-        pass
+#        process_iodide_obs_ancillaries_2_csv()
 
 
-def get_coastal_flag(df=None, Salinity_var='WOA_Salinity',
-                     coastal_flag='coastal_flagged'):
-    """
-    Flag data if coastal (Chance et al 2014)
 
-    Parameters
-    -------
-
-    Returns
-    -------
-    (pd.DataFrame)
-
-    Notes
-    -----
-     - This function is redundent. All values in data files now have a coastal flag.
-    """
-    # Setup a flag
-    df[coastal_flag] = 0
-    # For Chance et al data use coastal flag
-#    Chance_flagged = np.isfinite( df['Coastal'] )
-#    df.loc[ Chance_flagged, coastal_flag] = df['Coastal'].values
-    df[coastal_flag] = df['Coastal'].values
-    # for new data use Chance et al rule
-    meta_df = get_iodide_obs_metadata()
-    New_datasets = meta_df.loc[meta_df['In Chance2014?'] == 'N'].Data_Key
-    n_bool = df['Data_Key'].isin(New_datasets)
-    S_bool = df[Salinity_var] < 30
-    # Set values to non-coastal as default
-    df.loc[n_bool, coastal_flag] = 0
-    # Where values are New and high salinity, set to coastal
-    df.loc[n_bool & S_bool, coastal_flag] = 1.0
-    return df
+# def get_coastal_flag(df=None, Salinity_var='WOA_Salinity',
+#                      coastal_flag='coastal_flagged'):
+#     """
+#     Flag data if coastal (Chance et al 2014)
+#
+#     Parameters
+#     -------
+#
+#     Returns
+#     -------
+#     (pd.DataFrame)
+#
+#     Notes
+#     -----
+#      - This function is redundent. All values in data files now have a coastal flag.
+#     """
+#     # Setup a flag
+#     df[coastal_flag] = 0
+#     # For Chance et al data use coastal flag
+# #    Chance_flagged = np.isfinite( df['Coastal'] )
+# #    df.loc[ Chance_flagged, coastal_flag] = df['Coastal'].values
+#     df[coastal_flag] = df['Coastal'].values
+#     # for new data use Chance et al rule
+#     meta_df = get_iodide_obs_metadata()
+#     New_datasets = meta_df.loc[meta_df['In Chance2014?'] == 'N'].Data_Key
+#     n_bool = df['Data_Key'].isin(New_datasets)
+#     S_bool = df[Salinity_var] < 30
+#     # Set values to non-coastal as default
+#     df.loc[n_bool, coastal_flag] = 0
+#     # Where values are New and high salinity, set to coastal
+#     df.loc[n_bool & S_bool, coastal_flag] = 1.0
+#     return df
 
 
 def get_processed_df_obs_mod(reprocess_params=False,
@@ -103,34 +118,29 @@ def get_processed_df_obs_mod(reprocess_params=False,
 
     Parameters
     -------
+    file_and_path (str): folder and filename with location settings as single str
+    rm_Skagerrak_data (boolean): remove the single data from the Skagerrak region
+    reprocess_params (bool):
+    filename (str):
+    verbose (bool): print verbose statements
+    debug (bool): print debug statements
 
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
-
     """
     # Read in processed csv file
     folder = get_file_locations('data_root', file_and_path=file_and_path)
     df = pd.read_csv(folder+filename, encoding='utf-8')
-    # Kludge (temporary) - make Chlorophyll values all floats
-#     def mk_float_or_nan(input):
-#         try:
-#             return float(input)
-#         except:
-#             return np.nan
-#     df['SeaWIFs_ChlrA'] = df['SeaWIFs_ChlrA'].map(mk_float_or_nan)
     # Add ln of iodide too
     df['ln(Iodide)'] = df['Iodide'].map(np.ma.log)
     # Add SST in Kelvin too
     if 'WOA_TEMP_K' not in df.columns:
         df['WOA_TEMP_K'] = df['WOA_TEMP_K'].values + 273.15
     # Add a flag for coastal values
-    coastal_flagged = 'coastal_flagged'
-    if coastal_flagged not in df.columns:
-        df = get_coastal_flag(df=df)
+#     coastal_flagged = 'coastal_flagged'
+#     if coastal_flagged not in df.columns:
+#         df = get_coastal_flag(df=df)
     # Make sure month is numeric (if not given)
     month_var = 'Month'
     NaN_months_bool = ~np.isfinite(df[month_var].values)
@@ -169,9 +179,13 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     """
     Create a csv files of iodide observation and ancilllary observations
 
-
     Parameters
     -------
+    file_and_path (str): folder and filename with location settings as single str
+    add_ensemble (bool): add the ensemble prediction to input data dataframe
+    rm_Skagerrak_data (boolean): remove the single data from the Skagerrak region
+    target (str), Name of the target variable (e.g. iodide)
+    verbose (bool): print verbose statements
 
     Returns
     -------
@@ -184,8 +198,6 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     # Get iodide observations (as a dictionary/DataFrame)
     obs_data_df, obs_metadata_df = get_iodide_obs()
     # Add ancillary obs.
-#    obs_data_df = extract_ancillaries_from_external_files( \
-#        obs_data_df=obs_data_df, obs_metadata_df=obs_metadata_df )
     obs_data_df = extract_ancillaries_from_compiled_file(df=obs_data_df)
     # Save the intermediate file
     folder = get_file_locations('data_root', file_and_path=file_and_path)
@@ -222,12 +234,15 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
 # ---------------------------------------------------------------------------
 # ---------------- Iodide obs. processing/extraction/input testing ----------
 # ---------------------------------------------------------------------------
+
 def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     """
     Get Rosies observation data
 
     Parameters
     -------
+    file_and_path (str): folder and filename with location settings as single str
+    debug (bool): print debug statements
 
     Returns
     -------
@@ -418,13 +433,15 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
 
     Parameters
     -------
+    file_and_path (str), folder and filename with location settings as single str
+    filename (str), name of the csv file or archived data from BODC
+    limit_depth_to (float), depth (m) to limit inclusion of data to
+    use_inclusive_limit (bool), limit depth (limit_depth_to) in a inclusive way
+    debug (bool), print debug statements
 
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
     """
     # limit_depth_to=20; Data_Key=None; metadata_df=None; debug=False
     # ---  Get file details
@@ -476,11 +493,10 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     if verbose:
         print(df.columns)
     if use_inclusive_limit:
-        df = df.loc[df['Depth'] <= limit_depth_to, :]  # only consider values
+        df = df.loc[df['Depth'] <= limit_depth_to, :] # consider values inclusively
     else:
-        df = df.loc[df['Depth'] < limit_depth_to, :]  # only consider values
+        df = df.loc[df['Depth'] < limit_depth_to, :] # only consider values less than X
     # Add a column to be a unique identifier and column index
-
     def get_unique_Data_Key_label(x, Data_Key=Data_Key):
         # Use the index as the number (which now starts from 1)
         x = int(x)
@@ -579,13 +595,13 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
 
     Parameters
     -------
+    show_plot (bool):
+    dpi (int):
 
     Returns
     -------
     (tuple)
 
-    Notes
-    -----
     """
     import seaborn as sns
     sns.set(color_codes=True)
@@ -1007,11 +1023,11 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
     except KeyError:
         df[var2use] = df.apply(lambda x:
                                calc_iodide_chance2014_Multivariate(NO3=x[NO3_var],
-                                                                   sumMLDpt=x[sumMLDpt_var],
+                                                                 sumMLDpt=x[sumMLDpt_var],
                                                                    MOD_LAT=x[MOD_LAT_var],
                                                                    TEMP=x[TEMPvar],
-                                                                   salinity=x[salinity_var]),
-                               axis=1)
+                                                            salinity=x[salinity_var]),
+                                                                   axis=1)
     return df
 
 
