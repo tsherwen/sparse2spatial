@@ -7,6 +7,7 @@ This package uses packages from the existing Python stack (e.g. dask_, xarray_,
 pandas_, sklearn_, XGBoost_). `Pull Requests are
 welcome! <https://github.com/tsherwen/sparse2spatial/pulls>`_
 
+
 Installation
 ------------
 
@@ -20,29 +21,6 @@ can either clone the source directory and manually install::
 or, you can install via pip directly from git::
 
     $ pip install git+https://github.com/tsherwen/sparse2spatial.git
-
-Quick Start
------------
-
-Functions within **AC_Tools** can be used for various tasks for handling model output and observations.
-
-An exmample would be importing NetCDF files or converting ctm.bpch files from a directory of GEOS-Chem_ output (with ``tracerinfo.dat`` and ``diaginfo.dat`` files).
-
-
-.. code:: python
-
-    import AC_tools as AC
-    folder = '<folder containing GEOS-Chem output>'
-    # Get the atmospheric ozone burden in Gg O3 as a np.array
-    array = AC.get_O3_burden(folder)
-    print( "The ozone burden is: {burden}".format(burden=array.sum()))
-    # Get surface area for resolution
-    s_area = get_surface_area(res)[..., 0]  # m2 land map
-    # Get global average surface CO
-    spec = 'CO'
-    array = AC.get_GC_output(wd=folder, vars=['IJ_AVG_S__{}'.format(spec)])
-    ratio = AC.get_2D_arr_weighted_by_X(array, res='4x5', s_area=s_area)
-    print( "The global average surface mixing ratio of {spec} (ppbv) is: {ratio}".format(spec=spec, ratio=ratio*1E9))
 
 
 Usage
