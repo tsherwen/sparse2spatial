@@ -2,9 +2,8 @@
 
 Plotting and analysis code for sea-surface iodide prediction work.
 
-
-
 Please see Paper(s) for more details:
+
 Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data Discuss., https://doi.org/10.5194/essd-2019-40, in review, 2019.
 
 
@@ -3077,7 +3076,6 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
                                extend=extend, res=res, show=False, title=title,
                                fillcontinents=fillcontinents, centre=centre,
                                f_size=f_size, units=None, window=window)
-#        AC.map_plot( arr, res=res )
         # beautify
         # save plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
@@ -3144,44 +3142,6 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodi
             plt.savefig(png_filename, dpi=dpi, bbox_inches='tight')
         plt.close()
 
-    # as a maximum
-#     for var in vars2plot:
-#         arr = ds[var].max(dim='time').values
-#         # Plot up
-#         title = 'Annual maximum I ({})'.format( var )
-#         fixcb, nticks = np.array( [0., 240.] ), 5
-#         extend='max'
-#         AC.plot_spatial_figure( arr, fixcb=fixcb, nticks=nticks, \
-#             extend=extend, res=res, show=False, title=title, \
-#             fillcontinents=fillcontinents, centre=centre )
-# #        AC.map_plot( arr, res=res )
-#         # beautify
-#         # save plot
-#         AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
-#         if show_plot: plt.show()
-#         plt.close()
-
-    # --- Difference from Chance et al 2013
-#     REF = 'Chance2014_STTxx2_I'
-#     vars2plot = [i for i in ds.data_vars if i != REF ]
-#     # as a mean
-#     for var in vars2plot:
-#         arr = ds[var].mean(dim='time').values
-#         REF_arr = ds[REF].mean(dim='time').values
-#         arr = ( arr - REF_arr ) / REF_arr *100
-#         # Plot up
-#         title = '% $\Delta$ in annual I ({} vs {})'.format( var, REF )
-#         fixcb, nticks = np.array( [-100, 100.] ), 11
-#         extend='max'
-#         AC.plot_spatial_figure( arr, fixcb=fixcb, nticks=nticks, \
-#             extend=extend, res=res, show=False, title=title, \
-#             fillcontinents=fillcontinents, centre=centre )
-# #        AC.map_plot( arr, res=res )
-#         # beautify
-#         # save plot
-#         AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
-#         if show_plot: plt.show()
-#         plt.close()
     # Save entire pdf
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 

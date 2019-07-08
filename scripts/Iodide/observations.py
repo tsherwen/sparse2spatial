@@ -274,11 +274,12 @@ def get_iodide_obs_metadata(file_and_path='./sparse2spatial.rc'):
     Extract and return metadata from metadata csv
     """
     # What is the location of the iodide data?
-    data_root = get_file_locations('data_root', file_and_path=file_and_path)
+    s2s_root = get_file_locations('s2s_root', file_and_path=file_and_path)
+    folder = s2s_root+'/Iodide/inputs/'
     # Filename?
     filename = 'Iodine_climatology_Submitted_data_list_formatted_TMS.xlsx'
     # Extract
-    df = pd.read_excel(data_root+filename, sheetname='Full')
+    df = pd.read_excel(folder+filename, sheetname='Full')
     # return as DataFrame
     return df
 

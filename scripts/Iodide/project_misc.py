@@ -6,6 +6,12 @@ This includes presentation at conferences etc...
 
 """
 
+import numpy as np
+import pandas as pd
+import sparse2spatial as s2s
+from sparse2spatial.utils import get_file_locations
+from observations import get_iodide_obs_metadata
+
 
 def main():
     """
@@ -566,7 +572,9 @@ def get_analysis_numbers_for_AGU17_poster():
 # ---------- Funcs. to process iodine obs/external data --------------------
 # ---------------------------------------------------------------------------
 def check_points_for_cruises(target='Iodide', verbose=False, debug=False):
-    """ Check the cruise points for the new data (Liselotte, He, etc...)"""
+    """
+    Check the cruise points for the new data (Liselotte, He, etc...)
+    """
     # Get the observational data
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # And the metadata
@@ -601,8 +609,10 @@ def plot_threshold_plus_SD_spatially(var=None, value=None, std=None, res='4x5',
                                      fillcontinents=True, show_plot=False, save2png=True,
                                      dpi=320,
                                      verbose=True, debug=False):
-    """ Plot up the spatial extent of a input variable value + Std. Dev. """
-    # --- Local variables
+    """
+    Plot up the spatial extent of a input variable value + Std. Dev.
+    """
+    # - Local variables
     # Get the core input variables
     data_root = get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
@@ -663,7 +673,7 @@ def plot_up_iodide_vs_latitude(show_plot=True):
     For clarity, one exceptionally high coastal iodide value (700 nM, 58.25N)
     has been omitted.
     """
-    # ----  Get data
+    # -  Get data
     df = get_core_rosie_obs()
     # Select data of interest
     # ( later add a color selection based on coastal values here? )
@@ -672,7 +682,7 @@ def plot_up_iodide_vs_latitude(show_plot=True):
     # and select coastal/open ocean
     df_coastal = df[df['Coastal'] == True][vars]
     df_open_ocean = df[~(df['Coastal'] == True)][vars]
-    # --- Now plot Obs.
+    # - Now plot Obs.
     # plot coastal
 #    plt.scatter( df['Latitude'].values, df['Iodide'].values )
     ax = df_coastal.plot(kind='scatter', x='Latitude', y='Iodide', marker='D',
@@ -710,11 +720,11 @@ def plot_up_ln_iodide_vs_Nitrate(show_plot=True):
     and C show the relationships between iodide and nitrate adapted from
     Campos et al.41 by Ganzeveld et al.27
     """
-    #  ---  location of data to plot
+    #  - location of data to plot
     df = get_processed_df_obs_mod()
     # take log of iodide
     df['Iodide'] = np.log(df['Iodide'].values)
-    # --- Plot up all nitrate concentrations
+    # - Plot up all nitrate concentrations
     df.plot(kind='scatter', x='Nitrate', y='Iodide', marker='D',
             color='k')  # ,
 #        alpha=.75,
@@ -724,7 +734,7 @@ def plot_up_ln_iodide_vs_Nitrate(show_plot=True):
     if show_plot:
         plt.show()
     plt.close()
-    # --- Plot up all nitrate concentrations below 2 mM
+    # - Plot up all nitrate concentrations below 2 mM
     df_tmp = df[df['Nitrate'] < 2]
     df_tmp.plot(kind='scatter', x='Nitrate', y='Iodide', marker='D',
                 color='k')  # ,
@@ -735,7 +745,7 @@ def plot_up_ln_iodide_vs_Nitrate(show_plot=True):
     if show_plot:
         plt.show()
     plt.close()
-    # --- Plot up all nitrate concentrations above 2 mM
+    # - Plot up all nitrate concentrations above 2 mM
     df_tmp = df[df['Nitrate'] > 2]
     df_tmp.plot(kind='scatter', x='Nitrate', y='Iodide', marker='D',
                 color='k'),
@@ -758,13 +768,13 @@ def plot_up_ln_iodide_vs_SST(show_plot=True):
     temperature ( ) and climatological sea surface temperature ( ) values
     obtained from the World Ocean Atlas as described in the text.
     """
-    #  ---  location of data to plot
+    # - location of data to plot
     folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
     # take log of iodide
     df['Iodide'] = np.log(df['Iodide'].values)
-    # --- Plot up all nitrate concentrations
+    # - Plot up all nitrate concentrations
     df.plot(kind='scatter', x='Temperature', y='Iodide', marker='D',
             color='k')  # ,
 #        alpha=.75,
@@ -827,7 +837,9 @@ def plot_up_ln_iodide_vs_salinity(show_plot=True):
 
 
 def plot_pair_grid(df=None, vars_list=None):
-    """ Make a basic pair plot to test the data """
+    """
+    Make a basic pair plot to test the data
+    """
     import seaborn as sns
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -848,7 +860,9 @@ def plot_pair_grid(df=None, vars_list=None):
 def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
                                                                   res='0.125x0.125',
                                                                   dpi=320):
-    """ Analysis the input data for the Arctic and Antarctic """
+    """
+    Analyse the gridded data for the Arctic and Antarctic
+    """
     import matplotlib
 #    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -989,7 +1003,9 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
 def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
                                                                   res='0.125x0.125',
                                                                   dpi=320):
-    """ Analysis the input data for the Arctic and Antarctic """
+    """
+    Analyse the input data for the Arctic and Antarctic
+    """
     import matplotlib
 #    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -998,7 +1014,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
     sns.set()
     #
 
-    # ---  local variables
+    # - local variables
     # get input variables
     if isinstance(dsA, type(None)):
         filename = 'Oi_prj_predicted_iodide_{}.nc'.format(res)
@@ -1091,7 +1107,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
         'Global': pd.DataFrame(dfALL),
     }
 
-    # ---  Loop regions and plot PDFs of variables of interest
+    # - Loop regions and plot PDFs of variables of interest
 #    vars2use = dfs[ dfs.keys()[0] ].columns
     # set PDF
     savetitle = 'Oi_prj_explore_Arctic_Antarctic_ancillaries_space'
@@ -1113,7 +1129,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         plt.close()
 
-    # ---  plot up the PDF distribution of each of the variables.
+    # - Plot up the PDF distribution of each of the variables.
     for var2use in vars2use:
         print(var2use)
         # set a single axis to use.
@@ -1136,8 +1152,8 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         plt.close()
 
-    # --- Plot up the number of oceanic data points by lat for each lat
-    # - Plot up number of samples for South pole
+    # - Plot up the number of oceanic data points by lat for each lat
+    # Plot up number of samples for South pole
     ds = dsA.sel(lat=(dsA['lat'] <= -65))
     var_ = 'WOA_Salinity'
     N = {}
@@ -1152,7 +1168,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
     # Save to PDF and close plot
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
-    # - Plot up number of samples for North pole
+    # Plot up number of samples for North pole
     ds = dsA.sel(lat=(dsA['lat'] >= 65))
     var_ = 'WOA_Salinity'
     N = {}
@@ -1168,13 +1184,12 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
     # Save to PDF and close plot
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
-
-    # -- Save entire pdf
+    # Save entire pdf
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
 def explore_observational_data_in_Arctic_parameter_space(RFR_dict=None,
-                                                         plot_up_locations4var_conds=False,
+                                                         plt_up_locs4var_conds=False,
                                                          testset='Test set (strat. 20%)',
                                                          dpi=320):
     """ Analysis the input observational data for the Arctic and Antarctic """
@@ -1304,7 +1319,7 @@ def explore_observational_data_in_Arctic_parameter_space(RFR_dict=None,
         plt.close()
 
     # ---  Loop regions and plot PDFs of variables of interest
-    if plot_up_locations4var_conds:
+    if plt_up_locs4var_conds:
         df = RFR_dict['df']
         dfs = {}
         # Nitrate greater of equal to
@@ -1384,7 +1399,9 @@ def explore_observational_data_in_Arctic_parameter_space(RFR_dict=None,
 
 
 def Driver2analyse_new_data_vs_existing_data():
-    """ Get all options of plots """
+    """
+    Get all options of plots
+    """
     regions = 'all', 'coastal', 'noncoastal'
 
     for limit_to_400nM in True, False:
@@ -1564,7 +1581,9 @@ def get_diagnostic_plots_analysis4observations(inc_all_extract_vars=False,
                                                include_hexbin_plots=False,
                                                model_name='TEMP+DEPTH+SAL',
                                                show_plot=False, dpi=320):
-    """ Produce a PDF of comparisons of observations in dataset inventory"""
+    """
+    Produce a PDF of comparisons of observations in dataset inventory
+    """
     # inc_all_extract_vars=False; include_hexbin_plots=False; show_plot=False; dpi=320
     # --- Setup plotting
     # misc. shared variables
@@ -1939,10 +1958,12 @@ def test_dataset_plot_seaborn():
 
 
 def plot_PDF_iodide_obs_mod(bins=10):
-    """ plot up PDF of predicted values vs. observations """
+    """
+    plot up PDF of predicted values vs. observations
+    """
     import matplotlib.pyplot as plt
     import seaborn as sns
-    #  ---  location of data to plot
+    # Location of data to plot
     folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
@@ -1955,7 +1976,7 @@ def plot_PDF_iodide_obs_mod(bins=10):
 #    df = df[ (df['Salinity'] > 30 ) ]
     print(df.shape)
 
-    # ---  plot up data
+    # Plot up data
     # Macdonaly et al 2014 values
     ax = sns.distplot(df['MacDonald2014_iodide'],
                       label='MacDonald2014_iodide', bins=bins)
@@ -1988,12 +2009,12 @@ def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
     sns.set(color_codes=True)
     sns.set_context("paper")
 
-    #  ---  Get data
+    # Get data
     folder = get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
 
-    # --- local variables
+    # Local variables
     # sub select variables of interest.
     params2plot = [
         'Chance2014_STTxx2_I',  'MacDonald2014_iodide',
@@ -2017,20 +2038,19 @@ def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
     if limit_to_400nM:
         df = df.loc[df['Iodide'] < 400, :]
         filename += '_limited_400nM'
-    # --- Process data
+    # - Process data
     # Add binned mean
 #    bins  = np.arange(-70, 70, 10 )
     bins = np.arange(-80, 90, 10)
 #    groups = df.groupby( np.digitize(df[u'Latitude'], bins) )
     groups = df.groupby(pd.cut(df['Latitude'], bins))
-    # take means of groups
+    # Take means of groups
 #    groups_avg = groups.mean()
     groups_des = groups.describe().unstack()
 
-    # --- setup plotting
+    # - setup plotting
     fig, ax = plt.subplots(dpi=dpi)
-
-    # --- Plot up
+    # - Plot up
     X = groups_des['Latitude']['mean'].values  # groups_des.index
 #    X =bins
     print(groups_des)
@@ -2045,7 +2065,7 @@ def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
         # add shading for Q1/Q3
         ax.fill_between(X, Q1, Q3, alpha=0.2, color=color_d[var_])
 
-    # ---  plot observations
+    # - plot observations
     # highlight coastal obs
     tmp_df = df.loc[df['Coastal'] == True, :]
     X = tmp_df['Latitude'].values
@@ -2058,8 +2078,7 @@ def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
     Y = tmp_df['Iodide'].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='k', s=3,
                 label='Non-coastal obs.')
-
-    # --- Beuatify
+    # - Beautify
     #  legend
     plt.legend()
     # limit plot y axis
@@ -2251,7 +2270,9 @@ def map_plot_of_locations_of_obs4rosie():
 
 
 def plot_up_parameterisations(df=None, save2pdf=True, show=False):
-    """ Plot up parameterisations """
+    """
+    Plot up parameterisations
+    """
     import matplotlib.pyplot as plt
     import seaborn as sns
 
@@ -2383,7 +2404,9 @@ def mk_X_Y_scatter_plot_param_vs_iodide(X=None, Y=None, iodide_var=None,
 
 
 def compare_obs_ancillaries_with_extracted_values_WINDOW(dpi=320, df=None):
-    """ Plot up a window plot of the observed vs. climatological ancillaries """
+    """
+    Plot up a window plot of the observed vs. climatological ancillaries
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     current_palette = sns.color_palette("colorblind")
@@ -2894,7 +2917,9 @@ def plot_chance_param(df=None, X_var='Temperature', Y_var='Iodide',
 
 def plot_macdonald_param(df=None, X_var='Temperature', Y_var='Iodide',
                          data_str='(Obs.) data'):
-    """ Plot up MacDonald et al (2014) param vs. data in DataFrame """
+    """
+    Plot up MacDonald et al (2014) param vs. data in DataFrame
+    """
     # Only include finite data points for temp
     # ( NOTE: down to 1/3 of data of obs. data?! )
     df = df[np.isfinite(df[X_var])]
@@ -2936,7 +2961,7 @@ def plot_current_parameterisations():
     Plot up a comparison of Chance et al 2014 and MacDonald et al 2014 params.
     """
 
-    # --- Get obs and processed data
+    # - Get obs and processed data
     # get raw obs
     raw_df = get_core_rosie_obs()
     # don't consider iodide values above 30
@@ -2976,7 +3001,9 @@ def plot_current_parameterisations():
 # ---------------- Misc. Support for iodide project ------------------------
 # ---------------------------------------------------------------------------
 def explore_diferences_for_Skagerak():
-    """ Explore how the Skagerak data differs from the dataset as a whole """
+    """
+    Explore how the Skagerak data differs from the dataset as a whole
+    """
     # -  Get the observations and model output
     folder = get_file_locations('data_root')
     filename = 'Iodine_obs_WOA_v8_5_1_ENSEMBLE_csv__avg_nSkag_nOutliers.csv'
@@ -3021,7 +3048,9 @@ def explore_diferences_for_Skagerak():
 
 
 def check_numbers4old_chance_and_new_chance():
-    """ Do checks on which datasets have changed between versions """
+    """
+    Do checks on which datasets have changed between versions
+    """
     # - Get all observational data
     NIU, md_df = get_iodide_obs()
     folder = '/work/home/ts551/data/iodide/'
@@ -3060,14 +3089,16 @@ def check_numbers4old_chance_and_new_chance():
 
 
 def get_numbers_for_data_paper():
-    """ Get various numbers/analysis requested for data descriptor paper """
-    # - Get the full dataset.
+    """
+    Get various numbers/analysis requested for data descriptor paper
+    """
+    # - Get the full iodide sea-surface dataset
     filename = 'Iodide_data_above_20m.csv'
-    folder = get_file_locations('data_root')
+    folder = get_file_locations('s2s_root')+'/Iodide/inputs/'
     df = pd.read_csv(folder + filename, encoding='utf-8')
-    # exclude non finite data points.
+    # Exclude non finite data points.
     df = df.loc[np.isfinite(df['Iodide']), :]
-    # save the full data set as .csv for use in Data Descriptor paper
+    # Save the full data set as .csv for use in Data Descriptor paper
     cols2use = [
         u'Data_Key', u'Data_Key_ID', 'Latitude', u'Longitude',
         #	u'\xce\xb4Iodide',
@@ -3090,7 +3121,7 @@ def get_numbers_for_data_paper():
         # Add to main data array
         bool_ = df[u'Data_Key'] == Data_key
         df.loc[bool_, col2use] = REF
-    # round up the iodide values
+    # Round up the iodide values
     df['Iodide'] = df['Iodide'].round(1).values
     df[u'δIodide'] = df[u'δIodide'].round(1).values
     df[u'Longitude'] = df[u'Longitude'].round(6).values
@@ -3111,7 +3142,7 @@ def get_numbers_for_data_paper():
     md_df['n'] = s
     md_df.index = np.arange(md_df.shape[0])
     md_df.to_csv('Oi_prj_metadata_with_n.csv', encoding='utf-8')
-    # check sum for assignment?
+    # Check sum for assignment?
     prt_str = '# Assigned values ({}) should equal original DataFrame size:{}'
     print(prt_str.format(md_df['n'].sum(), str(df.shape[0])))
 
@@ -3123,12 +3154,12 @@ def get_numbers_for_data_paper():
         df_tmp = df.loc[df['Method'] == Method]
         s_n[Method] = df_tmp.shape[0]
         s_ds[Method] = len(set(df_tmp['Data_Key']))
-    # Combine	 and save
+    # Combine and save
     dfS = pd.DataFrame()
     dfS['N'] = s_n
     dfS['datasets'] = s_ds
     dfS.index.name = 'Method'
-    #  reset index
+    # Reset index
     index2use = [str(i) for i in sorted(pd.to_numeric(dfS.index))]
     dfS = dfS.reindex(index2use)
     dfS.to_csv('Oi_prj_num_in_Methods.csv', encoding='utf-8')
@@ -3343,7 +3374,8 @@ def get_iodide_cruise_data_from_Anoop_txt_files(verbose=False):
     #	cruise_name = cruise_files.keys()[0]
         df = pd.read_excel(folder+cruise_files[cruise_name])
         names_dict = {
-            'Date': 'date', 'UTC': 'date', 'time (UTC)': 'time', 'lat': 'LAT', 'lon': 'LON'
+            'Date': 'date', 'UTC': 'date', 'time (UTC)': 'time', 'lat': 'LAT',
+             'lon': 'LON'
         }
         if verbose:
             print(df.head())
@@ -3452,7 +3484,9 @@ def TEST_AND_PROCESS_iodide_cruise_output(just_process_surface_data=False):
 
 
 def process_planeflight_column_files(wd=None, df=None, res='4x5', debug=False):
-    """ Process column of v/v values into single values"""
+    """
+    Process column of v/v values into single values for total column
+    """
     # wd=files_dict[key_]; df = dfs[ key_ ]; res='4x5'
     specs = ['O3', u'BrO', u'IO', u'CH2O', u'GLYX']
     timestamps = list(sorted(set(df.index)))
@@ -3574,7 +3608,9 @@ def process_planeflight_files(wd=None):
 def get_test_plots_surface_pf_output(wd=None, name='Planeflight',
                                      df=None, specs=None, units=None, scale=1,
                                      show_plot=False):
-    """  Test model output at surface for Indian sgip cruises """
+    """
+    Test model output at surface for Indian sgip cruises
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     # sns.set_context("talk")
@@ -3635,8 +3671,10 @@ def get_test_plots_surface_pf_output(wd=None, name='Planeflight',
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi, no_dstr=True)
 
 
-def mk_datat_files4Rosie_surface_paper(res='0.125x0.125'):
-    """ Make data files for Rosie's analysis on the surface data paper """
+def mk_data_files4Rosie_surface_paper(res='0.125x0.125'):
+    """
+    Make data files for Rosie's analysis on the surface data paper
+    """
     AreasOfInterest = {
         'SubT_NA': ('NASW', 'NATR', 'NASE', ),
         'SubT_SA': ('SATL',),
@@ -3829,6 +3867,7 @@ def plot_up_EGU_fig05_emiss_change(ds_dict=None, levs=[1], specs=[],
                                    BASE='', DIFF1='',  DIFF2='', prefix='IJ_AVG_S__',
                                    update_PyGChem_format2COARDS=False):
     """
+    Plot up the change in emissions for EGU poster
     """
     import cartopy.crs as ccrs
     import matplotlib.pyplot as plt
@@ -3890,7 +3929,9 @@ def evalulate_burdens_and_surface_conc(run_dict=None, extra_str='', REF1=None,
                                        REF2=None, REF_wd=None, res='4x5', trop_limit=True,
                                        save2csv=True, prefix='GC_', run_names=None,
                                        debug=False):
-    """ Check Organo-halogen surface species """
+    """
+    Check general statistics on the CTM model runs
+    """
     # Extract names and locations of data
     if isinstance(run_dict, type(None)):
         run_dict = get_run_dict4EGU_runs()
@@ -4046,7 +4087,9 @@ def evalulate_burdens_and_surface_conc(run_dict=None, extra_str='', REF1=None,
 
 
 def Check_sensitivity_of_HOI_I2_param2WS():
-    """ Check the sensitivity of the parameterisation to wind speed """
+    """
+    Check the sensitivity of the Carpenter et al 2013 parameterisation to wind speed
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper", font_scale=1.75)
