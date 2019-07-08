@@ -1,7 +1,10 @@
 Sparse2Spatial (s2s)
 ======================================
-
-This package contains routines to convert sparse observations into spatially and temporally resolved datasets using machine learning algorithms.
+.. image:: https://zenodo.org/badge/182097197.svg
+   :target: https://zenodo.org/badge/latestdoi/182097197
+   :alt: Zenodo DOI
+   
+**Sparse2Spatial** contains routines to convert sparse observations into spatially and temporally resolved datasets using machine learning algorithms.
 
 This package uses packages from the existing Python stack (e.g. dask_, xarray_,
 pandas_, sklearn_, XGBoost_). `Pull Requests are
