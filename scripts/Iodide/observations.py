@@ -433,13 +433,15 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
 
     Parameters
     -------
+    file_and_path (str), folder and filename with location settings as single str
+    filename (str), name of the csv file or archived data from BODC
+    limit_depth_to (float), depth (m) to limit inclusion of data to
+    use_inclusive_limit (bool), limit depth (limit_depth_to) in a inclusive way
+    debug (bool), print debug statements
 
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
     """
     # limit_depth_to=20; Data_Key=None; metadata_df=None; debug=False
     # ---  Get file details
@@ -491,11 +493,10 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     if verbose:
         print(df.columns)
     if use_inclusive_limit:
-        df = df.loc[df['Depth'] <= limit_depth_to, :]  # only consider values
+        df = df.loc[df['Depth'] <= limit_depth_to, :] # consider values inclusively
     else:
-        df = df.loc[df['Depth'] < limit_depth_to, :]  # only consider values
+        df = df.loc[df['Depth'] < limit_depth_to, :] # only consider values less than X
     # Add a column to be a unique identifier and column index
-
     def get_unique_Data_Key_label(x, Data_Key=Data_Key):
         # Use the index as the number (which now starts from 1)
         x = int(x)
