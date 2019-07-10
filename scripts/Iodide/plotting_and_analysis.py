@@ -10,7 +10,12 @@ Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L
 """
 import numpy as np
 import pandas as pd
-from sea_surface_iodide import mk_iodide_ML_testing_and_training_set
+
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
+
+# Local modules
+from sea_surface_iodide import mk_iodide_test_train_sets
 
 
 # ---------------------------------------------------------------------------
@@ -21,7 +26,9 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
                                                       testset='Test set (strat. 20%)',
                                                       rm_Skagerrak_data=True,
                                                       rm_non_water_boxes=True):
-    """ Plot up predicted values overlaid with observations """
+    """
+    Plot up predicted values overlaid with observations
+    """
     # testset='Test set (strat. 20%)'
     import seaborn as sns
     from matplotlib import colors
@@ -858,7 +865,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
         # Get RFR_dict if not provide
         if isinstance(RFR_dict, type(None)):
             RFR_dict = build_or_get_models()
-        topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     params2plot = topmodels
     # assign colors
     CB_color_cycle = AC.get_CB_color_cycle()
@@ -1226,7 +1233,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     features_used_dict = RFR_dict['features_used_dict']
     # Get the names of the ensemble members (topten models )
     if isinstance(topmodels, type(None)):
-        topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
 
     # ---- Get data at observation points
     # add lines extract data from files...
@@ -1327,7 +1334,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     features_used_dict = RFR_dict['features_used_dict']
     # Get the names of the ensemble members (topten models )
     if isinstance(topmodels, type(None)):
-        topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     # --- build 20 variable models for the ensemble memberse
     if rebuild_models:
         for model_name in topmodels:
@@ -3542,7 +3549,7 @@ def get_ensemble_predicted_iodide(df=None,
             stats = get_stats_on_models(RFR_dict=RFR_dict,
                                         verbose=False)
         # get list of
-        topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
 
     # --- Add the ensemble to the dataframe
     use_vals_from_NetCDF = False  # Use the values from the spatial prediction
@@ -3642,7 +3649,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
     # Keep the base case to use as a reference
     dss['BASE'] = ds.copy()
     # Which variables should be plotted?
-    topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     var2test = get_features_used_by_model(RFR_dict=RFR_dict,
                                           models_list=topmodels)
 #	var2test =  ['WOA_Nitrate']  # for testing just change nitrate
@@ -3797,7 +3804,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     # Get the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
-    topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     topmodels = list(set(topmodels))
     # other local settings?
     plt_option_tired_but_didnt_help = False
@@ -3827,7 +3834,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 #     df2plot = dfA.drop( df.index ).copy()
 #     df.index = np.arange(df.shape[0])
 #     # Reset the training/withhel data split
-#     returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+#     returned_vars = mk_iodide_test_train_sets(df=df.copy(),
 #         rand_20_80=False, rand_strat=True,
 #         features_used=df.columns.tolist(),
 #         )
@@ -3870,7 +3877,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     df2plot = dfA.drop(df.index).copy()
     df.index = np.arange(df.shape[0])
     # Reset the training/withhel data split
-    returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+    returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                           rand_20_80=False,
                                                           rand_strat=True,
                                                           features_used=df.columns.tolist(),
@@ -3917,7 +3924,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     df2plot = dfA.drop(df.index).copy()
     df.index = np.arange(df.shape[0])
     # Reset the training/withhel data split
-    returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+    returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                           rand_20_80=False,
                                                           rand_strat=True,
                                                           features_used=df.columns.tolist(),
@@ -3965,7 +3972,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                 df2plot = dfA.drop( df.index ).copy()
         #                 df.index = np.arange(df.shape[0])
         #                 Reset the training/withhel data split
-        #                 returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        #                 returned_vars = mk_iodide_test_train_sets(df=df.copy(),
         #                     rand_20_80=False, rand_strat=True,
         #                     features_used=df.columns.tolist(),
         #                     )
@@ -4009,7 +4016,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                 df2plot = dfA.drop( df.index ).copy()
         #                 df.index = np.arange(df.shape[0])
         #                 Reset the training/withhel data split
-        #                 returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        #                 returned_vars = mk_iodide_test_train_sets(df=df.copy(),
         #                     rand_20_80=False, rand_strat=True,
         #                     features_used=df.columns.tolist(),
         #                     )
@@ -4061,7 +4068,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df2plot = dfA.drop(df.index)
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4105,7 +4112,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4135,7 +4142,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4169,7 +4176,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df2plot = dfA.drop(df.index)
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4222,7 +4229,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df2plot = dfA.drop(df.index)
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4276,7 +4283,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df2plot = dfA.drop(df.index)
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4320,7 +4327,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4353,7 +4360,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4383,7 +4390,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4412,7 +4419,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4445,7 +4452,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4477,7 +4484,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4507,7 +4514,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4539,7 +4546,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4571,7 +4578,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4601,7 +4608,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4634,7 +4641,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # reset index of updated DataFrame
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
-        returned_vars = mk_iodide_ML_testing_and_training_set(df=df.copy(),
+        returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                                               rand_20_80=False,
                                                               rand_strat=True,
                                                               features_used=df.columns.tolist(),
@@ -4738,7 +4745,7 @@ def explore_sensitivity_of_65N(res='4x5'):
     # Get the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
-    topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
 
     # set up a dictionary for different dataset splits
     dss = {}
@@ -5088,7 +5095,7 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
         df = get_stats_on_spatial_predictions_4x5_2x25_by_lat(res=res, ds=ds)
     # params to pot
     if isinstance(topmodels, type(None)):
-        topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     params2plot = topmodels
     # assign colors
     CB_color_cycle = AC.get_CB_color_cycle()

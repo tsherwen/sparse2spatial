@@ -32,13 +32,17 @@ import sparse2spatial as s2s
 from sparse2spatial.utils import get_file_locations
 from sparse2spatial.utils import set_backup_month_if_unkonwn
 from sparse2spatial.utils import get_outlier_value
-from sea_surface_iodide import mk_iodide_ML_testing_and_training_set
+#from sea_surface_iodide import mk_iodide_test_train_sets
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
 from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
 from sparse2spatial.utils import calc_i_chance2014_multivar
 from sparse2spatial.utils import calc_iodide_MacDonald2014
 # iodide specific functions (move these to this directory?)
 #from sparse2spatial.utils import get_literature_predicted_iodide
+
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
+
 
 
 def main(add_ancillaries=True):
@@ -100,6 +104,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
     """
     # Read in processed csv file
     folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/Iodide/'
     df = pd.read_csv(folder+filename, encoding='utf-8')
     # Add ln of iodide too
     df['ln(Iodide)'] = df['Iodide'].map(np.ma.log)

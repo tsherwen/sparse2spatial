@@ -6,9 +6,14 @@ Extract Ancillaries onto a common grid using an oversampling approach
 import numpy as np
 import pandas as pd
 import xarray as xr
+import gc
+
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
+
+# specific s2s imports
 from sparse2spatial.utils import get_file_locations
 from sparse2spatial.utils import set_backup_month_if_unkonwn
-import gc
 
 
 def extract_ancillaries_from_external_files(obs_data_df=None,

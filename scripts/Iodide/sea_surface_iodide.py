@@ -21,8 +21,8 @@ Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L
 # import os
 # import sys
 import numpy as np
-# import pandas as pd
-# import xarray as xr
+import pandas as pd
+import xarray as xr
 # import AC_tools as AC
 # from netCDF4 import Dataset
 # import scipy.interpolate as interpolate
@@ -41,7 +41,16 @@ import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 import sparse2spatial.archiving as archiving
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
+from sparse2spatial.RFRanalysis import get_stats_on_models
+from sparse2spatial.RFRbuild import get_top_models
+from sparse2spatial.RFRbuild import mk_test_train_sets
 from sparse2spatial.RFRbuild import build_or_get_models
+from sparse2spatial.utils import get_model_features_used_dict
+
+
+# temp
+from sparse2spatial.RFRanalysis import get_core_stats_on_current_models
+
 
 # Get iodide specific functions
 #from observations import get_dataset_processed4ML
@@ -52,22 +61,23 @@ def main():
     Driver for module's man if run directly from command line. unhash
     functionalitliy to call.
     """
-    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
+    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
     print(model_feature_dict)
-    print(model_feature_dict['NO3+DOC+Phos'])
+#    print(model_feature_dict['NO3+DOC+Phos'])
     # ---- ---- Over-arching settings
     # General settings
     rm_Skagerrak_data = True
+    rebuild = False
 #    rm_Skagerrak_data = False
     # Use top models from full dataset  ( now: nOutliers + nSkagerak
     RFR_dict = build_or_get_models_iodide(
+        rebuild=rebuild,
         rm_Skagerrak_data=rm_Skagerrak_data)
 #    RFR_dict = build_or_get_models_iodide( rm_Skagerrak_data=False )
-    topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     print(RFR_dict.keys)
     print(topmodels)
     # Check statistics on prediction
-    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=True)
     print(stats)
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
@@ -525,14 +535,13 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     #             rand_strat = False
     #             rand_20_80 = True
             # get the training and test set
-            returned_vars = mk_iodide_ML_testing_and_training_set(df=df_tmp,
-                                                                  rand_20_80=rand_20_80,
-                                                                  random_state=random_state,
-                                                                  nsplits=TSETS_nsplits[
-                                                                      Tname],
-                                                                  rand_strat=rand_strat,
-                                                                  features_used=features_used,
-                                                                  )
+            returned_vars = mk_iodide_test_train_sets(df=df_tmp,
+                                                      rand_20_80=rand_20_80,
+                                                      random_state=random_state,
+                                                      nsplits=TSETS_nsplits[Tname],
+                                                      rand_strat=rand_strat,
+                                                      features_used=features_used,
+                                                      )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
             train_features = df_tmp[features_used].loc[train_set.index]
@@ -720,10 +729,10 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     if isinstance(topmodels, type(None)):
         # get stats on models in RFR_dict
         if isinstance(stats, type(None)):
-            stats = get_stats_on_models(RFR_dict=RFR_dict,
+            stats = get_stats_on_models(RFR_dict=RFR_dict, analysis4coastal=True,
                                         verbose=False)
         topmodels = get_top_models(RFR_dict=RFR_dict, stats=stats,
-                                   NO_DERIVED=True)
+                                   vars2exclude=['DOC', 'Prod'])
     models2compare += topmodels
     # remove any double ups
     models2compare = list(set(models2compare))
@@ -1039,6 +1048,7 @@ def mk_ensemble_diagram(dpi=1000):
 
 def make_table_of_point_for_point_performance(RFR_dict=None,
                                               testset='Test set (strat. 20%)',
+                                              analysis4coastal=True,
                                               target='Iodide'):
     """
     Make a table to summarise point-for-point performance
@@ -1056,7 +1066,7 @@ def make_table_of_point_for_point_performance(RFR_dict=None,
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, analysis4coastal=True, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1109,7 +1119,7 @@ def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
     stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
-                                verbose=False)
+                                analysis4coastal=True, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1158,7 +1168,7 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, analysis4coastal=True, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1234,7 +1244,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
                                      #                                     add_modulus_of_lat=add_modulus_of_lat,
-                                     #                                     rm_Skagerrak_data=rm_Skagerrak_data,
+                                     rm_Skagerrak_data=rm_Skagerrak_data,
                                      rm_outliers=rm_outliers,
                                      rm_LOD_filled_data=rm_LOD_filled_data,
                                      #                use_median4chlr_a_NaNs=use_median4chlr_a_NaNs,
@@ -1262,7 +1272,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
         # Copy a df for splitting
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
-        returned_vars = mk_testing_training_sets(df=df.copy(), target=target,
+        returned_vars = mk_test_train_sets(df=df.copy(), target=target,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
                                                  features_used=df.columns.tolist(),
@@ -1293,7 +1303,7 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(
         rm_Skagerrak_data=rm_Skagerrak_data,
-        rm_LOD_filled_data=rm_LOD_filled_data,
+#        rm_LOD_filled_data=rm_LOD_filled_data,
         rm_outliers=rm_outliers,
     )
     #
@@ -1306,31 +1316,30 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
 
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
-                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                        model_feature_dict=model_feature_dict,
                                        df=df,
                                        read_model_from_disk=False,
+                                       model_sub_dir=model_sub_dir,
                                        delete_existing_model_files=True)
     else:
-        RFR_dict = build_or_get_models(save_model_to_disk=True,
-                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
+        RFR_dict = build_or_get_models(save_model_to_disk=False,
                                        model_feature_dict=model_feature_dict,
                                        df=df,
                                        read_model_from_disk=True,
+                                       model_sub_dir=model_sub_dir,
                                        delete_existing_model_files=False)
     return RFR_dict
 
 
-def mk_iodide_ML_testing_and_training_set(df=None, target='Iodide',
+def mk_iodide_test_train_sets(df=None, target='Iodide',
                                           rand_strat=True, features_used=None,
                                           random_state=42, rand_20_80=False,
                                           nsplits=4, verbose=True, debug=False):
     """
-    Wrapper for mk_testing_training_sets for iodide code
+    Wrapper for mk_test_train_sets for iodide code
     """
-    from sparse2spatial.RFRbuild import mk_testing_training_sets
     # Call the s2s function with some presets
-    returned_vars = mk_testing_training_sets(df=df, target=target, nsplits=nsplits,
+    returned_vars = mk_test_train_sets(df=df, target=target, nsplits=nsplits,
                                              rand_strat=rand_strat,
                                              features_used=features_used,
                                              random_state=random_state,

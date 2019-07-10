@@ -3,7 +3,18 @@
 Make high-res and re-gridded data files for archiving with xESMF
 
 """
+import sys
+import numpy as np
+import pandas as pd
+import xarray as xr
+import datetime as datetime
+import sklearn as sk
+from sklearn.ensemble import RandomForestRegressor
+import glob
+import xesmf as xe
 
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
 
 def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     """
@@ -104,7 +115,6 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
     -------
     (None)
     """
-    import xesmf as xe
     # Get file and location to regrid
     if rm_Skagerrak_data:
         ext_str = '_No_Skagerrak'

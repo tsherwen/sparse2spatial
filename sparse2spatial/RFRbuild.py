@@ -12,8 +12,12 @@ import sklearn as sk
 from sklearn.ensemble import RandomForestRegressor
 import glob
 
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
+
 # s2s imports
 import sparse2spatial.utils as utils
+from sparse2spatial.RFRanalysis import get_core_stats_on_current_models
 
 
 def build_or_get_models(df=None, testset='Test set (strat. 20%)',
@@ -57,8 +61,8 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
 
     # - Get local variables
     # Location to save models
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/models/LIVE/{}/'.format(s2s_root, target, model_sub_dir)
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/models/LIVE/{}/'.format(data_root, target, model_sub_dir)
     if debug:
         print('Using models from {}'.format(folder))
     # Get details on model setups to use
@@ -112,6 +116,8 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
                 try:
                     joblib.dump(model, folder+model_savename)
                 except FileNotFoundError:
+                    prt_str = "WARNING: Failed to save file - @ '{}' with name '{}'"
+                    print( prt_str.format(folder+model_savenam))
                     utils.check_or_mk_directory_struture()
             # Also keep models online in dictionary
             models_dict[model_name] = model
@@ -173,7 +179,7 @@ def get_features_used_by_model(models_list=None, RFR_dict=None):
         RFR_dict = build_or_get_models()
     # Get models to use (assume top models, if not provided)
     if isinstance(models_list, type(None)):
-        models_list = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+        models_list = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Now plot up in input variables
     features_used_dict = RFR_dict['features_used_dict']
     vars2use = []
@@ -184,13 +190,14 @@ def get_features_used_by_model(models_list=None, RFR_dict=None):
     return list(set(vars2use))
 
 
-def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
+def get_top_models(n=10, stats=None, RFR_dict=None, vars2exclude=None,
                    exclude_ensemble=True, verbose=True):
     """
     retrieve the names of the top 10 models
 
     Parameters
     -------
+    vars2exclude (list), list of variables to exclude (e.g. DEPTH)
 
     Returns
     -------
@@ -215,14 +222,14 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
         except:
             if verbose:
                 print('failed to remove {} from list'.format(var_))
-    # Return the top model's names (with ot without derivative values)
-    if NO_DERIVED:
-        params2inc = stats.T.columns
-        params2inc = [i for i in params2inc if 'DOC' not in i]
-        params2inc = [i for i in params2inc if 'Prod' not in i]
-        return list(stats.T[params2inc].T.head(n).index)
-    else:
-        return list(stats.head(n).index)
+    # Return the top model's names
+    params2inc = stats.T.columns
+    # Exclude any variables in provided list
+    if not isinstance(vars2exclude, type(None)):
+        for var_ in vars2exclude:
+            params2inc = [i for i in params2inc if var_ not in i]
+    # Return the updated dataframe's index (model names that are top models)
+    return list(stats.T[params2inc].T.head(n).index)
 
 
 def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
@@ -244,7 +251,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # Set models to optimise
-    models2compare = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+    models2compare = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Get variables needed from core dictionary
     features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
@@ -822,7 +829,7 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
     return target_predictions
 
 
-def mk_testing_training_sets(df=None, target='Iodide',
+def mk_test_train_sets(df=None, target='Iodide',
                              rand_strat=True, features_used=None,
                              random_state=42, rand_20_80=False,
                              nsplits=4, verbose=True, debug=False):

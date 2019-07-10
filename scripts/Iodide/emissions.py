@@ -1,6 +1,12 @@
 """
+Calculations iodine emissions with updated iodide field
 """
 
+import numpy as np
+import pandas as pd
+
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
 
 def compare_emissions(wd_dict=None, inorg_emiss=None, specs=None):
     """ Compare emissions between runs with different parameterisations """

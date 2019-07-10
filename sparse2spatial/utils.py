@@ -675,7 +675,7 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
     """
     # Check to make sure that the full observations are used to calc the outlier
     if check_full_df_used:
-        folder = get_file_locations('data_root')+'/{}/'.format(var2use)
+        folder = get_file_locations('data_root')+'/{}/inputs/'.format(var2use)
         filename = 'Iodide_data_above_20m.csv'
         dfA = pd.read_csv(folder+filename)
         dfA = dfA.loc[np.isfinite(dfA[var2use]), :]
@@ -709,7 +709,7 @@ def check_or_mk_directory_struture():
     """
     Check all the required directories are present and make them if not.
     """
-    pstr = 'TODO: Make function to check directory strcuture and add folders if not'
+    pstr = 'TODO: Make function to check directory structure and add folders if not'
     pstr += '\n not present.'
     print(pstr)
 
@@ -983,6 +983,47 @@ def get_model_features_used_dict(model_name=None, rtn_dict=False):
         #        u'DOCaccum',
         #    ],
     }
+    # Add additional feature combinations / names to test?
+    add_additional_dict = False
+    d2 = {
+        # 2 variables
+        'TEMP+MLD': ['WOA_TEMP_K', 'WOA_MLDpt', ],
+        'MLD+SAL': ['WOA_MLDpt', 'WOA_Salinity', ],
+        'MLD+DOC': ['WOA_MLDpt', 'DOC', ],
+        # 3 variables
+        'TEMP+MLD+DOC': ['WOA_TEMP_K', 'WOA_MLDpt', 'DOC', ],
+        'TEMP+MLD+SAL': ['WOA_TEMP_K', 'WOA_MLDpt', 'WOA_Salinity', ],
+        'TEMP+MLD+NO3': ['WOA_TEMP_K', 'WOA_MLDpt', u'WOA_Nitrate', ],
+        'TEMP+MLD+ChlrA': ['WOA_TEMP_K', 'WOA_MLDpt', u'SeaWIFs_ChlrA', ],
+        # 4 variables
+        'TEMP+MLD+SAL+NO3': [
+            'WOA_TEMP_K', 'WOA_MLDpt', 'WOA_Salinity', 'WOA_Nitrate',
+        ],
+        'TEMP+MLD+SAL+SWrad': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'WOA_MLDpt', u'SWrad',
+        ],
+        'TEMP+MLD+NO3+SWrad': [
+            'WOA_TEMP_K', 'WOA_Nitrate', 'WOA_MLDpt', u'SWrad',
+        ],
+        'TEMP+MLD+SAL+ChlrA': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'WOA_MLDpt', u'SeaWIFs_ChlrA',
+        ],
+        'TEMP+MLD+SAL+Phos': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'WOA_MLDpt', u'WOA_Phosphate',
+        ],
+        'TEMP+MLD+SAL+DOC': ['WOA_TEMP_K', 'WOA_Salinity', 'WOA_MLDpt', u'DOC', ],
+        'TEMP+MLD+SAL+Prod': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'WOA_MLDpt', u'Prod',
+        ],
+        # 5 vairables
+        'TEMP+MLD+SAL+NO3+DOC': [
+            'WOA_TEMP_K', 'WOA_MLDpt', 'WOA_Salinity', 'WOA_Nitrate', 'DOC',
+        ],
+    }
+    # merge the dictionaries into a single dictionary
+    if add_additional_dict:
+        d = {**d, **d2}
+
     # Add RFR in front of all model names for clarity
     modelnames = list(d.keys())
     for modelname in modelnames:
