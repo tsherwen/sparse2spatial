@@ -18,22 +18,12 @@ Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L
 
 
 """
-# import os
-# import sys
 import numpy as np
 import pandas as pd
 import xarray as xr
-# import AC_tools as AC
-# from netCDF4 import Dataset
-# import scipy.interpolate as interpolate
-# import glob
-# import datetime as datetime
-# import matplotlib.pyplot as plt
-# import sklearn as sk
+import matplotlib.pyplot as plt
 # from multiprocessing import Pool
 # from functools import partial
-# from time import gmtime, strftime
-# import time
 
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
@@ -42,15 +32,17 @@ import sparse2spatial.archiving as archiving
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
 from sparse2spatial.RFRanalysis import get_stats_on_models
+from sparse2spatial.RFRanalysis import add_ensemble_avg_std_to_dataset
 from sparse2spatial.RFRbuild import get_top_models
 from sparse2spatial.RFRbuild import mk_test_train_sets
 from sparse2spatial.RFRbuild import build_or_get_models
 from sparse2spatial.utils import get_model_features_used_dict
 
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
 
 # temp
 from sparse2spatial.RFRanalysis import get_core_stats_on_current_models
-
 
 # Get iodide specific functions
 #from observations import get_dataset_processed4ML
@@ -74,11 +66,11 @@ def main():
         rebuild=rebuild,
         rm_Skagerrak_data=rm_Skagerrak_data)
 #    RFR_dict = build_or_get_models_iodide( rm_Skagerrak_data=False )
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
-    print(RFR_dict.keys)
-    print(topmodels)
+#    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
+    print(RFR_dict.keys())
+#    print(topmodels)
     # Check statistics on prediction
-    print(stats)
+#    print(stats)
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Evaluating input datasets
@@ -126,19 +118,19 @@ def main():
 #     set_SAL_and_NIT_above_65N_to_avg(res=res)
 
     # --- Predict values globally (only use 0.125)
-    # extra strig for NetCDF save name
-    xsave_str = ''
+    # extra string for NetCDF save name
+#    xsave_str = ''
     # make NetCDF predictions from the main array
-    save2NetCDF = True
+#    save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
 #    res = '0.125x0.125'
-    res = '4x5'
-    mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
-                                           use_updated_predictor_NetCDF=False,
-                                           save2NetCDF=save2NetCDF,
-                                           rm_Skagerrak_data=rm_Skagerrak_data,
-                                           topmodels=topmodels,
-                                           xsave_str=xsave_str, add_ensemble2ds=True)
+#     res = '4x5'
+#     mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
+#                                            use_updated_predictor_NetCDF=False,
+#                                            save2NetCDF=save2NetCDF,
+#                                            rm_Skagerrak_data=rm_Skagerrak_data,
+#                                            topmodels=topmodels,
+#                                            xsave_str=xsave_str, add_ensemble2ds=False)
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Sensitive test the new iodide field (
@@ -265,9 +257,9 @@ def main():
 #    get_stats_on_models( RFR_dict=RFR_dict )
 
     # Get tabulated performance
-    make_table_of_point_for_point_performance(RFR_dict=RFR_dict)
-#    make_table_of_point_for_point_performance_ALL(RFR_dict=RFR_dict)
-#    make_table_of_point_for_point_performance_TESTSET(RFR_dict=RFR_dict)
+#    mk_table_of_point_for_point_performance(RFR_dict=RFR_dict)
+#    mk_table_of_point_for_point_performance_ALL(RFR_dict=RFR_dict)
+#    mk_table_of_point_for_point_performance_TESTSET(RFR_dict=RFR_dict)
 
     # Get CDF and PDF plots for test, training, entire, and residual
 #    plot_up_CDF_and_PDF_of_obs_and_predictions( df=RFR_dict['df'] )
@@ -329,8 +321,56 @@ def main():
     # analysis of outputted trees
 #    analyse_nodes_in_models()
 
-    # Now make Ensemble diagram
+    # Now make Ensemble diagram - REDUNDENT
 #    mk_ensemble_diagram()
+
+    # --- Do futher analysis on the impact of the depth variable
+    from plotting_and_analysis import get_ensemble_predicted_iodide
+    # Get the base topmodels
+    vars2exclude = ['DOC', 'Prod', ]
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
+    topmodels_BASE = topmodels.copy()
+
+    # add the ensemble to the dataframe and over write this as the dictionary
+    var2use='RFR(Ensemble)'
+#     df = RFR_dict['df']
+#     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
+#                                        var2use=var2use)
+#     RFR_dict['df'] =  df
+#     # now get the stats
+#     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, inc_ensemble=True)
+#
+#     # - Now do the same thing, but calculate the prediction with depth
+#     var2use = 'RFR(Ensemble_nDepth)'
+    # Get topmodels without
+    vars2exclude = ['DOC', 'Prod', 'DEPTH']
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
+    # Now calculate the ensemble prediction
+#     df = RFR_dict['df']
+#     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
+#                                        var2use=var2use)
+#     RFR_dict['df'] =  df
+#     # now get the stats
+#     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, df=df, inc_ensemble=True,
+#                                             var2use=var2use)
+
+    topmodels2use =  topmodels + topmodels_BASE
+    topmodels2use = list(set(topmodels2use))
+    # Make a spatial prediction
+    xsave_str = '_TEST_DEPTH_'
+    # make NetCDF predictions from the main array
+    save2NetCDF = True
+    # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
+    res = '0.125x0.125'
+#    res = '4x5'
+#    res = '2x2.5'
+    mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
+                                           use_updated_predictor_NetCDF=False,
+                                           save2NetCDF=save2NetCDF,
+                                           rm_Skagerrak_data=rm_Skagerrak_data,
+                                           topmodels=topmodels2use,
+                                           xsave_str=xsave_str, add_ensemble2ds=True)
+
 
     # pass if no functions are uncommented
     pass
@@ -340,6 +380,15 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
                                        features_used=None, target='Iodide', df=None):
     """
     Run tests on the sensitivity of model to test/training choices
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
@@ -699,7 +748,18 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
                                            rm_Skagerrak_data=False, xsave_str='',
                                            add_ensemble2ds=False,
                                            verbose=True, debug=False):
-    """ Make a NetCDF file of predicted vairables for a given resolution """
+    """
+    Make a NetCDF file of predicted vairables for a given resolution
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     # --- local variables
     # extract the models...
     if isinstance(RFR_dict, type(None)):
@@ -727,23 +787,23 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     # Make sure the top 10 models are included
     # ( with derivative variables )
     if isinstance(topmodels, type(None)):
-        # get stats on models in RFR_dict
+        # Get stats on models in RFR_dict
         if isinstance(stats, type(None)):
             stats = get_stats_on_models(RFR_dict=RFR_dict, analysis4coastal=True,
                                         verbose=False)
         topmodels = get_top_models(RFR_dict=RFR_dict, stats=stats,
                                    vars2exclude=['DOC', 'Prod'])
     models2compare += topmodels
-    # remove any double ups
+    # Remove any double ups
     models2compare = list(set(models2compare))
-    # get the variables required here
+    # Get the variables required here
     if isinstance(models_dict, type(None)):
         models_dict = RFR_dict['models_dict']
     if isinstance(features_used_dict, type(None)):
         features_used_dict = RFR_dict['features_used_dict']
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
-        folder = get_file_locations('data_root')
+        folder = utils.get_file_locations('data_root')+'/data/'
 
     extr_str = '_INTERP_NEAREST_DERIVED'
     # Add lines to save strings
@@ -758,12 +818,13 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     # --- Make a da for each model
     ds_l = []
     for modelname in models2compare:
+        print(modelname)
         # get model
         model = models_dict[modelname]
         # get testinng features
         features_used = get_model_features_used_dict(modelname)
         # Make a DataSet of predicted values
-        ds_tmp = mk_da_of_predicted_values(model=model, modelname=modelname,
+        ds_tmp = utils.mk_da_of_predicted_values(model=model, modelname=modelname,
                                            res=res, features_used=features_used,
                                            dsA=dsA)
         #  Add attributes to the prediction
@@ -809,252 +870,259 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
         return ds
 
 
-def mk_ensemble_diagram(dpi=1000):
-    """ Make a schematic image from outtputted trees to show the worflow """
-    from matplotlib import gridspec
-    import matplotlib.image as mpimg
-    import glob
-    # --- Local fixed variablse
-    depth2investigate = 6
-    fontname = 'Montserrat'
-    # Use an external file for the braces?
-#    file = 'Oi_prj_Braces_01'
-#    file = 'Oi_prj_Braces_02'
-    # Use local font
-    from matplotlib import font_manager as fm, rcParams
-    import matplotlib.pyplot as plt
-    fpath = 'Montserrat-ExtraLight.ttf'
-#    model2use = 'RFR(TEMP+DEPTH+NO3+SWrad)'
-    model2use = 'RFR(TEMP+DEPTH+NO3)'
+# def mk_ensemble_diagram(dpi=1000):
+#     """
+#     Make a schematic image from outtputted trees to show the workflow
+#     """
+#     from matplotlib import gridspec
+#     import matplotlib.image as mpimg
+#     import glob
+#     # --- Local fixed variablse
+#     depth2investigate = 6
+#     fontname = 'Montserrat'
+#     # Use an external file for the braces?
+# #    file = 'Oi_prj_Braces_01'
+# #    file = 'Oi_prj_Braces_02'
+#     # Use local font
+#     from matplotlib import font_manager as fm, rcParams
+#     import matplotlib.pyplot as plt
+#     fpath = 'Montserrat-ExtraLight.ttf'
+# #    model2use = 'RFR(TEMP+DEPTH+NO3+SWrad)'
+#     model2use = 'RFR(TEMP+DEPTH+NO3)'
+#
+#     # --- Setup the figure / subfigures for plotting
+#     fig = plt.figure(figsize=(6, 1.4), dpi=dpi)
+#     # Use grid specs to setup plot with nrows with set "height ratios"
+#     nrows = 1000
+#     ncols = 1000
+#     G = gridspec.GridSpec(nrows, ncols)
+#     # Setup axis
+#     Swidth = 100
+#     Lwidth = 200
+#     buffer = 10
+#     # Setup rows
+#     RowSizes = np.linspace(1, 999, 6)
+#     RowSizes = [int(i) for i in RowSizes]
+#     # Setup large axis subplots (for single tree and single forest)
+#     colsizes = (
+#         (0, 0+Lwidth+buffer),
+#         #    (300, 300+Swidth+buffer),
+#         (500, 500+Lwidth+buffer),
+#         #    (670, 670+Swidth+buffer),
+#     )
+#     Laxes = [plt.subplot(G[:, i[0]:i[-1]]) for i in colsizes]
+#     # switch off axis etc
+#     for ax in Laxes:
+#         ax.set_xticks([])
+#         ax.set_yticks([])
+#         ax.patch.set_visible(False)
+#         ax.axis('off')
+#
+#     # --- Single tree subplot
+#     ax = Laxes[0]
+#     # Open and use an arbitrary single tree
+#     filename = glob.glob('tree_{}*.png'.format(model2use))[0]
+#     img = mpimg.imread(filename)
+#     imgplot = ax.imshow(img)
+#
+#     # --- Plot an arrow sign from this to many (~10) trees of the forest's 500
+#     # Axis to use?
+#     ax = Laxes[0]
+#     # Arrow
+#     alt_text = r'$\Rightarrow$'
+#     fontsize = 30
+#     prop = fm.FontProperties(fname=fpath, size=fontsize)
+#     ax.annotate(alt_text, (0.85, .50), textcoords='axes fraction',
+#                 fontproperties=prop,
+#                 #    	fontname=fontname, fontsize=fontsize,
+#                 )
+#
+#     # --- Plot ten single trees (of the forest's 500 )
+#     # Setup Small Laxes
+#     startx = 50+Lwidth+buffer+buffer
+#     # tree files
+# #    file_str = 'tree_*{}*.png'.format(model2use)
+# #    file_str = file_str.replace(')', '\\)').replace('(', '\\(')
+#     tree_files = glob.glob('tree_*{}*.png'.format(model2use))
+#     if len(tree_files):
+#         tree_files += tree_files
+#     # loop by file to plot
+#     for n_plot in range(10):
+#         # Set locations for subplot
+#         Hspacer = 0
+#         Swidth = 75
+#         Hspacer = 5
+#         Xleft = startx
+#         XRight = startx+Swidth
+#         # Set Xright depending on plot number
+#         if n_plot in range(10)[0::2]:
+#             Xleft = XRight
+#             XRight = Xleft+Swidth+Hspacer
+#         # Get the row number
+#         Nrow = int(n_plot/2.)
+#         # make subplot
+#         print(RowSizes[Nrow], RowSizes[Nrow+1], Xleft, XRight)
+#         ax = plt.subplot(G[RowSizes[Nrow]:RowSizes[Nrow+1], Xleft:XRight])
+#         # Remove lines for subplots
+#         ax.set_xticks([])
+#         ax.set_yticks([])
+#         ax.patch.set_visible(False)
+#         ax.axis('off')
+#         # get tree
+#         img = mpimg.imread(tree_files[n_plot])
+#         imgplot = ax.imshow(img)
+#
+#     # --- Use mathematical braces etc to show combining of trees
+#     # Axis to use?
+#     ax = Laxes[0]
+#     # X... X500
+#     alt_text = r'$\bar \}$'
+#     fontsize = 70
+#     prop = fm.FontProperties(fname=fpath, size=fontsize)
+# #    ax.text(x=3000,y=0.25, s=alt_text, fontsize=fontsize )
+#     ax.annotate(alt_text, (2.05, 0.3), textcoords='axes fraction',
+#                 fontsize=fontsize,
+#                 #    	fontweight='ultralight', style='italic',
+#                 fontname=fontname)
+#     # now add x values
+#     fontsize = 5
+#     prop = fm.FontProperties(fname=fpath, size=fontsize)
+#     alt_text = r'$\bar X = X_i,...X_{500}$'
+#     ax.annotate(alt_text, (2.05, 0.05), textcoords='axes fraction',
+#                 fontproperties=prop,
+#                 #        fontweight='light', fontname=fontname, fontsize=fontsize,
+#                 )
+#
+#     # --- Single forest
+#     ax = Laxes[1]
+#     # Open and use tree
+#     filename = 'Oi_prj_features_of_{}_for_depth_{}_white.png'
+#     filename = filename.format(model2use, depth2investigate)
+#     img = mpimg.imread(filename)
+#     imgplot = ax.imshow(img)
+#
+#     # --- Use mathematical braces etc to show combining of forests
+#     ax = Laxes[1]
+#     # X... X10
+#     alt_text = r'$\bar \}$'
+#     fontsize = 70
+#     prop = fm.FontProperties(fname=fpath, size=fontsize)
+# #    ax.text(x=3000,y=0.25, s=alt_text, fontsize=fontsize )
+#     ax.annotate(alt_text, (2.2, 0.3), textcoords='axes fraction',
+#                 fontproperties=prop,
+#                 #    	fontweight='ultralight', style='italic',  fontname=fontname,
+#                 #		fontsize=fontsize,
+#                 )
+#     # now add x values
+#     fontsize = 5
+#     prop = fm.FontProperties(fname=fpath, size=fontsize)
+#     alt_text = r'$\bar X = X_i,...X_{10}$'
+#     ax.annotate(alt_text, (2.2, 0.05), textcoords='axes fraction',
+#                 fontproperties=prop,
+#                 #        fontweight='light', fontname=fontname, fontsize=fontsize,
+#                 )
+#
+#     # --- Arrow sign
+#     fontsize = 30
+#     prop = fm.FontProperties(fname=fpath, size=fontsize)
+#     alt_text = r'$\Rightarrow$'
+#     ax.annotate(alt_text, (0.85, .50), textcoords='axes fraction',
+#                 fontproperties=prop,
+#                 #    	fontname=fontname, fontsize=fontsize,
+#                 )
+#
+#     # --- forest
+# #    ax = axes[3]
+#     # --- Ten single trees
+#     # Get names of trees
+#     import glob
+#     files = glob.glob('*{}*white*png'.format(depth2investigate))
+#     # Setup Small Laxes
+#     startx = 570+Lwidth+buffer+buffer
+# #    starty =
+#     for n_plot in range(10):
+#
+#         # if
+#         Hspacer = 0
+#         Swidth = 75
+#         Hspacer = 5
+#         Xleft = startx
+#         XRight = startx+Swidth
+#
+#         if n_plot in range(10)[0::2]:
+#             Xleft = XRight
+#             XRight = Xleft+Swidth+Hspacer
+#         # Get the row number
+#         Nrow = int(n_plot/2.)
+#         # make subplot
+#         print(RowSizes[Nrow], RowSizes[Nrow+1], Xleft, XRight)
+#         ax = plt.subplot(G[RowSizes[Nrow]:RowSizes[Nrow+1], Xleft:XRight])
+#         # remove lines for subplots
+#         ax.set_xticks([])
+#         ax.set_yticks([])
+#         ax.patch.set_visible(False)
+#         ax.axis('off')
+#
+#         # get tree
+# #        filename = 'Oi_prj_features_of_RFR(TEMP+DEPTH+NO3+SWrad)_for_depth_7_white.png'
+#         img = mpimg.imread(files[n_plot])
+#         imgplot = ax.imshow(img)
+#
+#     # --- Add final text ("prediction")
+#     ax = Laxes[1]
+# #    ax = Label_ax
+# #    Label_ax = plt.subplot()
+# #    ax = plt.subplot()
+# #    ax.set_xticks([])
+# #    ax.set_yticks([])
+# #    ax.patch.set_visible(False)
+# #    ax.axis('off')
+# #    ax.patch.set_facecolor( None )
+# #    ax.patch.set_alpha(0.0)
+#
+#     # Arrow?
+#
+#     # Predcition
+#     alt_text = 'Prediction'
+#     fontsize = 18
+#     prop = fm.FontProperties(fname=fpath, size=fontsize)
+# #    ax.annotate( alt_text, (2.7, .90), textcoords='axes fraction',
+#     ax.annotate(alt_text, (2.7, .875), textcoords='axes fraction',
+#                 fontproperties=prop,
+#                 #    	fontname=fontname, fontsize=fontsize,
+#                 rotation=90)
+# #    ax.text( 0.75, .50, alt_text, ha="center", va="center", fontsize=fontsize,
+# #        rotation=90)
+#
+#     # ----  Update spacings
+#     left = 0.025
+#     bottom = 0.025
+#     top = 1 - bottom
+# #    hspace = 0.05
+#     fig.subplots_adjust(bottom=bottom, top=top,
+#                         left=left,
+#                         #         right=right,
+#                         #        hspace=hspace
+#                         #        , wspace=wspace
+#                         )
+#     # Save figure
+#     plt.savefig('Oi_prj_ensemble_workflow_image.png', dpi=dpi)
 
-    # --- Setup the figure / subfigures for plotting
-    fig = plt.figure(figsize=(6, 1.4), dpi=dpi)
-    # Use grid specs to setup plot with nrows with set "height ratios"
-    nrows = 1000
-    ncols = 1000
-    G = gridspec.GridSpec(nrows, ncols)
-    # Setup axis
-    Swidth = 100
-    Lwidth = 200
-    buffer = 10
-    # Setup rows
-    RowSizes = np.linspace(1, 999, 6)
-    RowSizes = [int(i) for i in RowSizes]
-    # Setup large axis subplots (for single tree and single forest)
-    colsizes = (
-        (0, 0+Lwidth+buffer),
-        #    (300, 300+Swidth+buffer),
-        (500, 500+Lwidth+buffer),
-        #    (670, 670+Swidth+buffer),
-    )
-    Laxes = [plt.subplot(G[:, i[0]:i[-1]]) for i in colsizes]
-    # switch off axis etc
-    for ax in Laxes:
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.patch.set_visible(False)
-        ax.axis('off')
 
-    # --- Single tree subplot
-    ax = Laxes[0]
-    # Open and use an arbitrary single tree
-    filename = glob.glob('tree_{}*.png'.format(model2use))[0]
-    img = mpimg.imread(filename)
-    imgplot = ax.imshow(img)
-
-    # --- Plot an arrow sign from this to many (~10) trees of the forest's 500
-    # Axis to use?
-    ax = Laxes[0]
-    # Arrow
-    alt_text = r'$\Rightarrow$'
-    fontsize = 30
-    prop = fm.FontProperties(fname=fpath, size=fontsize)
-    ax.annotate(alt_text, (0.85, .50), textcoords='axes fraction',
-                fontproperties=prop,
-                #    	fontname=fontname, fontsize=fontsize,
-                )
-
-    # --- Plot ten single trees (of the forest's 500 )
-    # Setup Small Laxes
-    startx = 50+Lwidth+buffer+buffer
-    # tree files
-#    file_str = 'tree_*{}*.png'.format(model2use)
-#    file_str = file_str.replace(')', '\\)').replace('(', '\\(')
-    tree_files = glob.glob('tree_*{}*.png'.format(model2use))
-    if len(tree_files):
-        tree_files += tree_files
-    # loop by file to plot
-    for n_plot in range(10):
-        # Set locations for subplot
-        Hspacer = 0
-        Swidth = 75
-        Hspacer = 5
-        Xleft = startx
-        XRight = startx+Swidth
-        # Set Xright depending on plot number
-        if n_plot in range(10)[0::2]:
-            Xleft = XRight
-            XRight = Xleft+Swidth+Hspacer
-        # Get the row number
-        Nrow = int(n_plot/2.)
-        # make subplot
-        print(RowSizes[Nrow], RowSizes[Nrow+1], Xleft, XRight)
-        ax = plt.subplot(G[RowSizes[Nrow]:RowSizes[Nrow+1], Xleft:XRight])
-        # Remove lines for subplots
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.patch.set_visible(False)
-        ax.axis('off')
-        # get tree
-        img = mpimg.imread(tree_files[n_plot])
-        imgplot = ax.imshow(img)
-
-    # --- Use mathematical braces etc to show combining of trees
-    # Axis to use?
-    ax = Laxes[0]
-    # X... X500
-    alt_text = r'$\bar \}$'
-    fontsize = 70
-    prop = fm.FontProperties(fname=fpath, size=fontsize)
-#    ax.text(x=3000,y=0.25, s=alt_text, fontsize=fontsize )
-    ax.annotate(alt_text, (2.05, 0.3), textcoords='axes fraction',
-                fontsize=fontsize,
-                #    	fontweight='ultralight', style='italic',
-                fontname=fontname)
-    # now add x values
-    fontsize = 5
-    prop = fm.FontProperties(fname=fpath, size=fontsize)
-    alt_text = r'$\bar X = X_i,...X_{500}$'
-    ax.annotate(alt_text, (2.05, 0.05), textcoords='axes fraction',
-                fontproperties=prop,
-                #        fontweight='light', fontname=fontname, fontsize=fontsize,
-                )
-
-    # --- Single forest
-    ax = Laxes[1]
-    # Open and use tree
-    filename = 'Oi_prj_features_of_{}_for_depth_{}_white.png'
-    filename = filename.format(model2use, depth2investigate)
-    img = mpimg.imread(filename)
-    imgplot = ax.imshow(img)
-
-    # --- Use mathematical braces etc to show combining of forests
-    ax = Laxes[1]
-    # X... X10
-    alt_text = r'$\bar \}$'
-    fontsize = 70
-    prop = fm.FontProperties(fname=fpath, size=fontsize)
-#    ax.text(x=3000,y=0.25, s=alt_text, fontsize=fontsize )
-    ax.annotate(alt_text, (2.2, 0.3), textcoords='axes fraction',
-                fontproperties=prop,
-                #    	fontweight='ultralight', style='italic',  fontname=fontname,
-                #		fontsize=fontsize,
-                )
-    # now add x values
-    fontsize = 5
-    prop = fm.FontProperties(fname=fpath, size=fontsize)
-    alt_text = r'$\bar X = X_i,...X_{10}$'
-    ax.annotate(alt_text, (2.2, 0.05), textcoords='axes fraction',
-                fontproperties=prop,
-                #        fontweight='light', fontname=fontname, fontsize=fontsize,
-                )
-
-    # --- Arrow sign
-    fontsize = 30
-    prop = fm.FontProperties(fname=fpath, size=fontsize)
-    alt_text = r'$\Rightarrow$'
-    ax.annotate(alt_text, (0.85, .50), textcoords='axes fraction',
-                fontproperties=prop,
-                #    	fontname=fontname, fontsize=fontsize,
-                )
-
-    # --- forest
-#    ax = axes[3]
-    # --- Ten single trees
-    # Get names of trees
-    import glob
-    files = glob.glob('*{}*white*png'.format(depth2investigate))
-    # Setup Small Laxes
-    startx = 570+Lwidth+buffer+buffer
-#    starty =
-    for n_plot in range(10):
-
-        # if
-        Hspacer = 0
-        Swidth = 75
-        Hspacer = 5
-        Xleft = startx
-        XRight = startx+Swidth
-
-        if n_plot in range(10)[0::2]:
-            Xleft = XRight
-            XRight = Xleft+Swidth+Hspacer
-        # Get the row number
-        Nrow = int(n_plot/2.)
-        # make subplot
-        print(RowSizes[Nrow], RowSizes[Nrow+1], Xleft, XRight)
-        ax = plt.subplot(G[RowSizes[Nrow]:RowSizes[Nrow+1], Xleft:XRight])
-        # remove lines for subplots
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.patch.set_visible(False)
-        ax.axis('off')
-
-        # get tree
-#        filename = 'Oi_prj_features_of_RFR(TEMP+DEPTH+NO3+SWrad)_for_depth_7_white.png'
-        img = mpimg.imread(files[n_plot])
-        imgplot = ax.imshow(img)
-
-    # --- Add final text ("prediction")
-    ax = Laxes[1]
-#    ax = Label_ax
-#    Label_ax = plt.subplot()
-#    ax = plt.subplot()
-#    ax.set_xticks([])
-#    ax.set_yticks([])
-#    ax.patch.set_visible(False)
-#    ax.axis('off')
-#    ax.patch.set_facecolor( None )
-#    ax.patch.set_alpha(0.0)
-
-    # Arrow?
-
-    # Predcition
-    alt_text = 'Prediction'
-    fontsize = 18
-    prop = fm.FontProperties(fname=fpath, size=fontsize)
-#    ax.annotate( alt_text, (2.7, .90), textcoords='axes fraction',
-    ax.annotate(alt_text, (2.7, .875), textcoords='axes fraction',
-                fontproperties=prop,
-                #    	fontname=fontname, fontsize=fontsize,
-                rotation=90)
-#    ax.text( 0.75, .50, alt_text, ha="center", va="center", fontsize=fontsize,
-#        rotation=90)
-
-    # ----  Update spacings
-    left = 0.025
-    bottom = 0.025
-    top = 1 - bottom
-#    hspace = 0.05
-    fig.subplots_adjust(bottom=bottom, top=top,
-                        left=left,
-                        #         right=right,
-                        #        hspace=hspace
-                        #        , wspace=wspace
-                        )
-    # Save figure
-    plt.savefig('Oi_prj_ensemble_workflow_image.png', dpi=dpi)
-
-
-def make_table_of_point_for_point_performance(RFR_dict=None,
-                                              testset='Test set (strat. 20%)',
-                                              analysis4coastal=True,
-                                              target='Iodide'):
+def mk_table_of_point_for_point_performance(RFR_dict=None, df=None,
+                                            testset='Test set (strat. 20%)',
+                                            inc_ensemble=False,
+                                            var2use='RFR(Ensemble)',
+                                            target='Iodide'):
     """
     Make a table to summarise point-for-point performance
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    var2use (str), variable name to use for ensemble prediction
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool), include the ensemble (var2use) in the analysis
 
     Returns
     -------
@@ -1062,15 +1130,20 @@ def make_table_of_point_for_point_performance(RFR_dict=None,
     Notes
     -----
     """
-    # def get data
+    # Get data objects as dictionary and extract dataframe if not provided.
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
+    if isinstance(df, type(None)):
+        df = RFR_dict['df']
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, analysis4coastal=True, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+                                var2use=var2use,
+                                inc_ensemble=inc_ensemble, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
-                     'RFR(Ensemble)': 'RFR(Ensemble)',
+#                     'RFR(Ensemble)': 'RFR(Ensemble)',
+                     var2use : var2use,
                      'Iodide': 'Obs.',
                      #                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
@@ -1096,14 +1169,20 @@ def make_table_of_point_for_point_performance(RFR_dict=None,
     stats.round(1).to_csv(csv_name)
 
 
-def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
-                                                      testset='Test set (strat. 20%)',
-                                                      target='Iodide'):
+def mk_table_of_point_for_point_performance_TESTSET(RFR_dict=None, df=None,
+                                                    testset='Test set (strat. 20%)',
+                                                    inc_ensemble=False,
+                                                    var2use='RFR(Ensemble)',
+                                                    target='Iodide'):
     """
-    Make a table to summarise point-for-point performance
+    Make a table to summarise point-for-point performance within testset
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    var2use (str), variable name to use for ensemble prediction
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool), include the ensemble (var2use) in the analysis
 
     Returns
     -------
@@ -1111,15 +1190,16 @@ def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
     Notes
     -----
     """
-    # def get data
+    # Get data objects as dictionary and extract dataframe if not provided.
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
-    # Just select the
-    df = RFR_dict['df']
+    if isinstance(df, type(None)):
+        df = RFR_dict['df']
+    # Just select the testing dataset
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
-                                analysis4coastal=True, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+                                inc_ensemble=inc_ensemble, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1127,36 +1207,42 @@ def make_table_of_point_for_point_performance_TESTSET(RFR_dict=None,
                      'Iodide': 'Obs.',
                      #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
-    # Set the stats to use
+    # Set the stats to use for in csv output
     first_columns = [
         'mean', 'std', '25%', '50%', '75%',
         'RMSE ({})'.format(testset),  'RMSE (all)',
     ]
 #    rest_of_columns = [i for i in stats.columns if i not in first_columns]
     stats = stats[first_columns]
-    # rename columns (50% to median and ... )
+    # Rename columns (50% to median and ... )
     cols2rename = {
         '50%': 'median', 'std': 'std. dev.',
         'RMSE ({})'.format(testset): 'RMSE (withheld)'
     }
     stats.rename(columns=cols2rename,  inplace=True)
-    # only select params of interest
+    # Only select params of interest
     stats = stats.T[rename_titles.values()].T
-    # rename
+    # Rename
     stats.rename(index=rename_titles, inplace=True)
     # Set filename and save detail on models
     csv_name = 'Oi_prj_point_for_point_comp4tabale_TESTSET.csv'
     stats.round(1).to_csv(csv_name)
 
 
-def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
-                                                  testset='Test set (strat. 20%)',
-                                                  target='Iodide'):
+def mk_table_of_point_for_point_performance_ALL(RFR_dict=None, df=None,
+                                                testset='Test set (strat. 20%)',
+                                                var2use='RFR(Ensemble)',
+                                                inc_ensemble=False,
+                                                target='Iodide'):
     """
-    Make a table to summarise point-for-point performance
+    Make a table to summarise point-for-point performance for all datapoints
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    var2use (str), variable name to use for ensemble prediction
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool), include the ensemble (var2use) in the analysis
 
     Returns
     -------
@@ -1164,11 +1250,14 @@ def make_table_of_point_for_point_performance_ALL(RFR_dict=None,
     Notes
     -----
     """
-    # def get data
+    # Get data objects as dictionary and extract dataframe if not provided.
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
+    if isinstance(df, type(None)):
+        df = RFR_dict['df']
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, analysis4coastal=True, verbose=False)
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+                                verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1296,6 +1385,15 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
                                rebuild=False):
     """
     Wrapper call to build_or_get_models for sea-surface iodide
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     # Get the dictionary  of model names and features (specific to iodide)
     model_feature_dict = get_model_features_used_dict(rtn_dict=True)
@@ -1355,6 +1453,15 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
                         convert2HEMCO_time=False):
     """
     wrapper for add_attrs2target_ds for iodine scripts
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     # Set variable attribute dictionary variables
     attrs_dict = {}
@@ -1370,12 +1477,13 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
         'references': "Paper Reference: A machine learning based global sea-surface iodide distribution, T. Sherwen , et al., in review, 2019 ; Data reference: Sherwen, T., Chance, R., Tinel, L., Ellis, D., Evans, M., and Carpenter, L.: Global predicted sea-surface iodide concentrations v0.0.0., https://doi.org/10.5285/02c6f4eea9914e5c8a8390dd09e5709a., 2019.",
     }
     #  Call s2s function
-    ds = add_attrs2target_ds(ds, convert_to_kg_m3=False,
-                             attrs_dict=attrs_dict, global_attrs_dict=global_attrs_dict,
-                             varname='Ensemble_Monthly_mean',
-                             add_global_attrs=True, add_varname_attrs=True,
-                             update_varnames_to_remove_spaces=False,
-                             convert2HEMCO_time=False)
+    ds = utils.add_attrs2target_ds(ds, convert_to_kg_m3=False,
+                                   attrs_dict=attrs_dict,
+                                   global_attrs_dict=global_attrs_dict,
+                                   varname=varname,
+                                   add_global_attrs=True, add_varname_attrs=True,
+                                   update_varnames_to_remove_spaces=False,
+                                   convert2HEMCO_time=False)
     return ds
 
 

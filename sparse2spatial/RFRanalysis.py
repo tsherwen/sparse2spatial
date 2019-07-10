@@ -7,6 +7,7 @@ Analysis output from RandomForestRegressor algorithms
 import numpy as np
 import xarray as xr
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
@@ -176,6 +177,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
 
     Returns
     -------
@@ -467,6 +469,7 @@ def run_tests_on_model_build_options(df=None,
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
 
     Returns
     -------
@@ -592,7 +595,7 @@ def get_feature_importance(RFR_dict=None):
 
 
 def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
-                                     target='Iodide', inc_ensemeble=False,
+                                     target='Iodide', inc_ensemble=False,
 #                                     save_CHOOSEN_MODEL=False,
                                      param_names=[],
                                      analysis4coastal=False,
@@ -605,6 +608,8 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool), include the ensemble (var2use) in the analysis
 
     Returns
     -------
@@ -690,9 +695,9 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 
 
 def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
-                        target='Iodide', inc_ensemeble=False,
+                        target='Iodide', inc_ensemble=False,
 #                        save_CHOOSEN_MODEL=False,
-                        analysis4coastal=False,
+                        analysis4coastal=False, var2use='RFR(Ensemble)',
                         plot_up_model_performance=True, RFR_dict=None,
                         add_sklean_metrics=False, verbose=True, debug=False):
     """
@@ -703,6 +708,8 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
     -------
     analysis4coastal (bool), include analysis of data split by coastal/non-coastal
     target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool), include the ensemble (var2use) in the analysis
 
 
     Returns
@@ -710,7 +717,6 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
 
     Notes
     -----
-
     """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
@@ -731,16 +737,16 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
                         # u'Chance2014_Multivariate',
                         ]
     # Aslo include the ensemble parameters
-    if inc_ensemeble:
-        param_names += ['RFR(Ensemble)']
+    if inc_ensemble:
+        param_names += [var2use]
     # Calculate performance
     stats = calc_performance_of_params(df=df,
                                        params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
     stats_sub1 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                       df=df_tmp[[target]+model_names +
-                                                 param_names], dataset_str=testset,
+                                       df=df_tmp[[target]+model_names + param_names],
+                                       dataset_str=testset,
                                        target=target,
                                        add_sklean_metrics=add_sklean_metrics).T
     stats2concat = [stats, stats_sub1]
@@ -749,32 +755,32 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
         dataset_split = 'Coastal'
         df_tmp = df.loc[(df['Coastal'] == 1), :]
         stats_sub2 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                           df=df_tmp[[target]+model_names +
-                                                     param_names], target=target,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Add testing on non-coastal
         dataset_split = 'Non coastal'
         df_tmp = df.loc[(df['Coastal'] == 0), :]
         stats_sub3 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                           df=df_tmp[[target]+model_names +
-                                                     param_names], target=target,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Add testing on coastal
         dataset_split = 'Coastal ({})'.format(testset)
         df_tmp = df.loc[(df['Coastal'] == 1) & (df[testset] == True), :]
         stats_sub4 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                           df=df_tmp[[target]+model_names +
-                                                     param_names], target=target,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Add testing on non-coastal
         dataset_split = 'Non coastal ({})'.format(testset)
         df_tmp = df.loc[(df['Coastal'] == 0) & (df[testset] == True), :]
         stats_sub5 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                           df=df_tmp[[target]+model_names +
-                                                     param_names], target=target,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Statistics to concat
@@ -1369,6 +1375,8 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    var2use (str), variable name to use for ensemble prediction
+
 
     Returns
     -------

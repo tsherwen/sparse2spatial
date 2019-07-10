@@ -10,12 +10,14 @@ Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L
 """
 import numpy as np
 import pandas as pd
-
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
-
+# s2s imports
+from sparse2spatial.RFRbuild import build_or_get_models
+from sparse2spatial.RFRanalysis import get_stats_on_models
 # Local modules
 from sea_surface_iodide import mk_iodide_test_train_sets
+
 
 
 # ---------------------------------------------------------------------------
@@ -28,6 +30,18 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
                                                       rm_non_water_boxes=True):
     """
     Plot up predicted values overlaid with observations
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+    (dict)
+
+    Notes
+    -----
     """
     # testset='Test set (strat. 20%)'
     import seaborn as sns
@@ -129,8 +143,22 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
                                               testset='Test set (strat. 20%)',
                                               rm_Skagerrak_data=False,
                                               rm_non_water_boxes=True):
-    """ Plot up predicted values overlaid with observations """
-    # testset='Test set (strat. 20%)'
+    """
+    Plot up predicted values overlaid with observations
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+    (dict)
+
+    Notes
+    -----
+
+    """
     import seaborn as sns
     from matplotlib import colors
     # reset settings as plotting maps
@@ -270,7 +298,19 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
                                                         RFR_dict=None,
                                                         testset='Test set (strat. 20%)'
                                                         ):
-    """ Plot up predicted values against observations at obs. points """
+    """
+    Plot up predicted values against observations at obs. points
+
+    Parameters
+    -------
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     import seaborn as sns
     from matplotlib import colors
     # reset settings as plotting maps
@@ -540,7 +580,18 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
                                         plot_up_param_iodide=True, context="paper",
                                         ds=None, target='iodide',
                                         rm_Skagerrak_data=False):
-    """ Plot a figure of iodide vs laitude """
+    """
+    Plot a figure of iodide vs laitude
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     if context == "paper":
@@ -664,7 +715,18 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodi
                                                            plot_up_param_iodide=True,
                                                            context="paper", ds=None,
                                                            rm_Skagerrak_data=False):
-    """ Plot a figure of iodide vs laitude """
+    """
+    Plot a figure of iodide vs laitude
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     if context == "paper":
@@ -766,7 +828,7 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodi
         var2plot = 'RFR(Ensemble)'
         param = var2plot
         plt_shading_around_avg = False
-    # Set color for param
+        # Set color for param
         color = color_d[param]
         # Plot average
         if plot_avg_as_median:
@@ -840,7 +902,18 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
                                                  show_plot=False, close_plot=True,
                                                  save_plot=False, shade_std=True,
                                                  folder=None, ds=None, topmodels=None):
-    """ Plot a figure of iodide vs laitude - showing all ensemble members """
+    """
+    Plot a figure of iodide vs laitude - showing all ensemble members
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     from collections import OrderedDict
     import seaborn as sns
     sns.set(color_codes=True)
@@ -950,7 +1023,9 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
 # ---------- Functions to analyse/test models for Oi! paper --------------
 # ---------------------------------------------------------------------------
 def check_seasonalitity_of_iodide_predcitions(show_plot=False):
-    """ Compare the seasonality of obs. and parameterised values """
+    """
+    Compare the seasonality of obs. and parameterised values
+    """
     # --- Set local variables
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1188,7 +1263,9 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
 
 def test_model_sensitiivty2training_test_split(models2compare=None,
                                                models_dict=None):
-    """ Driver to test/training set sensitivity for a set of models """
+    """
+    Driver to test/training set sensitivity for a set of models
+    """
     # list of models to test?
     if isinstance(models2compare, type(None)):
         models2compare = ['RFR(TEMP+DEPTH+SAL)']
@@ -1216,7 +1293,9 @@ def test_model_sensitiivty2training_test_split(models2compare=None,
 
 def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
                                                       rm_Skagerrak_data=False):
-    """ Calculation of model selection bias """
+    """
+    Calculation of model selection bias
+    """
     # --- Set local variables
     if rm_Skagerrak_data:
         extr_str = '_nSkagerrak'
@@ -1315,7 +1394,9 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
                                               rebuild_models=False, remake_NetCDFs=False,
                                               res='0.125x0.125',
                                               rm_Skagerrak_data=False, topmodels=None):
-    """ Analyse the variation in spatial prediction on a per model basis """
+    """
+    Analyse the variation in spatial prediction on a per model basis
+    """
     from multiprocessing import Pool
     from functools import partial
     # --- Set local variables
@@ -1625,9 +1706,22 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
 
 
 def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
-                         testset='Test set (strat. 20%)', target_name='Iodide',
+                         testset='Test set (strat. 20%)',
                          target='Iodide', context="paper", dpi=720):
-    """ Show the correlations between obs. and params. as window plot """
+    """
+    Show the correlations between obs. and params. as window plot
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # select dataframe with observations and predictions in it
@@ -1778,9 +1872,22 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
 
 
 def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
-                                 testset='Test set (strat. 20%)', target_name='Iodide',
+                                 testset='Test set (strat. 20%)',
                                  target='Iodide', context="paper", dpi=320):
-    """ Analyse the correlations between obs. and params. """
+    """
+    Analyse the correlations between obs. and params. using ODR
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
@@ -1890,9 +1997,21 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
 
 
 def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
-                             testset='Test set (strat. 20%)', target_name='Iodide',
+                             testset='Test set (strat. 20%)',
                              target='Iodide', dpi=320):
-    """ Analyse the correlations between obs. and params. """
+    """
+    Analyse the correlations between obs. and params.
+
+    Parameters
+    -------
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
@@ -2153,8 +2272,19 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
 
 
 def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
-                                    target_name='Iodide'):
-    """ Calculate the bias within the predictions """
+                                    target='Iodide'):
+    """
+    Calculate the bias within the predictions
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+    (None)
+    """
     # Get data
     if isinstance(df, type(None)):
         RFR_dict = build_or_get_models()
@@ -2166,7 +2296,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
     # --- Calculate bias for all params
     dfs = {}
     for param in params2plot:
-        dfs[param] = df[param]-df[target_name]
+        dfs[param] = df[param]-df[target]
     # Make new dataframe with params as columns
     dfNEW = pd.DataFrame([dfs[i] for i in params2plot]).T
     dfNEW.columns = params2plot
@@ -2245,10 +2375,22 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
 
 def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
                                                testset='Test set (strat. 20%)',
-                                               target_name='Iodide',
                                                target='Iodide', df=None,
                                                plot_up_CDF=False, dpi=320):
-    """ Plot up CDF and PDF plots to explore point-vs-point data """
+    """
+    Plot up CDF and PDF plots to explore point-vs-point data
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper", font_scale=0.75)
@@ -2303,7 +2445,7 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
         # - Plot up PDF plots for the dataset
         # plot observations
         var_ = 'Obs.'
-        obs_arr = df[target_name].values
+        obs_arr = df[target].values
         ax = sns.distplot(obs_arr, axlabel=axlabel, label=var_,
                           color='k',)
         # loop and plot model values
@@ -2325,7 +2467,7 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
         # plot observations
         if plot_up_CDF:
             var_ = 'Obs.'
-            obs_arr = df[target_name].values
+            obs_arr = df[target].values
             ax = sns.distplot(arr, axlabel=axlabel, label=var_, color='k',
                               hist_kws=dict(cumulative=True),
                               kde_kws=dict(cumulative=True))
@@ -2348,7 +2490,7 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
 
         # - Plot up PDF plots for the residual dataset
         # get observations
-        obs_arr = df[target_name].values
+        obs_arr = df[target].values
         fig, ax = plt.subplots()
         # loop and plot model values
         for param in params2plot:
@@ -2368,7 +2510,7 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
         # - Plot up CDF plots for the residual  dataset
         if plot_up_CDF:
             # plot observations
-            obs_arr = df[target_name].values
+            obs_arr = df[target].values
             fig, ax = plt.subplots()
             # loop and plot model values
             for param in params2plot:
@@ -2393,11 +2535,21 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
 
 def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
                                               testset='Test set (strat. 20%)',
-                                              target_name='Iodide',
                                               target='Iodide', df=None, plot_up_CDF=False,
                                               dpi=320):
     """
     Plot up CDF and PDF plots to explore point-vs-point data
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     import seaborn as sns
     sns.set(color_codes=True)
@@ -2453,7 +2605,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
         # - Plot up PDF plots for the dataset
         # plot observations
         var_ = 'Obs.'
-        obs_arr = df[target_name].values
+        obs_arr = df[target].values
         ax = sns.distplot(obs_arr, axlabel=axlabel, label=var_,
                           color='k', ax=ax1)
         # loop and plot model values
@@ -2477,7 +2629,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
         # set Axis for abosulte PDF
         ax2 = fig.add_subplot(3, 2, [2, 4, 6][n_dataset])
         # get observations
-        obs_arr = df[target_name].values
+        obs_arr = df[target].values
         # loop and plot model values
         for param in params2plot:
             arr = df[param].values - obs_arr
@@ -2501,6 +2653,15 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodid
                                        rm_non_water_boxes=True):
     """
     Plot up a window plot of predicted iodide
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     import seaborn as sns
     sns.reset_orig()
@@ -2585,6 +2746,15 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
                                   rm_non_water_boxes=True, debug=False):
     """
     Plot up a window plot of predicted iodide
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     import seaborn as sns
     sns.reset_orig()
@@ -2660,6 +2830,15 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
                                                  save2png=True, fillcontinents=True):
     """
     Plot up predictions from existing parameters spatially
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     import seaborn as sns
     sns.reset_orig()
@@ -2727,6 +2906,15 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                            verbose=True, debug=False):
     """
     Plot up the ensemble average and uncertainty (std. dev.) spatially
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     import seaborn as sns
     sns.reset_orig()
@@ -2961,7 +3149,18 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
                                         show_plot=False, save2png=True,
                                         fillcontinents=True,
                                         window=False, f_size=20, RFR_dict=None):
-    """ Plot up the spatial changes between models  """
+    """
+    Plot up the spatial changes between models
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     import seaborn as sns
     sns.reset_orig()
     # Get dictionary of shared data if not provided
@@ -3104,6 +3303,15 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodi
                                                 window=False, f_size=20):
     """
     Plot up the spatial changes between models
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     import seaborn as sns
     sns.reset_orig()
@@ -3453,39 +3661,45 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 #
 
 
-def get_equiv_Chance_arr(df=None, target_predictions=None,
-                         features_used=None, target_name=['Iodide'], res='4x5'):
-    """ Calculate Iodide from Chance parametistaion and input data"""
-    # calculate dependency of iodide from Chance et al 2014
-    C = (df['WOA_TEMP'].values)**2
-    arr = (0.225*C) + 19.
-    # Transpose to be a 2D array, that can then be plotted
-    arr = mk_uniform_2D_array(df_predictors=df, target_predictions=arr,
-                              target_name=target_name, res=res)
-    return arr
+# def get_equiv_Chance_arr(df=None, target_predictions=None,
+#                          features_used=None, target_name=['Iodide'], res='4x5'):
+#     """
+#     Calculate Iodide from Chance parametistaion and input data
+#     """
+#     # calculate dependency of iodide from Chance et al 2014
+#     C = (df['WOA_TEMP'].values)**2
+#     arr = (0.225*C) + 19.
+#     # Transpose to be a 2D array, that can then be plotted
+#     arr = mk_uniform_2D_array(df_predictors=df, target_predictions=arr,
+#                               target_name=target_name, res=res)
+#     return arr
 
 
-def get_equiv_MacDonald_arr(df=None, target_predictions=None,
-                            features_used=None, target_name=['Iodide'],
-                            res='4x5'):
-    """ Calculate Iodide from Chance parametistaion and input data"""
-    # calculate dependency of iodide from MacDonald et al 2014
-    # NOTE: conversion of M to nM of I-
-    C = (df['WOA_TEMP'].values+273.15)
-#    C = df['WOA_TEMP_K']
-    # NOTE: conversion of M to nM of I-
-    arr = 1.45E6 * (np.exp((-9134. / C))) * 1E9
-    # Transpose to be a 2D array, that can then be plotted
-    arr = mk_uniform_2D_array(df_predictors=df, target_predictions=arr,
-                              target_name=target_name, res=res)
-    return arr
+# def get_equiv_MacDonald_arr(df=None, target_predictions=None,
+#                             features_used=None, target_name=['Iodide'],
+#                             res='4x5'):
+#     """
+#     Calculate Iodide from Chance parametistaion and input data
+#     """
+#     # calculate dependency of iodide from MacDonald et al 2014
+#     # NOTE: conversion of M to nM of I-
+#     C = (df['WOA_TEMP'].values+273.15)
+# #    C = df['WOA_TEMP_K']
+#     # NOTE: conversion of M to nM of I-
+#     arr = 1.45E6 * (np.exp((-9134. / C))) * 1E9
+#     # Transpose to be a 2D array, that can then be plotted
+#     arr = mk_uniform_2D_array(df_predictors=df, target_predictions=arr,
+#                               target_name=target_name, res=res)
+#     return arr
 
 
 def plot_up_surface_iodide(arr=None, res='4x5', title=None, plot4poster=False,
                            fixcb=np.array([0., 240.]), nticks=5, extend='max',
                            show_plot=False,
                            f_size=15, window=False, axlabel='[I$^{-}_{aq}$] (nM)'):
-    """ Plot up surface concentrations of Iodide """
+    """
+    Plot up surface concentrations of Iodide
+    """
     # local params
     if plot4poster:
         title = None
@@ -3502,7 +3716,18 @@ def plot_up_surface_iodide(arr=None, res='4x5', title=None, plot4poster=False,
 
 def get_hexbin_plot(x=None, y=None, xlabel=None, ylabel=None, log=False,
                     title=None, add_ODR_trendline2plot=True):
-    """ Plot up a hexbin comparison with marginals """
+    """
+    Plot up a hexbin comparison with marginals
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     # detail: http://seaborn.pydata.org/examples/hexbin_marginals.html
     import numpy as np
     import seaborn as sns
@@ -3535,7 +3760,18 @@ def get_ensemble_predicted_iodide(df=None,
                                   RFR_dict=None, topmodels=None, stats=None,
                                   rm_Skagerrak_data=False, use_vals_from_NetCDF=False,
                                   var2use='RFR(Ensemble)', verbose=True, debug=False):
-    """ Get predicted iodide from literature parametersations """
+    """
+    Get predicted iodide from literature parametersations
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     # Just use top 10 models are included
     # ( with derivative variables )
     if isinstance(topmodels, type(None)):
@@ -3548,10 +3784,10 @@ def get_ensemble_predicted_iodide(df=None,
         if isinstance(stats, type(None)):
             stats = get_stats_on_models(RFR_dict=RFR_dict,
                                         verbose=False)
-        # get list of
+        # get list of the top models to use
         topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
 
-    # --- Add the ensemble to the dataframe
+    # Add the ensemble to the dataframe
     use_vals_from_NetCDF = False  # Use the values from the spatial prediction
     # If the variable is not already there then do not add
     try:
@@ -3589,10 +3825,10 @@ def get_ensemble_predicted_iodide(df=None,
                 rm_Skagerrak_data=rm_Skagerrak_data,
             )
         else:  #  average the topmodels output.
-                        # Get all the model predictions from the RFR_dict
-            df_tmp = RFR_dict['df']
+            # Get all the model predictions from the RFR_dict
+            df_tmp = RFR_dict['df'].copy()
             df_tmp.index = df_tmp['Data_Key_ID']
-            #
+            # Set the ensemble as the arithmetic mean
             df_tmp[var2use] = df_tmp[topmodels].mean(axis=1)
             # Add a column for the
             df[var2use] = np.NaN
@@ -3627,7 +3863,18 @@ def plot_difference2_input_PDF_on_update_of_var(res='4x5'):
 def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
         RFR_dict=None, stats=None, res='4x5', dpi=320,
         perturb_by_mutiple=False, save_str='', show_plot=False):
-    """ Graphically plot the sensitivity of iodide in input variables """
+    """
+    Graphically plot the sensitivity of iodide in input variables
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     import matplotlib
 #    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -3775,7 +4022,9 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
 
 
 def plot_spatial_area4core_decisions(res='4x5'):
-    """ Plot various spatial extents of input vairables  """
+    """
+    Plot various spatial extents of input vairables
+    """
     # Get core decision points for variables (for data=v6?)
     d = {
         'WOA_TEMP_K':  {'value': 17.4+273.15, 'std': 2.0},
@@ -3792,7 +4041,18 @@ def plot_spatial_area4core_decisions(res='4x5'):
 
 def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
                                            target='Iodide', verbose=True, debug=False):
-    """ Explore the sensitivity of the prediction to data denial """
+    """
+    Explore the sensitivity of the prediction to data denial
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     import gc
     # res='4x5'; dpi=320
     # --- Local variables
@@ -3878,10 +4138,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     df.index = np.arange(df.shape[0])
     # Reset the training/withhel data split
     returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                          rand_20_80=False,
-                                                          rand_strat=True,
-                                                          features_used=df.columns.tolist(),
-                                                          )
+                                              rand_20_80=False,
+                                              rand_strat=True,
+                                              features_used=df.columns.tolist(),
+                                              )
     train_set, test_set, test_set_targets = returned_vars
     key_varname = 'Test set ({})'.format('strat. 20%')
     df[key_varname] = False
@@ -3925,10 +4185,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     df.index = np.arange(df.shape[0])
     # Reset the training/withhel data split
     returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                          rand_20_80=False,
-                                                          rand_strat=True,
-                                                          features_used=df.columns.tolist(),
-                                                          )
+                                              rand_20_80=False,
+                                              rand_strat=True,
+                                              features_used=df.columns.tolist(),
+                                              )
     train_set, test_set, test_set_targets = returned_vars
     key_varname = 'Test set ({})'.format('strat. 20%')
     df[key_varname] = False
@@ -4069,10 +4329,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4113,10 +4373,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4143,10 +4403,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4177,10 +4437,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4230,10 +4490,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4284,10 +4544,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4328,10 +4588,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4361,10 +4621,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4391,10 +4651,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4420,10 +4680,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4453,10 +4713,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4485,10 +4745,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4515,10 +4775,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4547,10 +4807,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4579,10 +4839,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4609,10 +4869,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4642,10 +4902,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df.index = np.arange(df.shape[0])
         # Reset the training/withhel data split
         returned_vars = mk_iodide_test_train_sets(df=df.copy(),
-                                                              rand_20_80=False,
-                                                              rand_strat=True,
-                                                              features_used=df.columns.tolist(),
-                                                              )
+                                                  rand_20_80=False,
+                                                  rand_strat=True,
+                                                  features_used=df.columns.tolist(),
+                                                  )
         train_set, test_set, test_set_targets = returned_vars
         key_varname = 'Test set ({})'.format('strat. 20%')
         df[key_varname] = False
@@ -4681,7 +4941,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         # Predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
                                                         dsA=ds, RFR_dict=RFR_dict_d[key_],
-                                                        use_updated_predictor_NetCDF=False,
+                                                       use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels,
                                                         models2compare=topmodels)
@@ -4736,7 +4996,9 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
 
 def explore_sensitivity_of_65N(res='4x5'):
-    """ Explore sensitivty of iodide parameterisations to  input vairables """
+    """
+    Explore sensitivty of iodide parameterisations to input variables
+    """
     # --- Local variables
     # Get the core input variables
     data_root = get_file_locations('data_root')
@@ -5028,7 +5290,7 @@ def explore_sensitivity_of_65N(res='4x5'):
         # predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
                                                         dsA=dss[key_], RFR_dict=RFR_dict,
-                                                        use_updated_predictor_NetCDF=False,
+                                                       use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels)
         # add ensemble to ds
@@ -5155,7 +5417,18 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
                                            only_consider_water_boxes=True,
                                            fixed_value2use=None,
                                            save2NetCDF=True):
-    """ Set values above a latitude to the monthly lon average """
+    """
+    Set values above a latitude to the monthly lon average
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
+    """
     print(var2set)
     # local variables
     data_root = get_file_locations('data_root')
@@ -5262,11 +5535,21 @@ def set_SAL_and_NIT_above_65N_to_avg(res='0.125x0.125'):
 
 
 def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodide',
-                                              months=None, var2extract='Ensemble_Monthly_mean',
+                                              months=None,
+                                              var2extract='Ensemble_Monthly_mean',
                                               rm_Skagerrak_data=False, verbose=True,
                                               debug=False):
     """
     Wrapper for extract4nearest_points_in_ds for iodide
+
+    Parameters
+    -------
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     # Get data from NetCDF as a xarray dataset
     folder = get_file_locations('data_root')
@@ -5278,5 +5561,6 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
     ds = xr.open_dataset(folder + filename)
     # Now extract the dataset
     extracted_vars = extract4nearest_points_in_ds(lons=lons, lats=lats, months=months,
-                                                  var2extract=var2extract, verbose=verbose, debug=debug)
+                                                  var2extract=var2extract,
+                                                  verbose=verbose, debug=debug)
     return extracted_vars

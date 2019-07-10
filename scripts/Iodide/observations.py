@@ -57,17 +57,9 @@ def main(add_ancillaries=True):
     -------
     (None)
     """
-    # - Below lines are to update the BODC iodide dataset to include new obs.
-    # Get the latest data from BODC
-    df = get_iodide_data_from_BODC()
-    # Extract any new files of iodide (excel files)
-
-    # process these to contain all of the information of the BODC file
-
-    # Combine with existing BODC sea-surface iodide file
-
-    # Save this new combined file as a .csv
-
+    #  - First: run script in this directory to re-process the observations.
+    # e.g. python process_new_observations.py
+    # Full instructions are given in the README.rst within the scripts/Iodide directory
 
     # - Below lines are only to be used for processing initial file
     # Get iodide observations? (if already processed)

@@ -239,6 +239,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
 
     Parameters
     -------
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
 
     Returns
     -------
@@ -352,6 +353,7 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
 
     Parameters
     -------
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
 
     Returns
     -------
