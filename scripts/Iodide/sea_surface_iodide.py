@@ -22,6 +22,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
+import cartopy
+import cartopy.crs as ccrs
+
 # from multiprocessing import Pool
 # from functools import partial
 
@@ -31,12 +34,14 @@ import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 import sparse2spatial.archiving as archiving
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
+import sparse2spatial.plotting as plotting
 from sparse2spatial.RFRanalysis import get_stats_on_models
 from sparse2spatial.RFRanalysis import add_ensemble_avg_std_to_dataset
 from sparse2spatial.RFRbuild import get_top_models
 from sparse2spatial.RFRbuild import mk_test_train_sets
 from sparse2spatial.RFRbuild import build_or_get_models
 from sparse2spatial.utils import get_model_features_used_dict
+from sparse2spatial.utils import get_outlier_value
 
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
@@ -325,6 +330,18 @@ def main():
 #    mk_ensemble_diagram()
 
     # --- Do futher analysis on the impact of the depth variable
+    do_analysis_processing_linked_to_depth_variable()
+
+    # plot this up and other figures for the ML paper
+    plot_spatail_figures_for_ML_paper_with_cartopy()
+
+    # - pass if no functions are uncommented
+    pass
+
+
+def do_analysis_processing_linked_to_depth_variable():
+    """
+    """
     from plotting_and_analysis import get_ensemble_predicted_iodide
     # Get the base topmodels
     vars2exclude = ['DOC', 'Prod', ]
@@ -345,6 +362,7 @@ def main():
     # Get topmodels without
     vars2exclude = ['DOC', 'Prod', 'DEPTH']
     topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
+    topmodels_DEPTH = topmodels.copy()
     # Now calculate the ensemble prediction
 #     df = RFR_dict['df']
 #     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
@@ -354,7 +372,7 @@ def main():
 #     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, df=df, inc_ensemble=True,
 #                                             var2use=var2use)
 
-    topmodels2use =  topmodels + topmodels_BASE
+    topmodels2use = topmodels_DEPTH + topmodels_BASE
     topmodels2use = list(set(topmodels2use))
     # Make a spatial prediction
     xsave_str = '_TEST_DEPTH_'
@@ -364,16 +382,194 @@ def main():
     res = '0.125x0.125'
 #    res = '4x5'
 #    res = '2x2.5'
-    mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
-                                           use_updated_predictor_NetCDF=False,
-                                           save2NetCDF=save2NetCDF,
-                                           rm_Skagerrak_data=rm_Skagerrak_data,
-                                           topmodels=topmodels2use,
-                                           xsave_str=xsave_str, add_ensemble2ds=True)
+#     mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
+#                                            use_updated_predictor_NetCDF=False,
+#                                            save2NetCDF=save2NetCDF,
+#                                            rm_Skagerrak_data=rm_Skagerrak_data,
+#                                            topmodels=topmodels2use,
+#                                            xsave_str=xsave_str, add_ensemble2ds=True)
+
+    # Plot up the annual average predictions from the top models with depth
+    filename = 'Oi_prj_predicted_Iodide_0.125x0.125_TEST_DEPTH__No_Skagerrak.nc'
+    folder = './'
+    ds = xr.open_dataset( folder+filename )
+    # ... and without
+    var2use4Ensemble = 'Ensemble_Monthly_mean'
+    var2use4std = 'Ensemble_Monthly_std'
+    ds = add_ensemble_avg_std_to_dataset(ds=ds, var2use4std=var2use4std,
+                                         var2use4Ensemble=var2use4Ensemble,
+                                         topmodels=topmodels_BASE,
+                                         save2NetCDF=False
+                                         )
+
+    # Plot the same way for the no depth data
+    var2use4Ensemble = 'Ensemble_Monthly_mean_nDepth'
+    var2use4std = 'Ensemble_Monthly_std_nDepth'
+    ds = add_ensemble_avg_std_to_dataset(ds=ds, var2use4std=var2use4std,
+                                         var2use4Ensemble=var2use4Ensemble,
+                                         topmodels=topmodels_DEPTH,
+                                         save2NetCDF=False
+                                         )
+
+    # Save as a NetCDF to use for plotting
+    ds.to_netcdf('Oi_temp_iodide_annual.nc')
 
 
-    # pass if no functions are uncommented
-    pass
+def plot_spatail_figures_for_ML_paper_with_cartopy():
+    """
+    Plot up all the spatial figures for the ML paper with cartopy
+    """
+
+
+    # Add LWI to NEtCDF
+    res ='0.125x0.125'
+    ds = add_LWI2array(ds=ds, res=res, var2template='Ensemble_Monthly_mean')
+    vars2mask = [
+    'Ensemble_Monthly_mean_nDepth', 'Ensemble_Monthly_mean', 'Ensemble_Monthly_std',
+    'Chance2014_STTxx2_I', 'MacDonald2014_iodide',
+    ]
+    for var2mask in vars2mask:
+        # set non water boxes to np.NaN
+        ds[var2mask] = ds[var2mask].where(ds['IS_WATER'] == True)
+    # Average over time
+    ds = ds.mean(dim='time')
+    ds.to_netcdf('Oi_temp_iodide.nc')
+    # Variables for plotting
+    ds = xr.open_dataset('Oi_temp_iodide.nc')
+    target = 'Iodide'
+    dpi = 720
+    projection = ccrs.PlateCarree()
+    cbar_kwargs={
+    'extend':'max', 'pad': 0.025, 'orientation':"vertical", 'label': 'nM',
+#    'fraction' : 0.1
+    'shrink':0.675,
+    'ticks' : np.arange(vmin, vmax+1, 60),
+    }
+    vmax = 240
+    vmin = 0
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+    cmap = AC.get_colormap(arr=np.array([vmin,vmax]))
+
+    # Now plot the core prediction
+    var2use4Ensemble = 'Ensemble_Monthly_mean'
+    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble)'
+    title = None # no title shown in paper's plots
+    plot_spatial_data_TEST(ds=ds, var2plot=var2use4Ensemble, title=title,
+                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               )
+    # And the one without depth
+    var2use4Ensemble = 'Ensemble_Monthly_mean_nDepth'
+    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble-No_depth)'
+    title = None # no title shown in paper's plots
+    plot_spatial_data_TEST(ds=ds, var2plot=var2use4Ensemble, title=title,
+                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               )
+
+
+    # -  Now plot up observations over the top
+    var2use4Ensemble = 'Ensemble_Monthly_mean'
+    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble)'
+    title = None # no title shown in paper's plots
+    plot_spatial_data_TEST(ds=ds, var2plot=var2use4Ensemble, title=title,
+                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               save_plot=False,
+                               dpi=dpi,
+                               )
+    # Get the axis
+    ax = plt.gca()
+    # select dataframe with observations and predictions in it
+    if isinstance(RFR_dict, type(None)):
+        RFR_dict = build_or_get_models()
+    df = RFR_dict['df']
+    df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
+    s = 15
+    edgecolor = 'k'
+    x = df[u'Longitude'].values
+    y = df[u'Latitude'].values
+    z = df['Iodide'].values
+    ax.scatter(x, y, c=z, s=s, cmap=cmap, norm=norm, edgecolor=edgecolor,
+               transform=projection, zorder=100, linewidth=0.05)
+    # Now save
+    extr_str = '_overlaid_with_obs'
+    filename = 's2s_spatial_{}_{}.png'.format(target, extr_str)
+    plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
+
+    # -
+    # Now plot the core prediction uncertainty (nM)
+    var2use4Ensemble = 'Ensemble_Monthly_mean'
+    var2use4std = 'Ensemble_Monthly_std'
+    title= 'Spatial unceratainty in sea-surface iodide in predicted values (nM)'
+    cbar_kwargs['ticks'] = np.arange(0, 30+1, 6)
+    cbar_kwargs['label'] = 'nM'
+    title = None # no title shown in paper's plots
+    plot_spatial_data_TEST(ds=ds, var2plot=var2use4std, title=title,
+                               vmin=0, vmax=30, extr_str=var2use4std,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               )
+    # Now plot the core prediction uncertainty (%)
+    cbar_kwargs['ticks'] = np.arange(0, 25+1, 5)
+    cbar_kwargs['label'] = '%'
+    var2use4std_pcent = 'Ensemble_Monthly_std_pcent'
+    ds[var2use4std_pcent] = ds[var2use4std] / ds[var2use4Ensemble] *100
+    title= 'Spatial unceratainty in sea-surface iodide in predicted values (%)'
+    title = None # no title shown in paper's plots
+    plot_spatial_data_TEST(ds=ds, var2plot=var2use4std_pcent, title=title,
+                               vmin=0, vmax=25, extr_str=var2use4std_pcent,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               )
+
+    # Now plot the existing parameterisations
+    cbar_kwargs['ticks'] = np.arange(vmin, vmax+1, 60)
+    cbar_kwargs['label'] = 'nM'
+    cbar_kwargs['shrink'] = 0.85
+    fig = plt.figure(figsize=(10, 6))
+    ax1 = fig.add_subplot(2, 1, 1, projection=projection, aspect='auto')
+    var2use = 'Chance2014_STTxx2_I'
+    title= '(A) MacDonald et al. (2014)'
+    plot_spatial_data_TEST(ds=ds, var2plot=var2use, fig=fig, ax=ax1,
+                               title=title,
+                               vmin=0, vmax=240, extr_str=var2use,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi, xticks=False,
+                               save_plot=False,
+                               )
+
+    ax2 = fig.add_subplot(2, 1, 2, projection=projection, aspect='auto')
+    var2use = 'MacDonald2014_iodide'
+    title= '(B) MacDonald et al. (2014)'
+    plot_spatial_data_TEST(ds=ds, var2plot=var2use, fig=fig, ax=ax2,
+                               title=title,
+                               vmin=0, vmax=240, extr_str=var2use,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               save_plot=False,
+                               )
+
+    # Now save
+    extr_str = '_existing_params'
+    filename = 's2s_spatial_{}_{}.png'.format(target, extr_str)
+    plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
 
 
 def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,

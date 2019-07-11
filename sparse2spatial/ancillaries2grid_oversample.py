@@ -13,7 +13,7 @@ import AC_tools as AC
 
 # specific s2s imports
 from sparse2spatial.utils import get_file_locations
-from sparse2spatial.utils import set_backup_month_if_unkonwn
+from sparse2spatial.utils import set_backup_month_if_unknown
 
 
 def extract_ancillaries_from_external_files(obs_data_df=None,
@@ -541,7 +541,7 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
         # - Now extract Ancillary data
         # use the mid season month if not provided
         if tmp_month == 0:
-            tmp_month = set_backup_month_if_unkonwn(lat=tmp_lat,)
+            tmp_month = set_backup_month_if_unknown(lat=tmp_lat,)
         # Select data for month
         ds = dsA.sel(time=(dsA['time.month'] == tmp_month))
         # Select for location
@@ -890,7 +890,7 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var='ChlrA',
+        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1031,7 +1031,7 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
+        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1418,7 +1418,7 @@ def get_Prod4indices(lat_idx=None, lon_idx=None, month=None,
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
+        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1465,7 +1465,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
+        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1870,7 +1870,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     # - Which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
+        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1991,7 +1991,7 @@ def get_MLD_4_loc(var2use='pt', lat=None, lon=None, month=None,
     else:
         # Kludge - no annual values, so just use a fix SH/NH month for now.
         if month == 0:
-            month_ = set_backup_month_if_unkonwn(lat=lat, main_var='MLD',
+            month_ = set_backup_month_if_unknown(lat=lat, main_var='MLD',
                                                  var2use=var2use,
                                                  Data_key_ID_=Data_key_ID_)
         else:
@@ -2209,7 +2209,7 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var='ChlrA',
+        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -2293,7 +2293,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var='ChlrA',
+        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month

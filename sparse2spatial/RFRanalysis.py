@@ -1368,6 +1368,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
 def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Iodide',
                                     stats=None, ds=None, topmodels=None,
                                     var2template='Chance2014_STTxx2_I',
+                                    var2use4Ensemble = 'Ensemble_Monthly_mean',
+                                    var2use4std = 'Ensemble_Monthly_std',
                                     save2NetCDF=True):
     """
     Add ensemble average and std to dataset
@@ -1413,17 +1415,15 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
         avg_ars += [np.ma.mean(arr, axis=0)]
         std_ars += [np.ma.std(arr, axis=0)]
     # Combine the arrays and then make the model variable
-    var2use = 'Ensemble_Monthly_mean'
-    # Template an existing variable, then overwrite
-    ds[var2use] = ds[var2template].copy()
-    ds[var2use].values = np.stack(avg_ars)
-    # Repeat for standard deviation
-    var2use = 'Ensemble_Monthly_std'
-    ds[var2use] = ds[var2template].copy()
-    ds[var2use].values = np.stack(std_ars)
+    # 1st Template an existing variable, then overwrite
+    ds[var2use4Ensemble] = ds[var2template].copy()
+    ds[var2use4Ensemble].values = np.stack(avg_ars)
+    # And repeat for standard deviation
+    ds[var2use4std] = ds[var2template].copy()
+    ds[var2use4std].values = np.stack(std_ars)
     # Save the list of models used to make ensemble to array
     attrs = ds.attrs.copy()
-    attrs['Ensemble_members'] = ', '.join(topmodels)
+    attrs['Ensemble_members ({})'.format(var2use4Ensemble)] = ', '.join(topmodels)
     ds.attrs = attrs
     # Save to NetCDF
     if save2NetCDF:

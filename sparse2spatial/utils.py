@@ -8,6 +8,10 @@ import pandas as pd
 import xarray as xr
 from netCDF4 import Dataset
 from time import gmtime, strftime
+import datetime as datetime
+
+# s2s imports
+from sparse2spatial.utils import get_file_locations
 
 
 def mk_LWI_avg_array():
@@ -457,9 +461,9 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
         ds['IS_LAND'] = ds['IS_WATER'].copy()
         ds['IS_LAND'].values = (LWI['LWI'] == 1)
         # get surface area
-        s_area = AC.calc_surface_area_in_grid(res=res)  # m2 land map
-        ds['AREA'] = ds[var2template].mean(dim='time')
-        ds['AREA'].values = s_area.T
+#        s_area = AC.calc_surface_area_in_grid(res=res)  # m2 land map
+#        ds['AREA'] = ds[var2template].mean(dim='time')
+#        ds['AREA'].values = s_area.T
     else:
         ds['LWI'] = LWI['LWI']
         # Update attributes too
@@ -714,7 +718,7 @@ def check_or_mk_directory_struture():
     print(pstr)
 
 
-def set_backup_month_if_unkonwn(lat=None, var2use='', main_var='',
+def set_backup_month_if_unknown(lat=None, var2use='', main_var='',
                                 Data_key_ID_=None, debug=True):
     """
     Some of the input data may not have a known month so use an arbitrary one

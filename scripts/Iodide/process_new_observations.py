@@ -32,7 +32,7 @@ import pandas as pd
 import glob
 import sparse2spatial as s2s
 from sparse2spatial.utils import get_file_locations
-from sparse2spatial.utils import set_backup_month_if_unkonwn
+from sparse2spatial.utils import set_backup_month_if_unknown
 
 
 def main():

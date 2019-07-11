@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 import sparse2spatial as s2s
 from sparse2spatial.utils import get_file_locations
-from sparse2spatial.utils import set_backup_month_if_unkonwn
+from sparse2spatial.utils import set_backup_month_if_unknown
 from sparse2spatial.utils import get_outlier_value
 #from sea_surface_iodide import mk_iodide_test_train_sets
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
@@ -115,7 +115,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
         if verbose:
             print(print_str.format(N_NaN_months))
         NaN_months_df[month_var] = NaN_months_df.apply(lambda x:
-                                                       set_backup_month_if_unkonwn(
+                                                       set_backup_month_if_unknown(
                                                            lat=x['Latitude'],
                                                            # main_var=var2use,
                                                            # var2use=var2use,

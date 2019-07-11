@@ -3810,7 +3810,7 @@ def get_ensemble_predicted_iodide(df=None,
                     print(print_str.format(N_NaN_months))
                 NaN_months_df.loc[:, month_var] = NaN_months_df.apply(
                     lambda x:
-                    set_backup_month_if_unkonwn(
+                    set_backup_month_if_unknown(
                         lat=x['Latitude'],
                         #            main_var=var2use, var2use=var2use,
                         #            Data_key_ID_=Data_key_ID_,
