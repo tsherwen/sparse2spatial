@@ -5466,7 +5466,7 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
             LWI = xr.open_dataset(folderLWI+filenameLWI)
             bool_water = LWI.to_array().values[0, :, idx, :] == 0.0
         else:
-            LWI = AC.get_land_map(res=res)[..., 0]
+            LWI = AC.get_LWI_map(res=res)[..., 0]
             bool_water = (LWI[:, idx] == 0.0)
             # Use the annual value for ewvery month
             bool_water = np.ma.array([bool_water]*12)

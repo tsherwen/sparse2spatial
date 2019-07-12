@@ -897,7 +897,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
     LWI.time.values = new_dates
     # Sort by new dates
     LWI = LWI.loc[{'time': sorted(LWI.coords['time'].values)}]
-#    LWI = AC.get_land_map(res=res)[...,0]
+#    LWI = AC.get_LWI_map(res=res)[...,0]
     dsA['IS_WATER'] = dsA['WOA_TEMP'].copy()
     dsA['IS_WATER'].values = (LWI['LWI'] == 0)
     # add is land
@@ -1041,7 +1041,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
     LWI.time.values = new_dates
     # Sort by new dates
     LWI = LWI.loc[{'time': sorted(LWI.coords['time'].values)}]
-#    LWI = AC.get_land_map(res=res)[...,0]
+#    LWI = AC.get_LWI_map(res=res)[...,0]
     dsA['IS_WATER'] = dsA['WOA_TEMP'].copy()
     dsA['IS_WATER'].values = (LWI['LWI'] == 0)
     # add is land

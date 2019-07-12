@@ -498,7 +498,7 @@ def add_LWI2ds_2x25_4x5(ds, var2template='Chance2014_STTxx2_I',
     (xr.Dataset)
     """
     # Add LWI to array
-    LWI = AC.get_land_map(res=res)[..., 0]
+    LWI = AC.get_LWI_map(res=res)[..., 0]
     LWI = np.array([LWI.T]*12)
     print(LWI.shape,  ds[var2template].shape)
     if inc_booleans_and_area:
