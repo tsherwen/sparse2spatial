@@ -34,9 +34,9 @@ from sparse2spatial.utils import set_backup_month_if_unknown
 from sparse2spatial.utils import get_outlier_value
 #from sea_surface_iodide import mk_iodide_test_train_sets
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
-from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
-from sparse2spatial.utils import calc_i_chance2014_multivar
-from sparse2spatial.utils import calc_iodide_MacDonald2014
+from sparse2spatial.utils import calc_I_Chance2014_STTxx2_I
+from sparse2spatial.utils import calc_I_Chance2014_multivar
+from sparse2spatial.utils import calc_I_MacDonald2014
 # iodide specific functions (move these to this directory?)
 #from sparse2spatial.utils import get_literature_predicted_iodide
 
@@ -959,13 +959,13 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
     try:
         df[var2use]
     except KeyError:
-        df[var2use] = df[TEMPvar].map(calc_iodide_chance2014_STTxx2_I)
+        df[var2use] = df[TEMPvar].map(calc_I_Chance2014_STTxx2_I)
     # MacDonald et al. (2014)
     var2use = 'MacDonald2014_iodide'
     try:
         df[var2use]
     except KeyError:
-        df[var2use] = df[TEMPvar].map(calc_iodide_MacDonald2014)
+        df[var2use] = df[TEMPvar].map(calc_I_MacDonald2014)
     # Add all parameterisations from Chance et al (2014) to dataframe
     df = add_all_Chance2014_correlations(df=df, debug=debug)
 #    print df.shape
@@ -976,7 +976,7 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
         df[var2use]
     except KeyError:
         df[var2use] = df.apply(lambda x:
-                               calc_i_chance2014_multivar(NO3=x[NO3_var],
+                               calc_I_Chance2014_multivar(NO3=x[NO3_var],
                                                                  sumMLDpt=x[sumMLDpt_var],
                                                                    MOD_LAT=x[MOD_LAT_var],
                                                                    TEMP=x[TEMPvar],

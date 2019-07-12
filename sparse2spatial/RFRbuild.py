@@ -11,10 +11,8 @@ import datetime as datetime
 import sklearn as sk
 from sklearn.ensemble import RandomForestRegressor
 import glob
-
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
-
 # s2s imports
 import sparse2spatial.utils as utils
 from sparse2spatial.RFRanalysis import get_core_stats_on_current_models
@@ -168,7 +166,7 @@ def get_features_used_by_model(models_list=None, RFR_dict=None):
 
     Returns
     -------
-    (dict)
+    (list)
 
     Notes
     -----
@@ -201,7 +199,7 @@ def get_top_models(n=10, stats=None, RFR_dict=None, vars2exclude=None,
 
     Returns
     -------
-    (dict)
+    (list)
 
     Notes
     -----
@@ -783,12 +781,12 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     if target == 'Iodide':
         # Chance et al (2013)
         param = u'Chance2014_STTxx2_I'
-        arr = calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        arr = calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
         ds[param] = ds[b_modelname]  # use existing array as dummy to fill
         ds[param].values = arr
         # MacDonald et al (2013)
         param = 'MacDonald2014_iodide'
-        arr = calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+        arr = calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
         ds[param] = ds[b_modelname]  # use existing array as dummy to fill
         ds[param].values = arr
     # Do a test diagnostic plot?
@@ -1002,12 +1000,12 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     if target == 'Iodide':
         # Chance et al (2013)
         param = u'Chance2014_STTxx2_I'
-        arr = utils.calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        arr = utils.calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
         ds[param] = ds[modelname]  # use existing array as dummy to fill
         ds[param].values = arr
         # MacDonald et al (2013)
         param = 'MacDonald2014_iodide'
-        arr = utils.calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+        arr = utils.calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
         ds[param] = ds[modelname]  # use existing array as dummy to fill
         ds[param].values = arr
     # Add ensemble to ds too

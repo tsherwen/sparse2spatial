@@ -8,10 +8,8 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 import matplotlib.pyplot as plt
-
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
-
 # Internal loads within s2s
 #from sparse2spatial.utils import *
 import sparse2spatial.utils as utils

@@ -6,12 +6,10 @@ import platform
 import numpy as np
 import pandas as pd
 import xarray as xr
+import glob
 from netCDF4 import Dataset
 from time import gmtime, strftime
 import datetime as datetime
-
-# s2s imports
-from sparse2spatial.utils import get_file_locations
 
 
 def mk_LWI_avg_array():
@@ -77,11 +75,11 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
         # Extract feature variables to 2D DataFrame
         df = pd.DataFrame()
         for fvar in features_used:
-            #
+            # Make into a dataframe temporally
             df_tmp = pd.DataFrame(ds[fvar].values)
             df_tmp.columns = lon
             df_tmp.index = lat
-            # construct Series by unstacking
+            # Construct Series by unstacking
             df[fvar] = df_tmp.unstack()
         # Now predict values with feature variables
         df[target] = model.predict(df[features_used].values)
@@ -231,10 +229,10 @@ def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
     X_locs = df['Longitude'].values
     Y_locs = df['Latitude'].values
     Z_data = df['Iodide'].values
-    # - Degrade resolution
+    # Degrade resolution
     if res == '1x1':
         X_COORDS, Y_COORDS, NIU = AC.get_latlonalt4res(res=res)
-    # - Remove double ups in data for now...
+    # Remove double ups in data for now...
     print([len(i) for i in (X_locs, Y_locs)])
     # Degrade to 1x1 resolution...
     X_locs = [int(i) for i in X_locs]
@@ -246,9 +244,9 @@ def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
     Z_data = [Z_dict[i] for i in locs]
     X_locs, Y_locs = list(zip(*locs))
     print([len(i) for i in (X_locs, Y_locs)])
-    # - Setup meshgrid...
+    # Setup meshgrid...
     XI, YI = np.meshgrid(X_COORDS, Y_COORDS)
-    # - interpolate onto this...
+    # Interpolate onto this...
     # Creating the interpolation function and populating the output matrix value
     rbf = Rbf(X_locs, Y_locs, Z_data, function='inverse')
     ZI = rbf(XI, YI)
@@ -256,7 +254,6 @@ def make_2D_RDF_of_gridded_data(res='1x1', X_locs=None, Y_locs=None,
     n = plt.normalize(0.0, 100.0)
     plt.subplot(1, 1, 1)
     plt.pcolor(XI, YI, ZI)
-#    plt.scatter(X_locs, Y_locs, 100, Z_data)
     plt.scatter(X_locs, Y_locs, 100, Z_data)
     plt.title('RBF interpolation')
     plt.xlim(-180, 180)
@@ -312,7 +309,7 @@ def add_attrs2target_ds_global_and_iodide_param(ds):
     """
     Helper func to add both global and iodide parm attrs
     """
-    # add param values
+    # Add parameter values
     for var2use in ds.data_vars:
         ds = add_attrs2target_ds(ds, add_global_attrs=False, varname=var2use)
     # Add global attributes
@@ -328,10 +325,20 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
                         convert2HEMCO_time=False):
     """
     Update attributes for iodide dataset saved as NetCDF
+
+    Parameters
+    -------
+
+    Returns
+    -------
+    (dict)
+
+    Notes
+    -----
     """
-    # - Coordinate and global values
+    # Coordinate and global values
     if add_varname_attrs:
-        # convert the units?
+        # Convert the units?
         if convert_to_kg_m3:
             # get surface array
             #            print('Update of units not implimented')
@@ -345,14 +352,13 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
             # for variable
             attrs_dict['units'] = "nM"
             attrs_dict['units_longname'] = "Nanomolar"
-        # add COARDS variables
+        # Add COARDS variables
         attrs_dict['add_offset'] = int(0)
         attrs_dict['scale_factor'] = int(1)
         attrs_dict['missing_value'] = float(-1e-32)
         attrs_dict['_FillValue'] = float(-1e-32)
         ds[varname].attrs = attrs_dict
-
-    # - Update Name for use in external NetCDFs
+    # Update Name for use in external NetCDFs
     if update_varnames_to_remove_spaces:
         for var_ in ds.data_vars:
             if ' ' in var_:
@@ -364,8 +370,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
                 del ds[var_]
             else:
                 pass
-
-    # - Coordinate and global values
+    # Coordinate and global values
     if add_global_attrs:
         # for lat...
         attrs_dict = ds['lat'].attrs
@@ -374,14 +379,14 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
         attrs_dict["standard_name"] = "latitude"
         attrs_dict["axis"] = "Y"
         ds['lat'].attrs = attrs_dict
-        # and lon...
+        # And lon...
         attrs_dict = ds['lon'].attrs
         attrs_dict['long_name'] = "longitude"
         attrs_dict['units'] = "degrees_east"
         attrs_dict["standard_name"] = "longitude"
         attrs_dict["axis"] = "X"
         ds['lon'].attrs = attrs_dict
-        # and time
+        # And time
         attrs_dict = ds['time'].attrs
         attrs_dict["standard_name"] = "time"
         attrs_dict['long_name'] = attrs_dict["standard_name"]
@@ -407,9 +412,6 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
     return ds
 
 
-# ---------------------------------------------------------------------------
-# ------------------------- Global helper functions -------------------------
-# ---------------------------------------------------------------------------
 def check_plots4plotting():
     """
     Do a test plot of the colour cycle being used for plotting
@@ -529,7 +531,7 @@ def v10_ClBrI_TRA_XX_2_name(TRA_XX):
     return d[int(TRA_XX[4:])]
 
 
-def calc_iodide_MacDonald2014(TEMP):
+def calc_I_MacDonald2014(TEMP):
     """
     Temp. (C) to Macdonald2014 parameterised [iodide] in nmol/dm^-3 (nM)
     """
@@ -539,7 +541,7 @@ def calc_iodide_MacDonald2014(TEMP):
     return (1.46E6 * np.exp((-9134.0 / (TEMP+273.15))))*1E9
 
 
-def calc_iodide_chance2014_STTxx2_I(TEMP):
+def calc_I_Chance2014_STTxx2_I(TEMP):
     """
     Temp. (C) to Chance2014 parameterised [iodide] in nmol/dm^-3 (nM)
     """
@@ -548,7 +550,7 @@ def calc_iodide_chance2014_STTxx2_I(TEMP):
     return (0.225*(TEMP**2)) + 19.0
 
 
-def calc_i_chance2014_multivar(TEMP=None, MOD_LAT=None, NO3=None,
+def calc_I_Chance2014_multivar(TEMP=None, MOD_LAT=None, NO3=None,
                                         sumMLDpt=None, salinity=None):
     """
     Take variable and returns multivariate parameterised iodide from Chance2014
@@ -697,7 +699,7 @@ def get_outlier_value(df=None, var2use='Iodide', check_full_df_used=True):
 
 def get_hyperparameter_dict():
     """
-    get default hyperparam settings to use
+    get default hyperparameter settings to use
     """
     hyperparam_dict = {
         #    'n_estimators' : 100,
@@ -739,7 +741,7 @@ def set_backup_month_if_unknown(lat=None, var2use='', main_var='',
     -----
      - a value of three months prior to summer solstice for NH and SH is assumed
     """
-    # seasons  = 'DJF', 'MAM', 'JJA', 'SON'
+    # Seasons  = 'DJF', 'MAM', 'JJA', 'SON'
     if lat > 0:  # if NH
         # if Lat assume mid of season as April (as June is summer solstice in the NH)
         # Choose 3 months before summer solstice (Northern Hemisphere)
@@ -768,6 +770,7 @@ def get_df_stats_MSE_RMSE(df=None, target='Iodide',
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
 
     Returns
     -------
@@ -794,12 +797,15 @@ def add_sklean_metrics2df(df=None, stats=None, target='Iodide',
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    dataset_str (str), string describing any subsetting of the dataset
+    params (list), list of params to calculate statistics on the scores of
+    df (pd.DataFrame), dataframe of observations and predictions
+    stats (pd.DataFrame), dataframe of statistics on parameter performance
 
     Returns
     -------
-
-    Notes
-    -----
+    (pd.DataFrame)
     """
     from sklearn.metrics import r2_score
     from sklearn.metrics import explained_variance_score as EVS
@@ -824,7 +830,6 @@ def extract4nearest_points_in_ds(lons=None, lats=None, months=None,
                                  verbose=True, debug=False):
     """
     Extract requested variable for nearest point and time from NetCDF
-
 
     Parameters
     -------

@@ -15,7 +15,7 @@ import cartopy
 import cartopy.crs as ccrs
 import matplotlib
 import matplotlib.pyplot as plt
-import sparse2spatial as s2s
+#import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 import sparse2spatial.RFRanalysis as analysis
 

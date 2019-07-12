@@ -1033,12 +1033,12 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     # -- Also get values for parameterisations
     # Chance et al (2013)
     param = u'Chance2014_STTxx2_I'
-    arr = utils.calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+    arr = utils.calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
     ds[param] = ds[modelname]  # use existing array as dummy to fill
     ds[param].values = arr
     # MacDonald et al (2013)
     param = 'MacDonald2014_iodide'
-    arr = utils.calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+    arr = utils.calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
     ds[param] = ds[modelname]  # use existing array as dummy to fill
     ds[param].values = arr
     # Add ensemble to ds too

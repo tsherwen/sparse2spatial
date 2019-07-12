@@ -6,9 +6,10 @@ Functions for working with Longhurst provinces
 import numpy as np
 import pandas as pd
 import xarray as xr
-
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
+# s2s specific imports
+import sparse2spatial.utils as utils
 
 
 def add_longhurst_raster_array_and_LWI_core_NetCDFs(target='Iodide'):
