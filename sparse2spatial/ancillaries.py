@@ -25,6 +25,7 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
     ds (xr.Dataset), dataset object with variables to interpolate
     res (res), horizontal resolution (e.g. 4x5) of Dataset
     save2NetCDF (boolean), save interpolated Dataset to as a NetCDF?
+    debug (boolean), print out debugging output?
 
     Returns
     -------
@@ -363,13 +364,25 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
                                       lats=lats)
 
 
-def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
+def download_data4spec(lev2use=72, spec='LWI', res='0.125',
                        file_prefix='nature_run', doys_list=None, verbose=True,
                        debug=False):
     """
     Download all data for a given species at a given resolution
 
-    NOTES:
+    Parameters
+    -------
+    spec (str), variable to extract from archived data
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    file_prefix (str), file prefix to add to saved file
+    debug (boolean), print out debugging output?
+
+    Returns
+    -------
+    (None)
+
+    Notes
+    -----
      - use level=71 for lowest level
      (NetCDF is ordered the oposite way, python 0-71. Xarray numbering makes
      this level=72)
@@ -413,8 +426,8 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
             # Save as NetCDF
             year_ = list(set(ds_tmp['time.year'].values))[0]
             # What is the filename?
-            file2save = '{}_lev_{}_res_{}_spec_{}_{}_{:0>3}_ctm.nc'\
-                .format(file_prefix, lev2use, res, spec, year_, str(doy_))
+            fstr = '{}_lev_{}_res_{}_spec_{}_{}_{:0>3}_ctm.nc'
+            file2save = fstr.format(file_prefix, lev2use, res, spec, year_, str(doy_))
             # Now save downloaded data as a NetCDF locally...
             if verbose:
                 print(save_dir+file2save)

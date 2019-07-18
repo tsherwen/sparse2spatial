@@ -19,6 +19,14 @@ import AC_tools as AC
 def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     """
     Make data into NetCDF files for archiving at a data centre
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+
+    Returns
+    -------
+    (None)
     """
     # Main output excludes Skaggerak data
     rm_Skagerrak_data = True
@@ -35,7 +43,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     dsA = xr.open_dataset(folder + file2regrid)
     # Make sure there are not spaces in variable names
     dsA = add_attrs2target_ds(dsA, add_varname_attrs=False, add_global_attrs=False,
-                              update_varnames_to_remove_spaces=True)
+                              rm_spaces_from_vars=True)
     # Remove existing parameters if they are there
     try:
         del dsA['Chance2014_STTxx2_I']
@@ -81,7 +89,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     # Make sure there are not spaces in variable names
     dsA2 = add_attrs2target_ds(dsA2, add_varname_attrs=False,
                                add_global_attrs=False,
-                               update_varnames_to_remove_spaces=True)
+                               rm_spaces_from_vars=True)
     # Add land-water-ice (LWI) indices to array
     try:
         dsA2['LWI']

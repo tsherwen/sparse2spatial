@@ -18,11 +18,11 @@ Observations of sea-surface iodide gave been compiled and [archived at the Briti
 
 ### References
 
-1. Data descriptor paper for sea-surface iodide observations (*in review.*)
+- Data descriptor paper for sea-surface iodide observations (*in review.*)
 
 [Chance R.; Tinel L.; Sherwen T.; Baker A.; Bell T.; Brindle J.; Campos M.L.A.M.; Croot P.; Ducklow H.; He P.; Hoogakker B.; Hopkins F.E.; Hughes C.; Jickells T.; Loades D.; Reyes Macaya D.A.; Mahajan A.S.; Malin G.; Phillips D.P.; Sinha A.K.; Sarkar A.; Roberts I.J.; Roy R.; Song X.; Winklebauer H.A.; Wuttig K.; Yang M.; Zhou P.; Carpenter L.J. Global sea-surface iodide observations, 1967-2018. *in review*, 2019](https://doi.org/10.5285/7e77d6b9-83fb-41e0-e053-6c86abc069d0)
 
-1. Archived sea-surface iodide data at British Oceanographic Data Centre (BODC)
+- Archived sea-surface iodide data at British Oceanographic Data Centre (BODC)
 
 [Chance R.; Tinel L.; Sherwen T.; Baker A.; Bell T.; Brindle J.; Campos M.L.A.M.; Croot P.; Ducklow H.; He P.; Hoogakker B.; Hopkins F.E.; Hughes C.; Jickells T.; Loades D.; Reyes Macaya D.A.; Mahajan A.S.; Malin G.; Phillips D.P.; Sinha A.K.; Sarkar A.; Roberts I.J.; Roy R.; Song X.; Winklebauer H.A.; Wuttig K.; Yang M.; Zhou P.; Carpenter L.J.(2019). Global sea-surface iodide observations, 1967-2018. British Oceanographic Data Centre - Natural Environment Research Council, UK. doi:10/czhx.](https://doi.org/10.5285/7e77d6b9-83fb-41e0-e053-6c86abc069d0)
 
@@ -34,11 +34,11 @@ Please see the *paper in open-access review* linked below for more details on th
 
 ### References
 
-1.  Research paper on predicting sea-surface iodide using machine learning
+- Research paper on predicting sea-surface iodide using machine learning
 
 [Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data Discuss., https://doi.org/10.5194/essd-2019-40, *in review*, 2019.](https://doi.org/10.5194/essd-2019-40)
 
-1. Archived NetCDF files of predicted sea-surface iodide
+- Archived NetCDF files of predicted sea-surface iodide
 
 [Sherwen, T.; Chance, R.J.; Tinel, L.; Ellis, D.; Evans, M.J.; Carpenter, L.J. (2019): Global predicted sea-surface iodide concentrations v0.0.1. Centre for Environmental Data Analysis, 30 April 2019. doi:10.5285/6448e7c92d4e48188533432f6b26fe22. http://dx.doi.org/10.5285/6448e7c92d4e48188533432f6b26fe22](http://dx.doi.org/10.5285/6448e7c92d4e48188533432f6b26fe22)
 

@@ -1328,6 +1328,12 @@ def extract_feature_variables2NetCDF(res='4x5',
 def check_where_extraction_fails(verbose=True, dpi=320, debug=False):
     """
     Check locations where extraction fails - REDUNENT (Now extracting all points)
+
+    Parameters
+    -------
+    verbose (boolean), print out verbose output?
+    debug (boolean), print out debugging output?
+    dpi (int): resolution to use for saved image (dots per square inch)
     """
     # --- Get extracted and observational data
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
@@ -2936,7 +2942,6 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
      - s_an:long_name = "Objectively analyzed mean fields for
      sea_water_salinity at standard depth levels." ;
     """
-#    debug=True
     # Set folder that files are in
     folder = utils.get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
     # Select the correct file

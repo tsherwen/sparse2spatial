@@ -67,7 +67,6 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
     """
     Add numbers for Longhurst Provinces to NetCDF
 
-
     Parameters
     -------
     ds (xr.Dataset), xarray dataset to add LWI to

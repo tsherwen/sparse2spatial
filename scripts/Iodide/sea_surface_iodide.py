@@ -1626,11 +1626,16 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
 
 
 def mk_iodide_test_train_sets(df=None, target='Iodide',
-                                          rand_strat=True, features_used=None,
-                                          random_state=42, rand_20_80=False,
-                                          nsplits=4, verbose=True, debug=False):
+                              rand_strat=True, features_used=None,
+                              random_state=42, rand_20_80=False,
+                              nsplits=4, verbose=True, debug=False):
     """
     Wrapper for mk_test_train_sets for iodide code
+
+    Parameters
+    -------
+    rand_strat (bool), split the data in a random way using stratified sampling
+    rand_20_80 (bool), split the data in a random way
     """
     # Call the s2s function with some presets
     returned_vars = mk_test_train_sets(df=df, target=target, nsplits=nsplits,
@@ -1645,7 +1650,7 @@ def mk_iodide_test_train_sets(df=None, target='Iodide',
 def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
                         varname='Ensemble_Monthly_mean',
                         add_global_attrs=True, add_varname_attrs=True,
-                        update_varnames_to_remove_spaces=False,
+                        rm_spaces_from_vars=False,
                         convert2HEMCO_time=False):
     """
     wrapper for add_attrs2target_ds for iodine scripts
@@ -1678,7 +1683,7 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
                                    global_attrs_dict=global_attrs_dict,
                                    varname=varname,
                                    add_global_attrs=True, add_varname_attrs=True,
-                                   update_varnames_to_remove_spaces=False,
+                                   rm_spaces_from_vars=False,
                                    convert2HEMCO_time=False)
     return ds
 

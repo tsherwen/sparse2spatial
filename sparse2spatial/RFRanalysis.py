@@ -25,13 +25,15 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
-
+    features_used (list), list of the features within the model_name model
+    RFR_dict (dict), dictionary of core variables and data
+    model_name (str), name of model to build
+    df (pd.dataframe), dataframe containing of target and features
+    verbose (boolean), print out verbose output?
 
     Returns
     -------
-
-    Notes
-    -----
+    (pd.DataFrame)
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
@@ -58,8 +60,8 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
     # Location of data
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/models/LIVE/'.format(s2s_root, target)
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/models/LIVE/'.format(data_root, target)
     # - Predict multiple models and save these
     dfs = {}
     # get random state to use
@@ -134,10 +136,10 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
     else:
         extr_str = ''
     # Location of data
-#    s2s_root = './' # KLUDGE: use currentfolderwhilst testing
-    s2s_root = utils.get_file_locations('s2s_root')
+#    data_root = './' # KLUDGE: use currentfolderwhilst testing
+    data_root = utils.get_file_locations('data_root')
     folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
-    folder = folder_str.format(s2s_root, target, extr_str)
+    folder = folder_str.format(data_root, target, extr_str)
     # Get the folder and filename to use
     file_str = folder + '*{}*ENSEMBLE_BUILDS*{}*.nc'
     file2use = glob.glob(file_str.format(res, model_name))
@@ -176,12 +178,17 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     -------
     target (str), Name of the target variable (e.g. iodide)
     testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    RFR_dict (dict), dictionary of core variables and data
+    model_name (str), name of model to build
+    features_used (list), list of the features within the model_name model
+    n_estimators (int), number of estimators (decision trees) to use
+    df (pd.dataframe), dataframe containing of target and features
+    rm_Skagerrak_data (boolean), Remove specific data
+    (above argument is a iodide specific option - remove this)
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
@@ -211,9 +218,9 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
     #  location of data
-    s2s_root = utils.get_file_locations('s2s_root')
+    data_root = utils.get_file_locations('data_root')
     folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
-    folder = folder_str.format(s2s_root, target, extr_str)
+    folder = folder_str.format(data_root, target, extr_str)
 
     # - build multiple models and save these
     # get random state to use
@@ -260,6 +267,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    features_used (list), list of the features within the model_name model
 
 
     Returns
@@ -468,6 +476,7 @@ def run_tests_on_model_build_options(df=None,
     -------
     target (str), Name of the target variable (e.g. iodide)
     testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    features_used (list), list of the features within the model_name model
 
     Returns
     -------
@@ -594,7 +603,6 @@ def get_feature_importance(RFR_dict=None):
 
 def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                      target='Iodide', inc_ensemble=False,
-#                                     save_CHOOSEN_MODEL=False,
                                      param_names=[],
                                      analysis4coastal=False,
                                      plot_up_model_performance=True, RFR_dict=None,
@@ -608,6 +616,14 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     target (str), Name of the target variable (e.g. iodide)
     testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
     inc_ensemble (bool), include the ensemble (var2use) in the analysis
+    analysis4coastal (bool), include analysis for coastal vs. non-coastal regions
+    plot_up_model_performance (bool), plot up the model performance
+    add_sklean_metrics (bool), include core sklearn metrics
+    RFR_dict (dict), dictionary of core variables and data
+    save2csv (bool), save calculated statistics as a .csv file
+    analysis4coastal (bool), include analysis for coastal vs. non-coastal regions
+    param_names (list), list of parameters to calculate performance of
+    debug (boolean), print out debugging output?
 
     Returns
     -------
@@ -701,14 +717,13 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
     """
     Analyse the stats on of params and obs.
 
-
     Parameters
     -------
     analysis4coastal (bool), include analysis of data split by coastal/non-coastal
     target (str), Name of the target variable (e.g. iodide)
     testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
     inc_ensemble (bool), include the ensemble (var2use) in the analysis
-
+    debug (boolean), print out debugging output?
 
     Returns
     -------
@@ -1005,6 +1020,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    res (str), horizontal resolution of dataset (e.g. 4x5)
 
     Returns
     -------
@@ -1016,8 +1032,8 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
     if isinstance(filename, type(None)):
         filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(folder, type(None)):
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # variables to consider
     vars2plot = list(ds.data_vars)
@@ -1071,20 +1087,20 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    debug (boolean), print out debugging output?
 
     Returns
     -------
-
-    Notes
-    -----
+    (pd.DataFrame)
     """
     if isinstance(ds, type(None)):
         # If filename or folder not given, then use defaults
         if isinstance(filename, type(None)):
             filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
         if isinstance(folder, type(None)):
-            s2s_root = utils.get_file_locations('s2s_root')
-            folder = '{}/{}/'.format(s2s_root, target)
+            data_root = utils.get_file_locations('data_root')
+            folder = '{}/{}/'.format(data_root, target)
         ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
@@ -1143,9 +1159,12 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    debug (boolean), print out debugging output?
 
     Returns
     -------
+    (pd.DataFrame)
 
     Notes
     -----
@@ -1217,6 +1236,13 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    debug (boolean), print out debugging output?
+    rm_Skagerrak_data (boolean), Remove specific data
+    (above argument is a iodide specific option - remove this)
+    just_return_df (bool), just return the data as dataframe
+    folder (str), folder where NetCDF of predicted data is located
+    ex_str (str), extra string to include in file name to save data
+    use_annual_mean (bool), use the annual mean of the variable for statistics
 
     Returns
     -------
@@ -1236,8 +1262,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
         filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
             target, res, extr_file_str)
     if isinstance(folder, type(None)):
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
@@ -1375,8 +1401,13 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
-    var2use (str), variable name to use for ensemble prediction
-
+    var2use4Ensemble (str), variable name to use for ensemble prediction
+    var2use4Std (str), variable name to use for ensemble prediction's std dev.
+    var2template (str), variable to use a template to make new variables
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    topmodels (list), list of models to include in ensemble prediction
+    save2NetCDF (bool), save the dataset as NetCDF file
+    RFR_dict (dict), dictionary of core variables and data
 
     Returns
     -------
@@ -1385,8 +1416,8 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
     # Get existing dataset from NetCDF if ds not provided
     filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(ds, type(None)):
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/'.format(data_root, target)
         ds = xr.open_dataset(folder + filename)
     # Just use top 10 models are included
     # ( with derivative variables )
@@ -1436,6 +1467,8 @@ def test_performance_of_params(target='Iodide', features_used=None):
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    features_used (list), list of the features within the model_name model
 
     Returns
     -------
@@ -1459,8 +1492,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
             'WOA_Salinity',
             'Depth_GEBCO',
         ]
-
-    # - local variables
+    # Local variables for use in this function
     param_rename_dict = {
         u'Chance2014_STTxx2_I': 'Chance2014',
         u'MacDonald2014_iodide': 'MacDonald2014',
@@ -1468,7 +1500,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
     }
     param_names = param_rename_dict.keys()
     param_names.pop(param_names.index('Iodide'))
-    # dictionary of test set variables
+    # Set-up a dictionary of test set variables
     random_split_var = 'rn. 20%'
     strat_split_var = 'strat. 20%'
     model_names_dict = {
@@ -1476,9 +1508,9 @@ def test_performance_of_params(target='Iodide', features_used=None):
         'TEMP+DEPTH+SAL': strat_split_var,
     }
     model_names = model_names_dict.keys()
-    # --- Get data as a DataFrame
+    # Get data as a DataFrame
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
-    # - add extra vairables and remove some data.
+    # Add extra variables and remove some data.
     df = add_extra_vars_rm_some_data(df=df,
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
@@ -1565,6 +1597,12 @@ def test_performance_of_params(target='Iodide', features_used=None):
 def calc_performance_of_params(df=None, target='Iodide', params=[]):
     """
     Calculate stats on performance of parameters in DataFrame
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    df (pd.dataframe), dataframe containing of target and features
+    params (list), list of parameters to calculate performance of
     """
     # Initialise with generic stats
     stats = [df[i].describe() for i in params + [target]]
@@ -1593,11 +1631,10 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
 
     Returns
     -------
-
     (xr.Dataset)
     """
     # Location of data
-    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/outputs/'.format(target)
     # Set filename string, then open the NetCDF
     filename = 'Oi_prj_predicted_{}_{}_{}.nc'.format(target, res, version)
@@ -1605,9 +1642,6 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
     return ds
 
 
-# ---------------------------------------------------------------------------
-# ------------- Extract model / scripts linked to tree graphic --------------
-# ---------------------------------------------------------------------------
 def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='Iodide',
                          ouput_random_tree_numbers=False, verbose=True, ):
     """
@@ -1616,14 +1650,20 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    N_trees2output (int), number of trees to extract to .csv files
+    RFR_dict (dict), dictionary of core variables and data
+    max_depth (int), maximum depth of tree branch to extract
+    ouput_random_tree_numbers (bool), randomly select trees to output
+    verbose (boolean), print out verbose output?
 
     Returns
     -------
+    (None)
 
     Notes
     -----
      - This is a file processor for the TreeSurgeon java/node.js plotter
-     https://github.com/wolfiex/TreeSurgeon
+    https://github.com/wolfiex/TreeSurgeon
     """
     # Get the dictionary
     if isinstance(RFR_dict, type(None)):
@@ -1631,8 +1671,8 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
     # Get the top model names
     topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     # Set the folder
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/models/LIVE/TEMP_MODELS/'.format(s2s_root, target)
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/models/LIVE/TEMP_MODELS/'.format(data_root, target)
     # Get the file names for these
     modelnames = glob.glob(folder+'*.pkl')
     modelname_d = dict(zip(RFR_dict['model_names'], modelnames))
@@ -1663,9 +1703,18 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
     Parameters
     -------
     target (str), Name of the target variable (e.g. iodide)
+    features_used (list), list of the features within the model_name model
+    N_trees2output (int), number of trees to extract to .csv files
+    max_depth (int), maximum depth of tree branch to extract
+    ouput_random_tree_numbers (bool), randomly select trees to output
+    verbose (boolean), print out verbose output?
+    model_filename (str), filename of the model to extract
+    folder (str), location of file (model_filename) to extract
+    extr_str (str), string to add to outputted dot file
 
     Returns
     -------
+    (None)
 
     Notes
     -----
@@ -1677,8 +1726,8 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
     import os
     # Get the location of the saved model.
     if isinstance(folder, type(None)):
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/models/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/models/'.format(data_root, target)
     # Create a file name for model if not provided
     if isinstance(model_filename, type(None)):
         model_filename = "my_model_{}.pkl".format(extr_str)
@@ -1714,8 +1763,6 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
             tree.export_graphviz(rf_unit, out_file=out_file,
                                  max_depth=max_depth,
                                  feature_names=features_used)
-    # Also plot up?
-#    os.system('dot -Tpng tree.dot -o tree.png')
 
 
 def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
@@ -1724,9 +1771,12 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
 
     Parameters
     -------
+    RFR_dict (dict), dictionary of core variables and data
+    depth2investigate (int), the depth of branches to investigate to
 
     Returns
     -------
+    (None)
 
     Notes
     -----
@@ -1777,9 +1827,15 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
 
     Parameters
     -------
+    depth2investigate (int), the depth of branches to investigate to
+    RFR_dict (dict), dictionary of core variables and data
+    model_name (str), name of model to get decision points for
+    verbose (boolean), print out verbose output?
+    debug (boolean), print out debugging output?
 
     Returns
     -------
+    (None)
 
     Notes
     -----

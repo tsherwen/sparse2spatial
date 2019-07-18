@@ -289,6 +289,10 @@ def rasterize(shapes, coords, fill=np.nan, **kwargs):
 def update_time_in_NetCDF2save(ds, convert_time2dt=False):
     """
     Update time of monthly output to be in NetCDF saveable format
+
+    Parameters
+    -------
+    convert_time2dt (bool), convert the time into a datetime.datetime format
     """
     # Climate model time
     sdate = datetime.datetime(1985, 1, 1)
@@ -320,7 +324,7 @@ def add_attrs2target_ds_global_and_iodide_param(ds):
 def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
                         varname='Ensemble_Monthly_mean',
                         add_global_attrs=True, add_varname_attrs=True,
-                        update_varnames_to_remove_spaces=False,
+                        rm_spaces_from_vars=False,
                         global_attrs_dict={},
                         convert2HEMCO_time=False):
     """
@@ -328,13 +332,17 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
 
     Parameters
     -------
+    convert_to_kg_m3 (bool), convert the output units to kg/m3
+    rm_spaces_from_vars (bool), remove spaces from variable names
+    global_attrs_dict (dict), dictionary of global attributes
+    convert2HEMCO_time (bool), convert to a HEMCO-compliant time format
+    add_global_attrs (bool), add global attributes to dataset
+    add_varname_attrs (bool), add variable attributes to dataset
+    varname (str), variable name to make changes to
 
     Returns
     -------
-    (dict)
-
-    Notes
-    -----
+    (xr.dataset)
     """
     # Coordinate and global values
     if add_varname_attrs:
@@ -359,7 +367,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
         attrs_dict['_FillValue'] = float(-1e-32)
         ds[varname].attrs = attrs_dict
     # Update Name for use in external NetCDFs
-    if update_varnames_to_remove_spaces:
+    if rm_spaces_from_vars:
         for var_ in ds.data_vars:
             if ' ' in var_:
                 print('removing spaces from {}'.format(var_))
@@ -429,6 +437,17 @@ def add_LWI2array(ds=None,  res='4x5', var2template='Chance2014_STTxx2_I',
                   inc_booleans_and_area=True):
     """
     Add Land/Water/Ice (LWI) values to xr.DataArray/xr.Dataset
+
+    Parameters
+    -------
+    ds (xr.Dataset), xarray dataset to add LWI to
+    res (res), horizontal resolution (e.g. 4x5) of Dataset
+    inc_booleans_and_area (boolean), include extra booleans and surface area
+    var2template (str): variable to use a template for making LWI variable
+
+    Returns
+    -------
+    (xr.dataset)
     """
     if res == '0.125x0.125':
         ds = add_LWI2ds_0125x0125(ds=ds, res=res, var2template=var2template,
@@ -446,6 +465,17 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
                          res='0.125x0.125', inc_booleans_and_area=True):
     """
     Add Land/Water/Ice (LWI) values to xr.DataArray
+
+    Parameters
+    -------
+    ds (xr.Dataset), xarray dataset to add LWI to
+    res (res), horizontal resolution (e.g. 4x5) of Dataset
+    inc_booleans_and_area (boolean), include extra booleans and surface area
+    var2template (str): variable to use a template for making LWI variable
+
+    Returns
+    -------
+    (xr.dataset)
     """
     folderLWI = get_file_locations('AC_tools')
     folderLWI += '/data/LM/LANDMAP_LWI_ctm_0125x0125/'
@@ -731,6 +761,7 @@ def set_backup_month_if_unknown(lat=None, var2use='', main_var='',
     Data_key_ID_ (str): ID for input data point
     var2use (str): var to extracted from NetCDF
     main_var (str): general variable (e.g. TEMP)
+    debug (boolean), print out debugging output?
 
     Returns
     -------
@@ -770,13 +801,15 @@ def get_df_stats_MSE_RMSE(df=None, target='Iodide',
 
     Parameters
     -------
+    add_sklean_metrics (bool), add generic metrics from sklearn
+    df (pd.DataFrame), dataframe of observations and predictions
+    dataset_str (str), string describing any subsetting of the dataset
+    params (list), list of params to calculate statistics on the scores of
     target (str), Name of the target variable (e.g. iodide)
 
     Returns
     -------
-
-    Notes
-    -----
+    (pd.DataFrame)
     """
     mse = [(df[target]-df[param_])**2 for param_ in params]
     mse = [np.mean(i) for i in mse]
@@ -838,6 +871,7 @@ def extract4nearest_points_in_ds(lons=None, lats=None, months=None,
     months (np.array), list of months to use for temporal extraction
     var2extract (str), name of variable to extract data for
     rm_Skagerrak_data (boolean), remove the single data from the Skagerrak region
+    debug (boolean), print out debugging output?
 
     Returns
     -------

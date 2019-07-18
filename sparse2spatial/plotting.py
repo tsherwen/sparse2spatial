@@ -54,6 +54,8 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
     ds (xr.dataset), 3D dataset contraining variable of interest on monthly basis
     target (str), Name of the target variable (e.g. iodide)
     version (str), Version number or string (present in NetCDF names etc)
+    seperate_plots (bool), plot up output as separate plots
+    verbose (boolean), print out verbose output?
 
     Returns
     -------
@@ -101,7 +103,16 @@ def plot_spatial_data_TEST(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
     version (str), Version number or string (present in NetCDF names etc)
     file_and_path (str), folder and filename with location settings as single str
     res (str), horizontal resolution of dataset (e.g. 4x5)
+    xticks, yticks (bool), include ticks on y and/or x axis?
+    title (str), title to add use for plot
+    LatVar, LonVar (str), variables to use for latitude and longitude
     add_meridians_parallels (bool), add the meridians and parallels?
+    save_plot (bool), save the plot as png
+    show_plot (bool), show the plot on screen
+    dpi (int): resolution to use for saved image (dots per square inch)
+    projection (cartopy ccrs object), projection to use for spatial plots
+    fig (figure instance), figure instance to plot onto
+    ax (axis instance), axis to use for plotting
 
     Returns
     -------
