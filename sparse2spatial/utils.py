@@ -899,17 +899,18 @@ def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
     return extracted_vars
 
 
-def get_predicted_values_as_ds(rm_Skagerrak_data=False, target='Iodide'):
+def get_predicted_values_as_ds(rm_Skagerrak_data=False, target='Iodide',
+                               version=None):
     """
     Get predicted values from saved NetCDF file
     """
-    folder = get_file_locations('data_root')+'/{}/'.format(target)
-    filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
+    folder = get_file_locations('data_root')+'/{}/outputs/'.format(target)
+    filename = 'Oi_prj_predicted_{}_0.125x0.125'.format(target)
     if rm_Skagerrak_data:
-        filename = filename.format('_No_Skagerrak')
-    else:
-        filename = filename.format('')
-    ds = xr.open_dataset(folder + filename)
+        filename += '_No_Skagerrak'
+    if not isinstance(version, type(None)):
+        filename += version
+    ds = xr.open_dataset(folder + filename+'.nc')
     return ds
 
 
