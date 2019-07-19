@@ -4,6 +4,7 @@ from . import ancillaries2grid_oversample
 from . import archiving
 from . import RFRbuild
 from . import RFRanalysis
+from . import analysis
 from . import plotting
 from . import tests
 from . import utils

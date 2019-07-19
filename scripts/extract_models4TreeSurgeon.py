@@ -18,7 +18,8 @@ import matplotlib.pyplot as plt
 
 # s2s modules imports
 import sparse2spatial.RFRbuild as build
-import sparse2spatial.RFRanalysis as analysis
+import sparse2spatial.analysis as analysis
+import sparse2spatial.RFRanalysis as RFRanalysis
 
 def main( target=None ):
     """
@@ -33,10 +34,10 @@ def main( target=None ):
     # Otherwise could use Iodide in the scripts folder
 #    RFR_dict = build_or_get_models_iodide(rebuild=False)
     # Extract the pickled sklearn RandomForestRegressor models to .dot files
-    analysis.extract_trees_to_dot_files( target='Iodide', folder=None )
+    RFRanalysis.extract_trees_to_dot_files( target='Iodide', folder=None )
 
     # Analyse the nodes in the models
-    analysis.analyse_nodes_in_models( RFR_dict=RFR_dict )
+    RFRanalysis.analyse_nodes_in_models( RFR_dict=RFR_dict )
 
 
 def get_RFR_dictionary_local():

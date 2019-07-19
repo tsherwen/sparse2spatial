@@ -17,7 +17,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 #import sparse2spatial as s2s
 import sparse2spatial.utils as utils
-import sparse2spatial.RFRanalysis as analysis
+import sparse2spatial.RFRanalysis as RFRanalysis
+import sparse2spatial.analysis as analysis
 
 
 def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'):
@@ -85,7 +86,61 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
         print('TODO: setup to plot window plot by season')
 
 
-def plot_spatial_data_TEST(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
+def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
+                           obs_var='Obs.')
+    """
+    Plot up the X vs. Y performance by region
+    """
+    # Add ocean columns to dataframe
+    df = add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
+    # Split by regions
+    regions = set(df['ocean'].dropna())
+    dfs = [df.loc[df['ocean']==i,:] for i in regions]
+    dfs = dict(zip(regions,dfs))
+    # Also get an open ocean dataset
+    # TODO ...
+    # Use an all data for now
+    dfs['all'] = df.copy()
+    # loop and plot by region
+    for region in regions:
+        print(region)
+        df = dfs[region]
+        # Now plot
+        plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot, obs_var=obs_var,
+                                    extr_str=region)
+
+
+def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
+                                extr_str='', context='paper'):
+    """
+    Plot up comparisons for parameterisations against observations
+    """
+    import seaborn as sns
+    sns.set(color_codes=True)
+    sns.set_context(context)
+    # Get colours to use
+    CB_color_cycle = AC.get_CB_color_cycle()
+    color_dict = dict(zip([obs_var]+params2plot, ['k']+CB_color_cycle))
+    # Setup the figure and axis for the plot
+    fig = plt.figure(dpi=dpi, facecolor='w', edgecolor='k')
+    ax = fig.add_subplot(111)
+    # Loop by parameter
+    for param in params2plot:
+        # Now plot a generic X vs. Y plot
+        plt_df_X_vs_Y(df=df, fig=fig, ax=ax, y_var=param, x_var=obs_var,
+                      x_label=obs_var, y_label=param, color=color_dict[param],
+                      save_plot=False )
+        # Add a title
+        title_str = "{} '{}' vs. '{}'".format(extr_str, obs_var, param)
+        plt.title(title_str)
+
+    # Save the plot
+    png_filename = 's2s_X_vs_Y_{}_vs_{}_{}'.format(obs_var, 'params', extr_str)
+    png_filename = AC.rm_spaces_and_chars_from_str(png_filename)
+    plt.savefig(png_filename, dpi=dpi)
+
+
+def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
                       extr_str='', fillcontinents=True, target=None, units=None,
                       show_plot=False, save_plot=True, title=None,
                       projection=ccrs.Robinson(), fig=None, ax=None, cmap=None,

@@ -3932,7 +3932,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
         # predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
                                                         dsA=dss[key_], RFR_dict=RFR_dict,
-                                                        use_updated_predictor_NetCDF=False,
+                                                       use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels)
         # add ensemble to ds
@@ -5560,7 +5560,8 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
         filename = filename.format('')
     ds = xr.open_dataset(folder + filename)
     # Now extract the dataset
-    extracted_vars = extract4nearest_points_in_ds(lons=lons, lats=lats, months=months,
+    extracted_vars = extract4nearest_points_in_ds(ds=ds, lons=lons, lats=lats,
+                                                  months=months,
                                                   var2extract=var2extract,
                                                   verbose=verbose, debug=debug)
     return extracted_vars

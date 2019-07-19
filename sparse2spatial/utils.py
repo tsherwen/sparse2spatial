@@ -858,9 +858,9 @@ def add_sklean_metrics2df(df=None, stats=None, target='Iodide',
     return stats
 
 
-def extract4nearest_points_in_ds(lons=None, lats=None, months=None,
+def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
                                  var2extract='Ensemble_Monthly_mean',
-                                 verbose=True, debug=False):
+                                 target='Iodide', verbose=True, debug=False):
     """
     Extract requested variable for nearest point and time from NetCDF
 
@@ -878,7 +878,8 @@ def extract4nearest_points_in_ds(lons=None, lats=None, months=None,
     (xr.Dataset)
     """
     # Get data from NetCDF as a xarray dataset
-    ds = get_predicted_values_as_ds()
+    if isinstance(ds, type(None)):
+        ds = get_predicted_values_as_ds(target=target)
     # Check that the same about of locations have been given for all months
     lens = [len(i) for i in (lons, lats, months)]
     assert len(set(lens)) == 1, 'All lists provided must be same length!'
@@ -898,11 +899,11 @@ def extract4nearest_points_in_ds(lons=None, lats=None, months=None,
     return extracted_vars
 
 
-def get_predicted_values_as_ds(rm_Skagerrak_data=False):
+def get_predicted_values_as_ds(rm_Skagerrak_data=False, target='Iodide'):
     """
     Get predicted values from saved NetCDF file
     """
-    folder = get_file_locations('data_root')
+    folder = get_file_locations('data_root')+'/{}/'.format(target)
     filename = 'Oi_prj_predicted_iodide_0.125x0.125{}.nc'
     if rm_Skagerrak_data:
         filename = filename.format('_No_Skagerrak')
@@ -919,6 +920,32 @@ def get_feature_variables_as_ds(res='4x5'):
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
+    return ds
+
+
+def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
+                            res='0.125x0.125', file_and_path='./sparse2spatial.rc'):
+    """
+    Get the predicted target values from saved NetCDF
+
+    Parameters
+    -------
+    ds (xr.dataset), 3D dataset contraining variable of interest on monthly basis
+    target (str), Name of the target variable (e.g. iodide)
+    version (str), Version number or string (present in NetCDF names etc)
+    file_and_path (str), folder and filename with location settings as single str
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+
+    Returns
+    -------
+    (xr.Dataset)
+    """
+    # Location of data
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/{}/outputs/'.format(target)
+    # Set filename string, then open the NetCDF
+    filename = 'Oi_prj_predicted_{}_{}_{}.nc'.format(target, res, version)
+    ds = xr.open_dataset(folder+filename)
     return ds
 
 

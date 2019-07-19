@@ -18,7 +18,8 @@ import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 from sparse2spatial.RFRbuild import mk_test_train_sets
 import sparse2spatial.RFRbuild as build
-import sparse2spatial.RFRanalysis as analysis
+import sparse2spatial.RFRanalysis as RFRanalysis
+import sparse2spatial.analysis as analysis
 from sparse2spatial.RFRbuild import build_or_get_models
 
 
@@ -42,8 +43,9 @@ def main():
     RFR_dict = build_or_get_models_example(rebuild=False, target=target)
 
     # Get stats ont these models
-    stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-                                                      target=target, verbose=True, debug=True)
+    stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
+                                                         target=target, verbose=True,
+                                                         debug=True)
 
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
