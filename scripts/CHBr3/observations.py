@@ -19,8 +19,8 @@ def get_CHBr3_obs(target='CHBr3', limit_depth_to=20,):
     # File to use
     filename = 'HC_seawater_concs_above_{}m.csv'.format(limit_depth_to)
     # Where is the file?
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/inputs/'.format(s2s_root, target)
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/inputs/'.format(data_root, target)
     df = pd.read_csv(folder+filename)
     # Variable name? - Just use one of the values for now
     Varname = 'CHBr3 (pM)'
@@ -76,7 +76,7 @@ def process_obs_and_ancillaries_2_csv(target='CHBr3',
     # Extract the ancillary values for these locations
     df = extract_ancillaries_from_compiled_file(df=df)
     # Save the intermediate file
-    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/inputs/'.format(target)
     filename = 's2s_{}_obs_ancillaries_v0_0_0.csv'.format(target)
     df.to_csv(folder+filename, encoding='utf-8')
@@ -102,7 +102,7 @@ def get_processed_df_obs_mod(reprocess_params=False, target='CHBr3',
 
     """
     # Read in processed csv file
-    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/inputs/'.format(target)
     filename = 's2s_{}_obs_ancillaries.csv'.format(target)
     df = pd.read_csv(folder+filename, encoding='utf-8')
