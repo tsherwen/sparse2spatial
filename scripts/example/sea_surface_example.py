@@ -16,7 +16,7 @@ import pandas as pd
 import xarray as xr
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
-from sparse2spatial.RFRbuild import mk_testing_training_sets
+from sparse2spatial.RFRbuild import mk_test_train_sets
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
 from sparse2spatial.RFRbuild import build_or_get_models
@@ -47,7 +47,7 @@ def main():
 
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
-                                     NO_DERIVED=True, n=10)
+                                     vars2exclude=['DOC', 'Prod'], n=10)
 
     # - Predict values globally (only use 0.125)
     # extra strig for NetCDF save name
@@ -138,7 +138,7 @@ def get_dataset_processed4ML(target='example', rm_outliers=True):
         # Get settings
         rand_20_80, rand_strat = ways2split_data[key_]
         # Now split using existing function
-        returned_vars = mk_testing_training_sets(df=df.copy(),
+        returned_vars = mk_test_train_sets(df=df.copy(),
                                                  target=target,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,

@@ -6,9 +6,12 @@ Extract Ancillaries onto a common grid using an oversampling approach
 import numpy as np
 import pandas as pd
 import xarray as xr
-from sparse2spatial.utils import get_file_locations
-from sparse2spatial.utils import set_backup_month_if_unkonwn
 import gc
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
+# specific s2s imports
+import sparse2spatial.utils as utils
+from sparse2spatial.utils import set_backup_month_if_unknown
 
 
 def extract_ancillaries_from_external_files(obs_data_df=None,
@@ -492,7 +495,7 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
     # --- local variables
     # file ancillary data as a xarray Dataset
     res = '0.125x0.125'  # Use Nature res. run for analysis
-    data_root = get_file_locations('data_root')
+    data_root = utils.get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     dsA = xr.open_dataset(data_root + filename)
     # Get list of site IDs...
@@ -536,7 +539,7 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
         # - Now extract Ancillary data
         # use the mid season month if not provided
         if tmp_month == 0:
-            tmp_month = set_backup_month_if_unkonwn(lat=tmp_lat,)
+            tmp_month = set_backup_month_if_unknown(lat=tmp_lat,)
         # Select data for month
         ds = dsA.sel(time=(dsA['time.month'] == tmp_month))
         # Select for location
@@ -654,7 +657,7 @@ def get_WOA_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     (None)
     """
     # Set folder that files are in (using nitrate arrays)
-    folder = get_file_locations('WOA_2013') + '/Nitrate_1x1/'
+    folder = utils.get_file_locations('WOA_2013') + '/Nitrate_1x1/'
     # Select the correct file (abituaryily using September )
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
@@ -710,7 +713,7 @@ def get_GEBCO_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     """
     # var2use='elevation'; buffer_CORDS=2; rtn_flag=True; debug=True
     # Directory?
-    folder = get_file_locations('data_root') + '/BODC/'
+    folder = utils.get_file_locations('data_root') + '/BODC/'
     # Filename as string
     filename = 'GRIDONE_2D.nc'
     # - Extract data
@@ -758,7 +761,7 @@ def get_WOA_array_025x025_indices(lons=None, lats=None, month=9, debug=False):
     -----
     """
     # Set folder that files are in (using temperatures arrays)
-    folder = get_file_locations('WOA_2013') + '/Temperature_025x025/'
+    folder = utils.get_file_locations('WOA_2013') + '/Temperature_025x025/'
     # Select the correct file (abituaryily using September )
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -812,7 +815,7 @@ def get_RAD_array_1_9x1_9_indices(lons=None, lats=None, month=9, debug=False):
     -----
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/GFDL/'
+    folder = utils.get_file_locations('data_root') + '/GFDL/'
     # Filename as string
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # - Open file
@@ -885,12 +888,12 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var='ChlrA',
+        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Directory?
-    folder = get_file_locations('data_root') + '/SeaWIFS/'
+    folder = utils.get_file_locations('data_root') + '/SeaWIFS/'
     # Filename as string
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
@@ -959,7 +962,7 @@ def get_DOC_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     -----
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/DOC/'
+    folder = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as string
 #    file_str = 'DOCmodelSR.nc'
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
@@ -1019,14 +1022,14 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/Productivity/'
+    folder = utils.get_file_locations('data_root') + '/Productivity/'
     # Filename as string
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # - Extract data
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
+        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1079,7 +1082,7 @@ def get_WOA_MLD_array_1x1_indices(var2use='pt', lons=None, lats=None, month=9,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
 #    print folder+file_str
@@ -1143,7 +1146,7 @@ def get_DOC_accum_1x1_indices(var2use='DOCaccum_avg', lons=None, lats=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    folder = get_file_locations('data_root') + '/DOC/'
+    folder = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as string
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
     if debug:
@@ -1325,6 +1328,12 @@ def extract_feature_variables2NetCDF(res='4x5',
 def check_where_extraction_fails(verbose=True, dpi=320, debug=False):
     """
     Check locations where extraction fails - REDUNENT (Now extracting all points)
+
+    Parameters
+    -------
+    verbose (boolean), print out verbose output?
+    debug (boolean), print out debugging output?
+    dpi (int): resolution to use for saved image (dots per square inch)
     """
     # --- Get extracted and observational data
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
@@ -1406,14 +1415,14 @@ def get_Prod4indices(lat_idx=None, lon_idx=None, month=None,
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/Productivity/'
+    folder = utils.get_file_locations('data_root') + '/Productivity/'
     # Filename as string
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # - Extract data
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
+        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1453,14 +1462,14 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
  NOTES from oringal site (http://orca.science.oregonstate.edu/) from 'based on the standard vgpm algorithm. npp is based on the standard vgpm, using modis chl, sst4, and par as input; clouds have been filled in the input data using our own gap-filling software. For citation, please reference the original vgpm paper by Behrenfeld and Falkowski, 1997a as well as the Ocean Productivity site for the data.'
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/Productivity/'
+    folder = utils.get_file_locations('data_root') + '/Productivity/'
     # Filename as string
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.nc'
     # - Extract data
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
+        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1545,7 +1554,7 @@ def get_DOC4indices(lat_idx=None, lon_idx=None, month=None,
      - The time resolution for depth NetCDF is annual.
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/DOC/'
+    folder = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as string
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
     if debug:
@@ -1586,7 +1595,7 @@ def get_DOC_4_loc(var2use='DOCmdl_avg', lat=None, lon=None, month=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    folder = get_file_locations('data_root') + '/DOC/'
+    folder = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as string
 #    file_str = 'DOCmodelSR.nc'
     file_str = 'DOCmodelSR_TMS_EDIT.nc'
@@ -1679,7 +1688,7 @@ def get_DOC_accum4indices(lat_idx=None, lon_idx=None, month=None,
     -----
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/DOC/'
+    folder = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as string
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
     if debug:
@@ -1720,7 +1729,7 @@ def get_DOC_accum_4_loc(var2use='DOCaccum_avg', lat=None, lon=None, month=None,
     # Only annual values in dataset
     month_ = 0
     # Directory?
-    folder = get_file_locations('data_root') + '/DOC/'
+    folder = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as string
     file_str = 'DOC_Accum_rate_SR_TMS_EDIT.nc'
 #    print folder+file_str
@@ -1823,7 +1832,7 @@ def get_RAD4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/GFDL/'
+    folder = utils.get_file_locations('data_root') + '/GFDL/'
     # Filename as string
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # Open file
@@ -1859,13 +1868,13 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/GFDL/'
+    folder = utils.get_file_locations('data_root') + '/GFDL/'
     # Filename as string
     file_str = 'ncar_rad.15JUNE2009_TMS_EDIT.nc'
     # - Which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var=var2use,
+        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1986,7 +1995,7 @@ def get_MLD_4_loc(var2use='pt', lat=None, lon=None, month=None,
     else:
         # Kludge - no annual values, so just use a fix SH/NH month for now.
         if month == 0:
-            month_ = set_backup_month_if_unkonwn(lat=lat, main_var='MLD',
+            month_ = set_backup_month_if_unknown(lat=lat, main_var='MLD',
                                                  var2use=var2use,
                                                  Data_key_ID_=Data_key_ID_)
         else:
@@ -2025,7 +2034,7 @@ def extract_MLD_file4indices(var2use='pt', lat_idx=None, lon_idx=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     if debug:
@@ -2064,7 +2073,7 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     # - Open file
@@ -2204,12 +2213,12 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var='ChlrA',
+        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Directory?
-    folder = get_file_locations('data_root') + '/SeaWIFS/'
+    folder = utils.get_file_locations('data_root') + '/SeaWIFS/'
     # Filename as string
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
@@ -2288,12 +2297,12 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unkonwn(lat=lat, main_var='ChlrA',
+        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Directory?
-    folder = get_file_locations('data_root') + '/SeaWIFS/'
+    folder = utils.get_file_locations('data_root') + '/SeaWIFS/'
     # Filename as string
     file_Str = 'S*.L3m_MC_*{}*'.format(resolution)
     # get SeaWIFS Files
@@ -2437,7 +2446,7 @@ def get_Depth_GEBCO4indices(lat_idx=None, lon_idx=None, month=None,
      - The time resolution for depth NetCDF is annual.
     """
     # Directory?
-    folder = get_file_locations('data_root') + '/BODC/'
+    folder = utils.get_file_locations('data_root') + '/BODC/'
     # Filename as string
     filename = 'GRIDONE_2D.nc'
     # Open file and extract data
@@ -2479,7 +2488,7 @@ def get_GEBCO_depth_4_loc(lat=None, lon=None, month=None,
     """
     # var2use='elevation'; buffer_CORDS=2; rtn_flag=True; debug=True
     # Directory?
-    folder = get_file_locations('data_root') + '/BODC/'
+    folder = utils.get_file_locations('data_root') + '/BODC/'
     # Filename as string
     filename = 'GRIDONE_2D.nc'
     # - Extract data
@@ -2591,7 +2600,7 @@ def get_WOA_TEMP4indices(lat_idx=None, lon_idx=None, month=None,
        contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2645,7 +2654,7 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
     if debug:
         print(locals())
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2748,7 +2757,7 @@ def get_WOA_Nitrate4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -2800,7 +2809,7 @@ def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
@@ -2886,7 +2895,7 @@ def get_WOA_Salinity4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Fix depth = 0 for now...
@@ -2933,9 +2942,8 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
      - s_an:long_name = "Objectively analyzed mean fields for
      sea_water_salinity at standard depth levels." ;
     """
-#    debug=True
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Open file
@@ -3032,7 +3040,7 @@ def get_WOA_Silicate4indices(lat_idx=None, lon_idx=None, month=None,
      contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3081,7 +3089,7 @@ def get_WOA_Silicate_4_loc(lat=None, lon=None, month=None, var2use='i_an',
      contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Open file
@@ -3164,7 +3172,7 @@ def get_WOA_Phosphate4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3214,7 +3222,7 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
     in each grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Open file
@@ -3306,7 +3314,7 @@ def get_WOA_Dissolved_O2_4indices(lat_idx=None, lon_idx=None, month=None,
     grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3354,7 +3362,7 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
     grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Open file

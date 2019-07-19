@@ -9,7 +9,10 @@ from multiprocessing import Pool
 from time import gmtime, strftime
 import time
 from functools import partial
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
+# import from s2s
+import sparse2spatial.utils as utils
 
 
 def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
@@ -22,6 +25,7 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
     ds (xr.Dataset), dataset object with variables to interpolate
     res (res), horizontal resolution (e.g. 4x5) of Dataset
     save2NetCDF (boolean), save interpolated Dataset to as a NetCDF?
+    debug (boolean), print out debugging output?
 
     Returns
     -------
@@ -119,7 +123,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    folder = get_file_locations('DOC')
+    folder = utils.get_file_locations('DOC')
     # Filename as a string
     file_str = 'DOCmodelSR.nc'
     # Open dataset
@@ -159,7 +163,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    folder = get_file_locations('DOC')
+    folder = utils.get_file_locations('DOC')
     # Filename as a string
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
@@ -195,7 +199,7 @@ def mk_RAD_NetCDF_monthly():
     Resample shortwave radiation NetCDF from daily to monthly
     """
     # Directory?
-    folder = get_file_locations('GFDL')
+    folder = utils.get_file_locations('GFDL')
     # Filename as a string
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
@@ -211,7 +215,7 @@ def mk_NetCDF_from_productivity_data():
     Convert productivity .csv file (Behrenfeld and Falkowski, 1997) into a NetCDF file
     """
     # Location of data (update to use public facing host)
-    folder = get_file_locations('data_root') + '/Productivity/'
+    folder = utils.get_file_locations('data_root') + '/Productivity/'
     # Which file to use?
     filename = 'productivity_behrenfeld_and_falkowski_1997_extrapolated.csv'
     # Setup coordinates
@@ -308,7 +312,7 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     # Gov. Printing Office, Wash., D.C., 96 pp. 87 figs. (pdf, 13.0 MB).
     # variables for
     MLD_vars = ['pt', 'pd', 'vd']
-    folder = get_file_locations('WOA_1994')
+    folder = utils.get_file_locations('WOA_1994')
     # - Loop MLD variables
     for var_ in MLD_vars:
         file_str = 'mld*{}*'.format(var_)
@@ -360,13 +364,25 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
                                       lats=lats)
 
 
-def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
+def download_data4spec(lev2use=72, spec='LWI', res='0.125',
                        file_prefix='nature_run', doys_list=None, verbose=True,
                        debug=False):
     """
     Download all data for a given species at a given resolution
 
-    NOTES:
+    Parameters
+    -------
+    spec (str), variable to extract from archived data
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    file_prefix (str), file prefix to add to saved file
+    debug (boolean), print out debugging output?
+
+    Returns
+    -------
+    (None)
+
+    Notes
+    -----
      - use level=71 for lowest level
      (NetCDF is ordered the oposite way, python 0-71. Xarray numbering makes
      this level=72)
@@ -378,7 +394,7 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
 #    url_str = root_url+'12.5km/{}_deg/inst/inst1_3d_TRC{}_Nv'.format(res,spec)
     url_str = root_url+'12.5km/{}_deg/tavg/tavg1_2d_chm_Nx'.format(res)
     # Where should i save the data?
-    save_dir = get_file_locations('data_root') + '/NASA/LWI/'
+    save_dir = utils.get_file_locations('data_root') + '/NASA/LWI/'
     # - Open dataset via URL with xarray
     # Using xarray (issues found with NASA OpenDAP data model - via PyDAP)
     ds = xr.open_dataset(url_str)
@@ -410,8 +426,8 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125', save_dir=None,
             # Save as NetCDF
             year_ = list(set(ds_tmp['time.year'].values))[0]
             # What is the filename?
-            file2save = '{}_lev_{}_res_{}_spec_{}_{}_{:0>3}_ctm.nc'\
-                .format(file_prefix, lev2use, res, spec, year_, str(doy_))
+            fstr = '{}_lev_{}_res_{}_spec_{}_{}_{:0>3}_ctm.nc'
+            file2save = fstr.format(file_prefix, lev2use, res, spec, year_, str(doy_))
             # Now save downloaded data as a NetCDF locally...
             if verbose:
                 print(save_dir+file2save)

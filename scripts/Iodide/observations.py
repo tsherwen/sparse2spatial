@@ -30,15 +30,19 @@ import numpy as np
 import pandas as pd
 import sparse2spatial as s2s
 from sparse2spatial.utils import get_file_locations
-from sparse2spatial.utils import set_backup_month_if_unkonwn
+from sparse2spatial.utils import set_backup_month_if_unknown
 from sparse2spatial.utils import get_outlier_value
-from sea_surface_iodide import mk_iodide_ML_testing_and_training_set
+#from sea_surface_iodide import mk_iodide_test_train_sets
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
-from sparse2spatial.utils import calc_iodide_chance2014_STTxx2_I
-from sparse2spatial.utils import calc_i_chance2014_multivar
-from sparse2spatial.utils import calc_iodide_MacDonald2014
+from sparse2spatial.utils import calc_I_Chance2014_STTxx2_I
+from sparse2spatial.utils import calc_I_Chance2014_multivar
+from sparse2spatial.utils import calc_I_MacDonald2014
 # iodide specific functions (move these to this directory?)
 #from sparse2spatial.utils import get_literature_predicted_iodide
+
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
+
 
 
 def main(add_ancillaries=True):
@@ -53,17 +57,9 @@ def main(add_ancillaries=True):
     -------
     (None)
     """
-    # - Below lines are to update the BODC iodide dataset to include new obs.
-    # Get the latest data from BODC
-    df = get_iodide_data_from_BODC()
-    # Extract any new files of iodide (excel files)
-
-    # process these to contain all of the information of the BODC file
-
-    # Combine with existing BODC sea-surface iodide file
-
-    # Save this new combined file as a .csv
-
+    #  - First: run script in this directory to re-process the observations.
+    # e.g. python process_new_observations.py
+    # Full instructions are given in the README.rst within the scripts/Iodide directory
 
     # - Below lines are only to be used for processing initial file
     # Get iodide observations? (if already processed)
@@ -100,6 +96,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
     """
     # Read in processed csv file
     folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/Iodide/'
     df = pd.read_csv(folder+filename, encoding='utf-8')
     # Add ln of iodide too
     df['ln(Iodide)'] = df['Iodide'].map(np.ma.log)
@@ -118,7 +115,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
         if verbose:
             print(print_str.format(N_NaN_months))
         NaN_months_df[month_var] = NaN_months_df.apply(lambda x:
-                                                       set_backup_month_if_unkonwn(
+                                                       set_backup_month_if_unknown(
                                                            lat=x['Latitude'],
                                                            # main_var=var2use,
                                                            # var2use=var2use,
@@ -962,13 +959,13 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
     try:
         df[var2use]
     except KeyError:
-        df[var2use] = df[TEMPvar].map(calc_iodide_chance2014_STTxx2_I)
+        df[var2use] = df[TEMPvar].map(calc_I_Chance2014_STTxx2_I)
     # MacDonald et al. (2014)
     var2use = 'MacDonald2014_iodide'
     try:
         df[var2use]
     except KeyError:
-        df[var2use] = df[TEMPvar].map(calc_iodide_MacDonald2014)
+        df[var2use] = df[TEMPvar].map(calc_I_MacDonald2014)
     # Add all parameterisations from Chance et al (2014) to dataframe
     df = add_all_Chance2014_correlations(df=df, debug=debug)
 #    print df.shape
@@ -979,7 +976,7 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
         df[var2use]
     except KeyError:
         df[var2use] = df.apply(lambda x:
-                               calc_i_chance2014_multivar(NO3=x[NO3_var],
+                               calc_I_Chance2014_multivar(NO3=x[NO3_var],
                                                                  sumMLDpt=x[sumMLDpt_var],
                                                                    MOD_LAT=x[MOD_LAT_var],
                                                                    TEMP=x[TEMPvar],

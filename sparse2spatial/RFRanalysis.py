@@ -7,7 +7,9 @@ Analysis output from RandomForestRegressor algorithms
 import numpy as np
 import xarray as xr
 import pandas as pd
-
+import matplotlib.pyplot as plt
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
 # Internal loads within s2s
 #from sparse2spatial.utils import *
 import sparse2spatial.utils as utils
@@ -22,12 +24,16 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    features_used (list), list of the features within the model_name model
+    RFR_dict (dict), dictionary of core variables and data
+    model_name (str), name of model to build
+    df (pd.dataframe), dataframe containing of target and features
+    verbose (boolean), print out verbose output?
 
     Returns
     -------
-
-    Notes
-    -----
+    (pd.DataFrame)
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
@@ -54,8 +60,8 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
     # Location of data
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/models/LIVE/'.format(s2s_root, target)
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/models/LIVE/'.format(data_root, target)
     # - Predict multiple models and save these
     dfs = {}
     # get random state to use
@@ -63,15 +69,15 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
         prt_str = 'Using: random_state = {} to get stats for model = {}'
         if verbose:
             print(prt_str.format(random_state, model_name))
-        # set the training and test sets
+        # Set the training and test sets
         # Stratified split by default, unless random var in name
-        returned_vars = mk_testing_training_sets(df=df,
-                                                 rand_20_80=False,
-                                                 features_used=features_used,
-                                                 random_state=random_state,
-                                                 rand_strat=True,
-                                                 nsplits=4,
-                                                 )
+        returned_vars = mk_test_train_sets(df=df,
+                                           rand_20_80=False,
+                                           features_used=features_used,
+                                           random_state=random_state,
+                                           rand_strat=True,
+                                           nsplits=4,
+                                           )
         train_set, test_set, test_set_targets = returned_vars
         # Set the training and test sets
         train_features = df[features_used].loc[train_set.index]
@@ -79,7 +85,7 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
         test_features = df[features_used].loc[test_set.index]
         test_labels = df[[target]].loc[test_set.index]
         # Get testset
-        # build the model - NOTE THIS MUST BE RE-DONE!
+        # build the model - NOTE: THIS MUST BE RE-DONE
         # ( otherwise the model is being re-trained )
         # Open the already built model model
         model_savename = "my_model_{}_{}.pkl".format(model_name, random_state)
@@ -130,10 +136,10 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
     else:
         extr_str = ''
     # Location of data
-#    s2s_root = './' # KLUDGE: use currentfolderwhilst testing
-    s2s_root = utils.get_file_locations('s2s_root')
+#    data_root = './' # KLUDGE: use currentfolderwhilst testing
+    data_root = utils.get_file_locations('data_root')
     folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
-    folder = folder_str.format(s2s_root, target, extr_str)
+    folder = folder_str.format(data_root, target, extr_str)
     # Get the folder and filename to use
     file_str = folder + '*{}*ENSEMBLE_BUILDS*{}*.nc'
     file2use = glob.glob(file_str.format(res, model_name))
@@ -170,12 +176,19 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    RFR_dict (dict), dictionary of core variables and data
+    model_name (str), name of model to build
+    features_used (list), list of the features within the model_name model
+    n_estimators (int), number of estimators (decision trees) to use
+    df (pd.dataframe), dataframe containing of target and features
+    rm_Skagerrak_data (boolean), Remove specific data
+    (above argument is a iodide specific option - remove this)
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
@@ -205,9 +218,9 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # Random states to use (to make the plot reproducibility
     random_states = np.arange(25, 45, 1)
     #  location of data
-    s2s_root = utils.get_file_locations('s2s_root')
+    data_root = utils.get_file_locations('data_root')
     folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
-    folder = folder_str.format(s2s_root, target, extr_str)
+    folder = folder_str.format(data_root, target, extr_str)
 
     # - build multiple models and save these
     # get random state to use
@@ -216,13 +229,13 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         print(prt_str.format(random_state, model_name))
         # set the training and test sets
         # Stratified split by default, unless random var in name
-        returned_vars = mk_testing_training_sets(df=df,
-                                                 rand_20_80=False,
-                                                 features_used=features_used,
-                                                 random_state=random_state,
-                                                 rand_strat=True,
-                                                 nsplits=4,
-                                                 )
+        returned_vars = mk_test_train_sets(df=df,
+                                           rand_20_80=False,
+                                           features_used=features_used,
+                                           random_state=random_state,
+                                           rand_strat=True,
+                                           nsplits=4,
+                                           )
         train_set, test_set, test_set_targets = returned_vars
         # set the training and test sets
         train_features = df[features_used].loc[train_set.index]
@@ -253,6 +266,9 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    features_used (list), list of the features within the model_name model
+
 
     Returns
     -------
@@ -328,14 +344,13 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             rand_strat = True
             rand_20_80 = False
             # get the training and test set
-            returned_vars = mk_testing_training_sets(df=df_tmp,
-                                                     rand_20_80=rand_20_80,
-                                                     random_state=random_state,
-                                                     nsplits=TSETS_nsplits[
-                                                         Tname],
-                                                     rand_strat=rand_strat,
-                                                     features_used=features_used,
-                                                     )
+            returned_vars = mk_test_train_sets(df=df_tmp,
+                                               rand_20_80=rand_20_80,
+                                               random_state=random_state,
+                                               nsplits=TSETS_nsplits[Tname],
+                                               rand_strat=rand_strat,
+                                               features_used=features_used,
+                                               )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
             train_features = df_tmp[features_used].loc[train_set.index]
@@ -448,7 +463,9 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     plt.close()
 
 
-def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Iodide',
+def run_tests_on_model_build_options(df=None,
+#                                     use_choosen_model=True,
+                                     target='Iodide',
                                      testset='Test set (strat. 20%)',
                                      features_used=None,
                                      model_name='TEST_MODEL'):
@@ -457,6 +474,9 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Io
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    features_used (list), list of the features within the model_name model
 
     Returns
     -------
@@ -471,11 +491,11 @@ def run_tests_on_model_build_options(df=None, use_choosen_model=True, target='Io
     if isinstance(df, type(None)):
         df = get_dataset_processed4ML()
     # Use the model selected from the feature testing
-    if use_choosen_model:
-        mdict = get_choosen_model_from_features_selection()
-        features_used = mdict['features_used']
-        model = mdict['model']
-        model_name = mdict['name']
+#     if use_choosen_model:
+#         mdict = get_choosen_model_from_features_selection()
+#         features_used = mdict['features_used']
+#         model = mdict['model']
+#         model_name = mdict['name']
     # Which "features" (variables) to use
     if isinstance(features_used, type(None)):
         model_name = 'ALL'
@@ -556,7 +576,7 @@ def get_feature_importance(RFR_dict=None):
     """
     # set models to compare...
     models2compare = []
-    topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     models2compare = topmodels
     # Get data
     if isinstance(RFR_dict, type(None)):
@@ -582,9 +602,9 @@ def get_feature_importance(RFR_dict=None):
 
 
 def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
-                                     target='Iodide', inc_ensemeble=False,
-                                     save_CHOOSEN_MODEL=False, param_names=[],
-                                     coastal_vs_non_coastal_analysis=False,
+                                     target='Iodide', inc_ensemble=False,
+                                     param_names=[],
+                                     analysis4coastal=False,
                                      plot_up_model_performance=True, RFR_dict=None,
                                      add_sklean_metrics=False, save2csv=True,
                                      verbose=True, debug=False):
@@ -593,6 +613,17 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool), include the ensemble (var2use) in the analysis
+    analysis4coastal (bool), include analysis for coastal vs. non-coastal regions
+    plot_up_model_performance (bool), plot up the model performance
+    add_sklean_metrics (bool), include core sklearn metrics
+    RFR_dict (dict), dictionary of core variables and data
+    save2csv (bool), save calculated statistics as a .csv file
+    analysis4coastal (bool), include analysis for coastal vs. non-coastal regions
+    param_names (list), list of parameters to calculate performance of
+    debug (boolean), print out debugging output?
 
     Returns
     -------
@@ -678,13 +709,27 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 
 
 def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
-                        target='Iodide', inc_ensemeble=False,
-                        save_CHOOSEN_MODEL=False,
-                        coastal_vs_non_coastal_analysis=False,
+                        target='Iodide', inc_ensemble=False,
+#                        save_CHOOSEN_MODEL=False,
+                        analysis4coastal=False, var2use='RFR(Ensemble)',
                         plot_up_model_performance=True, RFR_dict=None,
                         add_sklean_metrics=False, verbose=True, debug=False):
     """
     Analyse the stats on of params and obs.
+
+    Parameters
+    -------
+    analysis4coastal (bool), include analysis of data split by coastal/non-coastal
+    target (str), Name of the target variable (e.g. iodide)
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool), include the ensemble (var2use) in the analysis
+    debug (boolean), print out debugging output?
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
@@ -705,50 +750,50 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
                         # u'Chance2014_Multivariate',
                         ]
     # Aslo include the ensemble parameters
-    if inc_ensemeble:
-        param_names += ['RFR(Ensemble)']
+    if inc_ensemble:
+        param_names += [var2use]
     # Calculate performance
     stats = calc_performance_of_params(df=df,
                                        params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
     stats_sub1 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                       df=df_tmp[[target]+model_names +
-                                                 param_names], dataset_str=testset,
+                                       df=df_tmp[[target]+model_names + param_names],
+                                       dataset_str=testset,
                                        target=target,
                                        add_sklean_metrics=add_sklean_metrics).T
     stats2concat = [stats, stats_sub1]
-    if coastal_vs_non_coastal_analysis:
+    if analysis4coastal:
         # Add testing on coastal
         dataset_split = 'Coastal'
         df_tmp = df.loc[(df['Coastal'] == 1), :]
         stats_sub2 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                           df=df_tmp[[target]+model_names +
-                                                     param_names], target=target,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Add testing on non-coastal
         dataset_split = 'Non coastal'
         df_tmp = df.loc[(df['Coastal'] == 0), :]
         stats_sub3 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                           df=df_tmp[[target]+model_names +
-                                                     param_names], target=target,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Add testing on coastal
         dataset_split = 'Coastal ({})'.format(testset)
         df_tmp = df.loc[(df['Coastal'] == 1) & (df[testset] == True), :]
         stats_sub4 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                           df=df_tmp[[target]+model_names +
-                                                     param_names], target=target,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Add testing on non-coastal
         dataset_split = 'Non coastal ({})'.format(testset)
         df_tmp = df.loc[(df['Coastal'] == 0) & (df[testset] == True), :]
         stats_sub5 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                           df=df_tmp[[target]+model_names +
-                                                     param_names], target=target,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
                                            dataset_str=dataset_split,
                                            add_sklean_metrics=add_sklean_metrics).T
         # Statistics to concat
@@ -810,36 +855,37 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
     params2inc = stats.T.columns
     params2inc = [i for i in params2inc if 'DOC' not in i]
     params2inc = [i for i in params2inc if 'Prod' not in i]
-#    params2inc = [ i for i in params2inc if 'Prod' not in i  ]
     # select these variables from the list
     tmp_stats = stats.T[params2inc].T
     # save a reduced csv
     vars2inc_REDUCED = [
         'mean', 'std', '25%', '50%', '75%',
         'RMSE ({})'.format(testset),  'RMSE (all)',
-        u'RMSE (Coastal)', u'RMSE (Non coastal)',
-        'RMSE (Coastal (Test set (strat. 20%)))',
-        u'RMSE (Non coastal (Test set (strat. 20%)))',
     ]
-    # Save a reduced csv
-    csv_name = 'Oi_prj_models_built_stats_on_models_at_obs_points_REDUCED.csv'
-    #
+    # add the coastal testsets to the data?
+    if analysis4coastal:
+        vars2inc_REDUCED += [
+            u'RMSE (Coastal)', u'RMSE (Non coastal)',
+            'RMSE (Coastal (Test set (strat. 20%)))',
+            u'RMSE (Non coastal (Test set (strat. 20%)))',
+        ]
+    # Save a csv with reduced infomation
     csv_name = 'Oi_prj_models_built_stats_on_models_at_obs_points'
     csv_name += '_REDUCED_NO_DERIVED.csv'
     tmp_stats[vars2inc_REDUCED].round(2).to_csv(csv_name)
 
     # - Select the best model based of criteria
-    if save_CHOOSEN_MODEL:
-        # Set a criteria?
-        # Select model at the top of the the sorted table for now...
-        CHOOSEN_MODEL_NAME = stats.head(1).index[0]
-        CHOOSEN_MODEL = models_dict[CHOOSEN_MODEL_NAME]
-        # Save best estimator model
-        model_savename = "my_model_{}.pkl".format(CHOOSEN_MODEL_NAME)
-        joblib.dump(CHOOSEN_MODEL, wrk_dir+'/CHOOSEN_MODEL/' + model_savename)
-        # Print detail on choosen model
-        features_used = model_feature_dict[CHOOSEN_MODEL_NAME]
-        zip(features_used, CHOOSEN_MODEL.feature_importances_)
+#     if save_CHOOSEN_MODEL:
+#         # Set a criteria?
+#         # Select model at the top of the the sorted table for now...
+#         CHOOSEN_MODEL_NAME = stats.head(1).index[0]
+#         CHOOSEN_MODEL = models_dict[CHOOSEN_MODEL_NAME]
+#         # Save best estimator model
+#         model_savename = "my_model_{}.pkl".format(CHOOSEN_MODEL_NAME)
+#         joblib.dump(CHOOSEN_MODEL, wrk_dir+'/CHOOSEN_MODEL/' + model_savename)
+#         # Print detail on choosen model
+#         features_used = model_feature_dict[CHOOSEN_MODEL_NAME]
+#         zip(features_used, CHOOSEN_MODEL.feature_importances_)
 
     # --- plot up model performance against the testset
     if plot_up_model_performance:
@@ -970,22 +1016,31 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
                                               ):
     """
     Evaluate the spatial predictions between models at a resolution of 4x5 or 2x2.5
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+
+    Returns
+    -------
+
+    Notes
+    -----
     """
-    # ----
     # If filename or folder not given, then use defaults
     if isinstance(filename, type(None)):
         filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(folder, type(None)):
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # variables to consider
     vars2plot = list(ds.data_vars)
     # add LWI and surface area to array
     ds = add_LWI2array(ds=ds, var2template=var2template)
-    # ----
+    # -- get general annual stats in a dataframe
     df = pd.DataFrame()
-    # -- get general annual stats
     for var_ in vars2plot:
         ds_tmp = ds[var_].copy()
         # take annual average
@@ -996,7 +1051,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
         arr = arr[(LWI == 0).T]
         # sve to dataframe
         df[var_] = pd.Series(arr.flatten()).describe()
-    # get area weighted mean
+    # Get area weighted mean
     vals = []
     for var_ in vars2plot:
         ds_tmp = ds[var_]
@@ -1013,7 +1068,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
     df = df.T
     df['mean (weighted)'] = vals
     df = df.T
-    # save or just return the values
+    # Save or just return the values
     file_save = 'Oi_prj_annual_stats_global_ocean_{}{}.csv'.format(res, ex_str)
     if just_return_df:
         return df
@@ -1028,14 +1083,24 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
                                                      debug=False):
     """
     Evaluate the spatial predictions between models, binned by latitude
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    debug (boolean), print out debugging output?
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
     if isinstance(ds, type(None)):
         # If filename or folder not given, then use defaults
         if isinstance(filename, type(None)):
             filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
         if isinstance(folder, type(None)):
-            s2s_root = utils.get_file_locations('s2s_root')
-            folder = '{}/{}/'.format(s2s_root, target)
+            data_root = utils.get_file_locations('data_root')
+            folder = '{}/{}/'.format(data_root, target)
         ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
@@ -1088,7 +1153,23 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
 def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
                                              target='Iodide',
                                              debug=False, res='0.125x0.125'):
-    """ Evaluate the spatial predictions between models """
+    """
+    Evaluate the spatial predictions between models
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    debug (boolean), print out debugging output?
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    Notes
+    -----
+
+    """
     # ----
     # get data
     if isinstance(ds, type(None)):
@@ -1151,6 +1232,24 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
                                                debug=False):
     """
     Evaluate the spatial predictions between models at 0.125x0.125
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    debug (boolean), print out debugging output?
+    rm_Skagerrak_data (boolean), Remove specific data
+    (above argument is a iodide specific option - remove this)
+    just_return_df (bool), just return the data as dataframe
+    folder (str), folder where NetCDF of predicted data is located
+    ex_str (str), extra string to include in file name to save data
+    use_annual_mean (bool), use the annual mean of the variable for statistics
+
+    Returns
+    -------
+
+    Notes
+    -----
+
     """
     # ----
     # Get spatial prediction data from NetCDF files saved already
@@ -1163,8 +1262,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
         filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
             target, res, extr_file_str)
     if isinstance(folder, type(None)):
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
@@ -1209,7 +1308,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
     df.T.to_csv(file_save_str+'.csv')
     # ---- print out a more formatted version as a table for the paper
     # remove variables
-    topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     params = [
         'Chance2014_STTxx2_I', 'MacDonald2014_iodide', 'Ensemble_Monthly_mean'
     ]
@@ -1293,12 +1392,22 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
 def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Iodide',
                                     stats=None, ds=None, topmodels=None,
                                     var2template='Chance2014_STTxx2_I',
+                                    var2use4Ensemble = 'Ensemble_Monthly_mean',
+                                    var2use4std = 'Ensemble_Monthly_std',
                                     save2NetCDF=True):
     """
     Add ensemble average and std to dataset
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    var2use4Ensemble (str), variable name to use for ensemble prediction
+    var2use4Std (str), variable name to use for ensemble prediction's std dev.
+    var2template (str), variable to use a template to make new variables
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    topmodels (list), list of models to include in ensemble prediction
+    save2NetCDF (bool), save the dataset as NetCDF file
+    RFR_dict (dict), dictionary of core variables and data
 
     Returns
     -------
@@ -1307,8 +1416,8 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
     # Get existing dataset from NetCDF if ds not provided
     filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(ds, type(None)):
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/'.format(data_root, target)
         ds = xr.open_dataset(folder + filename)
     # Just use top 10 models are included
     # ( with derivative variables )
@@ -1321,7 +1430,7 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
             stats = get_stats_on_models(RFR_dict=RFR_dict,
                                         verbose=False)
         # Get list of
-        topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Now get average concentrations and std dev. per month
     avg_ars = []
     std_ars = []
@@ -1335,17 +1444,15 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
         avg_ars += [np.ma.mean(arr, axis=0)]
         std_ars += [np.ma.std(arr, axis=0)]
     # Combine the arrays and then make the model variable
-    var2use = 'Ensemble_Monthly_mean'
-    # Template an existing variable, then overwrite
-    ds[var2use] = ds[var2template].copy()
-    ds[var2use].values = np.stack(avg_ars)
-    # Repeat for standard deviation
-    var2use = 'Ensemble_Monthly_std'
-    ds[var2use] = ds[var2template].copy()
-    ds[var2use].values = np.stack(std_ars)
+    # 1st Template an existing variable, then overwrite
+    ds[var2use4Ensemble] = ds[var2template].copy()
+    ds[var2use4Ensemble].values = np.stack(avg_ars)
+    # And repeat for standard deviation
+    ds[var2use4std] = ds[var2template].copy()
+    ds[var2use4std].values = np.stack(std_ars)
     # Save the list of models used to make ensemble to array
     attrs = ds.attrs.copy()
-    attrs['Ensemble_members'] = ', '.join(topmodels)
+    attrs['Ensemble_members ({})'.format(var2use4Ensemble)] = ', '.join(topmodels)
     ds.attrs = attrs
     # Save to NetCDF
     if save2NetCDF:
@@ -1355,7 +1462,18 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
 
 
 def test_performance_of_params(target='Iodide', features_used=None):
-    """ Test the performance of the parameters """
+    """
+    Test the performance of the parameters
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    features_used (list), list of the features within the model_name model
+
+    Returns
+    -------
+    (None)
+    """
     # - Get the data
     # get processed data
     # settings for incoming feature data
@@ -1374,8 +1492,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
             'WOA_Salinity',
             'Depth_GEBCO',
         ]
-
-    # - local variables
+    # Local variables for use in this function
     param_rename_dict = {
         u'Chance2014_STTxx2_I': 'Chance2014',
         u'MacDonald2014_iodide': 'MacDonald2014',
@@ -1383,7 +1500,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
     }
     param_names = param_rename_dict.keys()
     param_names.pop(param_names.index('Iodide'))
-    # dictionary of test set variables
+    # Set-up a dictionary of test set variables
     random_split_var = 'rn. 20%'
     strat_split_var = 'strat. 20%'
     model_names_dict = {
@@ -1391,9 +1508,9 @@ def test_performance_of_params(target='Iodide', features_used=None):
         'TEMP+DEPTH+SAL': strat_split_var,
     }
     model_names = model_names_dict.keys()
-    # --- Get data as a DataFrame
+    # Get data as a DataFrame
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
-    # - add extra vairables and remove some data.
+    # Add extra variables and remove some data.
     df = add_extra_vars_rm_some_data(df=df,
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
@@ -1410,11 +1527,11 @@ def test_performance_of_params(target='Iodide', features_used=None):
         # Select just the features used and the target variable
         df_tmp = df[features_used+['Iodide']].copy()
         # split into the training and test sets
-        returned_vars = mk_testing_training_sets(df=df_tmp,
-                                                 rand_20_80=rand_20_80,
-                                                 rand_strat=rand_strat,
-                                                 features_used=features_used,
-                                                 )
+        returned_vars = mk_test_train_sets(df=df_tmp,
+                                           rand_20_80=rand_20_80,
+                                           rand_strat=rand_strat,
+                                           features_used=features_used,
+                                           )
         train_set, test_set, test_set_targets = returned_vars
         # Add this to the dataframe using the passed shape as a template
         dummy = np.zeros(df.shape[0])
@@ -1480,6 +1597,12 @@ def test_performance_of_params(target='Iodide', features_used=None):
 def calc_performance_of_params(df=None, target='Iodide', params=[]):
     """
     Calculate stats on performance of parameters in DataFrame
+
+    Parameters
+    -------
+    target (str), Name of the target variable (e.g. iodide)
+    df (pd.dataframe), dataframe containing of target and features
+    params (list), list of parameters to calculate performance of
     """
     # Initialise with generic stats
     stats = [df[i].describe() for i in params + [target]]
@@ -1508,11 +1631,10 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
 
     Returns
     -------
-
     (xr.Dataset)
     """
     # Location of data
-    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/outputs/'.format(target)
     # Set filename string, then open the NetCDF
     filename = 'Oi_prj_predicted_{}_{}_{}.nc'.format(target, res, version)
@@ -1520,9 +1642,6 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
     return ds
 
 
-# ---------------------------------------------------------------------------
-# ------------- Extract model / scripts linked to tree graphic --------------
-# ---------------------------------------------------------------------------
 def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='Iodide',
                          ouput_random_tree_numbers=False, verbose=True, ):
     """
@@ -1530,23 +1649,30 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    N_trees2output (int), number of trees to extract to .csv files
+    RFR_dict (dict), dictionary of core variables and data
+    max_depth (int), maximum depth of tree branch to extract
+    ouput_random_tree_numbers (bool), randomly select trees to output
+    verbose (boolean), print out verbose output?
 
     Returns
     -------
+    (None)
 
     Notes
     -----
      - This is a file processor for the TreeSurgeon java/node.js plotter
-     https://github.com/wolfiex/TreeSurgeon
+    https://github.com/wolfiex/TreeSurgeon
     """
     # Get the dictionary
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # Get the top model names
-    topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     # Set the folder
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/models/LIVE/TEMP_MODELS/'.format(s2s_root, target)
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/models/LIVE/TEMP_MODELS/'.format(data_root, target)
     # Get the file names for these
     modelnames = glob.glob(folder+'*.pkl')
     modelname_d = dict(zip(RFR_dict['model_names'], modelnames))
@@ -1576,9 +1702,19 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    features_used (list), list of the features within the model_name model
+    N_trees2output (int), number of trees to extract to .csv files
+    max_depth (int), maximum depth of tree branch to extract
+    ouput_random_tree_numbers (bool), randomly select trees to output
+    verbose (boolean), print out verbose output?
+    model_filename (str), filename of the model to extract
+    folder (str), location of file (model_filename) to extract
+    extr_str (str), string to add to outputted dot file
 
     Returns
     -------
+    (None)
 
     Notes
     -----
@@ -1590,8 +1726,8 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
     import os
     # Get the location of the saved model.
     if isinstance(folder, type(None)):
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/models/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/models/'.format(data_root, target)
     # Create a file name for model if not provided
     if isinstance(model_filename, type(None)):
         model_filename = "my_model_{}.pkl".format(extr_str)
@@ -1627,8 +1763,6 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
             tree.export_graphviz(rf_unit, out_file=out_file,
                                  max_depth=max_depth,
                                  feature_names=features_used)
-    # Also plot up?
-#    os.system('dot -Tpng tree.dot -o tree.png')
 
 
 def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
@@ -1637,9 +1771,12 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
 
     Parameters
     -------
+    RFR_dict (dict), dictionary of core variables and data
+    depth2investigate (int), the depth of branches to investigate to
 
     Returns
     -------
+    (None)
 
     Notes
     -----
@@ -1653,7 +1790,7 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
         RFR_dict = build_or_get_models()
     # models to analyse?
     models2compare = []
-    topmodels = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True, n=10)
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     models2compare = topmodels
     # get strings to update variable names to
     name_dict = convert_fullname_to_shortname(rtn_dict=True)
@@ -1690,9 +1827,15 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
 
     Parameters
     -------
+    depth2investigate (int), the depth of branches to investigate to
+    RFR_dict (dict), dictionary of core variables and data
+    model_name (str), name of model to get decision points for
+    verbose (boolean), print out verbose output?
+    debug (boolean), print out debugging output?
 
     Returns
     -------
+    (None)
 
     Notes
     -----

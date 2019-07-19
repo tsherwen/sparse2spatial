@@ -11,9 +11,11 @@ import datetime as datetime
 import sklearn as sk
 from sklearn.ensemble import RandomForestRegressor
 import glob
-
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
 # s2s imports
 import sparse2spatial.utils as utils
+from sparse2spatial.RFRanalysis import get_core_stats_on_current_models
 
 
 def build_or_get_models(df=None, testset='Test set (strat. 20%)',
@@ -39,6 +41,8 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
     delete_existing_model_files (boolean), delete the existing model binaries in folder?
     rm_outliers (boolean), remove the outliers from the observational dataset
     rm_LOD_filled_data (boolean), remove the limit of detection (LOD) filled values?
+    rm_Skagerrak_data (boolean), Remove specific data
+    (above argument is a iodide specific option - remove this)
     model_feature_dict (dict), dictionary of features used in each model
     model_sub_dir (str), the sub directory in which the models are to be saved/read
     debug (boolean), run and debug function/output
@@ -57,8 +61,8 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
 
     # - Get local variables
     # Location to save models
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/models/LIVE/{}/'.format(s2s_root, target, model_sub_dir)
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/models/LIVE/{}/'.format(data_root, target, model_sub_dir)
     if debug:
         print('Using models from {}'.format(folder))
     # Get details on model setups to use
@@ -75,7 +79,7 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
     oob_scores = {}
     models_dict = {}
 
-    # - Loop model input variable options and build models
+    # Loop model input variable options and build models
     if not read_model_from_disk:
         for n_model_name, model_name in enumerate(model_names):
             print(n_model_name, model_name)
@@ -112,13 +116,15 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
                 try:
                     joblib.dump(model, folder+model_savename)
                 except FileNotFoundError:
+                    prt_str = "WARNING: Failed to save file - @ '{}' with name '{}'"
+                    print( prt_str.format(folder+model_savenam))
                     utils.check_or_mk_directory_struture()
             # Also keep models online in dictionary
             models_dict[model_name] = model
             # force local tidy of garbage
             gc.collect()
 
-    # - Loop model and predict for all values
+    # Loop model and predict for all values
     # If time to make models too great, then read-in here and 'rm' from above
     for n_model_name, model_name in enumerate(model_names):
         # Get testing features and hyperparameters to build model
@@ -142,7 +148,7 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
             oob_scores[model_name] = np.NaN
         models_dict[model_name] = model
 
-    # - Return models and predictions in a dictionary structure
+    # Return models and predictions in a dictionary structure
     RFR_dict = {}
     RFR_dict['models_dict'] = models_dict
     RFR_dict['model_names'] = model_names
@@ -159,21 +165,19 @@ def get_features_used_by_model(models_list=None, RFR_dict=None):
 
     Parameters
     -------
+    RFR_dict (dict), dictionary of core variables and data
+    models_list (list), list of model names to get features for
 
     Returns
     -------
-    (dict)
-
-    Notes
-    -----
-
+    (list)
     """
     # Get dictionary of shared data if not provided
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # Get models to use (assume top models, if not provided)
     if isinstance(models_list, type(None)):
-        models_list = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+        models_list = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Now plot up in input variables
     features_used_dict = RFR_dict['features_used_dict']
     vars2use = []
@@ -184,20 +188,22 @@ def get_features_used_by_model(models_list=None, RFR_dict=None):
     return list(set(vars2use))
 
 
-def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
+def get_top_models(n=10, stats=None, RFR_dict=None, vars2exclude=None,
                    exclude_ensemble=True, verbose=True):
     """
-    retrieve the names of the top 10 models
+    retrieve the names of the top models (default=top 10)
 
     Parameters
     -------
+    n (int), the number of top ranked models to return
+    vars2exclude (list), list of variables to exclude (e.g. DEPTH)
+    RFR_dict (dict), dictionary of core variables and data
+    exclude_ensemble (bool), exclude the ensemble prediction from the list
+    verbose (boolean), print out verbose output?
 
     Returns
     -------
-    (dict)
-
-    Notes
-    -----
+    (list)
     """
     # Get stats on models in RFR_dict
     if isinstance(RFR_dict, type(None)):
@@ -205,7 +211,7 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
     if isinstance(stats, type(None)):
         stats = get_core_stats_on_current_models(
             RFR_dict=RFR_dict, verbose=False)
-    # Don't count the Ensemble in the topten
+    # Don't count the Ensemble in the top ranking models
     if exclude_ensemble:
         var_ = 'RFR(Ensemble)'
         try:
@@ -215,44 +221,44 @@ def get_top_models(n=10, stats=None, RFR_dict=None, NO_DERIVED=True,
         except:
             if verbose:
                 print('failed to remove {} from list'.format(var_))
-    # Return the top model's names (with ot without derivative values)
-    if NO_DERIVED:
-        params2inc = stats.T.columns
-        params2inc = [i for i in params2inc if 'DOC' not in i]
-        params2inc = [i for i in params2inc if 'Prod' not in i]
-        return list(stats.T[params2inc].T.head(n).index)
-    else:
-        return list(stats.head(n).index)
+    # Return the top model's names
+    params2inc = stats.T.columns
+    # Exclude any variables in provided list
+    if not isinstance(vars2exclude, type(None)):
+        for var_ in vars2exclude:
+            params2inc = [i for i in params2inc if var_ not in i]
+    # Return the updated dataframe's index (model names that are top models)
+    return list(stats.T[params2inc].T.head(n).index)
 
 
-def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
+def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide', cv=7,
                                        testset='Test set (strat. 20%)'):
     """
     Driver to tune mutiple RFR models
 
     Parameters
     -------
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    cv (int), number of folds of cross-validation to use
+    target (str), Name of the target variable (e.g. iodide)
+    RFR_dict (dict), dictionary of models, data and shared variables
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     from sklearn.externals import joblib
     # Get the data for the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # Set models to optimise
-    models2compare = get_top_models(RFR_dict=RFR_dict, NO_DERIVED=True)
+    models2compare = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Get variables needed from core dictionary
     features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
     # Set folder to use for optimised models
-    s2s_root = utils.get_file_locations('s2s_root')
-    folder = '{}/{}/models/LIVE/OPTIMISED_MODELS/'.format(s2s_root, target)
-    # Use X fold cross validation (e.g. 5 or 7)
-    cv = 7
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/models/LIVE/OPTIMISED_MODELS/'.format(data_root, target)
     # Loop and save optimised model
     # NOTE: this could be speed up by using more cores
     for model_name in models2compare:
@@ -272,7 +278,7 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide',
     if test_the_tuned_models:
         # Get the core data
         df = RFR_dict['df']
-        # get the data
+        # Get the data
         test_set = df.loc[df[testset] == True, :]
         train_set = df.loc[df[testset] == False, :]
         # Test the improvements in the optimised models?
@@ -345,12 +351,18 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
 
     Parameters
     -------
+    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str), Name of the target variable (e.g. iodide)
+    RFR_dict (dict), dictionary of core variables and data
+    model_name (str), name of model to tune performance of
+    features_used (list), list of the features within the model_name model
+    save_best_estimator (bool), save the best performing model offline
+    model (RandomForestRegressor), Random Forest Regressor model to tune
+    cv (int), number of folds of cross-validation to use
 
     Returns
     -------
-
-    Notes
-    -----
+    (RandomForestRegressor)
     """
     from sklearn.externals import joblib
     from sklearn.ensemble import RandomForestRegressor
@@ -403,7 +415,7 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     # get the parameters based on the RandomizedSearchCV output
     param_grid = define_hyperparameter_options2test(
         features_used=features_used, best_params_=best_params_,
-        param_grid_based_on_RandomizedSearchCV=True)
+        param_grid_RandomizedSearchCV=True)
     # Use GridSearchCV
     grid_search = use_GS_CV_to_tune_Hyperparams(cv=cv,
                                                 train_features=train_features,
@@ -420,8 +432,8 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
 
     # Save the best estimator now for future use
     if save_best_estimator:
-        s2s_root = utils.get_file_locations('s2s_root')
-        folder = '{}/{}/models/LIVE/OPTIMISED_MODELS/'.format(s2s_root, target)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/models/LIVE/OPTIMISED_MODELS/'.format(data_root, target)
         model_savename = "my_model_{}.pkl".format(model_name)
         joblib.dump(BEST_ESTIMATOR, folder + model_savename)
     else:
@@ -438,15 +450,15 @@ def Use_RS_CV_to_explore_hyperparams(train_features=None,
     """
     Intial test of parameter space using RandomizedSearchCV
 
-
     Parameters
     -------
-
-    Returns
-    -------
-
-    Notes
-    -----
+    features_used (list), list of the features used by the model
+    train_features (list), list of the training features
+    train_labels  (list), list of the training labels
+    test_features (list), list of the testing features
+    test_labels (list), list of the testing labels
+    cv (int), number of folds of cross-validation to use
+    scoring (str), scoring method to use
     """
     from sklearn.model_selection import RandomizedSearchCV
     from sklearn.ensemble import RandomForestRegressor
@@ -500,12 +512,11 @@ def use_GS_CV_to_tune_Hyperparams(param_grid=None,
 
     Parameters
     -------
-
-    Returns
-    -------
-
-    Notes
-    -----
+    features_used (list), list of the features used by the model
+    train_features (list), list of the training features
+    train_labels  (list), list of the training labels
+    cv (int), number of folds of cross-validation to use
+    scoring (str), scoring method to use
     """
     from sklearn.model_selection import GridSearchCV
     from sklearn.ensemble import RandomForestRegressor
@@ -525,7 +536,6 @@ def quick_model_evaluation(model, test_features, test_labels):
     """
     from sklearn.metrics import mean_squared_error
     predictions = model.predict(test_features)
-#    mse = np.mean( (predictions - test_labels.values) **2 )
     MSE = mean_squared_error(test_labels, predictions)
     RMSE = np.sqrt(MSE)
     ME = np.mean(abs(predictions - test_labels.values))
@@ -537,21 +547,20 @@ def quick_model_evaluation(model, test_features, test_labels):
 
 
 def define_hyperparameter_options2test(features_used=None,
-                                       param_grid_based_on_RandomizedSearchCV=True,
+                                       param_grid_RandomizedSearchCV=True,
                                        best_params_=None,
-                                       param_grid_based_on_intial_guesses=True,
+                                       param_grid_intial_guess=True,
                                        ):
     """
     Define a selction of test groups
 
     Parameters
     -------
-
-    Returns
-    -------
-
-    Notes
-    -----
+    param_grid_intial_guess (bool), use the parameter grid of guesses
+    param_grid_RandomizedSearchCV (bool), use the parameter grid obtained
+                                                   by randomly searching
+    best_params_ (param_grid), parameter grid of best parameters to use
+    features_used (list), list of the features used by the model
     """
     # - Shared variables in grid
     vals2test = {
@@ -563,7 +572,7 @@ def define_hyperparameter_options2test(features_used=None,
         'oob_score':  [True],
         'bootstrap': [True],
     }
-    if param_grid_based_on_RandomizedSearchCV:
+    if param_grid_RandomizedSearchCV:
         if not isinstance(best_params_, type(None)):
             vals2test_ASSUMED = vals2test.copy()
             vals2test = {}
@@ -693,10 +702,10 @@ def define_hyperparameter_options2test(features_used=None,
             'oob_score': vals2test['oob_score'],
         },
     ]
-    if param_grid_based_on_intial_guesses:
+    if param_grid_intial_guess:
         return param_grid
     elif return_random_informed_grid:
-        return param_grid_based_on_RandomizedSearchCV
+        return param_grid_RandomizedSearchCV
 
 
 def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
@@ -710,9 +719,21 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
 
     Parameters
     -------
+    model2use (str), name of the model to use
+    target (str), Name of the target variable (e.g. iodide)
+    RFR_dict (dict), dictionary of core variables and data
+    res (str), horizontal resolution of dataset (e.g. 4x5)
+    features_used_dict (dict), dictionary of feature variables in models
+    plot2check (bool), make a quick plot to check the prediction
+    models_dict (dict), dictionary of RFR models and there names
+    stats (pd.DataFrame), dataframe of statistics on models in models_dict
+    rm_Skagerrak_data (boolean), Remove specific data
+    (above argument is a iodide specific option - remove this)
+    debug (boolean), print out debugging output?
 
     Returns
     -------
+    (None)
 
     Notes
     -----
@@ -739,9 +760,9 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     dsA = xr.open_dataset(data_root + filename)
     # Get location to save ensemble builds of models
-    s2s_root = utils.get_file_locations('s2s_root')
+    data_root = utils.get_file_locations('data_root')
     folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
-    folder = folder_str.format(s2s_root, target, extr_str)
+    folder = folder_str.format(data_root, target, extr_str)
     # - Make a dataset for each model
     ds_l = []
     # Get list of twenty models built
@@ -774,12 +795,12 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     if target == 'Iodide':
         # Chance et al (2013)
         param = u'Chance2014_STTxx2_I'
-        arr = calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        arr = calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
         ds[param] = ds[b_modelname]  # use existing array as dummy to fill
         ds[param].values = arr
         # MacDonald et al (2013)
         param = 'MacDonald2014_iodide'
-        arr = calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+        arr = calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
         ds[param] = ds[b_modelname]  # use existing array as dummy to fill
         ds[param].values = arr
     # Do a test diagnostic plot?
@@ -802,6 +823,10 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
 
     Parameters
     -------
+    df (pd.dataframe), dataframe containing of target and features
+    features_used_dict (dict), dictionary of feature variables in models
+    model (RandomForestRegressor), Random Forest Regressor model to user
+    model_name (str), name of the model to use
 
     Returns
     -------
@@ -822,21 +847,26 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
     return target_predictions
 
 
-def mk_testing_training_sets(df=None, target='Iodide',
-                             rand_strat=True, features_used=None,
-                             random_state=42, rand_20_80=False,
-                             nsplits=4, verbose=True, debug=False):
+def mk_test_train_sets(df=None, target='Iodide',
+                       rand_strat=True, features_used=None,
+                       random_state=42, rand_20_80=False,
+                       nsplits=4, verbose=True, debug=False):
     """
     Make a test and training dataset for ML algorithms
 
     Parameters
     -------
+    target (str), Name of the target variable (e.g. iodide)
+    nsplits (int), number of ways to split the data
+    rand_strat (bool), split the data in a random way using stratified sampling
+    rand_20_80 (bool), split the data in a random way
+    df (pd.dataframe), dataframe containing of target and features
+    debug (boolean), print out debugging output?
+    verbose (boolean), print out verbose output?
 
     Returns
     -------
-
-    Notes
-    -----
+    (list)
     """
     # - make Test and training set
     # to make this approach's output identical at every run
@@ -993,12 +1023,12 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     if target == 'Iodide':
         # Chance et al (2013)
         param = u'Chance2014_STTxx2_I'
-        arr = utils.calc_iodide_chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        arr = utils.calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
         ds[param] = ds[modelname]  # use existing array as dummy to fill
         ds[param].values = arr
         # MacDonald et al (2013)
         param = 'MacDonald2014_iodide'
-        arr = utils.calc_iodide_MacDonald2014(dsA['WOA_TEMP'].values)
+        arr = utils.calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
         ds[param] = ds[modelname]  # use existing array as dummy to fill
         ds[param].values = arr
     # Add ensemble to ds too
