@@ -20,6 +20,9 @@ import sparse2spatial.utils as utils
 import sparse2spatial.RFRanalysis as RFRanalysis
 import sparse2spatial.analysis as analysis
 
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
+
 
 def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'):
     """
@@ -87,7 +90,7 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
 
 
 def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
-                           obs_var='Obs.')
+                           obs_var='Obs.'):
     """
     Plot up the X vs. Y performance by region
     """
@@ -111,7 +114,7 @@ def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
 
 
 def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
-                                extr_str='', context='paper'):
+                                extr_str='', context='paper', dpi=320):
     """
     Plot up comparisons for parameterisations against observations
     """
@@ -125,15 +128,21 @@ def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
     fig = plt.figure(dpi=dpi, facecolor='w', edgecolor='k')
     ax = fig.add_subplot(111)
     # Loop by parameter
-    for param in params2plot:
-        # Now plot a generic X vs. Y plot
-        plt_df_X_vs_Y(df=df, fig=fig, ax=ax, y_var=param, x_var=obs_var,
-                      x_label=obs_var, y_label=param, color=color_dict[param],
-                      save_plot=False )
-        # Add a title
-        title_str = "{} '{}' vs. '{}'".format(extr_str, obs_var, param)
-        plt.title(title_str)
+    for n_param, param in enumerate( params2plot ):
+        # plot a single 1:1 line
+        plot_121 = False
+        if n_param == 0:
+            plot_121 =True
 
+        # Now plot a generic X vs. Y plot
+        AC.plt_df_X_vs_Y(df=df, fig=fig, ax=ax, y_var=param, x_var=obs_var,
+                         x_label=obs_var, y_label=param, color=color_dict[param],
+                         save_plot=False, plot_121=plot_121 )
+    # Add a title
+    title_str = "Obs. vs. predictions in '{}'".format(extr_str)
+    plt.title(title_str)
+    # Add a legend
+    plt.legend()
     # Save the plot
     png_filename = 's2s_X_vs_Y_{}_vs_{}_{}'.format(obs_var, 'params', extr_str)
     png_filename = AC.rm_spaces_and_chars_from_str(png_filename)

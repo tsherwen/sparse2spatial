@@ -2271,6 +2271,60 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
+def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
+                           obs_var='Obs.')
+    """
+    Plot up the X vs. Y performance by region - using core s2s functions
+    """
+    #
+    rm_Skagerrak_data = True
+    rebuild = False
+#    rm_Skagerrak_data = False
+    # Use top models from full dataset  ( now: nOutliers + nSkagerak
+    RFR_dict = build_or_get_models_iodide(
+        rebuild=rebuild,
+        rm_Skagerrak_data=rm_Skagerrak_data)
+    # Get the dataframe of observations and predictions
+    df = RFR_dict['df']
+    # Add ensemble to the df
+    LatVar = 'Latitude'
+    LonVar = 'Longitude'
+    ds = utils.get_predicted_values_as_ds(rm_Skagerrak_data=rm_Skagerrak_data)
+    vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df['Month'].values,
+                                              var2extract='Ensemble Monthly mean',)
+    var = 'RFR(Ensemble)'
+    df[var] = vals
+    # Just withheld data?
+    testset = 'Test set (strat. 20%)'
+    df = df.loc[df[testset] == True, :]
+    # Only consider the variables to be plotted
+    obs_var = 'Iodide'
+    params2plot = [var,  'Chance2014_STTxx2_I', 'MacDonald2014_iodide',]
+    df = df[params2plot+[LonVar, LatVar, obs_var]]
+    # Add ocean columns to dataframe
+    df = AC.add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
+    # Split by regions
+    regions = list(set(df['ocean'].dropna()))
+    dfs = [df.loc[df['ocean']==i,:] for i in regions]
+    dfs = dict(zip(regions,dfs))
+    # Also get an open ocean dataset
+    # TODO ...
+    # Use an all data for now
+    dfs['all'] = df.copy()
+    regions += ['all']
+    # loop and plot by region
+    for region in regions:
+        print(region)
+        df = dfs[region]
+        extr_str=region+' (withheld)'
+        # Now plot
+        plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                             obs_var=obs_var,
+                                             extr_str=extr_str)
+
+
 def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
                                     target='Iodide'):
     """
