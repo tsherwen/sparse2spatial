@@ -18,12 +18,14 @@ import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 #import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 #import sparse2spatial.archiving as archiving
-from sparse2spatial.RFRbuild import mk_testing_training_sets
+from sparse2spatial.RFRbuild import mk_test_train_sets
 import sparse2spatial.RFRbuild as build
-import sparse2spatial.RFRanalysis as analysis
+import sparse2spatial.RFRanalysis as RFRanalysis
+import sparse2spatial.analysis as analysis
+import sparse2spatial.plotting as plotting
 from sparse2spatial.RFRbuild import build_or_get_models
 
-# Get iodide specific functions
+# Get CH3I specific functions
 
 
 def main():
@@ -39,17 +41,18 @@ def main():
 #    df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
 
     # - build models with the observations
-#    RFR_dict = build_or_get_models_CH3I(rebuild=False, target=target)
+    RFR_dict = build_or_get_models_CH3I(rebuild=False, target=target)
     # build the models (just run once!)
-    RFR_dict = build_or_get_models_CH3I(rebuild=True, target=target)
+#    RFR_dict = build_or_get_models_CH3I(rebuild=True, target=target)
 
     # Get stats ont these models
     stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-                                                      target=target, verbose=True, debug=True)
+                                                      target=target, verbose=True,
+                                                      debug=True)
 
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
-                                     NO_DERIVED=True, n=10)
+                                     vars2exclude=['DOC', 'Prod'], n=10)
 
     # --- Predict values globally (only use 0.125)
     # Extra string for NetCDF save name
@@ -65,8 +68,60 @@ def main():
                                          topmodels=topmodels,
                                          xsave_str=xsave_str, add_ensemble2ds=True)
 
+    #
 
-def build_or_get_models_CH3I(rm_Skagerrak_data=True, target='CH3I',
+
+def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
+                           LonVar='lon', target='CH3I',
+                           obs_var='Obs.')
+    """
+    Plot up the X vs. Y performance by region - using core s2s functions
+    """
+    # Get the dataframe of observations and predictions
+    df = RFR_dict['df']
+    # Add ensemble to the df
+    LatVar = 'Latitude'
+    LonVar = 'Longitude'
+    ds = utils.get_predicted_values_as_ds(target=target)
+    vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df['Month'].values,
+                                              var2extract='Ensemble_Monthly_mean',)
+    var = 'RFR(Ensemble)'
+    df[var] = vals
+    # Just withheld data?
+#    testset = 'Test set (strat. 20%)'
+#    df = df.loc[df[testset] == True, :]
+    # Only consider the variables to be plotted
+    obs_var = target
+#    params2plot = [var,  'Chance2014_STTxx2_I', 'MacDonald2014_iodide',]
+    params2plot = [var,  ]
+    df = df[params2plot+[LonVar, LatVar, obs_var]]
+    # Add ocean columns to dataframe
+    df = AC.add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
+    # Split by regions
+    regions = list(set(df['ocean'].dropna()))
+    dfs = [df.loc[df['ocean']==i,:] for i in regions]
+    dfs = dict(zip(regions,dfs))
+    # Also get an open ocean dataset
+    # TODO ...
+    # Use an all data for now
+    dfs['all'] = df.copy()
+    regions += ['all']
+    # loop and plot by region
+    for region in regions:
+        print(region)
+        df = dfs[region]
+#        extr_str=region+' (withheld)'
+        extr_str=region
+        # Now plot
+        plotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                             obs_var=obs_var,
+                                             extr_str=extr_str)
+
+
+
+def build_or_get_models_CH3I(target='CH3I',
                              rm_LOD_filled_data=False,
                              rm_outliers=True,
                              rebuild=False):
@@ -81,14 +136,12 @@ def build_or_get_models_CH3I(rm_Skagerrak_data=True, target='CH3I',
 
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
-                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                        model_feature_dict=model_feature_dict,
                                        df=df, target=target,
                                        read_model_from_disk=False,
                                        delete_existing_model_files=True)
     else:
         RFR_dict = build_or_get_models(save_model_to_disk=False,
-                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                        model_feature_dict=model_feature_dict,
                                        df=df, target=target,
                                        read_model_from_disk=True,
@@ -97,7 +150,7 @@ def build_or_get_models_CH3I(rm_Skagerrak_data=True, target='CH3I',
 
 
 def get_dataset_processed4ML(restrict_data_max=False, target='CH3I',
-                             rm_Skagerrak_data=False, rm_outliers=True,
+                             rm_outliers=True,
                              rm_LOD_filled_data=False):
     """
     Get dataset as a DataFrame with standard munging settings
@@ -157,7 +210,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH3I',
         # Copy a df for splitting
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
-        returned_vars = mk_testing_training_sets(df=df.copy(),
+        returned_vars = mk_test_train_sets(df=df.copy(),
                                                  target=target,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
