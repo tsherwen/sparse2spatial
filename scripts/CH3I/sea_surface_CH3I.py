@@ -73,7 +73,7 @@ def main():
 
 def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
                            LonVar='lon', target='CH3I',
-                           obs_var='Obs.')
+                           obs_var='Obs.'):
     """
     Plot up the X vs. Y performance by region - using core s2s functions
     """
@@ -90,8 +90,8 @@ def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
     var = 'RFR(Ensemble)'
     df[var] = vals
     # Just withheld data?
-#    testset = 'Test set (strat. 20%)'
-#    df = df.loc[df[testset] == True, :]
+    testset = 'Test set (strat. 20%)'
+    df = df.loc[df[testset] == True, :]
     # Only consider the variables to be plotted
     obs_var = target
 #    params2plot = [var,  'Chance2014_STTxx2_I', 'MacDonald2014_iodide',]
@@ -112,8 +112,8 @@ def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
     for region in regions:
         print(region)
         df = dfs[region]
-#        extr_str=region+' (withheld)'
-        extr_str=region
+        extr_str=region+' (withheld)'
+#        extr_str=region
         # Now plot
         plotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
                                              obs_var=obs_var,
