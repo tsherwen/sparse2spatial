@@ -29,14 +29,11 @@ obs. = observations
 import numpy as np
 import pandas as pd
 import sparse2spatial as s2s
-from sparse2spatial.utils import get_file_locations
+import sparse2spatial.utils as utils
 from sparse2spatial.utils import set_backup_month_if_unknown
-from sparse2spatial.utils import get_outlier_value
 #from sea_surface_iodide import mk_iodide_test_train_sets
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
-from sparse2spatial.utils import calc_I_Chance2014_STTxx2_I
-from sparse2spatial.utils import calc_I_Chance2014_multivar
-from sparse2spatial.utils import calc_I_MacDonald2014
+
 # iodide specific functions (move these to this directory?)
 #from sparse2spatial.utils import get_literature_predicted_iodide
 
@@ -95,7 +92,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
     (pd.DataFrame)
     """
     # Read in processed csv file
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/Iodide/'
     df = pd.read_csv(folder+filename, encoding='utf-8')
     # Add ln of iodide too
@@ -162,7 +159,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     # Add ancillary obs.
     obs_data_df = extract_ancillaries_from_compiled_file(df=obs_data_df)
     # Save the intermediate file
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/'.format(target)
     filename = 'Iodine_obs_WOA_v8_5_1_TEMP_TEST.csv'
     obs_data_df.to_csv(folder+filename, encoding='utf-8')
@@ -213,7 +210,7 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     """
     # - Get file observational file
     # Directory to use?
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     # Filename for <20m iodide data?
     f = 'Iodide_data_above_20m.csv'
     # Open data as DataFrame
@@ -271,7 +268,7 @@ def get_iodide_obs_metadata(file_and_path='./sparse2spatial.rc'):
     Extract and return metadata from metadata csv
     """
     # What is the location of the iodide data?
-    s2s_root = get_file_locations('s2s_root', file_and_path=file_and_path)
+    s2s_root = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder = s2s_root+'/Iodide/inputs/'
     # Filename?
     filename = 'Iodine_climatology_Submitted_data_list_formatted_TMS.xlsx'
@@ -308,7 +305,7 @@ def get_iodide_obs(just_use_submitted_data=False,
     -----
     """
     # What is the location of the iodide data?
-    data_root = get_file_locations('data_root', file_and_path=file_and_path)
+    data_root = utils.get_file_locations('data_root', file_and_path=file_and_path)
     # Name to save file as
     filename = 'Iodide_data_above_20m.csv'
     # - Get Metadata (and keep as a seperate DataFrame )
@@ -417,7 +414,7 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     # Data submitted directly for preparation
     # (as publish by Chance et al (2014) )
     # New data, acquired since 2017
-    data_root = get_file_locations('data_root', file_and_path=file_and_path)
+    data_root = utils.get_file_locations('data_root', file_and_path=file_and_path)
     if (not InChance2014):
         folder = data_root + '/inputs/new_data/'
     elif ((source == 's') or (source == 'bodc')) and (InChance2014):
@@ -645,7 +642,7 @@ def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows=1,
     """
     # Location and filename?
     filename = 'Iodide_correlations_310114_MASTER_TMS_EDIT.xlsx'
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/RJC_spreadsheets/'
     # Extract Rosies MASTER excel sheet
     df = pd.read_excel(folder+filename, sheetname=sheetname, skiprows=skiprows)
@@ -689,7 +686,7 @@ def add_extra_vars_rm_some_data(df=None, target='Iodide',
     Shape0 = str(df.shape)
     N0 = df.shape[0]
     if rm_outliers:
-        bool = df[target] < get_outlier_value(df=df, var2use=target)
+        bool = df[target] < utils.get_outlier_value(df=df, var2use=target)
         df_tmp = df.loc[bool]
         prt_str = 'Removing outlier {} values. (df {}=>{},{})'
         N = int(df_tmp.shape[0])
@@ -868,7 +865,7 @@ def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
     # get details of parameterisations
 #    filename='Chance_2014_Table2_PROCESSED_17_04_19.csv'
     filename = 'Chance_2014_Table2_PROCESSED.csv'
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     param_df = pd.read_csv(folder+filename)
     # map input variables
     input_dict = {
@@ -959,13 +956,13 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
     try:
         df[var2use]
     except KeyError:
-        df[var2use] = df[TEMPvar].map(calc_I_Chance2014_STTxx2_I)
+        df[var2use] = df[TEMPvar].map(utils.calc_I_Chance2014_STTxx2_I)
     # MacDonald et al. (2014)
     var2use = 'MacDonald2014_iodide'
     try:
         df[var2use]
     except KeyError:
-        df[var2use] = df[TEMPvar].map(calc_I_MacDonald2014)
+        df[var2use] = df[TEMPvar].map(utils.calc_I_MacDonald2014)
     # Add all parameterisations from Chance et al (2014) to dataframe
     df = add_all_Chance2014_correlations(df=df, debug=debug)
 #    print df.shape
@@ -976,12 +973,12 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
         df[var2use]
     except KeyError:
         df[var2use] = df.apply(lambda x:
-                               calc_I_Chance2014_multivar(NO3=x[NO3_var],
-                                                                 sumMLDpt=x[sumMLDpt_var],
-                                                                   MOD_LAT=x[MOD_LAT_var],
-                                                                   TEMP=x[TEMPvar],
-                                                            salinity=x[salinity_var]),
-                                                                   axis=1)
+                               utils.calc_I_Chance2014_multivar(NO3=x[NO3_var],
+                                                                sumMLDpt=x[sumMLDpt_var],
+                                                                MOD_LAT=x[MOD_LAT_var],
+                                                                TEMP=x[TEMPvar],
+                                                                salinity=x[salinity_var]),
+                                                                axis=1)
     return df
 
 

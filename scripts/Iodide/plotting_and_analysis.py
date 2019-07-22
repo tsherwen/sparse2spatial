@@ -13,11 +13,18 @@ import pandas as pd
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 # s2s imports
+import sparse2spatial.RFRanalysis as RFRanalysis
+import sparse2spatial.analysis as analysis
+import sparse2spatial.RFRbuild as build
+import sparse2spatial.utils as utils
 from sparse2spatial.RFRbuild import build_or_get_models
+from sparse2spatial.RFRbuild import get_top_models
 from sparse2spatial.RFRanalysis import get_stats_on_models
+from sparse2spatial.RFRanalysis import get_stats_on_multiple_global_predictions
 # Local modules
-from sea_surface_iodide import mk_iodide_test_train_sets
-
+#from sea_surface_iodide import mk_iodide_test_train_sets
+#from sea_surface_iodide import build_or_get_models_iodide
+from sea_surface_iodide import *
 
 
 # ---------------------------------------------------------------------------
@@ -35,6 +42,8 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
     -------
     target (str), Name of the target variable (e.g. iodide)
     testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+
 
     Returns
     -------
@@ -74,12 +83,12 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
     # - Get the observations
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     df = RFR_dict['df']
     # get stats on models in RFR_dict
     stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # only consider that are not outliers.
-    df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
+    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
 #    df.loc[ df['Iodide']<= 400., :]
     # ---- Plot up and save to PDF
     # - setup plotting
@@ -150,6 +159,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     -------
     target (str), Name of the target variable (e.g. iodide)
     testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
 
     Returns
     -------
@@ -188,14 +198,14 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     # - Get the observations
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     df = RFR_dict['df']
     # get stats on models in RFR_dict
     stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # only consider values below 400
 #   df = df.loc[ df['Iodide']<= 400., :]
     # only consider values that are not outliers
-    df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
+    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
     # ---- Plot up and save to PDF
     # - setup plotting
     plt.close('all')
@@ -585,6 +595,7 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
 
     Returns
     -------
@@ -711,7 +722,7 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodi
                                                            plot_avg_as_median=False,
                                                            show_plot=False,
                                                            shade_std=True,
-                                                           just_plot_existing_params=False,
+                                                          just_plot_existing_params=False,
                                                            plot_up_param_iodide=True,
                                                            context="paper", ds=None,
                                                            rm_Skagerrak_data=False):
@@ -720,6 +731,7 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodi
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
 
     Returns
     -------
@@ -937,7 +949,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
     if isinstance(topmodels, type(None)):
         # Get RFR_dict if not provide
         if isinstance(RFR_dict, type(None)):
-            RFR_dict = build_or_get_models()
+            RFR_dict = build_or_get_models_iodide()
         topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     params2plot = topmodels
     # assign colors
@@ -1040,7 +1052,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     # Exclude data with values above 400 nM
 #    df = df.loc[ df['Iodide'].values < 400, : ]
     # Exclude outliers
-    df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
+    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
     # get metadata
     md_df = get_iodide_obs_metadata()
     datasets = md_df[u'Data_Key']
@@ -1272,7 +1284,7 @@ def test_model_sensitiivty2training_test_split(models2compare=None,
     # Get the unprocessed obs and variables as a DataFrame
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get variables to use for each model
-    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
+    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
     # setup a DataFrame to store statistics
     dfs = {}
     # Now models and assess the sensitivity to the training/test set
@@ -1303,7 +1315,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
         extr_str = ''
     # Get key data as a dictionary
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models(
+        RFR_dict = build_or_get_models_iodide(
             rm_Skagerrak_data=rm_Skagerrak_data,
         )
     # select dataframe with observations and predictions in it
@@ -1322,6 +1334,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
 #	dfP.index = dfP['Unnamed: 0'].values
  # Just select the
     df = RFR_dict['df']
+    testset='Test set (strat. 20%)'
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
     dfP = get_stats_on_models(RFR_dict=RFR_dict, df=df,
@@ -1396,6 +1409,15 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
                                               rm_Skagerrak_data=False, topmodels=None):
     """
     Analyse the variation in spatial prediction on a per model basis
+
+    Parameters
+    -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+
+    Returns
+    -------
+    (None)
+
     """
     from multiprocessing import Pool
     from functools import partial
@@ -1406,7 +1428,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         extr_str = ''
     # Get key data as a dictionary
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models(
+        RFR_dict = build_or_get_models_iodide(
             rm_Skagerrak_data=rm_Skagerrak_data
         )
     # select dataframe with observations and predictions in it
@@ -1462,7 +1484,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         features_used = features_used_dict[model_name]
         features_used = features_used.split('+')
         # Now build 20 separate initiations of the model
-        dfs[model_name] = get_stats4mulitple_model_builds(
+        dfs[model_name] = RFRanalysis.get_stats4mulitple_model_builds(
             model_name=model_name,
             features_used=features_used, df=df,
             RFR_dict=RFR_dict
@@ -1660,7 +1682,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     # for "dataset error" on RMSE
     ptr_str = 'Dataset split effect on RMSE: {:.5g}-{:.5g} %'
     print(ptr_str.format(min_/Emax*100, max_/Emin*100), file=a)
-    print(ptr_str.format(Emin, Emax), file=a)
+#    print(ptr_str.format(Emin, Emax), file=a)
     # for "dataset error" on mean
     Emin = dfPbP[MerrPCmin].min()
     Emax = dfPbP[MerrPCmax].max()
@@ -1723,7 +1745,7 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
     -----
     """
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
         features_used_dict = RFR_dict['features_used_dict']
@@ -1890,7 +1912,7 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
     """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
     features_used_dict = RFR_dict['features_used_dict']
@@ -2014,7 +2036,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
     features_used_dict = RFR_dict['features_used_dict']
@@ -2341,7 +2363,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
     """
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
         df = RFR_dict['df']
     # Select parameterisations
     models2compare = ['RFR(Ensemble)']
@@ -2450,7 +2472,7 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
     sns.set_context("paper", font_scale=0.75)
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
         df = RFR_dict['df']
     # Get a dictionary of different dataset splits
     dfs = {}
@@ -2610,7 +2632,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
     sns.set_context("paper", font_scale=0.75)
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
         df = RFR_dict['df']
     # Get a dictionary of different dataset splits
     dfs = {}
@@ -2803,6 +2825,7 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
 
     Returns
     -------
@@ -2963,6 +2986,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+
 
     Returns
     -------
@@ -3219,7 +3244,7 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
     sns.reset_orig()
     # Get dictionary of shared data if not provided
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # get XR Dataset of data
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     folder = get_file_locations('data_root')
@@ -3819,6 +3844,7 @@ def get_ensemble_predicted_iodide(df=None,
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
 
     Returns
     -------
@@ -3831,7 +3857,7 @@ def get_ensemble_predicted_iodide(df=None,
     if isinstance(topmodels, type(None)):
         # extract the models...
         if isinstance(RFR_dict, type(None)):
-            RFR_dict = build_or_get_models(
+            RFR_dict = build_or_get_models_iodide(
                 rm_Skagerrak_data=rm_Skagerrak_data
             )
         # get stats on models in RFR_dict
@@ -3937,7 +3963,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
     sns.set()
     # Get the dictionary of shared data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # Get the stats on the models built
     if isinstance(stats, type(None)):
         stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
@@ -4117,7 +4143,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     ds = xr.open_dataset(data_root + filename)
     # Get the models
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     topmodels = list(set(topmodels))
     # other local settings?
@@ -4175,7 +4201,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 #         plt.savefig( savestr, dpi=320 )
 #         plt.close()
 #     # rebuild (just the top models)
-#     RFR_dict_d[VarName] = build_or_get_models( df=df,
+#     RFR_dict_d[VarName] = build_or_get_models_iodide( df=df,
 #         model_names = topmodels,
 #         save_model_to_disk=False,
 #         read_model_from_disk=False,
@@ -4184,7 +4210,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
     # - no where obs where low temperature and coastal (NH)
     VarName = 'No outliers'
-    bool1 = dfA[target] > get_outlier_value(df=dfA, var2use=target)
+    bool1 = dfA[target] > utils.get_outlier_value(df=dfA, var2use=target)
     index2drop = dfA.loc[bool1, :].index
     df = dfA.drop(index2drop)
     # reset index of updated DataFrame (and save out the rm'd data prior)
@@ -4221,7 +4247,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plt.savefig(savestr, dpi=320)
         plt.close()
     # rebuild (just the top models)
-    RFR_dict_d[VarName] = build_or_get_models(df=df,
+    RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                               model_names=topmodels,
                                               save_model_to_disk=False,
                                               read_model_from_disk=False,
@@ -4230,7 +4256,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
     # - No outliers or skaggerak
     VarName = 'No outliers \or Skagerrak'
-    bool1 = dfA['Iodide'] > get_outlier_value(df=dfA, var2use=target)
+    bool1 = dfA['Iodide'] > utils.get_outlier_value(df=dfA, var2use=target)
     bool2 = dfA['Data_Key'].values == 'Truesdale_2003_I'
     index2drop = dfA.loc[bool1 | bool2, :].index
     df = dfA.drop(index2drop)
@@ -4268,12 +4294,12 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plt.savefig(savestr, dpi=320)
         plt.close()
     # rebuild (just the top models)
-    RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                              model_names=topmodels,
-                                              save_model_to_disk=False,
-                                              read_model_from_disk=False,
-                                              delete_existing_model_files=False
-                                              )
+    RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
+                                                     model_names=topmodels,
+                                                     save_model_to_disk=False,
+                                                     read_model_from_disk=False,
+                                                     delete_existing_model_files=False
+                                                     )
 
     # --- Include options that didn't improve things in PDF
     if plt_option_tried_but_only_slightly_helped:
@@ -4313,7 +4339,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                     plt.savefig( savestr, dpi=320 )
         #                     plt.close()
         #                 rebuild (just the top models)
-        #                 RFR_dict_d[VarName] = build_or_get_models( df=df,
+        #                 RFR_dict_d[VarName] = build_or_get_models_iodide( df=df,
         #                     model_names = topmodels,
         #                     save_model_to_disk=False,
         #                     read_model_from_disk=False,
@@ -4357,7 +4383,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                     plt.savefig( savestr, dpi=320 )
         #                     plt.close()
         #                 rebuild (just the top models)
-        #                 RFR_dict_d[VarName] = build_or_get_models( df=df,
+        #                 RFR_dict_d[VarName] = build_or_get_models_iodide( df=df,
         #                     model_names = topmodels,
         #                     save_model_to_disk=False,
         #                     read_model_from_disk=False,
@@ -4413,7 +4439,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4443,7 +4469,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4473,7 +4499,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4521,7 +4547,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4574,7 +4600,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4628,7 +4654,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4658,7 +4684,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4691,7 +4717,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4721,7 +4747,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4750,7 +4776,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4783,7 +4809,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4815,7 +4841,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4845,7 +4871,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4877,7 +4903,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4909,7 +4935,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4939,7 +4965,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4972,7 +4998,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -5060,7 +5086,7 @@ def explore_sensitivity_of_65N(res='4x5'):
     ds = xr.open_dataset(data_root + filename)
     # Get the models
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
 
     # set up a dictionary for different dataset splits
@@ -5395,7 +5421,7 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
     sns.set_context("paper", font_scale=0.75)
     # Get RFR_dict if not provide
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # Get predicted values
     if isinstance(folder, type(None)):
         folder = get_file_locations('data_root')
@@ -5598,6 +5624,7 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
 
     Returns
     -------
@@ -5614,8 +5641,8 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
         filename = filename.format('')
     ds = xr.open_dataset(folder + filename)
     # Now extract the dataset
-    extracted_vars = extract4nearest_points_in_ds(ds=ds, lons=lons, lats=lats,
-                                                  months=months,
-                                                  var2extract=var2extract,
-                                                  verbose=verbose, debug=debug)
+    extracted_vars = utils.extract4nearest_points_in_ds(ds=ds, lons=lons, lats=lats,
+                                                        months=months,
+                                                        var2extract=var2extract,
+                                                        verbose=verbose, debug=debug)
     return extracted_vars

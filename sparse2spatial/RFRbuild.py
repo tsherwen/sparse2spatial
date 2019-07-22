@@ -589,7 +589,7 @@ def define_hyperparameter_options2test(features_used=None,
                 # max depth
                 elif (key == 'max_depth'):
                     # value is either a number of "None".
-                    if is_number(value):
+                    if utils.is_number(value):
                         values = [value+(i*5) for i in range(0, 2)]
                         values += [value+(i*5) for i in range(-2, 0)]
                         # only allow values greater than zero
@@ -795,12 +795,12 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     if target == 'Iodide':
         # Chance et al (2013)
         param = u'Chance2014_STTxx2_I'
-        arr = calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        arr = utils.calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
         ds[param] = ds[b_modelname]  # use existing array as dummy to fill
         ds[param].values = arr
         # MacDonald et al (2013)
         param = 'MacDonald2014_iodide'
-        arr = calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
+        arr = utils.calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
         ds[param] = ds[b_modelname]  # use existing array as dummy to fill
         ds[param].values = arr
     # Do a test diagnostic plot?

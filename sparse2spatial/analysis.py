@@ -93,7 +93,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
     # variables to consider
     vars2plot = list(ds.data_vars)
     # add LWI and surface area to array
-    ds = add_LWI2array(ds=ds, var2template=var2template)
+    ds = utils.add_LWI2array(ds=ds, var2template=var2template)
     # -- get general annual stats in a dataframe
     df = pd.DataFrame()
     for var_ in vars2plot:
@@ -160,7 +160,7 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
     # Variables to consider
     vars2analyse = list(ds.data_vars)
     # Add LWI to array
-    ds = add_LWI2array(ds=ds, var2template=var2template, res=res)
+    ds = utils.add_LWI2array(ds=ds, var2template=var2template, res=res)
     # - Get general annual stats
     df = pd.DataFrame()
     # take annual average
@@ -237,7 +237,7 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
     # add LWI to ds
     vars2plot = list(ds.data_vars)
     # add LWI and surface area to array
-    ds = add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
+    ds = utils.add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
     # ----
     df = pd.DataFrame()
     # -- get general annual stats
@@ -318,12 +318,12 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
             target, res, extr_file_str)
     if isinstance(folder, type(None)):
         data_root = utils.get_file_locations('data_root')
-        folder = '{}/{}/'.format(data_root, target)
+        folder = '{}/outputs/{}/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
     # Add LWI and surface area to array
-    ds = add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
+    ds = utils.add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
     # Set a name for output to saved as
     file_save_str = 'Oi_prj_annual_stats_global_ocean_{}{}'.format(res, ex_str)
     # ---- build an array with general statistics

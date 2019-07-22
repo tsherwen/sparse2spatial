@@ -7,13 +7,17 @@ Analysis output from RandomForestRegressor algorithms
 import numpy as np
 import xarray as xr
 import pandas as pd
+import glob
 import matplotlib.pyplot as plt
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 # Internal loads within s2s
 #from sparse2spatial.utils import *
 import sparse2spatial.utils as utils
-from sparse2spatial.utils import get_df_stats_MSE_RMSE
+import sparse2spatial.RFRbuild as build
+#from sparse2spatial.analysis import get_stats_on_spatial_predictions_0125x0125
+#from sparse2spatial.analysis import get_stats_on_spatial_predictions_4x5_2x25
+from sparse2spatial.analysis import *
 
 
 def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
@@ -50,7 +54,7 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
     if isinstance(features_used, type(None)):
         #        model_name = 'ALL'
         #        model_name = 'RFR(TEMP+DEPTH+SAL)'
-        features_used = get_model_features_used_dict(model_name)
+        features_used = utils.get_model_features_used_dict(model_name)
     # Fix the extra_str variable for now
     extr_str = ''
 
@@ -71,13 +75,13 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
             print(prt_str.format(random_state, model_name))
         # Set the training and test sets
         # Stratified split by default, unless random var in name
-        returned_vars = mk_test_train_sets(df=df,
-                                           rand_20_80=False,
-                                           features_used=features_used,
-                                           random_state=random_state,
-                                           rand_strat=True,
-                                           nsplits=4,
-                                           )
+        returned_vars = build.mk_test_train_sets(df=df,
+                                                 rand_20_80=False,
+                                                 features_used=features_used,
+                                                 random_state=random_state,
+                                                 rand_strat=True,
+                                                 nsplits=4,
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # Set the training and test sets
         train_features = df[features_used].loc[train_set.index]
@@ -210,7 +214,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     # Which "features" (variables) to use
     if isinstance(features_used, type(None)):
         #        model_name = 'RFR(TEMP+DEPTH+SAL)'
-        #        features_used = get_model_features_used_dict(model_name)
+        #        features_used = utils.get_model_features_used_dict(model_name)
         print('please provided features_used to build_the_same_model_mulitple_times')
         sys.exit()
     # dictionary of test set variables
@@ -229,13 +233,13 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         print(prt_str.format(random_state, model_name))
         # set the training and test sets
         # Stratified split by default, unless random var in name
-        returned_vars = mk_test_train_sets(df=df,
-                                           rand_20_80=False,
-                                           features_used=features_used,
-                                           random_state=random_state,
-                                           rand_strat=True,
-                                           nsplits=4,
-                                           )
+        returned_vars = build.mk_test_train_sets(df=df,
+                                                 rand_20_80=False,
+                                                 features_used=features_used,
+                                                 random_state=random_state,
+                                                 rand_strat=True,
+                                                 nsplits=4,
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # set the training and test sets
         train_features = df[features_used].loc[train_set.index]
@@ -288,7 +292,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     if isinstance(features_used, type(None)):
         #        model_name = 'ALL'
         model_name = 'RFR(TEMP+DEPTH+SAL)'
-        features_used = get_model_features_used_dict(model_name)
+        features_used = utils.get_model_features_used_dict(model_name)
 
     # --- local variables
     # dictionary of test set variables
@@ -344,13 +348,13 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             rand_strat = True
             rand_20_80 = False
             # get the training and test set
-            returned_vars = mk_test_train_sets(df=df_tmp,
-                                               rand_20_80=rand_20_80,
-                                               random_state=random_state,
-                                               nsplits=TSETS_nsplits[Tname],
-                                               rand_strat=rand_strat,
-                                               features_used=features_used,
-                                               )
+            returned_vars = build.mk_test_train_sets(df=df_tmp,
+                                                     rand_20_80=rand_20_80,
+                                                     random_state=random_state,
+                                                     nsplits=TSETS_nsplits[Tname],
+                                                     rand_strat=rand_strat,
+                                                     features_used=features_used,
+                                                     )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
             train_features = df_tmp[features_used].loc[train_set.index]
@@ -499,7 +503,7 @@ def run_tests_on_model_build_options(df=None,
     # Which "features" (variables) to use
     if isinstance(features_used, type(None)):
         model_name = 'ALL'
-        features_used = get_model_features_used_dict(model_name)
+        features_used = utils.get_model_features_used_dict(model_name)
     # Select just the testing features, target, and  testset split
     df = df[features_used+[target, testset]]
     # - Select training dataset
@@ -645,11 +649,11 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                        params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
-    stats_sub1 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                       df=df_tmp[[target]+model_names +
-                                                 param_names], dataset_str=testset,
-                                       target=target,
-                                       add_sklean_metrics=add_sklean_metrics).T
+    stats_sub1 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
+                                             df=df_tmp[[target]+model_names +
+                                             param_names], dataset_str=testset,
+                                             target=target,
+                                             add_sklean_metrics=add_sklean_metrics).T
     stats2concat = [stats, stats_sub1]
     # Combine all stats (RMSE and general stats)
     stats = pd.concat(stats2concat)
@@ -757,8 +761,8 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
                                        params=param_names+model_names)
     # Just test on test set
     df_tmp = df.loc[df[testset] == True, :]
-    stats_sub1 = get_df_stats_MSE_RMSE(params=param_names+model_names,
-                                       df=df_tmp[[target]+model_names + param_names],
+    stats_sub1 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
+                                       df=df_tmp[[target]+model_names+param_names],
                                        dataset_str=testset,
                                        target=target,
                                        add_sklean_metrics=add_sklean_metrics).T
@@ -767,7 +771,7 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
         # Add testing on coastal
         dataset_split = 'Coastal'
         df_tmp = df.loc[(df['Coastal'] == 1), :]
-        stats_sub2 = get_df_stats_MSE_RMSE(params=param_names+model_names,
+        stats_sub2 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
                                            df=df_tmp[[target]+model_names+param_names],
                                            target=target,
                                            dataset_str=dataset_split,
@@ -775,7 +779,7 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
         # Add testing on non-coastal
         dataset_split = 'Non coastal'
         df_tmp = df.loc[(df['Coastal'] == 0), :]
-        stats_sub3 = get_df_stats_MSE_RMSE(params=param_names+model_names,
+        stats_sub3 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
                                            df=df_tmp[[target]+model_names+param_names],
                                            target=target,
                                            dataset_str=dataset_split,
@@ -783,7 +787,7 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
         # Add testing on coastal
         dataset_split = 'Coastal ({})'.format(testset)
         df_tmp = df.loc[(df['Coastal'] == 1) & (df[testset] == True), :]
-        stats_sub4 = get_df_stats_MSE_RMSE(params=param_names+model_names,
+        stats_sub4 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
                                            df=df_tmp[[target]+model_names+param_names],
                                            target=target,
                                            dataset_str=dataset_split,
@@ -791,7 +795,7 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
         # Add testing on non-coastal
         dataset_split = 'Non coastal ({})'.format(testset)
         df_tmp = df.loc[(df['Coastal'] == 0) & (df[testset] == True), :]
-        stats_sub5 = get_df_stats_MSE_RMSE(params=param_names+model_names,
+        stats_sub5 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
                                            df=df_tmp[[target]+model_names+param_names],
                                            target=target,
                                            dataset_str=dataset_split,
@@ -1075,11 +1079,11 @@ def test_performance_of_params(target='Iodide', features_used=None):
         # Select just the features used and the target variable
         df_tmp = df[features_used+['Iodide']].copy()
         # split into the training and test sets
-        returned_vars = mk_test_train_sets(df=df_tmp,
-                                           rand_20_80=rand_20_80,
-                                           rand_strat=rand_strat,
-                                           features_used=features_used,
-                                           )
+        returned_vars = build.mk_test_train_sets(df=df_tmp,
+                                                 rand_20_80=rand_20_80,
+                                                 rand_strat=rand_strat,
+                                                 features_used=features_used,
+                                                 )
         train_set, test_set, test_set_targets = returned_vars
         # Add this to the dataframe using the passed shape as a template
         dummy = np.zeros(df.shape[0])
@@ -1103,7 +1107,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
         print(modelname, test_set, dataset_str)
         df_tmp = df.loc[df[dataset_str] == True]
         print(df_tmp.shape, df_tmp[target].mean())
-        model_stats.append(get_df_stats_MSE_RMSE(
+        model_stats.append(utils.get_df_stats_MSE_RMSE(
             df=df_tmp[[target, modelname]+param_names],
             params=param_names+[modelname],
             dataset_str=test_set, target=target).T)
@@ -1116,7 +1120,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
     test_set = '>30 Salinty'
     print(df_tmp.shape)
     # Calculate...
-    stats_open_ocean = get_df_stats_MSE_RMSE(
+    stats_open_ocean = utils.get_df_stats_MSE_RMSE(
         df=df_tmp[[target]+model_names+param_names],
         params=param_names+model_names,
         dataset_str=test_set, target=target).T
@@ -1125,7 +1129,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
     test_set = '<30 Salinty'
     print(df_tmp.shape)
     # Calculate...
-    stats_coastal = get_df_stats_MSE_RMSE(
+    stats_coastal = utils.get_df_stats_MSE_RMSE(
         df=df_tmp[[target]+model_names+param_names],
         params=param_names+model_names,
         dataset_str=test_set, target=target).T
@@ -1156,7 +1160,7 @@ def calc_performance_of_params(df=None, target='Iodide', params=[]):
     stats = [df[i].describe() for i in params + [target]]
     stats = pd.DataFrame(stats).T
     # - Now add own stats
-    new_stats = get_df_stats_MSE_RMSE(df=df, target=target, params=params,
+    new_stats = utils.get_df_stats_MSE_RMSE(df=df, target=target, params=params,
                                       dataset_str='all')
     # Add new stats to standard stats
     stats = pd.concat([stats, new_stats.T])
@@ -1315,7 +1319,7 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
     topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     models2compare = topmodels
     # get strings to update variable names to
-    name_dict = convert_fullname_to_shortname(rtn_dict=True)
+    name_dict = utils.convert_fullname_to_shortname(rtn_dict=True)
     # Loop and analyse models2compare
     for model_name in models2compare:
         print(model_name)

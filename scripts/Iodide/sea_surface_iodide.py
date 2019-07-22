@@ -25,8 +25,8 @@ import matplotlib.pyplot as plt
 import cartopy
 import cartopy.crs as ccrs
 
-# from multiprocessing import Pool
-# from functools import partial
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
 
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
@@ -39,16 +39,7 @@ import sparse2spatial.plotting as plotting
 from sparse2spatial.RFRanalysis import get_stats_on_models
 from sparse2spatial.analysis import add_ensemble_avg_std_to_dataset
 from sparse2spatial.RFRbuild import get_top_models
-from sparse2spatial.RFRbuild import mk_test_train_sets
 from sparse2spatial.RFRbuild import build_or_get_models
-from sparse2spatial.utils import get_model_features_used_dict
-from sparse2spatial.utils import get_outlier_value
-
-# import AC_tools (https://github.com/tsherwen/AC_tools.git)
-import AC_tools as AC
-
-# temp
-from sparse2spatial.RFRanalysis import get_core_stats_on_current_models
 
 # Get iodide specific functions
 #from observations import get_dataset_processed4ML
@@ -492,7 +483,7 @@ def plot_spatial_figures_for_ML_paper_with_cartopy():
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     df = RFR_dict['df']
-    df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
+    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
     s = 15
     edgecolor = 'k'
     x = df[u'Longitude'].values
@@ -598,7 +589,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     if isinstance(features_used, type(None)):
         #        model_name = 'ALL'
         model_name = 'RFR(TEMP+DEPTH+SAL)'
-        features_used = get_model_features_used_dict(model_name)
+        features_used = utils.get_model_features_used_dict(model_name)
 
     # --- local variables
     # dictionary of test set variables
@@ -644,7 +635,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     Tname = 'SAL>=30 \n & no outliers'
     bool1 = df['WOA_Salinity'] >= 30
     # also remove outliers
-    bool2 = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
+    bool2 = df['Iodide'] < utils.get_outlier_value(df=df, var2use='Iodide')
     tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
@@ -671,7 +662,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     Tname = 'Just coastal\n& no outliers'
     bool1 = df['Coastal'] == 1
     # also remove outliers
-    bool2 = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
+    bool2 = df['Iodide'] < utils.get_outlier_value(df=df, var2use='Iodide')
     tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
@@ -689,7 +680,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     Tname = 'Just non-coastal\n& no outliers'
     bool1 = df['Coastal'] == 0
     # also remove outliers
-    bool2 = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
+    bool2 = df['Iodide'] < utils.get_outlier_value(df=df, var2use='Iodide')
     tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
@@ -741,7 +732,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     TSETS_nsplits[Tname] = 4
     # - No outliers
     Tname = 'No outliers'
-    bool_ = df['Iodide'] < get_outlier_value(df=df, var2use='Iodide')
+    bool_ = df['Iodide'] < utils.get_outlier_value(df=df, var2use='Iodide')
     tmp_ts = df.loc[bool_][features_used+[target]].copy()
     # also remove values where iodide <400
     TSETS_N[Tname] = tmp_ts.shape[0]
@@ -750,7 +741,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - No Skagerrak
     Tname = 'No Skagerrak \n or outliers'
     bool1 = df['Data_Key'].values == 'Truesdale_2003_I'
-    bool2 = df['Iodide'] > get_outlier_value(df=df, var2use='Iodide')
+    bool2 = df['Iodide'] > utils.get_outlier_value(df=df, var2use='Iodide')
     index2drop = df.loc[bool1 | bool2, :].index
     tmp_ts = df.drop(index2drop)[features_used+[target]].copy()
     # also remove values where iodide <400
@@ -940,6 +931,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
 
     Returns
     -------
@@ -1009,7 +1001,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
         # get model
         model = models_dict[modelname]
         # get testinng features
-        features_used = get_model_features_used_dict(modelname)
+        features_used = utils.get_model_features_used_dict(modelname)
         # Make a DataSet of predicted values
         ds_tmp = utils.mk_da_of_predicted_values(model=model, modelname=modelname,
                                            res=res, features_used=features_used,
@@ -1246,6 +1238,8 @@ def get_dataset_processed4ML(restrict_data_max=False,
     Parameters
     -------
     restrict_data_max (bool): restrict the obs. data to a maximum value?
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+
 
     Returns
     -------
@@ -1304,7 +1298,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
         # Copy a df for splitting
 #        df_tmp = df['Iodide'].copy()
         # Now split using existing function
-        returned_vars = mk_test_train_sets(df=df.copy(), target=target,
+        returned_vars = build.mk_test_train_sets(df=df.copy(), target=target,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
                                                  features_used=df.columns.tolist(),
@@ -1331,6 +1325,7 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
 
     Returns
     -------
@@ -1339,7 +1334,7 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
     -----
     """
     # Get the dictionary  of model names and features (specific to iodide)
-    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
+    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(
@@ -1377,7 +1372,7 @@ def mk_iodide_test_train_sets(df=None, target='Iodide',
                               random_state=42, rand_20_80=False,
                               nsplits=4, verbose=True, debug=False):
     """
-    Wrapper for mk_test_train_sets for iodide code
+    Wrapper for build.mk_test_train_sets for iodide code
 
     Parameters
     -------
@@ -1385,7 +1380,7 @@ def mk_iodide_test_train_sets(df=None, target='Iodide',
     rand_20_80 (bool), split the data in a random way
     """
     # Call the s2s function with some presets
-    returned_vars = mk_test_train_sets(df=df, target=target, nsplits=nsplits,
+    returned_vars = build.mk_test_train_sets(df=df, target=target, nsplits=nsplits,
                                              rand_strat=rand_strat,
                                              features_used=features_used,
                                              random_state=random_state,

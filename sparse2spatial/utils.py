@@ -11,6 +11,8 @@ from netCDF4 import Dataset
 from time import gmtime, strftime
 import datetime as datetime
 
+# import AC_tools (https://github.com/tsherwen/AC_tools.git)
+import AC_tools as AC
 
 def mk_LWI_avg_array():
     """
@@ -493,9 +495,10 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
         ds['IS_LAND'] = ds['IS_WATER'].copy()
         ds['IS_LAND'].values = (LWI['LWI'] == 1)
         # get surface area
-#        s_area = AC.calc_surface_area_in_grid(res=res)  # m2 land map
-#        ds['AREA'] = ds[var2template].mean(dim='time')
-#        ds['AREA'].values = s_area.T
+#        s_area = AC.calc_surface_area_in_grid(res=res).T  # m2 land map (Calculate)
+        s_area = AC.get_surface_area(res)[..., 0]  # m2 land map (Use CDO value)
+        ds['AREA'] = ds[var2template].mean(dim='time')
+        ds['AREA'].values = s_area
     else:
         ds['LWI'] = LWI['LWI']
         # Update attributes too

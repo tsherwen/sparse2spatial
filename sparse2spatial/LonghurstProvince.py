@@ -84,7 +84,7 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
     provinces, tree = ParseLonghurstProvinceFile()
     # Just use 4x5 as an example
     if isinstance(ds, type(None)):
-        ds = get_feature_variables_as_ds(res=res)
+        ds = utils.get_feature_variables_as_ds(res=res)
     # get dictionary of province numbers
     Rnum2prov = RosieLonghurstProvinceFileNum2Province(
         None, invert=True, rtn_dict=True)

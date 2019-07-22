@@ -4,6 +4,8 @@ Calculations iodine emissions with updated iodide field
 
 import numpy as np
 import pandas as pd
+import xarray as xr
+import sparse2spatial.utils as utils
 
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC

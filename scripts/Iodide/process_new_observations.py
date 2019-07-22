@@ -31,7 +31,7 @@ import numpy as np
 import pandas as pd
 import glob
 import sparse2spatial as s2s
-from sparse2spatial.utils import get_file_locations
+import sparse2spatial.utils as utils
 from sparse2spatial.utils import set_backup_month_if_unknown
 
 
@@ -80,7 +80,7 @@ def extract_new_observational_excel_files(file_and_path='./sparse2spatial.rc',
     (pd.DataFrame)
     """
     # Look for files in script folder for a given species
-#    folder = get_file_locations('s2s_root', file_and_path=file_and_path)
+#    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder = './'
     # Run with example new data file?
     if use_test_data:
@@ -233,7 +233,7 @@ def get_iodide_data_from_BODC(file_and_path='./sparse2spatial.rc',
     prt_str += '*.csv file availble from https://doi.org/10/czhx \n'
     print(prt_str)
     # Location of data
-    folder = get_file_locations('s2s_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('s2s_root', file_and_path=file_and_path)
     folder += '/Iodide/inputs/'
     # open .csv file and return
     df = pd.read_csv(folder+filename)

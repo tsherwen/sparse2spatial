@@ -9,7 +9,7 @@ This includes presentation at conferences etc...
 import numpy as np
 import pandas as pd
 import sparse2spatial as s2s
-from sparse2spatial.utils import get_file_locations
+import sparse2spatial.utils as utils
 
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
@@ -429,7 +429,7 @@ def get_analysis_numbers_for_AGU17_poster():
 #                                                         df=df_predictors,
 #                                                         features_used=features_used)
 #     # -- Also get the working output from processed file for obs.
-#     pro_df = pd.read_csv(get_file_locations(
+#     pro_df = pd.read_csv(utils.get_file_locations(
 #         'data_root')+'Iodine_obs_WOA.csv')
 #     # Exclude v. high values (N=4 -  in intial dataset)
 #     # Exclude v. high values (N=7 -  in final dataset)
@@ -550,7 +550,7 @@ def get_analysis_numbers_for_AGU17_poster():
 #     # --------  Plott up annual average 2x2.5 iodide
 #     res = '2x2.5'
 #     import xarray as xr
-#     folder = get_file_locations('data_root')
+#     folder = utils.get_file_locations('data_root')
 #     filename = 'Oi_prj_{}_monthly_param_{}.nc'.format(target, res)
 #     ds = xr.open_dataset(folder+filename)
 #     # annual average e
@@ -619,7 +619,7 @@ def plot_threshold_plus_SD_spatially(var=None, value=None, std=None, res='4x5',
     """
     # - Local variables
     # Get the core input variables
-    data_root = get_file_locations('data_root')
+    data_root = utils.get_file_locations('data_root')
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     ds = xr.open_dataset(data_root + filename)
     # make sure the dataset has units
@@ -774,7 +774,7 @@ def plot_up_ln_iodide_vs_SST(show_plot=True):
     obtained from the World Ocean Atlas as described in the text.
     """
     # - location of data to plot
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
     # take log of iodide
@@ -804,7 +804,7 @@ def plot_up_ln_iodide_vs_salinity(show_plot=True):
     30 have been excluded from further analysis and are not shown in Fig. 8–11.
     """
     # - location of data to plot
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
     # Just select non-coastal data
@@ -888,7 +888,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
     vars2analyse = list(dsA.data_vars)
     # add LWI to array - NOTE: 1 = water in Nature run LWI files !
     # ( The above comment is not correct! why is this written here? )
-    folderLWI = get_file_locations(
+    folderLWI = utils.get_file_locations(
         'AC_tools')+'/data/LM/TEMP_NASA_Nature_run/'
     filenameLWI = 'ctm.nc'
     LWI = xr.open_dataset(folderLWI+filenameLWI)
@@ -1032,7 +1032,7 @@ def explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs(dsA=None,
     vars2analyse = list(dsA.data_vars)
     # add LWI to array - NOTE: 1 = water in Nature run LWI files !
     # ( The above comment is not correct! why is this written here? )
-    folderLWI = get_file_locations(
+    folderLWI = utils.get_file_locations(
         'AC_tools')+'/data/LM/TEMP_NASA_Nature_run/'
     filenameLWI = 'ctm.nc'
     LWI = xr.open_dataset(folderLWI+filenameLWI)
@@ -1969,7 +1969,7 @@ def plot_PDF_iodide_obs_mod(bins=10):
     import matplotlib.pyplot as plt
     import seaborn as sns
     # Location of data to plot
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
 
@@ -2015,7 +2015,7 @@ def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
     sns.set_context("paper")
 
     # Get data
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
 
@@ -2130,7 +2130,7 @@ def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False):
     df2 = df.loc[bool]
     # ---  add existing data
     # get existing data... (Chance et al 2014 )
-#    folder = get_file_locations('data_root')
+#    folder = utils.get_file_locations('data_root')
 #    f = 'Iodine_obs_WOA.csv'
 #    df1 = pd.read_csv(folderf, encoding='utf-8' )
     # select lons and lats
@@ -2180,7 +2180,7 @@ def map_plot_of_locations_of_obs4rosie():
     show = True
 
     # ---  get data
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     f = 'Iodine_obs_WOA.csv'
     df = pd.read_csv(folder+f, encoding='utf-8')
 
@@ -2288,7 +2288,7 @@ def plot_up_parameterisations(df=None, save2pdf=True, show=False):
     # get details of parameterisations
 #    filename='Chance_2014_Table2_PROCESSED_17_04_19.csv'
     filename = 'Chance_2014_Table2_PROCESSED.csv'
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     param_df = pd.read_csv(folder+filename)
 
     # only consider non-coastal  locations
@@ -3010,7 +3010,7 @@ def explore_diferences_for_Skagerak():
     Explore how the Skagerak data differs from the dataset as a whole
     """
     # -  Get the observations and model output
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     filename = 'Iodine_obs_WOA_v8_5_1_ENSEMBLE_csv__avg_nSkag_nOutliers.csv'
     dfA = pd.read_csv(folder+filename, encoding='utf-8')
     # - Local variables
@@ -3099,7 +3099,7 @@ def get_numbers_for_data_paper():
     """
     # - Get the full iodide sea-surface dataset
     filename = 'Iodide_data_above_20m.csv'
-    folder = get_file_locations('s2s_root')+'/Iodide/inputs/'
+    folder = utils.get_file_locations('s2s_root')+'/Iodide/inputs/'
     df = pd.read_csv(folder + filename, encoding='utf-8')
     # Exclude non finite data points.
     df = df.loc[np.isfinite(df['Iodide']), :]
@@ -3358,7 +3358,7 @@ def test_input_files4Iodide_cruise_with_plots(dfs=None, show=False):
 def get_iodide_cruise_data_from_Anoop_txt_files(verbose=False):
     """ Get iodide data from Anoop's txt files """
     # --- Local variables
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     folder += 'LOCS_Inamdar_Mahajan_cruise_x3/'
     cruise_files = {
         # 1 8th Southern Ocean Expedition (SOE-8), not sure of ship - possibly the RV Sagar Nidhi again.
@@ -3413,7 +3413,7 @@ def get_iodide_cruise_data_from_MATlab_files():
         'lat': 'AWSdata_SOE9_lat',
         'datetime': 'AWSdata_SOE9_UTCdatetime',
     }
-    folder = get_file_locations('data_root')+'/iodide_cruise/'
+    folder = utils.get_file_locations('data_root')+'/iodide_cruise/'
     # --- Get data & process
     dfs = [pd.read_csv(folder+files[key_], header=None, names=[key_])
            for key_ in files.keys()]

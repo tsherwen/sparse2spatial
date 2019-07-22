@@ -39,7 +39,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
         ext_str = ''
     file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(
         target, ext_str)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     dsA = xr.open_dataset(folder + file2regrid)
     # Make sure there are not spaces in variable names
     dsA = add_attrs2target_ds(dsA, add_varname_attrs=False, add_global_attrs=False,
@@ -84,7 +84,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     ext_str = ''
     file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(
         target, ext_str)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
     dsA2 = xr.open_dataset(folder+file2regrid)
     # Make sure there are not spaces in variable names
     dsA2 = add_attrs2target_ds(dsA2, add_varname_attrs=False,
@@ -131,7 +131,7 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
     if isinstance(dsA, type(None)):
         file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(
             target, ext_str)
-        folder = get_file_locations('data_root')
+        folder = utils.get_file_locations('data_root')
         dsA = xr.open_dataset(folder + file2regrid)
     # Add LWI to array
     try:
