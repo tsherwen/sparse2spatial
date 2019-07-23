@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Module to hold processing/analysis functions for Ocean iodide (Oi!) project
+Module to hold core processing/analysis functions for Ocean iodide (Oi!) project
 
 Notes
 ----
@@ -32,7 +32,9 @@ import sparse2spatial as s2s
 import sparse2spatial.utils as utils
 import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
 import sparse2spatial.archiving as archiving
+import sparse2spatial.ancillaries as ancillaries
 import sparse2spatial.RFRbuild as build
+import sparse2spatial.archiving as archiving
 import sparse2spatial.analysis as analysis
 import sparse2spatial.RFRanalysis as RFRanalysis
 import sparse2spatial.plotting as plotting
@@ -43,12 +45,26 @@ from sparse2spatial.RFRbuild import build_or_get_models
 
 # Get iodide specific functions
 #from observations import get_dataset_processed4ML
+import observations as obs
+import project_misc as misc
+import plotting_and_analysis as plt_analysis
 
 
 def main():
     """
-    Driver for module's man if run directly from command line. unhash
-    functionalitliy to call.
+    Main driver if run directly from command line. unhash functionality to call.
+
+    Notes
+    -------
+     - Calls for the full pipeline used for producing a new sea-surface iodide field
+     are listed below. However, many of these now in the following functions in the
+     same folder:
+        plotting_and_analysis.py
+        process_new_observations.py
+        project_misc.py
+        observations.py
+        emissions.py
+     -  simply unhash the functions to be run below.
     """
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
     print(model_feature_dict)
@@ -72,22 +88,22 @@ def main():
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Evaluating input datasets
     # General plots of all species
-#    get_diagnostic_plots_analysis4observations()
+#    misc.get_diagnostic_plots_analysis4observations()
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Processing of observations (& extraction of ancillaries)
     # --- Get iodide observations?
-#    get_iodide_obs()
+#    df = obs.get_iodide_obs()
     # --- Re-process file?
-#    get_iodide_obs(process_new_iodide_obs_file=True)
+#    df = obs.get_iodide_obs(process_new_iodide_obs_file=True)
     # --- Re-process ancillaries file?
-#    process_iodide_obs_ancillaries_2_csv()
-#    get_core_rosie_obs()
+#    obs.process_iodide_obs_ancillaries_2_csv()
+#    get_core_Chance2014_obs()
     # --- Process MLD csv files? (Just for ease of use/data munging)
-#    process_MLD_csv2NetCDF()
+#    ancillaries.process_MLD_csv2NetCDF()
 
     # Check extracted data against observations.
-#    compare_obs_ancillaries_with_extracted_values()
+#    misc.compare_obs_ancillaries_with_extracted_values()
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Build ancillary variable dataset file
@@ -96,11 +112,11 @@ def main():
 #    res = '0.125x0.125'
 #    res = '4x5' # low resolution to test extraction etc?
     # Get indicies to extract for variables in imported NetCDF
-#    mk_array_of_indices4locations4res( res=res )
+#    ancillaries2grid.mk_array_of_indices4locations4res( res=res )
     # Extract the variables to NetCDF
-#    extract_feature_variables2NetCDF( res=res )
+#    ancillaries2grid.extract_feature_variables2NetCDF( res=res )
     # Interpolate the fields at full resolution
-#    interpolate_NaNs_in_feature_variables( res=res )
+#    ancillaries.interpolate_NaNs_in_feature_variables( res=res )
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Building new iodide field (inc. Machine learning)
@@ -108,17 +124,17 @@ def main():
     # (Re-)Build all models
     # (random stats means this gives the same answer everytime)
 #    build_or_get_models_iodide(rebuild=True,
-#                                       rm_Skagerrak_data=rm_Skagerrak_data )
+#                              rm_Skagerrak_data=rm_Skagerrak_data )
 
     # --- Update the predictor array values
 #     res='4x5'
-#     set_SAL_and_NIT_above_65N_to_avg(res=res)
+#     plt_analysis.set_SAL_and_NIT_above_65N_to_avg(res=res)
 
     # --- Predict values globally (only use 0.125)
     # extra string for NetCDF save name
-#    xsave_str = ''
+    xsave_str = 'TEST_'
     # make NetCDF predictions from the main array
-#    save2NetCDF = True
+    save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
 #    res = '0.125x0.125'
 #     res = '4x5'
@@ -127,10 +143,11 @@ def main():
 #                                            save2NetCDF=save2NetCDF,
 #                                            rm_Skagerrak_data=rm_Skagerrak_data,
 #                                            topmodels=topmodels,
-#                                            xsave_str=xsave_str, add_ensemble2ds=False)
+#                                            xsave_str=xsave_str,
+#                                            add_ensemble2ds=True)
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
-    # ----- ----- Sensitive test the new iodide field (
+    # ----- ----- Sensitivity testing of the new iodide field
     # ---
     # make NetCDF predictions from the updated arrays
 # vars2use = [
@@ -164,94 +181,69 @@ def main():
 #             extr_str=extr_str, res=res, folder=folder )
     # then test if depth is set to
 
-    # ---- ----- ----- ----- ----- ----- ----- ----- -----
-    # ----- ----- Plotting of output
-#     res = '4x5'
-#     res = '2x2.5'
-#     extr_str = 'tree_X_JUST_TEMP_K_GEBCO_SALINTY'
-#     get_diagnostic_plots_analysis4model(extr_str=extr_str, res=res)
-
-#    extr_str = 'tree_X_JUST_TEMP_K_GEBCO_SALINTY'
-#    extr_str='tree_X_JUST_TEMP_K_GEBCO_SALINTY_REPEAT'
-#    extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
-#     extr_strs = (
-#     'tree_X_JUST_TEMP_K_GEBCO_SALINTY_REPEAT',
-#     'tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY',
-#     )
-#     for res in ['4x5', '2x2.5']:
-#         for extr_str in extr_strs:
-#              get_diagnostic_plots_analysis4model(extr_str=extr_str, res=res)
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
-    # ----- ----- Plots for AGU poster
-    # get_analysis_numbers_for_AGU17_poster()
-    # get_plots_for_AGU_poster()
-
-    # ---- ----- ----- ----- ----- ----- ----- ----- -----
-    # ----- ----- Plots / Analsis for Oi! paper
+    # ----- ----- Plots / Analsis for sea-surface iodide ML paper
     # Get shared data
 #    RFR_dict = build_or_get_models()
 
     # --- 2D analysis
     # Plot up spatial comparison of obs. and params
-#    plot_up_obs_spatially_against_predictions( RFR_dict=RFR_dict )
+#    plt_analysis.plot_up_obs_spatially_against_predictions( RFR_dict=RFR_dict )
     # Test which plotting options to use (to display markers)
-#    plot_up_obs_spatially_against_predictions_options(
+#    plt_analysis.plot_up_obs_spatially_against_predictions_options(
 #          RFR_dict=RFR_dict )
 
     # plot up the input variables spatially
 #    res = '0.125x0.125'
 #    res = '4x5'
-#   plot_up_input_ancillaries_spatially( res=res, RFR_dict=RFR_dict,
-#    save2png=True)
+#   plt_analysis.plot_up_input_ancillaries_spatially( res=res, RFR_dict=RFR_dict,
+#                                                    save2png=True)
 
     # Plot up the 2D differences in predictions
 #    res= '0.125x0.125'
 #    res= '4x5'
-#    plot_up_spatial_changes_in_predicted_values( res=res, window=True, f_size=30)
-
-    # Plot the locations with greatest variation in the predictions - REDUNDENT!
-    # (Use plot_up_ensemble_avg_and_std_spatially instead )
-#     plot_up_spatial_uncertainty_predicted_values(res=res,
-#                                                  rm_Skagerrak_data=rm_Skagerrak_data )
+#    plt_analysis.plot_up_spatial_changes_in_predicted_values( res=res, window=True,
+#                                                              f_size=30)
 
     # Get stats from the 4x5 and 2x2.5 predictions
-#    get_stats_on_spatial_predictions_4x5_2x25()
+#    analysis.get_stats_on_spatial_predictions_4x5_2x25()
+#    analysis.get_stats_on_spatial_predictions_4x5_2x25_by_lat()
 
     # Get stats from the 0.125x0.125 prediction
-#    get_stats_on_spatial_predictions_0125x0125()
+#    analysis.get_stats_on_spatial_predictions_0125x0125()
 
     # Calculate the average predicted surface conc (only 4x5. 2x2.5 too? )
-#    calculate_average_predicted_surface_conc() # AGU calcs at 4x5
+#    plt_analysis.calculate_average_predicted_surface_conc() # AGU calcs at 4x5
 
     # Plot up latitude vs. predicted iodide
-#    plot_predicted_iodide_vs_lat_figure()
+#    plt_analysis.plot_predicted_iodide_vs_lat_figure()
 
     # Seasonal prediction of iodide by month
-#    plot_monthly_predicted_iodide( res='4x5' )
-#    plot_monthly_predicted_iodide( res='0.125x0.125' )
-#    plot_monthly_predicted_iodide_diff( res='0.125x0.125' )
+#    plt_analysis.plot_monthly_predicted_iodide( res='4x5' )
+#    plt_analysis.plot_monthly_predicted_iodide( res='0.125x0.125' )
+#    plt_analysis.plot_monthly_predicted_iodide_diff( res='0.125x0.125' )
 
     # explore the extracted data in the arctic and AnatArctic
-#    explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs()
+#    plt_analysis.explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs()
 
     # Check the sensitivity to input variables >= 65 N
-#    mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
+#    plt_analysis.mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
 #        save_str='TEST_V' )
 
     # --- Point-for-point analysis
     # build ODR plots for obs. vs. model
-#    analyse_X_Y_correlations_ODR( RFR_dict=RFR_dict, context='poster' )
-#    analyse_X_Y_correlations_ODR( RFR_dict=RFR_dict, context='paper' )
+#    plt_analysis.analyse_X_Y_correlations_ODR( RFR_dict=RFR_dict, context='poster' )
+#    plt_analysis.analyse_X_Y_correlations_ODR( RFR_dict=RFR_dict, context='paper' )
 
     # Analyse the X_Y correlations
-#    analyse_X_Y_correlations( RFR_dict=RFR_dict )
+#    plt_analysis.analyse_X_Y_correlations( RFR_dict=RFR_dict )
 
     # Get the importance of individual features for prediction
-#    get_feature_importance( RFR_dict=RFR_dict )
+#    RFRanalysis.get_feature_importance( RFR_dict=RFR_dict )
 
     # Get general stats on the current models
-#    get_stats_on_models( RFR_dict=RFR_dict )
+#   RFRanalysis.get_stats_on_models( RFR_dict=RFR_dict )
 
     # Get tabulated performance
 #    mk_table_of_point_for_point_performance(RFR_dict=RFR_dict)
@@ -259,31 +251,31 @@ def main():
 #    mk_table_of_point_for_point_performance_TESTSET(RFR_dict=RFR_dict)
 
     # Get CDF and PDF plots for test, training, entire, and residual
-#    plot_up_CDF_and_PDF_of_obs_and_predictions( df=RFR_dict['df'] )
+#    plt_analysis.plot_up_CDF_and_PDF_of_obs_and_predictions( df=RFR_dict['df'] )
 
     # Plot up various spatial plots for iodide concs + std.
-#    plot_up_ensemble_avg_and_std_spatially(
+#    plt_analysis.plot_up_ensemble_avg_and_std_spatially(
 #        rm_Skagerrak_data=rm_Skagerrak_data
 #    )
 
     # --- Spatial analysis for specific locations
     # explore the observational data in the Arctic
-#    explore_observational_data_in_Arctic_parameter_space( RFR_dict=RFR_dict )
+#    misc.explore_observational_data_in_Arctic_parameter_space( RFR_dict=RFR_dict )
 
     # plot up where decision points are
-#    plot_spatial_area4core_decisions( res='4x5' )
-#    plot_spatial_area4core_decisions( res='0.125x0.125' )
+#    plt_analysis.plot_spatial_area4core_decisions( res='4x5' )
+#    plt_analysis.plot_spatial_area4core_decisions( res='0.125x0.125' )
 
     # Explore the sensitivity to data denial
-#    explore_sensitivity_of_65N2data_denial( res='4x5' )
-#    explore_sensitivity_of_65N2data_denial( res='2x2.5' )
-#    explore_sensitivity_of_65N2data_denial( res='0.125x0.125' )
+#    plt_analysis.explore_sensitivity_of_65N2data_denial( res='4x5' )
+#    plt_analysis.explore_sensitivity_of_65N2data_denial( res='2x2.5' )
+#    plt_analysis.explore_sensitivity_of_65N2data_denial( res='0.125x0.125' )
 
     # --- Analysis of models build
     # testset analysis
-#    test_model_sensitiivty2training_test_split() # driver not in use yet!
-#    run_tests_on_testing_dataset_split_quantiles()
-#    run_tests_on_testing_dataset_split()
+#    plt_analysis.test_model_sensitiivty2training_test_split() # driver not in use yet!
+#    RFRanalysis.run_tests_on_testing_dataset_split_quantiles()
+#    RFRanalysis.run_tests_on_testing_dataset_split()
 
     # selection of variables to build models
 
@@ -292,275 +284,40 @@ def main():
     # Analysis of the spatial variance of individual ensemble members
 #    rm_Skagerrak_data = True
 #    rm_Skagerrak_data = False
-#     analyse_dataset_error_in_ensemble_members( res='0.125x0.125', \
+#     plt_analysis.analyse_dataset_error_in_ensemble_members( res='0.125x0.125', \
 #         rebuild_models=False, remake_NetCDFs=False,
 #         rm_Skagerrak_data=rm_Skagerrak_data,
 #         topmodels=topmodels )
-#    analyse_dataset_error_in_ensemble_members( res='0.125x0.125', \
+#    plt_analysis.analyse_dataset_error_in_ensemble_members( res='0.125x0.125', \
 #       rebuild_models=True, remake_NetCDFs=True, \
 #       rm_Skagerrak_data=rm_Skagerrak_data,
 #       topmodels=topmodels
 #        )
     # Common resolutions
-#   regrid_output_to_common_res_as_NetCDFs(topmodels=topmodels,
-#                                         rm_Skagerrak_data=rm_Skagerrak_data)
+#   archiving.regrid_output_to_common_res_as_NetCDFs(topmodels=topmodels,
+#                                                    rm_Skagerrak_data=rm_Skagerrak_data)
 
     # --- Do tree by tree analysis
     # Extract trees to .dot files (used make make the single tree figures)
-#    extract_trees4models( RFR_dict=RFR_dict, N_trees2output=50 )
+#    RFRanalysis.extract_trees4models( RFR_dict=RFR_dict, N_trees2output=50 )
 
     # Plot up interpretation of trees
     # Now in TreeSurgeon - see separate repository on github
     # https://github.com/wolfiex/TreeSurgeon
 
     # analysis of node spliting
-#    analyse_nodes_in_models( RFR_dict=RFR_dict )
+#    RFRanalysis.analyse_nodes_in_models( RFR_dict=RFR_dict )
     # analysis of outputted trees
-#    analyse_nodes_in_models()
-
-    # Now make Ensemble diagram - REDUNDENT
-#    mk_ensemble_diagram()
+#    RFRanalysis.analyse_nodes_in_models()
 
     # --- Do futher analysis on the impact of the depth variable
-    do_analysis_processing_linked_to_depth_variable()
+    plt_analysis.do_analysis_processing_linked_to_depth_variable()
 
     # plot this up and other figures for the ML paper
-    plot_spatial_figures_for_ML_paper_with_cartopy()
+    plt_analysis.plot_spatial_figures_for_ML_paper_with_cartopy()
 
     # - pass if no functions are uncommented
     pass
-
-
-def do_analysis_processing_linked_to_depth_variable():
-    """
-    Function to do analysis specific to removing depth variable
-    """
-    from plotting_and_analysis import get_ensemble_predicted_iodide
-    # Get the base topmodels
-    vars2exclude = ['DOC', 'Prod', ]
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
-    topmodels_BASE = topmodels.copy()
-
-    # add the ensemble to the dataframe and over write this as the dictionary
-    var2use='RFR(Ensemble)'
-#     df = RFR_dict['df']
-#     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
-#                                        var2use=var2use)
-#     RFR_dict['df'] =  df
-#     # now get the stats
-#     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, inc_ensemble=True)
-#
-#     # - Now do the same thing, but calculate the prediction with depth
-#     var2use = 'RFR(Ensemble_nDepth)'
-    # Get topmodels without
-    vars2exclude = ['DOC', 'Prod', 'DEPTH']
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
-    topmodels_DEPTH = topmodels.copy()
-    # Now calculate the ensemble prediction
-#     df = RFR_dict['df']
-#     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
-#                                        var2use=var2use)
-#     RFR_dict['df'] =  df
-#     # now get the stats
-#     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, df=df, inc_ensemble=True,
-#                                             var2use=var2use)
-
-    topmodels2use = topmodels_DEPTH + topmodels_BASE
-    topmodels2use = list(set(topmodels2use))
-    # Make a spatial prediction
-    xsave_str = '_TEST_DEPTH_'
-    # make NetCDF predictions from the main array
-    save2NetCDF = True
-    # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
-    res = '0.125x0.125'
-#    res = '4x5'
-#    res = '2x2.5'
-#     mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
-#                                            use_updated_predictor_NetCDF=False,
-#                                            save2NetCDF=save2NetCDF,
-#                                            rm_Skagerrak_data=rm_Skagerrak_data,
-#                                            topmodels=topmodels2use,
-#                                            xsave_str=xsave_str, add_ensemble2ds=True)
-
-    # Plot up the annual average predictions from the top models with depth
-    filename = 'Oi_prj_predicted_Iodide_0.125x0.125_TEST_DEPTH__No_Skagerrak.nc'
-    folder = './'
-    ds = xr.open_dataset( folder+filename )
-    # ... and without
-    var2use4Ensemble = 'Ensemble_Monthly_mean'
-    var2use4std = 'Ensemble_Monthly_std'
-    ds = add_ensemble_avg_std_to_dataset(ds=ds, var2use4std=var2use4std,
-                                         var2use4Ensemble=var2use4Ensemble,
-                                         topmodels=topmodels_BASE,
-                                         save2NetCDF=False
-                                         )
-
-    # Plot the same way for the no depth data
-    var2use4Ensemble = 'Ensemble_Monthly_mean_nDepth'
-    var2use4std = 'Ensemble_Monthly_std_nDepth'
-    ds = add_ensemble_avg_std_to_dataset(ds=ds, var2use4std=var2use4std,
-                                         var2use4Ensemble=var2use4Ensemble,
-                                         topmodels=topmodels_DEPTH,
-                                         save2NetCDF=False
-                                         )
-
-    # Save as a NetCDF to use for plotting
-    ds.to_netcdf('Oi_temp_iodide_annual.nc')
-
-
-def plot_spatial_figures_for_ML_paper_with_cartopy():
-    """
-    Plot up all the spatial figures for the ML paper with cartopy
-    """
-    # Add LWI to NEtCDF
-    res ='0.125x0.125'
-    ds = add_LWI2array(ds=ds, res=res, var2template='Ensemble_Monthly_mean')
-    vars2mask = [
-    'Ensemble_Monthly_mean_nDepth', 'Ensemble_Monthly_mean', 'Ensemble_Monthly_std',
-    'Chance2014_STTxx2_I', 'MacDonald2014_iodide',
-    ]
-    for var2mask in vars2mask:
-        # set non water boxes to np.NaN
-        ds[var2mask] = ds[var2mask].where(ds['IS_WATER'] == True)
-    # Average over time
-    ds = ds.mean(dim='time')
-    ds.to_netcdf('Oi_temp_iodide.nc')
-    # Variables for plotting
-    ds = xr.open_dataset('Oi_temp_iodide.nc')
-    target = 'Iodide'
-    dpi = 720
-    projection = ccrs.PlateCarree()
-    cbar_kwargs={
-    'extend':'max', 'pad': 0.025, 'orientation':"vertical", 'label': 'nM',
-#    'fraction' : 0.1
-    'shrink':0.675,
-    'ticks' : np.arange(vmin, vmax+1, 60),
-    }
-    vmax = 240
-    vmin = 0
-    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-    cmap = AC.get_colormap(arr=np.array([vmin,vmax]))
-
-    # Now plot the core prediction
-    var2use4Ensemble = 'Ensemble_Monthly_mean'
-    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble)'
-    title = None # no title shown in paper's plots
-    plot_spatial_data_TEST(ds=ds, var2plot=var2use4Ensemble, title=title,
-                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
-                               target=target, cmap=cmap, projection=projection,
-                               add_meridians_parallels=True,
-                               cbar_kwargs=cbar_kwargs,
-                               dpi=dpi,
-                               )
-    # And the one without depth
-    var2use4Ensemble = 'Ensemble_Monthly_mean_nDepth'
-    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble-No_depth)'
-    title = None # no title shown in paper's plots
-    plot_spatial_data_TEST(ds=ds, var2plot=var2use4Ensemble, title=title,
-                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
-                               target=target, cmap=cmap, projection=projection,
-                               add_meridians_parallels=True,
-                               cbar_kwargs=cbar_kwargs,
-                               dpi=dpi,
-                               )
-
-
-    # -  Now plot up observations over the top
-    var2use4Ensemble = 'Ensemble_Monthly_mean'
-    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble)'
-    title = None # no title shown in paper's plots
-    plot_spatial_data_TEST(ds=ds, var2plot=var2use4Ensemble, title=title,
-                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
-                               target=target, cmap=cmap, projection=projection,
-                               add_meridians_parallels=True,
-                               cbar_kwargs=cbar_kwargs,
-                               save_plot=False,
-                               dpi=dpi,
-                               )
-    # Get the axis
-    ax = plt.gca()
-    # select dataframe with observations and predictions in it
-    if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
-    df = RFR_dict['df']
-    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
-    s = 15
-    edgecolor = 'k'
-    x = df[u'Longitude'].values
-    y = df[u'Latitude'].values
-    z = df['Iodide'].values
-    ax.scatter(x, y, c=z, s=s, cmap=cmap, norm=norm, edgecolor=edgecolor,
-               transform=projection, zorder=100, linewidth=0.05)
-    # Now save
-    extr_str = '_overlaid_with_obs'
-    filename = 's2s_spatial_{}_{}.png'.format(target, extr_str)
-    plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
-
-    # -
-    # Now plot the core prediction uncertainty (nM)
-    var2use4Ensemble = 'Ensemble_Monthly_mean'
-    var2use4std = 'Ensemble_Monthly_std'
-    title= 'Spatial unceratainty in sea-surface iodide in predicted values (nM)'
-    cbar_kwargs['ticks'] = np.arange(0, 30+1, 6)
-    cbar_kwargs['label'] = 'nM'
-    title = None # no title shown in paper's plots
-    plot_spatial_data_TEST(ds=ds, var2plot=var2use4std, title=title,
-                               vmin=0, vmax=30, extr_str=var2use4std,
-                               target=target, cmap=cmap, projection=projection,
-                               add_meridians_parallels=True,
-                               cbar_kwargs=cbar_kwargs,
-                               dpi=dpi,
-                               )
-    # Now plot the core prediction uncertainty (%)
-    cbar_kwargs['ticks'] = np.arange(0, 25+1, 5)
-    cbar_kwargs['label'] = '%'
-    var2use4std_pcent = 'Ensemble_Monthly_std_pcent'
-    ds[var2use4std_pcent] = ds[var2use4std] / ds[var2use4Ensemble] *100
-    title= 'Spatial unceratainty in sea-surface iodide in predicted values (%)'
-    title = None # no title shown in paper's plots
-    plot_spatial_data_TEST(ds=ds, var2plot=var2use4std_pcent, title=title,
-                               vmin=0, vmax=25, extr_str=var2use4std_pcent,
-                               target=target, cmap=cmap, projection=projection,
-                               add_meridians_parallels=True,
-                               cbar_kwargs=cbar_kwargs,
-                               dpi=dpi,
-                               )
-
-    # Now plot the existing parameterisations
-    cbar_kwargs['ticks'] = np.arange(vmin, vmax+1, 60)
-    cbar_kwargs['label'] = 'nM'
-    cbar_kwargs['shrink'] = 0.85
-    fig = plt.figure(figsize=(10, 6))
-    ax1 = fig.add_subplot(2, 1, 1, projection=projection, aspect='auto')
-    var2use = 'Chance2014_STTxx2_I'
-    title= '(A) MacDonald et al. (2014)'
-    plot_spatial_data_TEST(ds=ds, var2plot=var2use, fig=fig, ax=ax1,
-                               title=title,
-                               vmin=0, vmax=240, extr_str=var2use,
-                               target=target, cmap=cmap, projection=projection,
-                               add_meridians_parallels=True,
-                               cbar_kwargs=cbar_kwargs,
-                               dpi=dpi, xticks=False,
-                               save_plot=False,
-                               )
-
-    ax2 = fig.add_subplot(2, 1, 2, projection=projection, aspect='auto')
-    var2use = 'MacDonald2014_iodide'
-    title= '(B) MacDonald et al. (2014)'
-    plot_spatial_data_TEST(ds=ds, var2plot=var2use, fig=fig, ax=ax2,
-                               title=title,
-                               vmin=0, vmax=240, extr_str=var2use,
-                               target=target, cmap=cmap, projection=projection,
-                               add_meridians_parallels=True,
-                               cbar_kwargs=cbar_kwargs,
-                               dpi=dpi,
-                               save_plot=False,
-                               )
-
-    # Now save
-    extr_str = '_existing_params'
-    filename = 's2s_spatial_{}_{}.png'.format(target, extr_str)
-    plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
 
 
 def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
@@ -570,12 +327,15 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 
     Parameters
     -------
+    target (str): Name of the target variable (e.g. iodide)
+    df (pd.DataFrame): dataframe containing target and feature variables
+    n_estimators (int), number of estimators (decision trees) to use
+    features_used (list): list of the features within the model_name model
+    model_name (str): name of model to build
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
@@ -931,7 +691,14 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
 
     Parameters
     -------
+    var2use (str): var to use as main model prediction
     rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    RFR_dict (dict): dictionary of core variables and data
+    target (str): Name of the target variable (e.g. iodide)
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    models_dict (dict): dictionary of models (values) and their names (keys)
+    features_used_dict (dict): dictionary of models (keys) and their features (values)
+    use_updated_predictor_NetCDF (bool):
 
     Returns
     -------
@@ -939,7 +706,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     Notes
     -----
     """
-    # --- local variables
+    # -local variables
     # extract the models...
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models(
@@ -1013,7 +780,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
         ds_l += [ds_tmp]
     # Combine datasets
     ds = xr.merge(ds_l)
-    # -- Also get values for parameterisations
+    # - Also get values for parameterisations
     # Chance et al (2013)
     param = u'Chance2014_STTxx2_I'
     arr = utils.calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
@@ -1031,7 +798,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
                                              RFR_dict=RFR_dict, topmodels=topmodels,
                                              res=res,
                                              save2NetCDF=False)
-    # ---- Do a quick diagnostic plot
+    # - Do a quick diagnostic plot
     if plot2check:
         for var_ in ds.data_vars:
             # plot an annual average
@@ -1041,7 +808,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
             plt.show()
         # Add global variables
     ds = add_attrs2iodide_ds(ds, add_varname_attrs=False)
-    # --- Save to NetCDF
+    # - Save to NetCDF
     if save2NetCDF:
         filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, xsave_str)
         ds.to_netcdf(filename)
@@ -1059,16 +826,16 @@ def mk_table_of_point_for_point_performance(RFR_dict=None, df=None,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    var2use (str), variable name to use for ensemble prediction
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    var2use (str): variable name to use for ensemble prediction
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
     inc_ensemble (bool), include the ensemble (var2use) in the analysis
+    RFR_dict (dict): dictionary of core variables and data
+    df (pd.DataFrame): dataframe containing target and feature variables
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     # Get data objects as dictionary and extract dataframe if not provided.
     if isinstance(RFR_dict, type(None)):
@@ -1116,16 +883,16 @@ def mk_table_of_point_for_point_performance_TESTSET(RFR_dict=None, df=None,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    var2use (str), variable name to use for ensemble prediction
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    var2use (str): variable name to use for ensemble prediction
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
     inc_ensemble (bool), include the ensemble (var2use) in the analysis
+    RFR_dict (dict): dictionary of core variables and data
+    df (pd.DataFrame): dataframe containing target and feature variables
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     # Get data objects as dictionary and extract dataframe if not provided.
     if isinstance(RFR_dict, type(None)):
@@ -1142,7 +909,6 @@ def mk_table_of_point_for_point_performance_TESTSET(RFR_dict=None, df=None,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      'Iodide': 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     # Set the stats to use for in csv output
     first_columns = [
@@ -1175,16 +941,16 @@ def mk_table_of_point_for_point_performance_ALL(RFR_dict=None, df=None,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    var2use (str), variable name to use for ensemble prediction
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    var2use (str): variable name to use for ensemble prediction
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
     inc_ensemble (bool), include the ensemble (var2use) in the analysis
+    RFR_dict (dict): dictionary of core variables and data
+    df (pd.DataFrame): dataframe containing target and feature variables
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     # Get data objects as dictionary and extract dataframe if not provided.
     if isinstance(RFR_dict, type(None)):
@@ -1199,7 +965,6 @@ def mk_table_of_point_for_point_performance_ALL(RFR_dict=None, df=None,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      target: 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     # Set the stats to use
     first_columns = [
@@ -1207,18 +972,18 @@ def mk_table_of_point_for_point_performance_ALL(RFR_dict=None, df=None,
         'RMSE ({})'.format(testset),  'RMSE (all)',
     ]
     stats = stats[first_columns]
-    # rename columns (50% to median and ... )
+    # Rename columns to more standard names for stats (e.g. 50% to median and ... )
     cols2rename = {
         '50%': 'median', 'std': 'std. dev.',
         'RMSE ({})'.format(testset): 'RMSE (withheld)'
     }
     stats.rename(columns=cols2rename,  inplace=True)
-    # rename
+    # Rename the columns
     stats.rename(index=rename_titles, inplace=True)
     # Set filename and save detail on models
     csv_name = 'Oi_prj_point_for_point_comp4tabale_ALL.csv'
     stats.round(1).to_csv(csv_name)
-    # also save a .csv of values without derived values
+    # Also save a .csv of values without derived values
     index2use = [i for i in stats.index if all(
         [ii not in i for ii in derived])]
     stats = stats.T
@@ -1234,12 +999,11 @@ def get_dataset_processed4ML(restrict_data_max=False,
     """
     Get dataset as a DataFrame with standard munging settings
 
-
     Parameters
     -------
     restrict_data_max (bool): restrict the obs. data to a maximum value?
     rm_Skagerrak_data (bool): remove the data from the Skagerrak region
-
+    rm_outliers (bool): remove the outliers from the observational dataset
 
     Returns
     -------
@@ -1269,13 +1033,9 @@ def get_dataset_processed4ML(restrict_data_max=False,
     df = add_extra_vars_rm_some_data(df=df,
                                      restrict_data_max=restrict_data_max,
                                      restrict_min_salinity=restrict_min_salinity,
-                                     #                                     add_modulus_of_lat=add_modulus_of_lat,
                                      rm_Skagerrak_data=rm_Skagerrak_data,
                                      rm_outliers=rm_outliers,
                                      rm_LOD_filled_data=rm_LOD_filled_data,
-                                     #                use_median4chlr_a_NaNs=use_median4chlr_a_NaNs,
-                                     #                median_4MLD_when_NaN_or_less_than_0=median_4MLD_when_NaN_or_less_than_0,
-                                     #                    median_4depth_when_greater_than_0=median_4depth_when_greater_than_0,
                                      )    # add
 
     # - Add test and training set assignment to columns
@@ -1302,7 +1062,6 @@ def get_dataset_processed4ML(restrict_data_max=False,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
                                                  features_used=df.columns.tolist(),
-                                                 #                                                   features_used=features_used,
                                                  )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
@@ -1326,12 +1085,13 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
     Parameters
     -------
     rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    rm_LOD_filled_data (bool): remove the observational values below LOD
+    add_modulus_of_lat (bool): add the modulus of lat to dataframe
+    rm_outliers (bool): remove the observational outliers from the dataframe
 
     Returns
     -------
-
-    Notes
-    -----
+    (dict)
     """
     # Get the dictionary  of model names and features (specific to iodide)
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
@@ -1339,14 +1099,11 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(
         rm_Skagerrak_data=rm_Skagerrak_data,
-#        rm_LOD_filled_data=rm_LOD_filled_data,
         rm_outliers=rm_outliers,
     )
-    #
+    # Exclude data from the Skaggerakk data?
     if rm_Skagerrak_data:
         model_sub_dir = '/TEMP_MODELS_No_Skagerrak/'
-#     elif rm_LOD_filled_data:
-#         temp_model_dir = wrk_dir+'/TEMP_MODELS_no_LOD_filled/'
     else:
         model_sub_dir = '/TEMP_MODELS/'
 
@@ -1378,6 +1135,16 @@ def mk_iodide_test_train_sets(df=None, target='Iodide',
     -------
     rand_strat (bool), split the data in a random way using stratified sampling
     rand_20_80 (bool), split the data in a random way
+    df (pd.DataFrame): dataframe containing target and feature variables
+    target (str): Name of the target variable (e.g. iodide)
+    nsplits (int), number of ways to split the data
+    random_state (int), seed value to use as random seed for reproducible analysis
+    debug (bool): print out debugging output?
+    verbose (bool): print out verbose output?
+
+    Returns
+    -------
+    (list)
     """
     # Call the s2s function with some presets
     returned_vars = build.mk_test_train_sets(df=df, target=target, nsplits=nsplits,
@@ -1399,12 +1166,17 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
 
     Parameters
     -------
+    varname (str): variable name to make changes to
+    rm_spaces_from_vars (bool), remove spaces from variable names
+    convert_to_kg_m3 (bool), convert the output units to kg/m3
+    global_attrs_dict (dict), dictionary of global attributes
+    convert2HEMCO_time (bool), convert to a HEMCO-compliant time format
+    add_global_attrs (bool), add global attributes to dataset
+    add_varname_attrs (bool), add variable attributes to dataset
 
     Returns
     -------
-
-    Notes
-    -----
+    (xr.Dataset)
     """
     # Set variable attribute dictionary variables
     attrs_dict = {}

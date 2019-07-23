@@ -70,8 +70,8 @@ def extract_new_observational_excel_files(file_and_path='./sparse2spatial.rc',
 
     Parameters
     -------
-    file_and_path (str), folder and filename with location settings as single str
-    filename (str), name of the csv file or archived data from BODC
+    file_and_path (str): folder and filename with location settings as single str
+    filename (str): name of the csv file or archived data from BODC
     limit_depth_to (float), depth (m) to limit inclusion of data to
     debug (bool), print debug statements
 
@@ -120,8 +120,8 @@ def extract_observational_excel_file(folder=None,filename=None, file_extension='
 
     Parameters
     -------
-    file_and_path (str), folder and filename with location settings as single str
-    filename (str), name of the csv file or archived data from BODC
+    file_and_path (str): folder and filename with location settings as single str
+    filename (str): name of the csv file or archived data from BODC
     limit_depth_to (float), depth (m) to limit inclusion of data to
     use_inclusive_limit (bool), limit depth (limit_depth_to) in a inclusive way
     debug (bool), print debug statements
@@ -219,8 +219,8 @@ def get_iodide_data_from_BODC(file_and_path='./sparse2spatial.rc',
 
     Parameters
     -------
-    file_and_path (str), folder and filename with location settings as single str
-    filename (str), name of the csv file or archived data from BODC
+    file_and_path (str): folder and filename with location settings as single str
+    filename (str): name of the csv file or archived data from BODC
     debug (bool), print debug statements
 
     Returns
