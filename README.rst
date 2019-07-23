@@ -29,9 +29,12 @@ or, you can install via pip directly from git::
 Usage
 ------------
 
-Example analysis code for using Sparse2Spatial is available in the
+Example analysis code for using **sparse2spatial** is available in the
 scripts folder.
 
+A seperate package (TreeSurgeon_) is availible for plotting output the from sklearn_
+RandomForestRegressors models. Scripts are provided in **sparse2spatial** for making 
+the input `.csv` files required by TreeSurgeon_.
 
 Work using Sparse2Spatial (s2s)
 ^^^^^^^^^^^^
@@ -69,6 +72,7 @@ Contact
 .. _pandas: https://pandas.pydata.org/
 .. _sklearn: https://scikit-learn.org/stable/
 .. _XGBoost: https://xgboost.readthedocs.io/en/latest/
+.. _TreeSurgeon: https://github.com/wolfiex/TreeSurgeon
 .. _AC_tools_wiki: https://github.com/tsherwen/AC_tools/wiki
 
 
