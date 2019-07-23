@@ -46,11 +46,11 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
     Parameters
     -------
     model (RFR model), RandomForestRegressor model to make predictions with
-    modelname (str), Name of RandomForestRegressor model to use
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    target (str), name of target variable to be predict with features
-    dsA (xr.dataset), dataset of feature variables to use for prediction
-    features_used (list), names of feature variables used by model to predict target
+    modelname (str): Name of RandomForestRegressor model to use
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    target (str): name of target variable to be predict with features
+    dsA (xr.Dataset): dataset of feature variables to use for prediction
+    features_used (list): names of feature variables used by model to predict target
 
     Returns
     -------
@@ -106,26 +106,26 @@ def add_units2ds(ds):
     Add input ancillary units to xarray dataset
     """
     unit_dict = {
-        u'DOC': 'ADD THIS',
-        u'DOCaccum': 'ADD THIS',
+        u'DOC': '<UNIT NOT SET>',
+        u'DOCaccum': '<UNIT NOT SET>',
         u'Depth_GEBCO': 'm',
-        u'Prod': 'ADD THIS',
-        u'SWrad': 'ADD THIS',
+        u'Prod': '<UNIT NOT SET>',
+        u'SWrad': '<UNIT NOT SET>',
         u'SeaWIFs_ChlrA': "mg m$^{-3}$",
-        u'WOA_Dissolved_O2': 'ADD THIS',
-        u'WOA_MLDpd': 'ADD THIS',
-        u'WOA_MLDpd_max': 'ADD THIS',
-        u'WOA_MLDpd_sum': 'ADD THIS',
-        u'WOA_MLDpt': 'ADD THIS',
-        u'WOA_MLDpt_max': 'ADD THIS',
-        u'WOA_MLDpt_sum': 'ADD THIS',
-        u'WOA_MLDvd': 'ADD THIS',
-        u'WOA_MLDvd_max': 'ADD THIS',
-        u'WOA_MLDvd_sum': 'ADD THIS',
+        u'WOA_Dissolved_O2': '<UNIT NOT SET>',
+        u'WOA_MLDpd': '<UNIT NOT SET>',
+        u'WOA_MLDpd_max': '<UNIT NOT SET>',
+        u'WOA_MLDpd_sum': '<UNIT NOT SET>',
+        u'WOA_MLDpt': '<UNIT NOT SET>',
+        u'WOA_MLDpt_max': '<UNIT NOT SET>',
+        u'WOA_MLDpt_sum': '<UNIT NOT SET>',
+        u'WOA_MLDvd': '<UNIT NOT SET>',
+        u'WOA_MLDvd_max': '<UNIT NOT SET>',
+        u'WOA_MLDvd_sum': '<UNIT NOT SET>',
         u'WOA_Nitrate': "$\mu$M",
-        u'WOA_Phosphate': 'ADD THIS',
+        u'WOA_Phosphate': '<UNIT NOT SET>',
         u'WOA_Salinity': 'PSU',
-        u'WOA_Silicate': 'ADD THIS',
+        u'WOA_Silicate': '<UNIT NOT SET>',
         u'WOA_TEMP': '$^{o}$C',
         u'WOA_TEMP_K': '$^{o}$K',
     }
@@ -294,7 +294,7 @@ def update_time_in_NetCDF2save(ds, convert_time2dt=False):
 
     Parameters
     -------
-    convert_time2dt (bool), convert the time into a datetime.datetime format
+    convert_time2dt (bool): convert the time into a datetime.datetime format
     """
     # Climate model time
     sdate = datetime.datetime(1985, 1, 1)
@@ -334,13 +334,13 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
 
     Parameters
     -------
-    convert_to_kg_m3 (bool), convert the output units to kg/m3
-    rm_spaces_from_vars (bool), remove spaces from variable names
-    global_attrs_dict (dict), dictionary of global attributes
-    convert2HEMCO_time (bool), convert to a HEMCO-compliant time format
-    add_global_attrs (bool), add global attributes to dataset
-    add_varname_attrs (bool), add variable attributes to dataset
-    varname (str), variable name to make changes to
+    convert_to_kg_m3 (bool): convert the output units to kg/m3
+    rm_spaces_from_vars (bool): remove spaces from variable names
+    global_attrs_dict (dict): dictionary of global attributes
+    convert2HEMCO_time (bool): convert to a HEMCO-compliant time format
+    add_global_attrs (bool): add global attributes to dataset
+    add_varname_attrs (bool): add variable attributes to dataset
+    varname (str): variable name to make changes to
 
     Returns
     -------
@@ -442,9 +442,9 @@ def add_LWI2array(ds=None,  res='4x5', var2template='Chance2014_STTxx2_I',
 
     Parameters
     -------
-    ds (xr.Dataset), xarray dataset to add LWI to
-    res (res), horizontal resolution (e.g. 4x5) of Dataset
-    inc_booleans_and_area (boolean), include extra booleans and surface area
+    ds (xr.Dataset): xarray dataset to add LWI to
+    res (str): horizontal resolution (e.g. 4x5) of Dataset
+    inc_booleans_and_area (bool): include extra booleans and surface area
     var2template (str): variable to use a template for making LWI variable
 
     Returns
@@ -470,9 +470,9 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
 
     Parameters
     -------
-    ds (xr.Dataset), xarray dataset to add LWI to
-    res (res), horizontal resolution (e.g. 4x5) of Dataset
-    inc_booleans_and_area (boolean), include extra booleans and surface area
+    ds (xr.Dataset): xarray dataset to add LWI to
+    res (str): horizontal resolution (e.g. 4x5) of Dataset
+    inc_booleans_and_area (bool): include extra booleans and surface area
     var2template (str): variable to use a template for making LWI variable
 
     Returns
@@ -521,10 +521,10 @@ def add_LWI2ds_2x25_4x5(ds, var2template='Chance2014_STTxx2_I',
 
     Parameters
     -------
-    ds (xr.Dataset), xarray dataset to add LWI to
-    res (str), horizontal resolution of dataset (e.g. 4x5)
+    ds (xr.Dataset): xarray dataset to add LWI to
+    res (str): horizontal resolution of dataset (e.g. 4x5)
     var2template (str): variable to use a template for making LWI variable
-    inc_booleans_and_area (boolean), include extra booleans and surface area
+    inc_booleans_and_area (bool): include extra booleans and surface area
 
     Returns
     -------
@@ -607,6 +607,11 @@ def is_number(s):
 def get_file_locations(input_var, file_and_path='./sparse2spatial.rc'):
     """
     Dictionary store of data/file locations
+
+    Parameters
+    -------
+    file_and_path (str): folder and filename with location settings as single str
+    input_var (str): key to extract from locations dictionary
     """
     # Get a dictionary of paths
     d = read_settings_rc_file2dict(file_and_path=file_and_path)
@@ -627,9 +632,9 @@ def convert_fullname_to_shortname(input=None, rtn_dict=False, invert=False):
 
     Parameters
     -------
-    input (str), input string to use as key to return dictionary value
-    invert (float), reverse the key/pair of the dictionary
-    rtn_dict (boolean), return the entire dictionary.
+    input (str): input string to use as key to return dictionary value
+    invert (bool): reverse the key/pair of the dictionary
+    rtn_dict (bool): return the entire dictionary.
 
     Returns
     -------
@@ -760,15 +765,15 @@ def set_backup_month_if_unknown(lat=None, var2use='', main_var='',
 
     Parameters
     -------
-    lat (float): latitude degrees north
+    lat (float): latitude in degrees north
     Data_key_ID_ (str): ID for input data point
-    var2use (str): var to extracted from NetCDF
+    var2use (str): var to be extracted from NetCDF
     main_var (str): general variable (e.g. TEMP)
-    debug (boolean), print out debugging output?
+    debug (bool): print out debugging output?
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
 
     Notes
@@ -804,11 +809,11 @@ def get_df_stats_MSE_RMSE(df=None, target='Iodide',
 
     Parameters
     -------
-    add_sklean_metrics (bool), add generic metrics from sklearn
-    df (pd.DataFrame), dataframe of observations and predictions
-    dataset_str (str), string describing any subsetting of the dataset
-    params (list), list of params to calculate statistics on the scores of
-    target (str), Name of the target variable (e.g. iodide)
+    add_sklean_metrics (bool): add generic metrics from sklearn
+    df (pd.DataFrame): dataframe of observations and predictions
+    dataset_str (str): string describing any subsetting of the dataset
+    params (list): list of params to calculate statistics on the scores of
+    target (str): Name of the target variable (e.g. iodide)
 
     Returns
     -------
@@ -833,11 +838,11 @@ def add_sklean_metrics2df(df=None, stats=None, target='Iodide',
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    dataset_str (str), string describing any subsetting of the dataset
-    params (list), list of params to calculate statistics on the scores of
-    df (pd.DataFrame), dataframe of observations and predictions
-    stats (pd.DataFrame), dataframe of statistics on parameter performance
+    target (str): Name of the target variable (e.g. iodide)
+    dataset_str (str): string describing any subsetting of the dataset
+    params (list): list of params to calculate statistics on the scores of
+    df (pd.DataFrame): dataframe of observations and predictions
+    stats (pd.DataFrame): dataframe of statistics on parameter performance
 
     Returns
     -------
@@ -869,12 +874,12 @@ def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
 
     Parameters
     -------
-    lons (np.array), list of Longitudes to use for spatial extraction
-    lats (np.array), list of latitudes to use for spatial extraction
-    months (np.array), list of months to use for temporal extraction
-    var2extract (str), name of variable to extract data for
-    rm_Skagerrak_data (boolean), remove the single data from the Skagerrak region
-    debug (boolean), print out debugging output?
+    lons (np.array): list of Longitudes to use for spatial extraction
+    lats (np.array): list of latitudes to use for spatial extraction
+    months (np.array): list of months to use for temporal extraction
+    var2extract (str): name of variable to extract data for
+    rm_Skagerrak_data (bool): remove the single data from the Skagerrak region
+    debug (bool): print out debugging output?
 
     Returns
     -------
@@ -934,11 +939,11 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
 
     Parameters
     -------
-    ds (xr.dataset), 3D dataset contraining variable of interest on monthly basis
-    target (str), Name of the target variable (e.g. iodide)
-    version (str), Version number or string (present in NetCDF names etc)
-    file_and_path (str), folder and filename with location settings as single str
-    res (str), horizontal resolution of dataset (e.g. 4x5)
+    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    target (str): Name of the target variable (e.g. iodide)
+    version (str): Version number or string (present in NetCDF names etc)
+    file_and_path (str): folder and filename with location settings as single str
+    res (str): horizontal resolution of dataset (e.g. 4x5)
 
     Returns
     -------

@@ -22,7 +22,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
+    target (str): Name of the target variable (e.g. iodide)
 
     Returns
     -------
@@ -113,11 +113,11 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
 
     Parameters
     -------
-    topmodels (list), List of models to include in re-gridded output
-    rm_Skagerrak_data (boolean), remove the single data from the Skagerrak region
-    dsA (xr.Dataset), data to regrid and save to NetCDFs
-    just_1x1_grids (boolean), Just regridd to the 1x1 (for debugging)
-    debug (boolean), perform debugging and verbose printing?
+    topmodels (list): List of models to include in re-gridded output
+    rm_Skagerrak_data (bool): remove the single data from the Skagerrak region
+    dsA (xr.Dataset): data to regrid and save to NetCDFs
+    just_1x1_grids (bool): Just regridd to the 1x1 (for debugging)
+    debug (bool): perform debugging and verbose printing?
 
     Returns
     -------

@@ -12,11 +12,8 @@ import matplotlib.pyplot as plt
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 # Internal loads within s2s
-#from sparse2spatial.utils import *
 import sparse2spatial.utils as utils
 import sparse2spatial.RFRbuild as build
-#from sparse2spatial.analysis import get_stats_on_spatial_predictions_0125x0125
-#from sparse2spatial.analysis import get_stats_on_spatial_predictions_4x5_2x25
 from sparse2spatial.analysis import *
 
 
@@ -28,12 +25,12 @@ def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    features_used (list), list of the features within the model_name model
-    RFR_dict (dict), dictionary of core variables and data
-    model_name (str), name of model to build
-    df (pd.dataframe), dataframe containing of target and features
-    verbose (boolean), print out verbose output?
+    target (str): Name of the target variable (e.g. iodide)
+    features_used (list): list of the features within the model_name model
+    RFR_dict (dict): dictionary of core variables and data
+    model_name (str): name of model to build
+    df (pd.DataFrame): dataframe containing of target and features
+    verbose (bool): print out verbose output?
 
     Returns
     -------
@@ -120,11 +117,11 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
 
     Parameters
     -------
-    target (str), name of the target variable being predicted by the feature variables
-    model_name (str), name of the RFR model being used to predict the target variable
-    RFR_dict (dict), dictionary of models, data and shared variables
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    rm_Skagerrak_data (boolean), Remove specific data
+    target (str): name of the target variable being predicted by the feature variables
+    model_name (str): name of the RFR model being used to predict the target variable
+    RFR_dict (dict): dictionary of models, data and shared variables
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    rm_Skagerrak_data (bool): Remove specific data
     (above argument is a iodide specific option - remove this)
 
     Returns
@@ -180,14 +177,14 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
-    RFR_dict (dict), dictionary of core variables and data
-    model_name (str), name of model to build
-    features_used (list), list of the features within the model_name model
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    RFR_dict (dict): dictionary of core variables and data
+    model_name (str): name of model to build
+    features_used (list): list of the features within the model_name model
     n_estimators (int), number of estimators (decision trees) to use
-    df (pd.dataframe), dataframe containing of target and features
-    rm_Skagerrak_data (boolean), Remove specific data
+    df (pd.DataFrame): dataframe containing of target and features
+    rm_Skagerrak_data (bool): Remove specific data
     (above argument is a iodide specific option - remove this)
 
     Returns
@@ -196,7 +193,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
-    # ----- Local variables
+    # - Local variables
     # Get unprocessed input data at observation points
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models(
@@ -209,7 +206,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         extr_str = '_No_Skagerrak'
     else:
         extr_str = ''
-    # ---- get the data
+    # - Get the data
     # get processed data
     # Which "features" (variables) to use
     if isinstance(features_used, type(None)):
@@ -251,7 +248,6 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         # ( otherwise the model is being re-trained )
         model = RandomForestRegressor(random_state=random_state,
                                       n_estimators=n_estimators, criterion='mse')
-#            , oob_score=oob_score)
         # fit the model
         model.fit(train_features, train_labels)
         # Save the newly built model model
@@ -270,23 +266,23 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    features_used (list), list of the features within the model_name model
-
+    target (str): Name of the target variable (e.g. iodide)
+    features_used (list): list of the features within the model_name model
+    df (pd.DataFrame): DataFrame of target and features values for point locations
+    n_estimators (int), number of estimators (decision trees) to use
+    model_name (str): name of the RFR model being used to predict the target variable
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
-    # ----- Local variables
+    # - Local variables
     # Get unprocessed input data at observation points
     if isinstance(df, type(None)):
         df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
-    # ---- get the data
+    # - Get the data
     # get processed data
     # Which "features" (variables) to use
     if isinstance(features_used, type(None)):
@@ -294,7 +290,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
         model_name = 'RFR(TEMP+DEPTH+SAL)'
         features_used = utils.get_model_features_used_dict(model_name)
 
-    # --- local variables
+    # - Local variables
     # dictionary of test set variables
     random_split_var = 'rn. 20%'
     strat_split_var = 'strat. 20%'
@@ -307,7 +303,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     else:
         Iaq = target
 
-    # --- set testset to evaulte
+    # - Set testset to evaulte
     TSETS = {}
     TSETS_N = {}
     TSETS_nsplits = {}
@@ -329,7 +325,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     # remove the now double up of nsplit=5 for Tname2copy
     del TSETS[Tname2copy]
 
-    # ---  build models using testsets
+    # - build models using testsets
     # setup Dataframe to store values
     RMSE_df = pd.DataFrame()
     # Now loop TSETS
@@ -365,7 +361,6 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             # ( otherwise the model is being re-trained )
             model = RandomForestRegressor(random_state=random_state,
                                           n_estimators=n_estimators, criterion='mse')
-    #            , oob_score=oob_score)
             # fit the model
             model.fit(train_features, train_labels)
             # predict the values
@@ -380,16 +375,12 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             # return stats on bias and variance
             # (just use RMSE and std dev. for now)
             RMSE_l += [np.sqrt(MSE)]
-    #        s = pd.Series( {'MSE': MSE, 'RMSE': np.sqrt(MSE), 'std':std } )
-    #        RMSE_df[Tname] = s
-            #
             del df_tmp, train_features, train_labels, test_features, test_labels
             del model
-#        gc.collect()
-        #
+        # Add to save dictionary
         RMSE_df[Tname] = RMSE_l
 
-    # --- Get stats on the ensemble values
+    # - Get stats on the ensemble values
     # Get general stats on ensemble
     RMSE_stats = pd.DataFrame(RMSE_df.describe().copy()).T
     RMSE_stats.sort_values(by='mean', inplace=True)
@@ -411,20 +402,20 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     # Save to csv
     RMSE_stats.to_csv('Oi_prj_test_training_selection_quantiles.csv')
 
-    # --- Setup the datafframes for plotting ( long form needed )
+    # - Setup the datafframes for plotting ( long form needed )
     RMSE_df = RMSE_df.melt()
     # rename columns
     ylabel_str = 'RMSE (nM)'
     RMSE_df.rename(columns={'value': ylabel_str}, inplace=True)
 
-    # --- Plot up the test runs
+    # - Plot up the test runs
     CB_color_cycle = AC.get_CB_color_cycle()
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper")
     dpi = 320
 
-    # --- plot up the results as violin plots
+    # - plot up the results as violin plots
     fig, ax = plt.subplots(figsize=(10, 4), dpi=dpi)
     # plot up these values
     ax = sns.violinplot(x='variable', y=ylabel_str, data=RMSE_df,
@@ -468,7 +459,6 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
 
 
 def run_tests_on_model_build_options(df=None,
-#                                     use_choosen_model=True,
                                      target='Iodide',
                                      testset='Test set (strat. 20%)',
                                      features_used=None,
@@ -478,15 +468,15 @@ def run_tests_on_model_build_options(df=None,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
-    features_used (list), list of the features within the model_name model
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    features_used (list): list of the features within the model_name model
+    model_name (str): name of the model to use
+    df (pd.DataFrame): dataframe containing of target and features
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.externals import joblib
@@ -617,23 +607,23 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
-    inc_ensemble (bool), include the ensemble (var2use) in the analysis
-    analysis4coastal (bool), include analysis for coastal vs. non-coastal regions
-    plot_up_model_performance (bool), plot up the model performance
-    add_sklean_metrics (bool), include core sklearn metrics
-    RFR_dict (dict), dictionary of core variables and data
-    save2csv (bool), save calculated statistics as a .csv file
-    analysis4coastal (bool), include analysis for coastal vs. non-coastal regions
-    param_names (list), list of parameters to calculate performance of
-    debug (boolean), print out debugging output?
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool): include the ensemble (var2use) in the analysis
+    analysis4coastal (bool): include analysis for coastal vs. non-coastal regions
+    plot_up_model_performance (bool): plot up the model performance
+    add_sklean_metrics (bool): include core sklearn metrics
+    RFR_dict (dict): dictionary of core variables and data
+    save2csv (bool): save calculated statistics as a .csv file
+    analysis4coastal (bool): include analysis for coastal vs. non-coastal regions
+    param_names (list): list of parameters to calculate performance of
+    debug (bool): print out debugging output?
 
     Returns
     -------
     (pd.DataFrame)
     """
-    # --- Get data
+    # - Get data
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # select dataframe with observations and predictions in it
@@ -723,17 +713,17 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
 
     Parameters
     -------
-    analysis4coastal (bool), include analysis of data split by coastal/non-coastal
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
-    inc_ensemble (bool), include the ensemble (var2use) in the analysis
-    debug (boolean), print out debugging output?
+    analysis4coastal (bool): include analysis of data split by coastal/non-coastal
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool): include the ensemble (var2use) in the analysis
+    var2use (str): var to use as main model prediction
+    debug (bool): print out debugging output?
+    add_sklean_metrics (bool): include core sklearn metrics
 
     Returns
     -------
-
-    Notes
-    -----
+    (pd.DataFrame)
     """
     # --- Get data
     if isinstance(RFR_dict, type(None)):
@@ -878,20 +868,7 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
     csv_name += '_REDUCED_NO_DERIVED.csv'
     tmp_stats[vars2inc_REDUCED].round(2).to_csv(csv_name)
 
-    # - Select the best model based of criteria
-#     if save_CHOOSEN_MODEL:
-#         # Set a criteria?
-#         # Select model at the top of the the sorted table for now...
-#         CHOOSEN_MODEL_NAME = stats.head(1).index[0]
-#         CHOOSEN_MODEL = models_dict[CHOOSEN_MODEL_NAME]
-#         # Save best estimator model
-#         model_savename = "my_model_{}.pkl".format(CHOOSEN_MODEL_NAME)
-#         joblib.dump(CHOOSEN_MODEL, wrk_dir+'/CHOOSEN_MODEL/' + model_savename)
-#         # Print detail on choosen model
-#         features_used = model_feature_dict[CHOOSEN_MODEL_NAME]
-#         zip(features_used, CHOOSEN_MODEL.feature_importances_)
-
-    # --- plot up model performance against the testset
+    # - plot up model performance against the testset
     if plot_up_model_performance:
         #
         rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
@@ -1019,8 +996,8 @@ def test_performance_of_params(target='Iodide', features_used=None):
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    features_used (list), list of the features within the model_name model
+    target (str): Name of the target variable (e.g. iodide)
+    features_used (list): list of the features within the model_name model
 
     Returns
     -------
@@ -1152,9 +1129,9 @@ def calc_performance_of_params(df=None, target='Iodide', params=[]):
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    df (pd.dataframe), dataframe containing of target and features
-    params (list), list of parameters to calculate performance of
+    target (str): Name of the target variable (e.g. iodide)
+    df (pd.DataFrame): dataframe containing of target and features
+    params (list): list of parameters to calculate performance of
     """
     # Initialise with generic stats
     stats = [df[i].describe() for i in params + [target]]
@@ -1175,12 +1152,12 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
+    target (str): Name of the target variable (e.g. iodide)
     N_trees2output (int), number of trees to extract to .csv files
-    RFR_dict (dict), dictionary of core variables and data
+    RFR_dict (dict): dictionary of core variables and data
     max_depth (int), maximum depth of tree branch to extract
-    ouput_random_tree_numbers (bool), randomly select trees to output
-    verbose (boolean), print out verbose output?
+    ouput_random_tree_numbers (bool): randomly select trees to output
+    verbose (bool): print out verbose output?
 
     Returns
     -------
@@ -1190,6 +1167,7 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
     -----
      - This is a file processor for the TreeSurgeon java/node.js plotter
     https://github.com/wolfiex/TreeSurgeon
+    http://doi.org/10.5281/zenodo.2579239
     """
     # Get the dictionary
     if isinstance(RFR_dict, type(None)):
@@ -1228,15 +1206,15 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    features_used (list), list of the features within the model_name model
+    target (str): Name of the target variable (e.g. iodide)
+    features_used (list): list of the features within the model_name model
     N_trees2output (int), number of trees to extract to .csv files
     max_depth (int), maximum depth of tree branch to extract
-    ouput_random_tree_numbers (bool), randomly select trees to output
-    verbose (boolean), print out verbose output?
-    model_filename (str), filename of the model to extract
-    folder (str), location of file (model_filename) to extract
-    extr_str (str), string to add to outputted dot file
+    ouput_random_tree_numbers (bool): randomly select trees to output
+    verbose (bool): print out verbose output?
+    model_filename (str): filename of the model to extract
+    folder (str): location of file (model_filename) to extract
+    extr_str (str): string to add to outputted dot file
 
     Returns
     -------
@@ -1246,6 +1224,7 @@ def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide'
     -----
      - This is a file processor for the TreeSurgeon java/node.js plotter
      https://github.com/wolfiex/TreeSurgeon
+     http://doi.org/10.5281/zenodo.2579239
     """
     from sklearn.externals import joblib
     from sklearn import tree
@@ -1297,7 +1276,7 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
 
     Parameters
     -------
-    RFR_dict (dict), dictionary of core variables and data
+    RFR_dict (dict): dictionary of core variables and data
     depth2investigate (int), the depth of branches to investigate to
 
     Returns
@@ -1308,6 +1287,7 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
     -----
      - This is a file processor for the TreeSurgeon java/node.js plotter
      https://github.com/wolfiex/TreeSurgeon
+     http://doi.org/10.5281/zenodo.2579239
     """
     import glob
     # ---
@@ -1354,10 +1334,10 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
     Parameters
     -------
     depth2investigate (int), the depth of branches to investigate to
-    RFR_dict (dict), dictionary of core variables and data
-    model_name (str), name of model to get decision points for
-    verbose (boolean), print out verbose output?
-    debug (boolean), print out debugging output?
+    RFR_dict (dict): dictionary of core variables and data
+    model_name (str): name of model to get decision points for
+    verbose (bool): print out verbose output?
+    debug (bool): print out debugging output?
 
     Returns
     -------
@@ -1367,6 +1347,7 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
     -----
      - This is a file processor for the TreeSurgeon java/node.js plotter
      https://github.com/wolfiex/TreeSurgeon
+     http://doi.org/10.5281/zenodo.2579239
      - Details on unfold approach
     link: http://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html
     # The decision estimator has an attribute called tree_  which stores the entire

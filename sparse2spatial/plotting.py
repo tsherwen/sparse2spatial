@@ -5,7 +5,7 @@ Plotting functions for plotting up s2s models/output
 Notes
 -----
  - Code for direct plotting for RandomForestRegressor output is externally held in the TreeSurgeon package (linked below)
-https://github.com/wolfiex/TreeSurgeon
+https://github.com/wolfiex/TreeSurgeon / http://doi.org/10.5281/zenodo.2579239
 
 """
 import numpy as np
@@ -19,27 +19,28 @@ import matplotlib.pyplot as plt
 import sparse2spatial.utils as utils
 import sparse2spatial.RFRanalysis as RFRanalysis
 import sparse2spatial.analysis as analysis
-
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 
 
-def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'):
+def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0',
+                                          var2plot='Ensemble_Monthly_mean'):
     """
     Wrapper to plot up the annual averages of the predictions
 
     Parameters
     -------
-    ds (xr.dataset), 3D dataset contraining variable of interest on monthly basis
-    target (str), Name of the target variable (e.g. iodide)
-    version (str), Version number or string (present in NetCDF names etc)
+    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    target (str): Name of the target variable (e.g. iodide)
+    version (str): Version number or string (present in NetCDF names etc)
+    var2plot (str): variable in dataset to be plotted
 
     Returns
     -------
     (None)
     """
     # Get annual average of the variable in the dataset
-    var2plot = 'Ensemble_Monthly_mean'
+
     ds = ds[[var2plot]].mean(dim='time')
     # Set a title for the plot
     title = "Annual average ensemble prediction for '{}' (pM)".format(target)
@@ -55,11 +56,11 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
 
     Parameters
     -------
-    ds (xr.dataset), 3D dataset contraining variable of interest on monthly basis
-    target (str), Name of the target variable (e.g. iodide)
-    version (str), Version number or string (present in NetCDF names etc)
-    seperate_plots (bool), plot up output as separate plots
-    verbose (boolean), print out verbose output?
+    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    target (str): Name of the target variable (e.g. iodide)
+    version (str): Version number or string (present in NetCDF names etc)
+    seperate_plots (bool): plot up output as separate plots
+    verbose (bool): print out verbose output?
 
     Returns
     -------
@@ -104,7 +105,7 @@ def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
     # TODO ...
     # Use an all data for now
     dfs['all'] = df.copy()
-    # loop and plot by region
+    # Loop and plot by region
     for region in regions:
         print(region)
         df = dfs[region]
@@ -129,11 +130,10 @@ def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
     ax = fig.add_subplot(111)
     # Loop by parameter
     for n_param, param in enumerate( params2plot ):
-        # plot a single 1:1 line
+        # Plot a single 1:1 line
         plot_121 = False
         if n_param == 0:
             plot_121 =True
-
         # Now plot a generic X vs. Y plot
         AC.plt_df_X_vs_Y(df=df, fig=fig, ax=ax, y_var=param, x_var=obs_var,
                          x_label=obs_var, y_label=param, color=color_dict[param],
@@ -161,18 +161,18 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
 
     Parameters
     -------
-    ds (xr.dataset), 3D dataset contraining variable of interest on monthly basis
-    var2plot (str), variable to plot from dataset
-    target (str), Name of the target variable (e.g. iodide)
-    version (str), Version number or string (present in NetCDF names etc)
-    file_and_path (str), folder and filename with location settings as single str
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    xticks, yticks (bool), include ticks on y and/or x axis?
-    title (str), title to add use for plot
-    LatVar, LonVar (str), variables to use for latitude and longitude
-    add_meridians_parallels (bool), add the meridians and parallels?
-    save_plot (bool), save the plot as png
-    show_plot (bool), show the plot on screen
+    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    var2plot (str): variable to plot from dataset
+    target (str): Name of the target variable (e.g. iodide)
+    version (str): Version number or string (present in NetCDF names etc)
+    file_and_path (str): folder and filename with location settings as single str
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    xticks, yticks (bool): include ticks on y and/or x axis?
+    title (str): title to add use for plot
+    LatVar, LonVar (str): variables to use for latitude and longitude
+    add_meridians_parallels (bool): add the meridians and parallels?
+    save_plot (bool): save the plot as png
+    show_plot (bool): show the plot on screen
     dpi (int): resolution to use for saved image (dots per square inch)
     projection (cartopy ccrs object), projection to use for spatial plots
     fig (figure instance), figure instance to plot onto

@@ -11,7 +11,6 @@ import AC_tools as AC
 # s2s specific imports
 import sparse2spatial.utils as utils
 
-
 def add_longhurst_raster_array_and_LWI_core_NetCDFs(target='Iodide'):
     """
     Driver to add Longhurst Provinces fields to spatial NetCDF files
@@ -69,12 +68,12 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
 
     Parameters
     -------
-    ds (xr.Dataset), xarray dataset to add LWI to
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    CoordVar (str), name to give to newly created
-    LatVar (str), variable name in DataFrame for latitude
-    LonVar (str), variable name in DataFrame for longitude
-    ExStr (str), extra string to add as a suffix to outputted files
+    ds (xr.Dataset): xarray dataset to add LWI to
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    CoordVar (str): name to give to newly created
+    LatVar (str): variable name in DataFrame for latitude
+    LonVar (str): variable name in DataFrame for longitude
+    ExStr (str): extra string to add as a suffix to outputted files
 
     Returns
     -------
@@ -240,9 +239,9 @@ def LonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
 
     Parameters
     -------
-    input (str), input string to use as key to return dictionary value
-    invert (float), reverse the key/pair of the dictionary
-    rtn_dict (boolean), return the entire dictionary.
+    input (str): input string to use as key to return dictionary value
+    invert (float): reverse the key/pair of the dictionary
+    rtn_dict (bool): return the entire dictionary.
 
     Returns
     -------
@@ -281,9 +280,9 @@ def MarineRegionsOrg_LonghurstProvinceFileNum2Province(input, invert=False,
 
     Parameters
     -------
-    input (str), input string to use as key to return dictionary value
-    invert (float), reverse the key/pair of the dictionary
-    rtn_dict (boolean), return the entire dictionary.
+    input (str): input string to use as key to return dictionary value
+    invert (float): reverse the key/pair of the dictionary
+    rtn_dict (bool): return the entire dictionary.
 
     Returns
     -------
@@ -322,9 +321,9 @@ def RosieLonghurstProvinceFileNum2Province(input, invert=False, rtn_dict=False):
 
     Parameters
     -------
-    input (str), input string to use as key to return dictionary value
-    invert (float), reverse the key/pair of the dictionary
-    rtn_dict (boolean), return the entire dictionary.
+    input (str): input string to use as key to return dictionary value
+    invert (float): reverse the key/pair of the dictionary
+    rtn_dict (bool): return the entire dictionary.
 
     Returns
     -------

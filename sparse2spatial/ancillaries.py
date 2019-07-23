@@ -23,10 +23,10 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
 
     Parameters
     -------
-    ds (xr.Dataset), dataset object with variables to interpolate
-    res (res), horizontal resolution (e.g. 4x5) of Dataset
-    save2NetCDF (boolean), save interpolated Dataset to as a NetCDF?
-    debug (boolean), print out debugging output?
+    ds (xr.Dataset): dataset object with variables to interpolate
+    res (str): horizontal resolution (e.g. 4x5) of Dataset
+    save2NetCDF (bool): save interpolated Dataset to as a NetCDF?
+    debug (bool): print out debugging output?
 
     Returns
     -------
@@ -292,8 +292,8 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
 
     Parameters
     -------
-    _fill_value (float), fill value to use for new NetCDF
-    debug (boolean), perform debugging and verbose printing?
+    _fill_value (float): fill value to use for new NetCDF
+    debug (bool): perform debugging and verbose printing?
 
     Returns
     -------
@@ -373,10 +373,10 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125',
 
     Parameters
     -------
-    spec (str), variable to extract from archived data
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    file_prefix (str), file prefix to add to saved file
-    debug (boolean), print out debugging output?
+    spec (str): variable to extract from archived data
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    file_prefix (str): file prefix to add to saved file
+    debug (bool): print out debugging output?
 
     Returns
     -------
