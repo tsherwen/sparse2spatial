@@ -846,6 +846,7 @@ def mk_test_train_sets(df=None, target='Iodide',
     Parameters
     -------
     target (str): Name of the target variable (e.g. iodide)
+    random_state (int), seed value to use as random seed for reproducible analysis
     nsplits (int), number of ways to split the data
     rand_strat (bool): split the data in a random way using stratified sampling
     rand_20_80 (bool): split the data in a random way

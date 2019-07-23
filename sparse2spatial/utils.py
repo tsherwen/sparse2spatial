@@ -878,7 +878,7 @@ def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
     lats (np.array): list of latitudes to use for spatial extraction
     months (np.array): list of months to use for temporal extraction
     var2extract (str): name of variable to extract data for
-    rm_Skagerrak_data (bool): remove the single data from the Skagerrak region
+    rm_Skagerrak_data (bool): remove the data for the Skagerrak region
     debug (bool): print out debugging output?
 
     Returns

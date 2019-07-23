@@ -27,6 +27,10 @@ def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
     df (pd.DataFrame): DataFrame of data
     LatVar (str): variable name in DataFrame for latitude
     LonVar (str): variable name in DataFrame for longitude
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
     from geopandas.tools import sjoin
     # Get the shapes for the ocean
@@ -51,6 +55,16 @@ def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
 def mk_NetCDF_of_global_oceans(df=None, LatVar='lat', LonVar='lon', save2NetCDF=False):
     """
     Add the regional location of observations to dataframe
+
+    Parameters
+    -------
+    df (pd.DataFrame): DataFrame of data
+    LatVar (str): variable name in DataFrame for latitude
+    LonVar (str): variable name in DataFrame for longitude
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
     # Get AC_tools location, then set example data folder location
     import os
@@ -84,7 +98,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
     target (str): Name of the target variable (e.g. iodide)
     res (str): horizontal resolution of dataset (e.g. 4x5)
     var2template (str): variable to use a template for making new variables in ds
-
+    use_annual_mean (bool): use the annual mean of the variable
 
     Returns
     -------
@@ -97,12 +111,13 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
         filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(folder, type(None)):
         data_root = utils.get_file_locations('data_root')
-        folder = '{}/{}/'.format(data_root, target)
+        folder = '{}/{}/outputs/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # variables to consider
     vars2plot = list(ds.data_vars)
     # add LWI and surface area to array
     ds = utils.add_LWI2array(ds=ds, var2template=var2template)
+    IS_WATER = ds['IS_WATER'].mean(dim='time')
     # -- get general annual stats in a dataframe
     df = pd.DataFrame()
     for var_ in vars2plot:
@@ -112,7 +127,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
             ds_tmp = ds_tmp.mean(dim='time')
         # mask to only consider (100%) water boxes
         arr = ds_tmp.values
-        arr = arr[(LWI == 0).T]
+        arr = arr[(IS_WATER == True)]
         # sve to dataframe
         df[var_] = pd.Series(arr.flatten()).describe()
     # Get area weighted mean
@@ -154,6 +169,7 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
     res (str): horizontal resolution of dataset (e.g. 4x5)
     debug (bool): print out debugging output?
     var2template (str): variable to use a template for making new variables in ds
+    use_annual_mean (bool): use the annual mean of the variable
 
     Returns
     -------
@@ -165,7 +181,7 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
             filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
         if isinstance(folder, type(None)):
             data_root = utils.get_file_locations('data_root')
-            folder = '{}/{}/'.format(data_root, target)
+            folder = '{}/{}/outputs/'.format(data_root, target)
         ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
@@ -227,6 +243,7 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
     res (str): horizontal resolution of dataset (e.g. 4x5)
     debug (bool): print out debugging output?
     var2template (str): variable to use a template for making new variables in ds
+    use_annual_mean (bool): use the annual mean of the variable
 
     Returns
     -------

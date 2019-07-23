@@ -7,11 +7,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import gc
+import glob
+import datetime as datetime
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
-import glob
 # specific s2s imports
 import sparse2spatial.utils as utils
+import sparse2spatial.ancillaries as ancillaries
 
 
 def extract_ancillaries_from_external_files(obs_data_df=None,
@@ -496,9 +498,9 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
     # - Local variables
     # file ancillary data as a xarray Dataset
     res = '0.125x0.125'  # Use Nature res. run for analysis
-    data_root = utils.get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/data/'
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    dsA = xr.open_dataset(data_root + filename)
+    dsA = xr.open_dataset(folder + filename)
     # Get list of site IDs...
     # NOTE: if a new index axis is created, then the index info is lost
     Data_key_ID = df['Data_Key_ID'].values
@@ -658,7 +660,7 @@ def get_WOA_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     (None)
     """
     # Set folder that files are in (using nitrate arrays)
-    folder = utils.get_file_locations('WOA_2013') + '/Nitrate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Nitrate_1x1/'
     # Select the correct file (abituaryily using September )
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
@@ -759,7 +761,7 @@ def get_WOA_array_025x025_indices(lons=None, lats=None, month=9, debug=False):
     (list, list)
     """
     # Set folder that files are in (using temperatures arrays)
-    folder = utils.get_file_locations('WOA_2013') + '/Temperature_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file (abituaryily using September )
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -1074,7 +1076,7 @@ def get_WOA_MLD_array_1x1_indices(var2use='pt', lons=None, lats=None, month=9,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA94/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
 #    print folder+file_str
@@ -1297,8 +1299,8 @@ def extract_feature_variables2NetCDF(res='4x5',
     ds.to_netcdf('Oi_prj_feature_variables_{}_TEST.nc'.format(res))
     # Interpolate NaNs?
     if interpolate_nans:
-        ds = interpolate_NaNs_in_feature_variables(ds, res=res,
-                                                   save2NetCDF=False)
+        ds = ancillaries.interpolate_NaNs_in_feature_variables(ds, res=res,
+                                                               save2NetCDF=False)
         # Save interpolated version
         ext_str = '_INTERP_NEAREST'
         filename = 'Oi_prj_feature_variables_{}{}.nc'.format(res, ext_str)
@@ -2016,7 +2018,7 @@ def extract_MLD_file4indices(var2use='pt', lat_idx=None, lon_idx=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA94/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     if debug:
@@ -2055,7 +2057,7 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA94/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     # - Open file
@@ -2582,7 +2584,7 @@ def get_WOA_TEMP4indices(lat_idx=None, lon_idx=None, month=None,
        contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2636,7 +2638,7 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
     if debug:
         print(locals())
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2739,7 +2741,7 @@ def get_WOA_Nitrate4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -2791,7 +2793,7 @@ def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
@@ -2877,7 +2879,7 @@ def get_WOA_Salinity4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Fix depth = 0 for now...
@@ -2925,7 +2927,7 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
      sea_water_salinity at standard depth levels." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Open file
@@ -3022,7 +3024,7 @@ def get_WOA_Silicate4indices(lat_idx=None, lon_idx=None, month=None,
      contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3071,7 +3073,7 @@ def get_WOA_Silicate_4_loc(lat=None, lon=None, month=None, var2use='i_an',
      contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Open file
@@ -3154,7 +3156,7 @@ def get_WOA_Phosphate4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3204,7 +3206,7 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
     in each grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Open file
@@ -3296,7 +3298,7 @@ def get_WOA_Dissolved_O2_4indices(lat_idx=None, lon_idx=None, month=None,
     grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3344,7 +3346,7 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
     grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Open file

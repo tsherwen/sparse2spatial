@@ -1130,7 +1130,7 @@ def calc_performance_of_params(df=None, target='Iodide', params=[]):
     Parameters
     -------
     target (str): Name of the target variable (e.g. iodide)
-    df (pd.DataFrame): dataframe containing of target and features
+    df (pd.DataFrame): dataframe containing target and feature variables
     params (list): list of parameters to calculate performance of
     """
     # Initialise with generic stats

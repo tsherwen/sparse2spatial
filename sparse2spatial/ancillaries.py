@@ -4,6 +4,9 @@ Processing scripts for ancillary data to used as dependent variable for preditio
 
 """
 import xarray as xr
+import numpy as np
+import pandas as pd
+import xarray as xr
 import gc
 from multiprocessing import Pool
 from time import gmtime, strftime
@@ -124,7 +127,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    folder = utils.get_file_locations('DOC')
+    older = utils.get_file_locations('data_root') +'/DOC/'
     # Filename as a string
     file_str = 'DOCmodelSR.nc'
     # Open dataset
@@ -164,7 +167,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    folder = utils.get_file_locations('DOC')
+    older = utils.get_file_locations('data_root') +'/DOC/'
     # Filename as a string
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
@@ -200,7 +203,7 @@ def mk_RAD_NetCDF_monthly():
     Resample shortwave radiation NetCDF from daily to monthly
     """
     # Directory?
-    folder = utils.get_file_locations('GFDL')
+    folder = utils.get_file_locations('data_root') +'/GFDL/'
     # Filename as a string
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
@@ -313,7 +316,7 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     # Gov. Printing Office, Wash., D.C., 96 pp. 87 figs. (pdf, 13.0 MB).
     # variables for
     MLD_vars = ['pt', 'pd', 'vd']
-    folder = utils.get_file_locations('WOA_1994')
+    folder = utils.get_file_locations('data_root') + '/WOA94/'
     # - Loop MLD variables
     for var_ in MLD_vars:
         file_str = 'mld*{}*'.format(var_)
