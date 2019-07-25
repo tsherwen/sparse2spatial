@@ -589,7 +589,7 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
 
     Parameters
     -------
-    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
     rm_Skagerrak_data (bool): remove the data from the Skagerrak region
     dpi (int): resolution to use for saved image (dots per square inch)
     plot_avg_as_median (bool): use median as the average in plots
@@ -735,7 +735,7 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
     context (str): seaborn context to use for plotting (e.g. paper, poster, talk...)
     just_plot_existing_params (bool): just plot up the existing parameterisations
     plot_up_param_iodide (bool): plot parameterised iodide
-    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
     plot_avg_as_median (bool): use median as the average in plots
     show_plot (bool): show the plot on screen
 
@@ -924,7 +924,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
     RFR_dict (dict): dictionary of core variables and data
     target (str): Name of the target variable (e.g. iodide)
     dpi (int): resolution to use for saved image (dots per square inch)
-    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
     plot_avg_as_median (bool): use median as the average in plots
     topmodels (list): list of models to make spatial predictions for
     show_plot (bool): show the plot on screen

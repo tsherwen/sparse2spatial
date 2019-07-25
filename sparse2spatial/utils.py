@@ -939,7 +939,7 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
 
     Parameters
     -------
-    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
     file_and_path (str): folder and filename with location settings as single str

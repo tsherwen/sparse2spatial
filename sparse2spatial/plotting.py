@@ -30,7 +30,7 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
 
     Parameters
     -------
-    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
     var2plot (str): variable in dataset to be plotted
@@ -56,7 +56,7 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
 
     Parameters
     -------
-    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
     seperate_plots (bool): plot up output as separate plots
@@ -161,7 +161,7 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
 
     Parameters
     -------
-    ds (xr.Dataset): 3D dataset contraining variable of interest on monthly basis
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
     var2plot (str): variable to plot from dataset
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
