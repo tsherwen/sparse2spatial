@@ -11,7 +11,7 @@ Observations of sea-surface iodide gave been compiled and [archived at the Briti
 ### How to update the compilation
 
 1. Download the latest from British Oceanographic Data Centre (BODC) archive (see reference below)
-1. Compile all new observations into the provided template excel file (one per observational dataset - e.g. cruise/campaign)
+1. Compile all new observations into the provided template excel file (``Iodine_climatologyXX_NAME_OF_CRUISE.xlsx``). One file should be made with template per observational dataset (e.g. one per cruise/campaign).
 1. Download this Github package, install the package (see install instructions in main repository ``README.md``), and navigate to this folder (``sparse2spatial/scripts/Iodide``)
 1. Place all new datafiles in this directory
 1. Run the main driver file ``process_new_observations.py`` at command line or interactively
@@ -30,7 +30,7 @@ Observations of sea-surface iodide gave been compiled and [archived at the Briti
 
 ### Overview
 
-Please see the *paper in open-access review* linked below for more details on this work.
+Please see the *paper in open-access review* linked below for more details on this work. This work used the observational dataset as described in the data descriptor paper and archived data linked above. 
 
 ### References
 
