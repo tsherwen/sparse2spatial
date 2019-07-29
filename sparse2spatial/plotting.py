@@ -90,6 +90,93 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
         print('TODO: setup to plot window plot by season')
 
 
+def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
+                          start_from_last_obs=False, drop_bins_without_data=True,
+                          target='Iodide', dpi=320):
+    """
+    Plot up # of obs. data (Y) binned by region against year (X)
+
+    Parameters
+    -------
+    df (pd.DataFrame): DataFrame of data with and a datetime variable
+    target (str): Name of the target variable (e.g. iodide)
+    TimeWindow (int): number years to bit observations over
+    start_from_last_obs (bool): start from the last observational date
+    drop_bins_without_data (bool): exclude bins with no data from plotting
+    dpi (int): resolution of figure (dots per sq inch)
+
+    Returns
+    -------
+    (None)
+    """
+    # Sort the dataframe by date
+    df.sort_values( by=Datetime_var, inplace=True )
+    # Get the minimum and maximum dates
+    min_date = df[Datetime_var].min()
+    max_date = df[Datetime_var].max()
+    # How many years of data are there?
+    yrs_of_data = (max_date-min_date).total_seconds()/60/60/24/365
+    nbins = AC.myround(yrs_of_data/TimeWindow, base=1 )
+    # Start from last observation or from last block of time
+    sdate_block = AC.myround(max_date.year, 5)
+    sdate_block =  datetime.datetime(sdate_block, 1, 1)
+    # Make sure the dates used are datetimes
+    min_date, max_date = pd.to_datetime( [min_date, max_date] ).values
+    min_date, max_date = AC.dt64_2_dt( [min_date, max_date])
+    # Calculate the number of points for each bin by region
+    dfs = {}
+    for nbin in range(nbins+2):
+        # Start from last observation or from last block of time?
+        days2rm = int(nbin*365*TimeWindow)
+        if start_from_last_obs:
+            bin_start = AC.add_days( max_date, -int(days2rm+(365*TimeWindow)))
+            bin_end = AC.add_days( max_date, -days2rm )
+        else:
+            bin_start = AC.add_days( sdate_block,-int(days2rm+(365*TimeWindow)))
+            bin_end = AC.add_days( sdate_block, -days2rm )
+        # Select the data within the observational dates
+        bool1 = df[Datetime_var] > bin_start
+        bool2 = df[Datetime_var] <= bin_end
+        df_tmp = df.loc[bool1 & bool2, :]
+        # Print the number of values in regions for bin
+        if verbose:
+            print(bin_start, bin_end, df_tmp.shape)
+        # String to save data with
+        if start_from_last_obs:
+            bin_start_str = bin_start.strftime( '%Y/%m/%d')
+            bin_end_str = bin_end.strftime( '%Y/%m/%d')
+        else:
+            bin_start_str = bin_start.strftime( '%Y')
+            bin_end_str = bin_end.strftime( '%Y')
+        str2use = '{}-{}'.format(bin_start_str, bin_end_str)
+        # Sum up the number of values by region
+        dfs[ str2use] = df_tmp['ocean'].value_counts(dropna=False)
+    # Combine to single dataframe and sort by date
+    dfA = pd.DataFrame( dfs )
+    dfA = dfA[list(sorted(dfA.columns)) ]
+    # Drop the years without any data
+    if drop_bins_without_data:
+        dfA = dfA.T.dropna(how='all').T
+    # Update index names
+    dfA = dfA.T
+    dfA.columns
+    rename_cols = {
+    np.NaN : 'Other',  'INDIAN OCEAN': 'Indian Ocean', 'SOUTHERN OCEAN' : 'Southern Ocean'
+    }
+    dfA = dfA.rename(columns=rename_cols)
+    dfA = dfA.T
+    # Plot up as a stacked bar plot
+    import seaborn as sns
+    sns.set()
+    dfA.T.plot(kind='bar', stacked=True)
+    # Add title etc
+    plt.ylabel( '# of observations')
+    plt.title( '{} obs. data by region'.format(target))
+    # Save plotted figure
+    savename = 's2s_{}_data_by_year_region'.format(target)
+    plt.savefig(savename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
+
+
 def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
                            obs_var='Obs.'):
     """
