@@ -31,14 +31,14 @@ def get_CH3I_obs(target='CH3I', limit_depth_to=20,):
     TimeVar1 = 'Date (UTC) and time'
     TimeVar2 = 'Sampling date/time (UT)'
     month_var = 'Month'
-    dt = pd.to_datetime(
-        df[TimeVar1], format='%Y-%m-%d %H:%M:%S', errors='coerce')
+    format = '%Y-%m-%d %H:%M:%S'
+    dt = pd.to_datetime(df[TimeVar1], format=format, errors='coerce')
     df['datetime'] = dt
-
+    # Get month by mapping a local helper function
     def get_month(x):
         return x.month
     df[month_var] = df['datetime'].map(get_month)
-    # make sure all values are numeric
+    # Make sure all values are numeric
     for var in [Varname]+[LatVar1, LonVar1]:
         df.loc[:, var] = pd.to_numeric(df[var].values, errors='coerce')
         # replace flagged values with NaN

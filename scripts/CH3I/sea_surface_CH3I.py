@@ -26,6 +26,7 @@ import sparse2spatial.plotting as plotting
 from sparse2spatial.RFRbuild import build_or_get_models
 
 # Get CH3I specific functions
+from observations import get_CH3I_obs
 
 
 def main():
@@ -46,9 +47,9 @@ def main():
 #    RFR_dict = build_or_get_models_CH3I(rebuild=True, target=target)
 
     # Get stats ont these models
-    stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-                                                      target=target, verbose=True,
-                                                      debug=True)
+    stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
+                                                         target=target, verbose=True,
+                                                         debug=True)
 
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
@@ -69,6 +70,93 @@ def main():
                                          xsave_str=xsave_str, add_ensemble2ds=True)
 
     #
+
+
+def plot_up_obs_data_by_year( target='CH3I',):
+    """
+    Plot up the amount of observational in a given year, by region
+    """
+    # Get the observational data
+    df = get_CH3I_obs()
+    # Add the ocean that the data is in
+    df = analysis.add_loc_ocean2df(df=df,  LatVar='Latitude', LonVar='Longitude')
+    # Plot up the observational data by year
+    plot_up_df_data_by_yr( df=df, target=target )
+
+
+def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
+                          start_from_last_obs=False, drop_bins_without_data=True,
+                          target='Iodide', dpi=320):
+    """
+    Plot up # of obs. data binned by region against year
+    """
+    # Sort the dataframe by date
+    df.sort_values( by=Datetime_var, inplace=True )
+    # Get the minimum and maximum dates
+    min_date = df[Datetime_var].min()
+    max_date = df[Datetime_var].max()
+    # How many years of data are there?
+    yrs_of_data = (max_date-min_date).total_seconds()/60/60/24/365
+    nbins = AC.myround(yrs_of_data/TimeWindow, base=1 )
+    # Start from last observation or from last block of time
+    sdate_block = AC.myround(max_date.year, 5)
+    sdate_block =  datetime.datetime(sdate_block, 1, 1)
+    # Make sure the dates used are datetimes
+    min_date, max_date = pd.to_datetime( [min_date, max_date] ).values
+    min_date, max_date = AC.dt64_2_dt( [min_date, max_date])
+    # Calculate the numer of points for each bin by region
+    dfs = {}
+    for nbin in range(nbins+2):
+        # Start from last observation or from last block of time?
+        days2rm = int(nbin*365*TimeWindow)
+        if start_from_last_obs:
+            bin_start = AC.add_days( max_date, -int(days2rm+(365*TimeWindow)))
+            bin_end = AC.add_days( max_date, -days2rm )
+        else:
+            bin_start = AC.add_days( sdate_block,-int(days2rm+(365*TimeWindow)))
+            bin_end = AC.add_days( sdate_block, -days2rm )
+        # Select the data within the observational dates
+        bool1 = df[Datetime_var] > bin_start
+        bool2 = df[Datetime_var] <= bin_end
+        df_tmp = df.loc[bool1 & bool2, :]
+        # Print the number of values in regions for bin
+        if verbose:
+            print(bin_start, bin_end, df_tmp.shape)
+        # String to save data with
+        if start_from_last_obs:
+            bin_start_str = bin_start.strftime( '%Y/%m/%d')
+            bin_end_str = bin_end.strftime( '%Y/%m/%d')
+        else:
+            bin_start_str = bin_start.strftime( '%Y')
+            bin_end_str = bin_end.strftime( '%Y')
+        str2use = '{}-{}'.format(bin_start_str, bin_end_str)
+        # Sum up the number of values by region
+        dfs[ str2use] = df_tmp['ocean'].value_counts(dropna=False)
+    # Combine to single dataframe and sort by date
+    dfA = pd.DataFrame( dfs )
+    dfA = dfA[list(sorted(dfA.columns)) ]
+    # Drop the years without any data
+    if drop_bins_without_data:
+        dfA = dfA.T.dropna(how='all').T
+    # Update index names
+    dfA = dfA.T
+    dfA.columns
+    rename_cols = {
+    np.NaN : 'Other',  'INDIAN OCEAN': 'Indian Ocean', 'SOUTHERN OCEAN' : 'Southern Ocean'
+    }
+    dfA = dfA.rename(columns=rename_cols)
+    dfA = dfA.T
+    # Plot up as a stacked bar plot
+    import seaborn as sns
+    sns.set()
+    dfA.T.plot(kind='bar', stacked=True)
+    # Add title etc
+    plt.ylabel( '# of observations')
+    plt.title( '{} obs. data by region'.format(target))
+    # Save plotted figure
+    savename = 's2s_{}_data_by_year_region'.format(target)
+    plt.savefig(savename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
+
 
 
 def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
