@@ -4,10 +4,14 @@ Processing scripts for ancillary data to used as dependent variable for preditio
 
 """
 import xarray as xr
+import numpy as np
+import pandas as pd
+import xarray as xr
 import gc
 from multiprocessing import Pool
 from time import gmtime, strftime
 import time
+import glob
 from functools import partial
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
@@ -22,10 +26,10 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
 
     Parameters
     -------
-    ds (xr.Dataset), dataset object with variables to interpolate
-    res (res), horizontal resolution (e.g. 4x5) of Dataset
-    save2NetCDF (boolean), save interpolated Dataset to as a NetCDF?
-    debug (boolean), print out debugging output?
+    ds (xr.Dataset): dataset object with variables to interpolate
+    res (str): horizontal resolution (e.g. 4x5) of Dataset
+    save2NetCDF (bool): save interpolated Dataset to as a NetCDF?
+    debug (bool): print out debugging output?
 
     Returns
     -------
@@ -123,7 +127,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    folder = utils.get_file_locations('DOC')
+    older = utils.get_file_locations('data_root') +'/DOC/'
     # Filename as a string
     file_str = 'DOCmodelSR.nc'
     # Open dataset
@@ -163,7 +167,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    folder = utils.get_file_locations('DOC')
+    older = utils.get_file_locations('data_root') +'/DOC/'
     # Filename as a string
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
@@ -199,7 +203,7 @@ def mk_RAD_NetCDF_monthly():
     Resample shortwave radiation NetCDF from daily to monthly
     """
     # Directory?
-    folder = utils.get_file_locations('GFDL')
+    folder = utils.get_file_locations('data_root') +'/GFDL/'
     # Filename as a string
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
@@ -291,8 +295,8 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
 
     Parameters
     -------
-    _fill_value (float), fill value to use for new NetCDF
-    debug (boolean), perform debugging and verbose printing?
+    _fill_value (float): fill value to use for new NetCDF
+    debug (bool): perform debugging and verbose printing?
 
     Returns
     -------
@@ -312,7 +316,7 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
     # Gov. Printing Office, Wash., D.C., 96 pp. 87 figs. (pdf, 13.0 MB).
     # variables for
     MLD_vars = ['pt', 'pd', 'vd']
-    folder = utils.get_file_locations('WOA_1994')
+    folder = utils.get_file_locations('data_root') + '/WOA94/'
     # - Loop MLD variables
     for var_ in MLD_vars:
         file_str = 'mld*{}*'.format(var_)
@@ -372,10 +376,10 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125',
 
     Parameters
     -------
-    spec (str), variable to extract from archived data
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    file_prefix (str), file prefix to add to saved file
-    debug (boolean), print out debugging output?
+    spec (str): variable to extract from archived data
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    file_prefix (str): file prefix to add to saved file
+    debug (bool): print out debugging output?
 
     Returns
     -------

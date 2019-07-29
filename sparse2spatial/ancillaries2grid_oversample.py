@@ -7,11 +7,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import gc
+import glob
+import datetime as datetime
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 # specific s2s imports
 import sparse2spatial.utils as utils
-from sparse2spatial.utils import set_backup_month_if_unknown
+import sparse2spatial.ancillaries as ancillaries
 
 
 def extract_ancillaries_from_external_files(obs_data_df=None,
@@ -23,11 +25,11 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
 
     Parameters
     -------
-    obs_data_df (pd.DataFrame), DataFrame of observational data
-    obs_metadata_df (pd.DataFrame), DataFrame of metadata for observational data
-    fill_error_strings_with_NaNs (boolean), fill the error strings with NaNs?
+    obs_data_df (pd.DataFrame): DataFrame of observational data
+    obs_metadata_df (pd.DataFrame): DataFrame of metadata for observational data
+    fill_error_strings_with_NaNs (bool): fill the error strings with NaNs?
     buffer_CORDS (int), number of buffer coordinates to use for interpolation
-    debug (boolean), perform debugging and verbose printing?
+    debug (bool): perform debugging and verbose printing?
 
     Returns
     -------
@@ -386,12 +388,12 @@ def get_ancillaries4df_locs(df=None,
 
     Parameters
     -------
-    df (pd.DataFrame), DataFrame of observational data
-    get_Chance_multi_vars (boolean), get the extra ancillary values needed?
-    fill_error_strings_with_NaNs (boolean), fill the error strings with NaNs?
-    df_lar_var (str), variable name in DataFrame for latitude
-    df_lon_var (str), variable name in DataFrame for longitude
-    df_time_var (str), variable name in DataFrame for time (month)
+    df (pd.DataFrame): DataFrame of observational data
+    get_Chance_multi_vars (bool): get the extra ancillary values needed?
+    fill_error_strings_with_NaNs (bool): fill the error strings with NaNs?
+    df_lar_var (str): variable name in DataFrame for latitude
+    df_lon_var (str): variable name in DataFrame for longitude
+    df_time_var (str): variable name in DataFrame for time (month)
 
     Returns
     -------
@@ -419,8 +421,9 @@ def get_ancillaries4df_locs(df=None,
     # Add WOA_TEMP_K
     if TEMP_K_var not in df.columns:
         df[TEMP_K_var] = df[TEMP_var].values + 273.15
-    # Also consider variables for
-    if consider_extra_vars4Rosies_multivariate_eqn:
+    # Also consider variables for Chance2014 multivariante eqn.
+    consider_extra_vars4Chance2014_multivariate_eqn=False
+    if consider_extra_vars4Chance2014_multivariate_eqn:
         sumMLDpt_sum_var = 'WOA_MLDpt_sum'
         #
         df[sumMLDpt_sum_var] = df.apply(lambda x: get_MLD_4_loc(
@@ -439,14 +442,14 @@ def mk_predictor_variable_csv(res='4x5', month=9,
 
     Parameters
     -------
-    df (pd.DataFrame), DataFrame of observational data
-    get_Chance_multi_vars (boolean), get the extra ancillary values needed?
-    fill_error_strings_with_NaNs (boolean), fill the error strings with NaNs?
-    df_lar_var (str), variable name in DataFrame for latitude
-    df_lon_var (str), variable name in DataFrame for longitude
-    df_time_var (str), variable name in DataFrame for time (month)
+    df (pd.DataFrame): DataFrame of observational data
+    get_Chance_multi_vars (bool): get the extra ancillary values needed?
+    fill_error_strings_with_NaNs (bool): fill the error strings with NaNs?
+    df_lar_var (str): variable name in DataFrame for latitude
+    df_lon_var (str): variable name in DataFrame for longitude
+    df_time_var (str): variable name in DataFrame for time (month)
     month (int): month number to use (1=jan, 12=dec)
-    res (str), horizontal resolution of dataset (e.g. 4x5)
+    res (str): horizontal resolution of dataset (e.g. 4x5)
 
     Returns
     -------
@@ -485,19 +488,19 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
 
     Parameters
     -------
-    df (pd.DataFrame), DataFrame of observational data
-    debug (boolean), perform debugging and verbose printing?
+    df (pd.DataFrame): DataFrame of observational data
+    debug (bool): perform debugging and verbose printing?
 
     Returns
     -------
     (pd.DataFrame)
     """
-    # --- local variables
+    # - Local variables
     # file ancillary data as a xarray Dataset
     res = '0.125x0.125'  # Use Nature res. run for analysis
-    data_root = utils.get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/data/'
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    dsA = xr.open_dataset(data_root + filename)
+    dsA = xr.open_dataset(folder + filename)
     # Get list of site IDs...
     # NOTE: if a new index axis is created, then the index info is lost
     Data_key_ID = df['Data_Key_ID'].values
@@ -539,7 +542,7 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
         # - Now extract Ancillary data
         # use the mid season month if not provided
         if tmp_month == 0:
-            tmp_month = set_backup_month_if_unknown(lat=tmp_lat,)
+            tmp_month = utils.set_backup_month_if_unknown(lat=tmp_lat,)
         # Select data for month
         ds = dsA.sel(time=(dsA['time.month'] == tmp_month))
         # Select for location
@@ -574,11 +577,11 @@ def mk_array_of_indices4locations4res(res='4x5', df_lar_var='lat', df_lon_var='l
 
     Parameters
     -------
-    df (pd.DataFrame), DataFrame of observational data
-    df_lar_var (str), variable name in DataFrame for latitude
-    df_lon_var (str), variable name in DataFrame for longitude
-    df_time_var (str), variable name in DataFrame for time (month)
-    res (str), horizontal resolution of dataset (e.g. 4x5)
+    df (pd.DataFrame): DataFrame of observational data
+    df_lar_var (str): variable name in DataFrame for latitude
+    df_lon_var (str): variable name in DataFrame for longitude
+    df_time_var (str): variable name in DataFrame for time (month)
+    res (str): horizontal resolution of dataset (e.g. 4x5)
 
     Returns
     -------
@@ -647,17 +650,17 @@ def get_WOA_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
 
     Parameters
     -------
-    lons (np.array), list of Longitudes to use for spatial extraction
-    lats (np.array), list of latitudes to use for spatial extraction
+    lons (np.array): list of Longitudes to use for spatial extraction
+    lats (np.array): list of latitudes to use for spatial extraction
     month (int): month number to use (1=jan, 12=dec)
-    debug (boolean), perform debugging and verbose printing?
+    debug (bool): perform debugging and verbose printing?
 
     Returns
     -------
     (None)
     """
     # Set folder that files are in (using nitrate arrays)
-    folder = utils.get_file_locations('WOA_2013') + '/Nitrate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Nitrate_1x1/'
     # Select the correct file (abituaryily using September )
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
@@ -756,12 +759,9 @@ def get_WOA_array_025x025_indices(lons=None, lats=None, month=9, debug=False):
     Returns
     -------
     (list, list)
-
-    Notes
-    -----
     """
     # Set folder that files are in (using temperatures arrays)
-    folder = utils.get_file_locations('WOA_2013') + '/Temperature_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file (abituaryily using September )
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -810,9 +810,6 @@ def get_RAD_array_1_9x1_9_indices(lons=None, lats=None, month=9, debug=False):
     Returns
     -------
     (list, list)
-
-    Notes
-    -----
     """
     # Directory?
     folder = utils.get_file_locations('data_root') + '/GFDL/'
@@ -888,7 +885,7 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
+        month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -957,9 +954,6 @@ def get_DOC_array_1x1_indices(lons=None, lats=None, month=9, debug=False):
     Returns
     -------
     (list, list)
-
-    Notes
-    -----
     """
     # Directory?
     folder = utils.get_file_locations('data_root') + '/DOC/'
@@ -1029,7 +1023,7 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
+        month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1070,7 +1064,7 @@ def get_WOA_MLD_array_1x1_indices(var2use='pt', lons=None, lats=None, month=9,
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -1078,11 +1072,11 @@ def get_WOA_MLD_array_1x1_indices(var2use='pt', lons=None, lats=None, month=9,
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA94/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
 #    print folder+file_str
@@ -1130,17 +1124,14 @@ def get_DOC_accum_1x1_indices(var2use='DOCaccum_avg', lons=None, lats=None,
     depth (float): index of float to extract
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
     var2use (str): var to extract from NetCDF
 
     Returns
     -------
-    (float), (str)
-
-    Notes
-    -----
+    (float): (str)
     """
     # var2use='DOCaccum_avg'; verbose=True; debug=False
     # Only annual values in dataset
@@ -1193,16 +1184,16 @@ def extract_feature_variables2NetCDF(res='4x5',
 
     Parameters
     -------
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    interpolate_nans (boolean), interpolate to fill the NaN values
-    add_derivative_vars (boolean), add the derivative feature variables
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    interpolate_nans (bool): interpolate to fill the NaN values
+    add_derivative_vars (bool): add the derivative feature variables
 
     Returns
     -------
     (None)
     """
     import xarray as xr
-    # --- Local variables
+    # - Local variables
     # Temp vars variables
     TEMP_K_var = 'WOA_TEMP_K'
     TEMP_var = 'WOA_TEMP'
@@ -1249,7 +1240,7 @@ def extract_feature_variables2NetCDF(res='4x5',
     # Get indicies for boxes (calculated offline)
     filename = 'Oi_prj_indices4feature_variable_inputs_{}.csv'.format(res)
     df_IND = pd.read_csv(filename)
-    # --- Loop variables and add values to NetCDF
+    # - Loop variables and add values to NetCDF
     # Loop variables and extract en masse
     ds_vars = []
     for var in vars2use:
@@ -1264,15 +1255,16 @@ def extract_feature_variables2NetCDF(res='4x5',
                 # extract data for indicies
                 if 'WOA_MLD' in var:
                     vals = funcs4vars[var](lon_idx=lon_idx, lat_idx=lat_idx,
-                                           month=month, var2use=var.split('WOA_MLD')[-1])
+                                           month=month,
+                                           var2use=var.split('WOA_MLD')[-1])
                 else:
                     vals = funcs4vars[var](lon_idx=lon_idx, lat_idx=lat_idx,
                                            month=month)
-                # construct DataFrame by unstacking
+                # Construct DataFrame by unstacking
                 lat = df_IND['lat']
                 lon = df_IND['lon']
                 df = pd.DataFrame(vals, index=[lat, lon]).unstack()
-                # convert to Dataset
+                # Convert to Dataset
                 lon4ds = list(df.columns.levels[1])
                 lat4ds = list(df.index)
                 arr = df.values[None, ...]
@@ -1288,15 +1280,15 @@ def extract_feature_variables2NetCDF(res='4x5',
             # Extract for a single month
             vals = funcs4vars[var](lon_idx=lon_idx, lat_idx=lat_idx,
                                    month=month)
-            # construct DataFrame by unstacking
+            # Construct DataFrame by unstacking
             lat = df_IND['lat']
             lon = df_IND['lon']
             df = pd.DataFrame(vals, index=[lat, lon]).unstack()
-            # convert to Dataset
+            # Convert to Dataset
             lon4ds = list(df.columns.levels[1])
             lat4ds = list(df.index)
             arr = df.values
-            # save without time dimension
+            # Save without time dimension
             ds_var = xr.Dataset(data_vars={var: (['lat', 'lon', ], arr)},
                                 coords={'lat': lat4ds, 'lon': lon4ds})
         # Save variable to list
@@ -1307,16 +1299,16 @@ def extract_feature_variables2NetCDF(res='4x5',
     ds.to_netcdf('Oi_prj_feature_variables_{}_TEST.nc'.format(res))
     # Interpolate NaNs?
     if interpolate_nans:
-        ds = interpolate_NaNs_in_feature_variables(ds, res=res,
-                                                   save2NetCDF=False)
-        # save interpolated version
+        ds = ancillaries.interpolate_NaNs_in_feature_variables(ds, res=res,
+                                                               save2NetCDF=False)
+        # Save interpolated version
         ext_str = '_INTERP_NEAREST'
         filename = 'Oi_prj_feature_variables_{}{}.nc'.format(res, ext_str)
         ds.to_netcdf(filename)
     # Add derived variables?
     if add_derivative_vars:
         ds = add_derivitive_variables(ds)
-        # save interpolated version
+        # Save interpolated version
         ext_str = '_INTERP_NEAREST_DERIVED'
         filename = 'Oi_prj_feature_variables_{}{}.nc'.format(res, ext_str)
         ds.to_netcdf(filename)
@@ -1331,13 +1323,13 @@ def check_where_extraction_fails(verbose=True, dpi=320, debug=False):
 
     Parameters
     -------
-    verbose (boolean), print out verbose output?
-    debug (boolean), print out debugging output?
+    verbose (bool): print out verbose output?
+    debug (bool): print out debugging output?
     dpi (int): resolution to use for saved image (dots per square inch)
     """
-    # --- Get extracted and observational data
+    # - Get extracted and observational data
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
-    # --- Local variables
+    # - Local variables
     flag4flagging = '_flagged'
     lat_var = 'Latitude'
     lon_var = 'Longitude'
@@ -1402,12 +1394,12 @@ def get_Prod4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -1422,8 +1414,9 @@ def get_Prod4indices(lat_idx=None, lon_idx=None, month=None,
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
-                                             var2use=var2use, Data_key_ID_=Data_key_ID_)
+        month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
+                                                   var2use=var2use,
+                                                   Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Open file
@@ -1446,7 +1439,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -1454,7 +1447,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -1469,7 +1462,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
     # which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
+        month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1541,7 +1534,7 @@ def get_DOC4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
@@ -1569,7 +1562,8 @@ def get_DOC4indices(lat_idx=None, lon_idx=None, month=None,
 
 
 def get_DOC_4_loc(var2use='DOCmdl_avg', lat=None, lon=None, month=None,
-                  depth=1, buffer_CORDS=5, Data_key_ID_=None, verbose=True, debug=False):
+                  depth=1, buffer_CORDS=5, Data_key_ID_=None, verbose=True,
+                  debug=False):
     """
     Extract DOC data from annual climatology
 
@@ -1580,17 +1574,14 @@ def get_DOC_4_loc(var2use='DOCmdl_avg', lat=None, lon=None, month=None,
     depth (float): index of float to extract
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
     var2use (str): var to extract from NetCDF
 
     Returns
     -------
-    (float), (str)
-
-    Notes
-    -----
+    (float): (str)
     """
     # Only annual values in dataset
     month_ = 0
@@ -1668,7 +1659,8 @@ def get_DOC_4_loc(var2use='DOCmdl_avg', lat=None, lon=None, month=None,
 
 
 def get_DOC_accum4indices(lat_idx=None, lon_idx=None, month=None,
-                          var2use='DOCaccum_avg', depth=1, verbose=True, debug=False):
+                          var2use='DOCaccum_avg', depth=1, verbose=True,
+                          debug=False):
     """
     Extract DOC accumulation data from annual climatology
 
@@ -1677,15 +1669,12 @@ def get_DOC_accum4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
     -------
-    (float), (str)
-
-    Notes
-    -----
+    (float): (str)
     """
     # Directory?
     folder = utils.get_file_locations('data_root') + '/DOC/'
@@ -1702,7 +1691,8 @@ def get_DOC_accum4indices(lat_idx=None, lon_idx=None, month=None,
 
 
 def get_DOC_accum_4_loc(var2use='DOCaccum_avg', lat=None, lon=None, month=None,
-                        buffer_CORDS=5, Data_key_ID_=None, verbose=True, debug=False):
+                        buffer_CORDS=5, Data_key_ID_=None, verbose=True,
+                        debug=False):
     """
     Extract DOC accumulation data from annual climatology
 
@@ -1713,17 +1703,14 @@ def get_DOC_accum_4_loc(var2use='DOCaccum_avg', lat=None, lon=None, month=None,
     depth (float): index of float to extract
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
     var2use (str): var to extract from NetCDF
 
     Returns
     -------
-    (float), (str)
-
-    Notes
-    -----
+    (float): (str)
     """
     # var2use='DOCaccum_avg'; buffer_CORDS=5; Data_key_ID_=None; verbose=True; debug=False
     # Only annual values in dataset
@@ -1824,7 +1811,7 @@ def get_RAD4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
@@ -1856,7 +1843,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -1864,7 +1851,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
@@ -1874,7 +1861,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     # - Which month to use?
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unknown(lat=lat, main_var=var2use,
+        month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -1947,8 +1934,8 @@ def get_MLD_4_loc(var2use='pt', lat=None, lon=None, month=None,
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
-    get_max_and_sum_of_values (boolean): return annual sum/max instead of
+    debug (bool): print out debug information?
+    get_max_and_sum_of_values (bool): return annual sum/max instead of
         month value
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
@@ -1957,11 +1944,8 @@ def get_MLD_4_loc(var2use='pt', lat=None, lon=None, month=None,
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
-
-    Notes
-    -----
     """
     # Use annual max or sum of values?
     if get_max_and_sum_of_values or just_return_sum:
@@ -1995,7 +1979,7 @@ def get_MLD_4_loc(var2use='pt', lat=None, lon=None, month=None,
     else:
         # Kludge - no annual values, so just use a fix SH/NH month for now.
         if month == 0:
-            month_ = set_backup_month_if_unknown(lat=lat, main_var='MLD',
+            month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='MLD',
                                                  var2use=var2use,
                                                  Data_key_ID_=Data_key_ID_)
         else:
@@ -2025,16 +2009,16 @@ def extract_MLD_file4indices(var2use='pt', lat_idx=None, lon_idx=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA94/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     if debug:
@@ -2061,7 +2045,7 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -2069,11 +2053,11 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
     (or list of two sets of above variables if get_max_and_sum_of_values==True)
     """
     # Directory?
-    folder = utils.get_file_locations('data_root') + '/WOA_1994/'
+    folder = utils.get_file_locations('data_root') + '/WOA94/'
     # Filename as string
     file_str = 'WOA94_MLD_1x1_{}_1x1.nc'.format(var2use)
     # - Open file
@@ -2186,12 +2170,12 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -2213,7 +2197,7 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
+        month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -2267,7 +2251,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -2275,7 +2259,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -2297,7 +2281,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     # https://oceancolor.gsfc.nasa.gov/docs/format/Ocean_Level-3_Binned_Data_Products.pdf
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
-        month_ = set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
+        month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
                                              var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
@@ -2433,7 +2417,7 @@ def get_Depth_GEBCO4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
@@ -2471,7 +2455,7 @@ def get_GEBCO_depth_4_loc(lat=None, lon=None, month=None,
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -2479,7 +2463,7 @@ def get_GEBCO_depth_4_loc(lat=None, lon=None, month=None,
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -2583,7 +2567,7 @@ def get_WOA_TEMP4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
@@ -2600,7 +2584,7 @@ def get_WOA_TEMP4indices(lat_idx=None, lon_idx=None, month=None,
        contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2632,7 +2616,7 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -2640,7 +2624,7 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -2654,7 +2638,7 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
     if debug:
         print(locals())
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Temperature_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2739,7 +2723,7 @@ def get_WOA_Nitrate4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     month (int): month number (1-12)
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
@@ -2757,7 +2741,7 @@ def get_WOA_Nitrate4indices(lat_idx=None, lon_idx=None, month=None,
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -2788,7 +2772,7 @@ def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -2796,7 +2780,7 @@ def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -2809,7 +2793,7 @@ def get_WOA_Nitrate_4_loc(lat=None, lon=None, month=None, var2use='n_an',
     """
     # lat=20; lon=-40; month=1; var2use='n_an'; debug=False
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Nitrate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Nitrate_1x1/'
     # Select the correct file
     filename = 'woa13_all_n{:0>2}_01.nc'.format(month)
     # Open file
@@ -2887,7 +2871,7 @@ def get_WOA_Salinity4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     month (int): month number (1-12)
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCD
 
     Returns
@@ -2895,7 +2879,7 @@ def get_WOA_Salinity4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Fix depth = 0 for now...
@@ -2923,7 +2907,7 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -2931,7 +2915,7 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -2943,7 +2927,7 @@ def get_WOA_Salinity_4_loc(lat=None, lon=None, month=None, var2use='s_an',
      sea_water_salinity at standard depth levels." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Salinity_025x025/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Salinity_025x025/'
     # Select the correct file
     filename = 'woa13_decav_s{:0>2}_04v2.nc'.format(month)
     # Open file
@@ -3019,7 +3003,7 @@ def get_WOA_Silicate4indices(lat_idx=None, lon_idx=None, month=None,
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -3027,7 +3011,7 @@ def get_WOA_Silicate4indices(lat_idx=None, lon_idx=None, month=None,
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -3040,7 +3024,7 @@ def get_WOA_Silicate4indices(lat_idx=None, lon_idx=None, month=None,
      contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3068,7 +3052,7 @@ def get_WOA_Silicate_4_loc(lat=None, lon=None, month=None, var2use='i_an',
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -3076,7 +3060,7 @@ def get_WOA_Silicate_4_loc(lat=None, lon=None, month=None, var2use='i_an',
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -3089,7 +3073,7 @@ def get_WOA_Silicate_4_loc(lat=None, lon=None, month=None, var2use='i_an',
      contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Silicate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Silicate_1x1/'
     # Select the correct file
     filename = 'woa13_all_i{:0>2}_01.nc'.format(month)
     # Open file
@@ -3164,7 +3148,7 @@ def get_WOA_Phosphate4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     month (int): month number (1-12)
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
@@ -3172,7 +3156,7 @@ def get_WOA_Phosphate4indices(lat_idx=None, lon_idx=None, month=None,
     (array)
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3202,7 +3186,7 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -3210,7 +3194,7 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -3222,7 +3206,7 @@ def get_WOA_Phosphate_4_loc(lat=None, lon=None, month=None, var2use='p_an',
     in each grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Phosphate_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Phosphate_1x1/'
     # Select the correct file
     filename = 'woa13_all_p{:0>2}_01.nc'.format(month)
     # Open file
@@ -3297,7 +3281,7 @@ def get_WOA_Dissolved_O2_4indices(lat_idx=None, lon_idx=None, month=None,
     lat_idx (list): indicies for latitude
     lon_idx (list): indicies for longitude
     month (int): month number (1-12)
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     var2use (str): var to extract from NetCDF
 
     Returns
@@ -3314,7 +3298,7 @@ def get_WOA_Dissolved_O2_4indices(lat_idx=None, lon_idx=None, month=None,
     grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Fix depth = 0 for now...
@@ -3342,7 +3326,7 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
     lon (float): latitude degress east
     month (int): month number (1-12)
     Data_key_ID_ (str): ID for input data point
-    debug (boolean): print out debug information?
+    debug (bool): print out debug information?
     _fill_value (float): fill value in NetCDF
     buffer_CORDS (int): value (degrees lat/lon) added to loc define edges of
         rectangle used for interpolation.
@@ -3350,7 +3334,7 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
 
     Returns
     -------
-    (float), (str)
+    (float): (str)
 
     NOTES
     ---
@@ -3362,7 +3346,7 @@ def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
     grid-square which contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA_2013/Dissolved_O2_1x1/'
+    folder = utils.get_file_locations('data_root') + '/WOA13/Dissolved_O2_1x1/'
     # Select the correct file
     filename = 'woa13_all_o{:0>2}_01.nc'.format(month)
     # Open file

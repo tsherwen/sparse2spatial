@@ -1,6 +1,6 @@
 """
 
-Generic analysis output/input for s2s
+Generic analysis and processing of model data output/input in sparse2spatial
 
 """
 
@@ -13,9 +13,7 @@ from rasterio import features
 from affine import Affine
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
-
 # Internal loads within s2s
-#from sparse2spatial.utils import *
 import sparse2spatial.utils as utils
 from sparse2spatial.utils import get_df_stats_MSE_RMSE
 
@@ -23,6 +21,16 @@ from sparse2spatial.utils import get_df_stats_MSE_RMSE
 def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
     """
     Add the ocean of a location to dataframe
+
+    Parameters
+    -------
+    df (pd.DataFrame): DataFrame of data
+    LatVar (str): variable name in DataFrame for latitude
+    LonVar (str): variable name in DataFrame for longitude
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
     from geopandas.tools import sjoin
     # Get the shapes for the ocean
@@ -31,7 +39,7 @@ def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
     # Turn the dataframe into a geopandas dataframe
     gdf = geopandas.GeoDataFrame(
         df, geometry=geopandas.points_from_xy(df[LonVar], df[LatVar]))
-    # work out if any of the points are within the polys
+    # Work out if any of the points are within the polys
     pointInPolys = sjoin(points, group, how='left')
     # Check how many were assigned to a region
     Nnew = float(pointInPolys['name'].dropna().shape[0])
@@ -44,9 +52,19 @@ def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
     return df
 
 
-def mk_NetCDF_of_global_oceans(df=None, LatVar='lat', LonVar='lon'):
+def mk_NetCDF_of_global_oceans(df=None, LatVar='lat', LonVar='lon', save2NetCDF=False):
     """
     Add the regional location of observations to dataframe
+
+    Parameters
+    -------
+    df (pd.DataFrame): DataFrame of data
+    LatVar (str): variable name in DataFrame for latitude
+    LonVar (str): variable name in DataFrame for longitude
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
     # Get AC_tools location, then set example data folder location
     import os
@@ -61,7 +79,10 @@ def mk_NetCDF_of_global_oceans(df=None, LatVar='lat', LonVar='lon'):
     # Add a raster array for the oceans
     ds = AC.add_raster_of_oceans2ds(ds, test_plot=True, country=country)
     # save as a NetCDF?
-#    ds.to_netcdf()
+    if save2NetCDF:
+        ds.to_netcdf()
+    else:
+        return ds
 
 
 def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodide',
@@ -74,8 +95,10 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    res (str), horizontal resolution of dataset (e.g. 4x5)
+    target (str): Name of the target variable (e.g. iodide)
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    var2template (str): variable to use a template for making new variables in ds
+    use_annual_mean (bool): use the annual mean of the variable
 
     Returns
     -------
@@ -88,12 +111,13 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
         filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     if isinstance(folder, type(None)):
         data_root = utils.get_file_locations('data_root')
-        folder = '{}/{}/'.format(data_root, target)
+        folder = '{}/{}/outputs/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # variables to consider
     vars2plot = list(ds.data_vars)
     # add LWI and surface area to array
-    ds = add_LWI2array(ds=ds, var2template=var2template)
+    ds = utils.add_LWI2array(ds=ds, var2template=var2template)
+    IS_WATER = ds['IS_WATER'].mean(dim='time')
     # -- get general annual stats in a dataframe
     df = pd.DataFrame()
     for var_ in vars2plot:
@@ -103,7 +127,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
             ds_tmp = ds_tmp.mean(dim='time')
         # mask to only consider (100%) water boxes
         arr = ds_tmp.values
-        arr = arr[(LWI == 0).T]
+        arr = arr[(IS_WATER == True)]
         # sve to dataframe
         df[var_] = pd.Series(arr.flatten()).describe()
     # Get area weighted mean
@@ -141,9 +165,11 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    debug (boolean), print out debugging output?
+    target (str): Name of the target variable (e.g. iodide)
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    debug (bool): print out debugging output?
+    var2template (str): variable to use a template for making new variables in ds
+    use_annual_mean (bool): use the annual mean of the variable
 
     Returns
     -------
@@ -155,12 +181,12 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
             filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
         if isinstance(folder, type(None)):
             data_root = utils.get_file_locations('data_root')
-            folder = '{}/{}/'.format(data_root, target)
+            folder = '{}/{}/outputs/'.format(data_root, target)
         ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
     # Add LWI to array
-    ds = add_LWI2array(ds=ds, var2template=var2template, res=res)
+    ds = utils.add_LWI2array(ds=ds, var2template=var2template, res=res)
     # - Get general annual stats
     df = pd.DataFrame()
     # take annual average
@@ -213,9 +239,11 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    debug (boolean), print out debugging output?
+    target (str): Name of the target variable (e.g. iodide)
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    debug (bool): print out debugging output?
+    var2template (str): variable to use a template for making new variables in ds
+    use_annual_mean (bool): use the annual mean of the variable
 
     Returns
     -------
@@ -237,7 +265,7 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
     # add LWI to ds
     vars2plot = list(ds.data_vars)
     # add LWI and surface area to array
-    ds = add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
+    ds = utils.add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
     # ----
     df = pd.DataFrame()
     # -- get general annual stats
@@ -290,14 +318,15 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    debug (boolean), print out debugging output?
-    rm_Skagerrak_data (boolean), Remove specific data
+    target (str): Name of the target variable (e.g. iodide)
+    debug (bool): print out debugging output?
+    rm_Skagerrak_data (bool): Remove specific data
     (above argument is a iodide specific option - remove this)
-    just_return_df (bool), just return the data as dataframe
-    folder (str), folder where NetCDF of predicted data is located
-    ex_str (str), extra string to include in file name to save data
-    use_annual_mean (bool), use the annual mean of the variable for statistics
+    just_return_df (bool): just return the data as dataframe
+    folder (str): folder where NetCDF of predicted data is located
+    ex_str (str): extra string to include in file name to save data
+    use_annual_mean (bool): use the annual mean of the variable for statistics
+    var2template (str): variable to use a template for making new variables in ds
 
     Returns
     -------
@@ -318,12 +347,12 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
             target, res, extr_file_str)
     if isinstance(folder, type(None)):
         data_root = utils.get_file_locations('data_root')
-        folder = '{}/{}/'.format(data_root, target)
+        folder = '{}/outputs/{}/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # Variables to consider
     vars2analyse = list(ds.data_vars)
     # Add LWI and surface area to array
-    ds = add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
+    ds = utils.add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
     # Set a name for output to saved as
     file_save_str = 'Oi_prj_annual_stats_global_ocean_{}{}'.format(res, ex_str)
     # ---- build an array with general statistics
@@ -399,7 +428,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
     # ---- Do some further analysis and save this to a text file
     a = open(file_save_str+'_analysis.txt', 'w')
     # Set a header
-    print('This file contains global analysis of {} data'.format(res), file=a)
+    print('This file contains global analysis of {} data'.format(str), file=a)
     print('\n', file=a)
     # which files are being analysed?
     print('---- Detail on the predicted fields', file=a)
@@ -455,14 +484,15 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    var2use4Ensemble (str), variable name to use for ensemble prediction
-    var2use4Std (str), variable name to use for ensemble prediction's std dev.
-    var2template (str), variable to use a template to make new variables
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    topmodels (list), list of models to include in ensemble prediction
-    save2NetCDF (bool), save the dataset as NetCDF file
-    RFR_dict (dict), dictionary of core variables and data
+    target (str): Name of the target variable (e.g. iodide)
+    var2use4Ensemble (str): variable name to use for ensemble prediction
+    var2use4Std (str): variable name to use for ensemble prediction's std dev.
+    var2template (str): variable to use a template to make new variables
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    topmodels (list): list of models to include in ensemble prediction
+    save2NetCDF (bool): save the dataset as NetCDF file
+    RFR_dict (dict): dictionary of core variables and data
+    var2template (str): variable to use a template for making new variables in ds
 
     Returns
     -------

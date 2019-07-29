@@ -28,20 +28,15 @@ obs. = observations
 """
 import numpy as np
 import pandas as pd
-import sparse2spatial as s2s
-from sparse2spatial.utils import get_file_locations
-from sparse2spatial.utils import set_backup_month_if_unknown
-from sparse2spatial.utils import get_outlier_value
-#from sea_surface_iodide import mk_iodide_test_train_sets
-from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
-from sparse2spatial.utils import calc_I_Chance2014_STTxx2_I
-from sparse2spatial.utils import calc_I_Chance2014_multivar
-from sparse2spatial.utils import calc_I_MacDonald2014
-# iodide specific functions (move these to this directory?)
-#from sparse2spatial.utils import get_literature_predicted_iodide
-
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
+import sparse2spatial as s2s
+import sparse2spatial.utils as utils
+from sparse2spatial.utils import set_backup_month_if_unknown
+#from sea_surface_iodide import mk_iodide_test_train_sets
+from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
+
+# iodide specific functions (move these to this directory?)
 
 
 
@@ -70,7 +65,7 @@ def main(add_ancillaries=True):
 #    if add_ancillaries:
         # Re-process ancillaries file?
 #        process_iodide_obs_ancillaries_2_csv()
-
+    pass
 
 
 def get_processed_df_obs_mod(reprocess_params=False,
@@ -95,7 +90,7 @@ def get_processed_df_obs_mod(reprocess_params=False,
     (pd.DataFrame)
     """
     # Read in processed csv file
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/Iodide/'
     df = pd.read_csv(folder+filename, encoding='utf-8')
     # Add ln of iodide too
@@ -146,7 +141,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     file_and_path (str): folder and filename with location settings as single str
     add_ensemble (bool): add the ensemble prediction to input data dataframe
     rm_Skagerrak_data (boolean): remove the single data from the Skagerrak region
-    target (str), Name of the target variable (e.g. iodide)
+    target (str): Name of the target variable (e.g. iodide)
     verbose (bool): print verbose statements
 
     Returns
@@ -162,7 +157,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
     # Add ancillary obs.
     obs_data_df = extract_ancillaries_from_compiled_file(df=obs_data_df)
     # Save the intermediate file
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/'.format(target)
     filename = 'Iodine_obs_WOA_v8_5_1_TEMP_TEST.csv'
     obs_data_df.to_csv(folder+filename, encoding='utf-8')
@@ -193,9 +188,9 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
         print('File saved to: ', folder+filename)
 
 
-def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
+def get_core_Chance2014_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     """
-    Get Rosies observation data
+    Get core observation data from Chance2014
 
     Parameters
     -------
@@ -213,11 +208,12 @@ def get_core_rosie_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     """
     # - Get file observational file
     # Directory to use?
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder = '{}/Iodide/inputs/'.format(folder)
     # Filename for <20m iodide data?
-    f = 'Iodide_data_above_20m.csv'
+    filename = 'Iodide_data_above_20m.csv'
     # Open data as DataFrame
-    df = pd.read_csv(folder+f)
+    df = pd.read_csv(folder+filename)
     # - Process the input observational data
     # list of core variables
     core_vars = [
@@ -271,8 +267,8 @@ def get_iodide_obs_metadata(file_and_path='./sparse2spatial.rc'):
     Extract and return metadata from metadata csv
     """
     # What is the location of the iodide data?
-    s2s_root = get_file_locations('s2s_root', file_and_path=file_and_path)
-    folder = s2s_root+'/Iodide/inputs/'
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/Iodide/inputs/'
     # Filename?
     filename = 'Iodine_climatology_Submitted_data_list_formatted_TMS.xlsx'
     # Extract
@@ -282,20 +278,20 @@ def get_iodide_obs_metadata(file_and_path='./sparse2spatial.rc'):
 
 
 def get_iodide_obs(just_use_submitted_data=False,
-                   just_rosie_core_data=True, analyse_iodide_values2drop=False,
+                   use_Chance2014_core_data=True, analyse_iodide_values2drop=False,
                    process_new_iodide_obs_file=False,
                    file_and_path='./sparse2spatial.rc',
                    limit_depth_to=20, verbose=True, debug=False):
     """
-    Extract iodide observations from the (re-formated) file from Rosie
+    Extract iodide observations from the (re-formated) file from Chance2014
 
     Parameters
     -------
     just_use_submitted_data (bool), just use the data submitted for Chance et al 2014
-    just_rosie_core_data (bool), just use the code data in Chance et al 2014's analysis
+    use_Chance2014_core_data (bool), just use the code data in Chance2014's analysis
     analyse_iodide_values2drop (bool), check which values should be removed
     process_new_iodide_obs_file (bool), make a new iodide obs. file?
-    file_and_path (str), folder and filename with location settings as single str
+    file_and_path (str): folder and filename with location settings as single str
     limit_depth_to (float), depth (m) to limit inclusion of data to
     verbose (bool): print verbose statements to screen
     debug (bool): print debugging statements to screen
@@ -308,7 +304,8 @@ def get_iodide_obs(just_use_submitted_data=False,
     -----
     """
     # What is the location of the iodide data?
-    data_root = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/Iodide/inputs/'
     # Name to save file as
     filename = 'Iodide_data_above_20m.csv'
     # - Get Metadata (and keep as a seperate DataFrame )
@@ -339,7 +336,7 @@ def get_iodide_obs(just_use_submitted_data=False,
             if verbose:
                 print(n_Data_Key, Data_Key, pcent)
             # Extract data
-            df = extract_rosie_excel_file(Data_Key=Data_Key,
+            df = extract_templated_excel_file(Data_Key=Data_Key,
                                           metadata_df=metadata_df,
                                           limit_depth_to=limit_depth_to)
             # Save to list
@@ -370,32 +367,32 @@ def get_iodide_obs(just_use_submitted_data=False,
         for var in core_numeric_vars:
             main_df[var] = pd.to_numeric(main_df[var].values, errors='coerce')
         # Save to disk
-        main_df.to_csv(data_root+filename, encoding='utf-8')
+        main_df.to_csv(folder+filename, encoding='utf-8')
     # - Just use existing file
     else:
         try:
             # Just open existing file
-            if just_rosie_core_data:
-                main_df = get_core_rosie_obs()
+            if use_Chance2014_core_data:
+                main_df = get_core_Chance2014_obs()
             else:
-                main_df = pd.read_csv(data_root+filename, encoding='utf-8')
+                main_df = pd.read_csv(folder+filename, encoding='utf-8')
         except:
             print('Error opening processed iodide data file')
     # Return DataFrames
     return main_df, metadata_df
 
 
-def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
-                             metadata_df=None, use_inclusive_limit=False,
-                             file_and_path='./sparse2spatial.rc',
-                             verbose=True, debug=False):
+def extract_templated_excel_file(limit_depth_to=20, Data_Key=None,
+                                 metadata_df=None, use_inclusive_limit=False,
+                                 file_and_path='./sparse2spatial.rc',
+                                 verbose=True, debug=False):
     """
-    Extract an excel file from Rosies' collectiom & return as DataFrame
+    Extract an excel file in the iodide template format & return as DataFrame
 
     Parameters
     -------
-    file_and_path (str), folder and filename with location settings as single str
-    filename (str), name of the csv file or archived data from BODC
+    file_and_path (str): folder and filename with location settings as single str
+    filename (str): name of the csv file or archived data from BODC
     limit_depth_to (float), depth (m) to limit inclusion of data to
     use_inclusive_limit (bool), limit depth (limit_depth_to) in a inclusive way
     debug (bool), print debugging statements to screen
@@ -417,14 +414,15 @@ def extract_rosie_excel_file(limit_depth_to=20, Data_Key=None,
     # Data submitted directly for preparation
     # (as publish by Chance et al (2014) )
     # New data, acquired since 2017
-    data_root = get_file_locations('data_root', file_and_path=file_and_path)
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder = '/{}/Iodide/'.format(folder)
     if (not InChance2014):
-        folder = data_root + '/inputs/new_data/'
+        folder +=  '/inputs/new_data/'
     elif ((source == 's') or (source == 'bodc')) and (InChance2014):
-        folder = data_root + '/inputs/submitted_data/'
+        folder += '/inputs/submitted_data/'
     # Data digitalised for Chance et al (2014)
     elif (source == 'd') and (InChance2014):
-        folder = data_root + '/inputs/digitised_data/'
+        folder += '/inputs/digitised_data/'
     else:
         print("Source received ('') unknown?!".format(source))
         sys.exit()
@@ -543,8 +541,8 @@ def read_csv_settings_4_data_key_file(Data_Key=None):
     return d[Data_Key]
 
 
-def build_comparisons_between_MASTER_obs_file_and_extracted_data(
-        show_plot=False, dpi=320):
+def build_comparisons_between_MASTER_obs_file_and_extracted_data(dpi=320,
+                                                                 show_plot=False,):
     """
     Check the extract data against the values used previously
 
@@ -557,8 +555,8 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
     sns.set(color_codes=True)
     current_palette = sns.color_palette("colorblind")
     sns.set_style("darkgrid")
-    # Get Rosies data
-    df_obs = get_Rosies_MASTER_obs_file(sheetname='<20 m all data')
+    # Get data from Chance2014
+    df_obs = get_MASTER_Chance2014_iodide_obs_file(sheetname='<20 m all data')
     # Get meta data on observations
     metadata_df = get_iodide_obs_metadata()
     # Get the processed obs+extracted data ...
@@ -568,7 +566,7 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
     TMS_ID_KEY = u'Data_Key_ID'
     mapping_dict = dict(zip(df[var2map].values, df[TMS_ID_KEY].values))
     df_obs[TMS_ID_KEY] = df_obs[var2map].map(mapping_dict)
-    # Map rosie's variable names against TMS' extracted ones
+    # Map Chance2014 variable names against TMS' extracted ones
     vars_dict = {
         u'vd MLD': 'WOA_MLDvd',
         u'pt MLD': 'WOA_MLDpt',
@@ -626,28 +624,28 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def get_Rosies_MASTER_obs_file(sheetname='S>30 data set', skiprows=1,
+def get_MASTER_Chance2014_iodide_obs_file(sheetname='S>30 data set', skiprows=1,
                                file_and_path='./sparse2spatial.rc',):
     """
     To check on the correlations between the newly extract climatological
-    values, this funtion extracts the details from Rosie's master
+    values, this funtion extracts the details from Chance2014's master
     spreadsheet to perform comparisons.
 
     Parameters
     -------
+    sheetname (str): name of the excel sheet to use
+    skiprows (int): number of rows to skip when reading sheet
+    file_and_path (str): folder and filename with location settings as single str
 
     Returns
     -------
-    (tuple)
-
-    Notes
-    -----
+    (pd.DataFrame)
     """
     # Location and filename?
     filename = 'Iodide_correlations_310114_MASTER_TMS_EDIT.xlsx'
-    folder = get_file_locations('data_root', file_and_path=file_and_path)
-    folder += '/RJC_spreadsheets/'
-    # Extract Rosies MASTER excel sheet
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder += 'Iodide/inputs/RJC_spreadsheets/'
+    # Extract MASTER excel spreadsheet from Chance2014
     df = pd.read_excel(folder+filename, sheetname=sheetname, skiprows=skiprows)
     return df
 
@@ -681,15 +679,12 @@ def add_extra_vars_rm_some_data(df=None, target='Iodide',
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
     """
-    # --- Apply choices & Make user aware of choices applied to data
+    # - Apply choices & Make user aware of choices applied to data
     Shape0 = str(df.shape)
     N0 = df.shape[0]
     if rm_outliers:
-        bool = df[target] < get_outlier_value(df=df, var2use=target)
+        bool = df[target] < utils.get_outlier_value(df=df, var2use=target)
         df_tmp = df.loc[bool]
         prt_str = 'Removing outlier {} values. (df {}=>{},{})'
         N = int(df_tmp.shape[0])
@@ -868,7 +863,8 @@ def add_all_Chance2014_correlations(df=None, debug=False, verbose=False):
     # get details of parameterisations
 #    filename='Chance_2014_Table2_PROCESSED_17_04_19.csv'
     filename = 'Chance_2014_Table2_PROCESSED.csv'
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')
+    folder += '/Iodide/'
     param_df = pd.read_csv(folder+filename)
     # map input variables
     input_dict = {
@@ -959,13 +955,13 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
     try:
         df[var2use]
     except KeyError:
-        df[var2use] = df[TEMPvar].map(calc_I_Chance2014_STTxx2_I)
+        df[var2use] = df[TEMPvar].map(utils.calc_I_Chance2014_STTxx2_I)
     # MacDonald et al. (2014)
     var2use = 'MacDonald2014_iodide'
     try:
         df[var2use]
     except KeyError:
-        df[var2use] = df[TEMPvar].map(calc_I_MacDonald2014)
+        df[var2use] = df[TEMPvar].map(utils.calc_I_MacDonald2014)
     # Add all parameterisations from Chance et al (2014) to dataframe
     df = add_all_Chance2014_correlations(df=df, debug=debug)
 #    print df.shape
@@ -976,12 +972,12 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
         df[var2use]
     except KeyError:
         df[var2use] = df.apply(lambda x:
-                               calc_I_Chance2014_multivar(NO3=x[NO3_var],
-                                                                 sumMLDpt=x[sumMLDpt_var],
-                                                                   MOD_LAT=x[MOD_LAT_var],
-                                                                   TEMP=x[TEMPvar],
-                                                            salinity=x[salinity_var]),
-                                                                   axis=1)
+                               utils.calc_I_Chance2014_multivar(NO3=x[NO3_var],
+                                                                sumMLDpt=x[sumMLDpt_var],
+                                                                MOD_LAT=x[MOD_LAT_var],
+                                                                TEMP=x[TEMPvar],
+                                                                salinity=x[salinity_var]),
+                                                                axis=1)
     return df
 
 

@@ -4,25 +4,38 @@ Calculations iodine emissions with updated iodide field
 
 import numpy as np
 import pandas as pd
+import xarray as xr
+import sparse2spatial.utils as utils
 
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 
 def compare_emissions(wd_dict=None, inorg_emiss=None, specs=None):
-    """ Compare emissions between runs with different parameterisations """
+    """
+    Compare emissions between runs with different parameterisations
+
+    Parameters
+    -------
+    wd_dict (dict): dictionary of names (keys) and locations of model runs
+    inorg_emiss (dict): dictionary of inorganic iodine emissions for runs
+
+    Returns
+    -------
+    (pd.DataFrame)
+
+    """
     # Get emission runs that test output
     if isinstance(wd_dict, type(None)):
         wd_dict = get_emissions_testing_runs()
     params = sorted(wd_dict.keys())
-    #
 
-    # --- Get O3 burdens
+    # Get ozone burdens
     O3Burdens = [AC.get_O3_burden(wd_dict[i]) for i in params]
     O3Burdens = [i.sum()/1E3 for i in O3Burdens]
-    #
+    # Compile date into dataframe
     df = pd.DataFrame(O3Burdens, index=params, columns=['O3 bud.'])
 
-    # ---- Get emissions
+    # Get emissions
     if isinstance(inorg_emiss, type(None)):
         inorg_emiss, specs = get_inorg_emissions_for_params(wd_dict=wd_dict)
     # Sum emissions
@@ -32,17 +45,16 @@ def compare_emissions(wd_dict=None, inorg_emiss=None, specs=None):
     inorg_emiss_names = [i+' emiss.' for i in specs]
     df2 = pd.DataFrame(inorg_emiss, index=inorg_emiss_names)
     df = pd.concat([df, df2.T], axis=1)
-    # Add total inorganic flux
+    # Add total inorganic flux? (Hasghed out for now )
 #    df['Inorg emiss']  = df[inorg_emiss_names].sum(axis=1)
 
-    # ---- Now do calculations
+    # Now do calculations to get change and difference between runs
     # calculate % change in values between runs
     df = df.T
     #
     param = 'RFR(offline)'
     refs = 'Chance2014', 'MacDonald2014'
-#    comp_cols = df.columns.tolist()
-#    comp_cols.pop( comp_cols.index(ref) )
+    # Loop and calculate percentages
     for ref in refs:
         col_name = '({}% vs. {})'.format(param, ref)
         df[col_name] = (df[param] - df[ref])/df[ref]*100
@@ -51,11 +63,13 @@ def compare_emissions(wd_dict=None, inorg_emiss=None, specs=None):
 
 
 def get_emissions_testing_runs():
-    """ Get dictionary of emission model run locations """
+    """
+    Get dictionary of emission model run locations
+    """
 #    folder = get_file_locations('earth0_home_dir')
     folder = ''
     folder += '/data/all_model_simulations/iodine_runs/iGEOSChem_4.0_v10/'
-    #
+    # Locations of model runs with different iodide fields
     RFR_dir = 'run.XS.UPa.FP.EU.BC.II.FP.2014.NEW_OFFLINE_IODIDE.several_months/'
     Chance_dir = '/run.XS.UPa.FP.EU.BC.II.FP.2014.re_run4HEMCO_diag/'
     MacDonald_dir = 'run.XS.UPa.FP.EU.BC.II.FP.2014.Chance_iodide/'
@@ -71,10 +85,12 @@ def get_emissions_testing_runs():
 
 
 def get_inorg_emissions_for_params(wd_dict=None, res='4x5'):
-    """ Get inorganic emissions for the difference parameterisations """
+    """
+    Get inorganic emissions for the difference parameterisations
+    """
     from A_PD_hal_paper_analysis_figures.halogen_family_emission_printer import get_species_emiss_Tg_per_yr
     specs = ['HOI', 'I2']
-    # Surface area?
+    # Retrieve the surface area for a given resolution
     s_area = AC.get_surface_area(res=res)
     # calc emissions!
     inorg_emiss = {}
@@ -83,30 +99,14 @@ def get_inorg_emissions_for_params(wd_dict=None, res='4x5'):
         wd = wd_dict[param]
         months = AC.get_gc_months(wd=wd)
         years = AC.get_gc_years(wd=wd)
-        # get emissions
+        # Get emissions
         ars = get_species_emiss_Tg_per_yr(wd=wd, specs=specs, ref_spec='I',
-                                          s_area=s_area, years=years, months=months)
-
+                                          s_area=s_area, years=years,
+                                          months=months)
         # Add sums
         ars += [ars[0]+ars[1]]
         inorg_emiss[param] = ars
-
     return inorg_emiss, specs+['Inorg']
-
-
-# def get_inorganic_iodide_emissions():
-#     """ Get dictionary of emission model run locations """
-#     # Location of run data
-#     wd = get_file_locations('earth0_home_dir')
-#     wd += '/data/all_model_simulations/iodine_runs/iGEOSChem_4.0_v10/'
-#     #
-#     print('WARNING: Neither simulation used NEI2011 emissions!!')
-#     runs = {
-#         'MacDonald et al (2014)': wd + '/run.XS.UPa.FP.EU.BC.II.FP.2014/',
-#         'Chance et al (2014)': wd + 'run.XS.UPa.FP.EU.BC.II.FP.2014.Chance_iodide/',
-#     }
-#     # What are the O3 burdens for these runs?
-#     O3_burdens = dict([(i, AC.get_O3_burden(runs[i])) for i in runs.keys()])
 
 
 def add_Inorg_and_Org_totals2array(ds, InOrgVar='Inorg_Total', OrgVar='Org_Total'):
@@ -150,9 +150,8 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
     """
     Plot up emissions using HEMCO NetCDF files
     """
-#    import cartopy.crs as ccrs
-#    import matplotlib.pyplot as plt
-
+    import cartopy.crs as ccrs
+    import matplotlib.pyplot as plt
     # names of runs to plot up?
     if isinstance(wds, type(None)):
         wds = get_run_dict4EGU_runs()
@@ -169,7 +168,7 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
     TotalVar = 'I_Total'
     InOrgVar = 'Inorg_Total'
     OrgVar = 'Org_Total'
-    #
+    # Setup the colourbar to use
     Divergent_cmap = plt.get_cmap('RdBu_r')
     cmap = AC.get_colormap(np.arange(10))
     # loop my run and add values
@@ -177,12 +176,12 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
         # which dataset to use?
         print(run)
         ds = dsDH[run]
-        # - Add Inorg and org subtotals to array
+        # Add Inorg and org subtotals to array
         ds = add_Inorg_and_Org_totals2array(ds=ds)
-        # - Total
+        # Calculate totals
         # template off the first species
         ds[TotalVar] = dsDH[run][vars2use[0]].copy()
-        # sum values to this
+        # Sum values to this
         arr = ds[TotalVar].values
         for var_ in vars2use[1:]:
             print(var_)
@@ -191,9 +190,8 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
         attrs = ds[TotalVar].attrs
         attrs['long_name'] = TotalVar
         ds[TotalVar].attrs = attrs
-    # just return t data he
 
-    #  - Setup PDF
+    # Setup PDF to save plot to
     savetitle = 'Oi_prj_emissions_diff_plots_EGU_runs'
     dpi = 320
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
@@ -209,20 +207,17 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree(), aspect='auto')
         ds[TotalVar].plot.imshow(x='lon', y='lat',
-                                 #                               vmin=1, vmax=5,
                                  ax=ax,
                                  cmap=cmap,
                                  transform=ccrs.PlateCarree())
-
-        # add a title
+        # Add a title to the plot to the plot
         PtrStr = "Total iodine emissions (Gg I) in '{}'"
         PtrStr += "\n(max={:.1f}, min={:.1f}, sum={:.1f})"
         sum_ = float(ds[TotalVar].sum().values)
         max_ = float(ds[TotalVar].max().values)
         min_ = float(ds[TotalVar].min().values)
         plt.title(PtrStr.format(run, max_, min_, sum_))
-
-        # beautify
+        # Beautify the plot
         ax.coastlines()
         ax.set_global()
         # Save to PDF and close plot
@@ -243,18 +238,17 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree(), aspect='auto')
         ds[InOrgVar].plot.imshow(x='lon', y='lat',
-                                 #                               vmin=1, vmax=5,
                                  ax=ax,
                                  cmap=cmap,
                                  transform=ccrs.PlateCarree())
-        # add a title
+        # Add a title to the plot
         PtrStr = "Total Inorganic iodine emissions (Gg I) in '{}'"
         PtrStr += "\n(max={:.1f}, min={:.1f}, sum={:.1f})"
         sum_ = float(ds[InOrgVar].sum().values)
         max_ = float(ds[InOrgVar].max().values)
         min_ = float(ds[InOrgVar].min().values)
         plt.title(PtrStr.format(run, max_, min_, sum_))
-        # beautify
+        # Beautify the plot
         ax.coastlines()
         ax.set_global()
         # Save to PDF and close plot
@@ -271,26 +265,24 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
         ds = dsDH[run][[InOrgVar, TotalVar]]
         # use annual sum of emissions
         ds = ds.sum(dim='time')
-        #
+        # Calculate the difference (perecent)
         DIFFvar = 'Inorg/Total'
         ds[DIFFvar] = ds[InOrgVar].copy()
         ds[DIFFvar].values = ds[InOrgVar].values/ds[TotalVar].values*100
-        # - Loop and plot species
+        # Loop and plot species
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree(), aspect='auto')
         ds[DIFFvar].plot.imshow(x='lon', y='lat',
-                                #                               vmin=-100, vmax=100,
                                 ax=ax,
                                 cmap=cmap,
                                 transform=ccrs.PlateCarree())
-
-        # add a title
+        # Add a title to the plot
         PtrStr = "Total Inorganic iodine emissions (% of total) in '{}' \n"
         PtrStr += '(max={:.1f}, min={:.1f})'
         max_ = float(ds[DIFFvar].max().values)
         min_ = float(ds[DIFFvar].min().values)
         plt.title(PtrStr.format(run, max_, min_))
-        # beautify
+        # Beautify the plot
         ax.coastlines()
         ax.set_global()
         # Save to PDF and close plot
@@ -323,13 +315,13 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
                                 cmap=cmap,
                                 transform=ccrs.PlateCarree())
 
-        # Add a title
+        # Add a title to the plot
         PtrStr = "Total Inorganic iodine emissions in '{}'\n as % of {}"
         PtrStr += '(max={:.1f}, min={:.1f})'
         max_ = float(ds[DIFFvar].max().values)
         min_ = float(ds[DIFFvar].min().values)
         plt.title(PtrStr.format(run, REF, max_, min_))
-        # beautify
+        # Beautify the plot
         ax.coastlines()
         ax.set_global()
         # Save to PDF and close plot
@@ -358,17 +350,16 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
         ds[DIFFvar].plot.imshow(x='lon', y='lat',
                                 vmin=0, vmax=200,
                                 ax=ax,
-                                #                                       cmap=Divergent_cmap,
                                 cmap=cmap,
                                 transform=ccrs.PlateCarree())
 
-        # Add a title
+        # Add a title to the plot
         PtrStr = "Total Inorganic iodine emissions in '{}'\n as % of {}"
         PtrStr += '(max={:.1f}, min={:.1f})'
         max_ = float(ds[DIFFvar].max().values)
         min_ = float(ds[DIFFvar].min().values)
         plt.title(PtrStr.format(run, REF, max_, min_))
-        # beautify
+        # Beautify the plot
         ax.coastlines()
         ax.set_global()
         # Save to PDF and close plot
@@ -403,13 +394,13 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
                                 cmap=Divergent_cmap,
                                 transform=ccrs.PlateCarree())
 
-        # Add a title
+        # Add a title to the plot
         PtrStr = "Total Inorganic iodine emissions in '{}'\n as % of {}"
         PtrStr += '(max={:.1f}, min={:.1f})'
         max_ = float(ds[DIFFvar].max().values)
         min_ = float(ds[DIFFvar].min().values)
         plt.title(PtrStr.format(run, REF, max_, min_))
-        # beautify
+        # Beautify the plot
         ax.coastlines()
         ax.set_global()
         # Save to PDF and close plot
@@ -440,16 +431,15 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
                                 vmin=-100, vmax=100,
                                 ax=ax,
                                 cmap=Divergent_cmap,
-                                #                                       cmap=cmap,
                                 transform=ccrs.PlateCarree())
 
-        # Add a title
+        # Add a title to the plot
         PtrStr = "Total Inorganic iodine emissions in '{}'\n as % of {}"
         PtrStr += '(max={:.1f}, min={:.1f})'
         max_ = float(ds[DIFFvar].max().values)
         min_ = float(ds[DIFFvar].min().values)
         plt.title(PtrStr.format(run, REF, max_, min_))
-        # beautify
+        # Beautify the plot
         ax.coastlines()
         ax.set_global()
         # Save to PDF and close plot
@@ -463,7 +453,9 @@ def plot_up_surface_emissions(dsDH=None, runs=None, show_plot=False,
 
 
 def get_run_dict4EGU_runs():
-    """ Return locations of data to use for analysis/plotting """
+    """
+    Return locations of data to use for analysis/plotting for EGU presentation
+    """
     RunRoot = '/users/ts551/scratch/GC/rundirs/'
 #    wds = glob.glob( RunRoot+ '*Oi*' )
 #    runs = [i.split('Oi.')[-1] for i in wds]
@@ -491,7 +483,7 @@ def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None):
     """
     Get the emissions from the HEMCO NetCDF files as a dictionary of datasets.
     """
-    # - Look at emissions through HEMCO
+    # Look at emissions through HEMCO
     # Get data locations and run names as a dictionary
     if isinstance(wds, type(None)):
         wds = get_run_dict4EGU_runs()
@@ -511,7 +503,7 @@ def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None):
     # Get actual species
     specs = [i.split('Emis')[-1].split('_')[0] for i in vars2use]
     var_species_dict = dict(zip(vars2use, specs))
-    # convert to Gg
+    # Convert to Gg
     for run in runs:
         ds = dsDH[run]
         ds = AC.Convert_HEMCO_ds2Gg_per_yr(ds, vars2convert=vars2use,
@@ -537,29 +529,28 @@ def Check_global_statistics_on_emissions(dsDH=None, verbose=True, debug=False):
         'EmisCH3I_Ocean', 'EmisI2_Ocean', 'EmisHOI_Ocean',
     ]
     vars2useALL = vars2use + [InOrgVar, OrgVar]
-    # - compile data.
+    # - compile data into a pd.DataFrame
     df = pd.DataFrame()
     for run in runs:
         # Get the dataset to use
         ds = dsDH[run].copy()
-        # add inorg and org emissions
+        # Add inorg and org emissions
         ds = add_Inorg_and_Org_totals2array(ds=ds)
-        # sum data in to global values
+        # Sum data in to global values
         s = ds[vars2useALL].sum(dim='lat').sum(dim='lon').to_dataframe().sum()
         df[run] = s
         if debug:
             print(run, dsDH[run][vars2useALL].sum())
-    # - Add totals and print summary
+    # Add totals and print summary
     total = df.T[vars2use].T.sum().copy()
     df = df.T
     df['Total'] = total
-
     # in Tg units
     if verbose:
         print('-------- Global Gg (I) emission budgets ')
         print(df.T)
-    #
-    # - in units of % change of the surface values
+
+    # In units of % change of the surface values
     # vs. Macdonald
     dfP = df.T.copy()
     REF = 'Macdonald2014'

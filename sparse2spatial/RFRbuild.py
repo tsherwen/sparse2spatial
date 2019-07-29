@@ -22,7 +22,6 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
                         save_model_to_disk=False, read_model_from_disk=True,
                         target='Iodide', model_names=None,
                         delete_existing_model_files=False, rm_outliers=True,
-                        #                                rm_Skagerrak_data=False,
                         model_sub_dir='/TEMP_MODELS/', random_state=42,
                         rm_LOD_filled_data=False, model_feature_dict=None,
                         debug=False):
@@ -31,21 +30,21 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
 
     Parameters
     -------
-    df (pd.DataFrame), DataFrame of target and features values for point locations
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
-    save_model_to_disk (boolean), Save the models to disc as pickled binaries?
-    read_model_from_disk (boolean), read the models from disc if they are already built?
-    target (str), Name of the target variable (e.g. iodide)
-    model_names (list), List of model names to build/read
+    df (pd.DataFrame): DataFrame of target and features values for point locations
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    save_model_to_disk (bool): Save the models to disc as pickled binaries?
+    read_model_from_disk (bool): read the models from disc if they are already built?
+    target (str): Name of the target variable (e.g. iodide)
+    model_names (list): List of model names to build/read
     random_state (int), the seed used by the random number generator
-    delete_existing_model_files (boolean), delete the existing model binaries in folder?
-    rm_outliers (boolean), remove the outliers from the observational dataset
-    rm_LOD_filled_data (boolean), remove the limit of detection (LOD) filled values?
-    rm_Skagerrak_data (boolean), Remove specific data
+    delete_existing_model_files (bool): delete the existing model binaries in folder?
+    rm_outliers (bool): remove the outliers from the observational dataset
+    rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
+    rm_Skagerrak_data (bool): Remove specific data
     (above argument is a iodide specific option - remove this)
-    model_feature_dict (dict), dictionary of features used in each model
-    model_sub_dir (str), the sub directory in which the models are to be saved/read
-    debug (boolean), run and debug function/output
+    model_feature_dict (dict): dictionary of features used in each model
+    model_sub_dir (str): the sub directory in which the models are to be saved/read
+    debug (bool): run and debug function/output
 
     Returns
     -------
@@ -165,8 +164,8 @@ def get_features_used_by_model(models_list=None, RFR_dict=None):
 
     Parameters
     -------
-    RFR_dict (dict), dictionary of core variables and data
-    models_list (list), list of model names to get features for
+    RFR_dict (dict): dictionary of core variables and data
+    models_list (list): list of model names to get features for
 
     Returns
     -------
@@ -196,10 +195,10 @@ def get_top_models(n=10, stats=None, RFR_dict=None, vars2exclude=None,
     Parameters
     -------
     n (int), the number of top ranked models to return
-    vars2exclude (list), list of variables to exclude (e.g. DEPTH)
-    RFR_dict (dict), dictionary of core variables and data
-    exclude_ensemble (bool), exclude the ensemble prediction from the list
-    verbose (boolean), print out verbose output?
+    vars2exclude (list): list of variables to exclude (e.g. DEPTH)
+    RFR_dict (dict): dictionary of core variables and data
+    exclude_ensemble (bool): exclude the ensemble prediction from the list
+    verbose (bool): print out verbose output?
 
     Returns
     -------
@@ -238,10 +237,10 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide', cv=7,
 
     Parameters
     -------
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
     cv (int), number of folds of cross-validation to use
-    target (str), Name of the target variable (e.g. iodide)
-    RFR_dict (dict), dictionary of models, data and shared variables
+    target (str): Name of the target variable (e.g. iodide)
+    RFR_dict (dict): dictionary of models, data and shared variables
 
     Returns
     -------
@@ -351,12 +350,12 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
 
     Parameters
     -------
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
-    target (str), Name of the target variable (e.g. iodide)
-    RFR_dict (dict), dictionary of core variables and data
-    model_name (str), name of model to tune performance of
-    features_used (list), list of the features within the model_name model
-    save_best_estimator (bool), save the best performing model offline
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    RFR_dict (dict): dictionary of core variables and data
+    model_name (str): name of model to tune performance of
+    features_used (list): list of the features within the model_name model
+    save_best_estimator (bool): save the best performing model offline
     model (RandomForestRegressor), Random Forest Regressor model to tune
     cv (int), number of folds of cross-validation to use
 
@@ -402,8 +401,6 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
                                                  train_features=train_features,
                                                  train_labels=train_labels,
                                                  features_used=features_used
-                                                 #                                                 test_features=test_features,
-                                                 #                                                 test_labels=test_labels
                                                  )
     # Check the performance by Random searching (RandomizedSearchCV)
     best_random = rf_random.best_estimator_
@@ -422,8 +419,6 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
                                                 param_grid=param_grid,
                                                 train_labels=train_labels,
                                                 features_used=features_used,
-                                                #                                               test_features=test_features,
-                                                #                                                test_labels=test_labels
                                                 )
     print(grid_search.best_params_)
     # Check the performance of grid seraching searching
@@ -452,13 +447,13 @@ def Use_RS_CV_to_explore_hyperparams(train_features=None,
 
     Parameters
     -------
-    features_used (list), list of the features used by the model
-    train_features (list), list of the training features
-    train_labels  (list), list of the training labels
-    test_features (list), list of the testing features
-    test_labels (list), list of the testing labels
+    features_used (list): list of the features used by the model
+    train_features (list): list of the training features
+    train_labels  (list): list of the training labels
+    test_features (list): list of the testing features
+    test_labels (list): list of the testing labels
     cv (int), number of folds of cross-validation to use
-    scoring (str), scoring method to use
+    scoring (str): scoring method to use
     """
     from sklearn.model_selection import RandomizedSearchCV
     from sklearn.ensemble import RandomForestRegressor
@@ -504,7 +499,6 @@ def Use_RS_CV_to_explore_hyperparams(train_features=None,
 def use_GS_CV_to_tune_Hyperparams(param_grid=None,
                                   train_features=None, train_labels=None,
                                   features_used=None, \
-                                  #                                  test_features=None, test_labels=None
                                   scoring='neg_mean_squared_error', cv=3,
                                   ):
     """
@@ -512,11 +506,11 @@ def use_GS_CV_to_tune_Hyperparams(param_grid=None,
 
     Parameters
     -------
-    features_used (list), list of the features used by the model
-    train_features (list), list of the training features
-    train_labels  (list), list of the training labels
+    features_used (list): list of the features used by the model
+    train_features (list): list of the training features
+    train_labels  (list): list of the training labels
     cv (int), number of folds of cross-validation to use
-    scoring (str), scoring method to use
+    scoring (str): scoring method to use
     """
     from sklearn.model_selection import GridSearchCV
     from sklearn.ensemble import RandomForestRegressor
@@ -556,11 +550,11 @@ def define_hyperparameter_options2test(features_used=None,
 
     Parameters
     -------
-    param_grid_intial_guess (bool), use the parameter grid of guesses
-    param_grid_RandomizedSearchCV (bool), use the parameter grid obtained
+    param_grid_intial_guess (bool): use the parameter grid of guesses
+    param_grid_RandomizedSearchCV (bool): use the parameter grid obtained
                                                    by randomly searching
     best_params_ (param_grid), parameter grid of best parameters to use
-    features_used (list), list of the features used by the model
+    features_used (list): list of the features used by the model
     """
     # - Shared variables in grid
     vals2test = {
@@ -589,7 +583,7 @@ def define_hyperparameter_options2test(features_used=None,
                 # max depth
                 elif (key == 'max_depth'):
                     # value is either a number of "None".
-                    if is_number(value):
+                    if utils.is_number(value):
                         values = [value+(i*5) for i in range(0, 2)]
                         values += [value+(i*5) for i in range(-2, 0)]
                         # only allow values greater than zero
@@ -719,24 +713,21 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
 
     Parameters
     -------
-    model2use (str), name of the model to use
-    target (str), Name of the target variable (e.g. iodide)
-    RFR_dict (dict), dictionary of core variables and data
-    res (str), horizontal resolution of dataset (e.g. 4x5)
-    features_used_dict (dict), dictionary of feature variables in models
-    plot2check (bool), make a quick plot to check the prediction
-    models_dict (dict), dictionary of RFR models and there names
-    stats (pd.DataFrame), dataframe of statistics on models in models_dict
-    rm_Skagerrak_data (boolean), Remove specific data
+    model2use (str): name of the model to use
+    target (str): Name of the target variable (e.g. iodide)
+    RFR_dict (dict): dictionary of core variables and data
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    features_used_dict (dict): dictionary of feature variables in models
+    plot2check (bool): make a quick plot to check the prediction
+    models_dict (dict): dictionary of RFR models and there names
+    stats (pd.DataFrame): dataframe of statistics on models in models_dict
+    rm_Skagerrak_data (bool): Remove specific data
     (above argument is a iodide specific option - remove this)
-    debug (boolean), print out debugging output?
+    debug (bool): print out debugging output?
 
     Returns
     -------
     (None)
-
-    Notes
-    -----
     """
     from sklearn.externals import joblib
     import gc
@@ -795,12 +786,12 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     if target == 'Iodide':
         # Chance et al (2013)
         param = u'Chance2014_STTxx2_I'
-        arr = calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+        arr = utils.calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
         ds[param] = ds[b_modelname]  # use existing array as dummy to fill
         ds[param].values = arr
         # MacDonald et al (2013)
         param = 'MacDonald2014_iodide'
-        arr = calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
+        arr = utils.calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
         ds[param] = ds[b_modelname]  # use existing array as dummy to fill
         ds[param].values = arr
     # Do a test diagnostic plot?
@@ -823,16 +814,14 @@ def get_model_predictions4obs_point(df=None, model_name='TEMP+DEPTH+SAL',
 
     Parameters
     -------
-    df (pd.dataframe), dataframe containing of target and features
-    features_used_dict (dict), dictionary of feature variables in models
+    df (pd.DataFrame): dataframe containing of target and features
+    features_used_dict (dict): dictionary of feature variables in models
     model (RandomForestRegressor), Random Forest Regressor model to user
-    model_name (str), name of the model to use
+    model_name (str): name of the model to use
 
     Returns
     -------
-
-    Notes
-    -----
+    (np.array)
     """
     # Model name?
     if isinstance(model, type(None)):
@@ -856,13 +845,14 @@ def mk_test_train_sets(df=None, target='Iodide',
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
+    target (str): Name of the target variable (e.g. iodide)
+    random_state (int), seed value to use as random seed for reproducible analysis
     nsplits (int), number of ways to split the data
-    rand_strat (bool), split the data in a random way using stratified sampling
-    rand_20_80 (bool), split the data in a random way
-    df (pd.dataframe), dataframe containing of target and features
-    debug (boolean), print out debugging output?
-    verbose (boolean), print out verbose output?
+    rand_strat (bool): split the data in a random way using stratified sampling
+    rand_20_80 (bool): split the data in a random way
+    df (pd.DataFrame): dataframe containing of target and features
+    debug (bool): print out debugging output?
+    verbose (bool): print out verbose output?
 
     Returns
     -------
@@ -931,18 +921,7 @@ def mk_test_train_sets(df=None, target='Iodide',
                 print(dfs[key_][SPLITvar].value_counts() / dfs[key_].shape[0])
         # Now remove the SPLIT group
         for set_ in train_set, test_set:
-            #            if (SPLITvar in set_.columns):
             set_.drop(SPLITvar, axis=1, inplace=True)
-        # re-name (TODO mak naming consistent!)
-#        train_set_full = train_set
-#        test_set_full = test_set
-#        test_set_targets =test_set_targets
-
-#        print('NOT setup!'*100)
-#        sys.exit()
-#    else:
-#        print('select a method for making the test dataset')
-#        sys.exit()
     return train_set, test_set, test_set_targets
 
 
@@ -960,21 +939,21 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
 
     Parameters
     ----------
-    dsA (xr.Dataset), dataset object with variables to interpolate
-    RFR_dict (dict), dictionary of core variables and data
-    res (res), horizontal resolution (e.g. 4x5) of Dataset
-    save2NetCDF (boolean), save interpolated Dataset to as a NetCDF?
-    features_used_dict (dict), dictionary of feature variables in models
-    models_dict (dict), dictionary of RFR models and there names
-    stats (pd.DataFrame), dataframe of statistics on models in models_dict
-    folder (str), location of NetCDF file of feature variables
-    target (str), name of the species being predicted
-    models2compare (list), list of models to make spatial predictions for (rm: double up?)
-    topmodels (list), list of models to make spatial predictions for
-    xsave_str (str), string to include as suffix in filename used for saved NetCDF
-    add_ensemble2ds (boolean), calculate std. dev. and mean for list of topmodels
-    verbose (boolean), print out verbose output?
-    debug (boolean), print out debugging output?
+    dsA (xr.Dataset): dataset object with variables to interpolate
+    RFR_dict (dict): dictionary of core variables and data
+    res (str): horizontal resolution (e.g. 4x5) of Dataset
+    save2NetCDF (bool): save interpolated Dataset to as a NetCDF?
+    features_used_dict (dict): dictionary of feature variables in models
+    models_dict (dict): dictionary of RFR models and there names
+    stats (pd.DataFrame): dataframe of statistics on models in models_dict
+    folder (str): location of NetCDF file of feature variables
+    target (str): name of the species being predicted
+    models2compare (list): list of models to make spatial predictions for (rm: double up?)
+    topmodels (list): list of models to make spatial predictions for
+    xsave_str (str): string to include as suffix in filename used for saved NetCDF
+    add_ensemble2ds (bool): calculate std. dev. and mean for list of topmodels
+    verbose (bool): print out verbose output?
+    debug (bool): print out debugging output?
 
     Returns
     -------

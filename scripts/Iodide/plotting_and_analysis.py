@@ -12,17 +12,24 @@ import numpy as np
 import pandas as pd
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
+import matplotlib
+import matplotlib.pyplot as plt
+import cartopy
+import cartopy.crs as ccrs
 # s2s imports
+import sparse2spatial.RFRanalysis as RFRanalysis
+import sparse2spatial.analysis as analysis
+import sparse2spatial.RFRbuild as build
+import sparse2spatial.utils as utils
 from sparse2spatial.RFRbuild import build_or_get_models
+from sparse2spatial.RFRbuild import get_top_models
 from sparse2spatial.RFRanalysis import get_stats_on_models
-# Local modules
-from sea_surface_iodide import mk_iodide_test_train_sets
+from sparse2spatial.RFRanalysis import get_stats_on_multiple_global_predictions
+# Local modules specific to iodide work
+from sea_surface_iodide import *
+import project_misc as misc
 
 
-
-# ---------------------------------------------------------------------------
-# ---------- Functions to produce plots/analysis for Oi! paper --------------
-# ---------------------------------------------------------------------------
 def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
                                                       RFR_dict=None,
                                                       testset='Test set (strat. 20%)',
@@ -33,23 +40,23 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    rm_non_water_boxes (bool): fill all non-water grid boxes with NaNs
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
 
     Returns
     -------
     (dict)
-
-    Notes
-    -----
     """
     # testset='Test set (strat. 20%)'
     import seaborn as sns
     from matplotlib import colors
     # reset settings as plotting maps
     sns.reset_orig()
-    # elephant
-    # ---- Get the data
+    # - Get the data
     # - Get the spatial predictions
 #    res4param = '4x5'  # use 4x5 for testing
     res4param = '0.125x0.125'  # only 0.125x0.125 should be used for analysis
@@ -60,13 +67,13 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
     filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
         target, res4param, extr_str)
 #    folder =  './'
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')+ '/{}/outputs/'.format(target)
     ds = xr.open_dataset(folder + filename)
     # Set the variable to plot underneath observations
     var2plot = 'Ensemble_Monthly_mean'
     # only select boxes where that are fully water (seasonal)
     if rm_non_water_boxes:
-        ds = add_LWI2array(ds=ds, res=res4param, var2template=var2plot)
+        ds = utils.add_LWI2array(ds=ds, res=res4param, var2template=var2plot)
         #
         ds[var2plot] = ds[var2plot].where(ds['IS_WATER'] == True)
 #    var2plot = 'RFR(TEMP+DEPTH+SAL)'
@@ -74,12 +81,12 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
     # - Get the observations
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     df = RFR_dict['df']
     # get stats on models in RFR_dict
     stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # only consider that are not outliers.
-    df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
+    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
 #    df.loc[ df['Iodide']<= 400., :]
     # ---- Plot up and save to PDF
     # - setup plotting
@@ -148,23 +155,22 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    RFR_dict (dict): dictionary of core variables and data
+    dpi (int): resolution to use for saved image (dots per square inch)
+    rm_non_water_boxes (bool): fill all non-water grid boxes with NaNs
 
     Returns
     -------
-    (dict)
-
-    Notes
-    -----
-
+    (None)
     """
     import seaborn as sns
     from matplotlib import colors
     # reset settings as plotting maps
     sns.reset_orig()
-    # elephant
-    # ---- Get the data
+    # - Get the data
     # - Get the spatial predictions
 #    res4param = '4x5'  # use 4x5 for testing
     res4param = '0.125x0.125'  # only 0.125x0.125 should be used for analysis
@@ -174,13 +180,13 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
         extr_str = ''
     filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
         target, res4param, extr_str)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     ds = xr.open_dataset(folder + filename)
     # Set the variable to plot underneath observations
     var2plot = 'Ensemble_Monthly_mean'
     # only select boxes where the
     if rm_non_water_boxes:
-        ds = add_LWI2array(ds=ds, res=res4param, var2template=var2plot)
+        ds = utils.add_LWI2array(ds=ds, res=res4param, var2template=var2plot)
         #
         ds[var2plot] = ds[var2plot].where(ds['IS_WATER'] == True)
     #    var2plot = 'RFR(TEMP+DEPTH+SAL)'
@@ -188,14 +194,14 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     # - Get the observations
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     df = RFR_dict['df']
     # get stats on models in RFR_dict
     stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # only consider values below 400
 #   df = df.loc[ df['Iodide']<= 400., :]
     # only consider values that are not outliers
-    df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
+    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
     # ---- Plot up and save to PDF
     # - setup plotting
     plt.close('all')
@@ -263,7 +269,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
         latmax = latrange[nlat+1]
         for nlon, lonmin in enumerate(lonrange[:-1]):
             lonmax = lonrange[nlon+1]
-            # -  plot up obs
+            # - plot up obs
             # Initialise plot
             fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
             # Now plot up
@@ -273,7 +279,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
                                    left_cb_pos=left_cb_pos,
                                    #        cmap=cmap,
                                    units=units, show=False)
-            # -  plot up param
+            # - plot up param
             # Now add point for observations
             x = df[u'Longitude'].values
             y = df[u'Latitude'].values
@@ -303,20 +309,18 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
 
     Parameters
     -------
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    RFR_dict (dict): dictionary of core variables and data
+    dpi (int): resolution to use for saved image (dots per square inch)
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     from matplotlib import colors
     # reset settings as plotting maps
     sns.reset_orig()
-    # elephant
-    # ---- Get the data
     # - Get the spatial predictions
     # set models and params to plot
     models2compare = [
@@ -326,7 +330,7 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         #    'RFR(TEMP+DEPTH+SAL)',
     ]
     params = [u'Chance2014_STTxx2_I', u'MacDonald2014_iodide', ]
-    # --- Plot up comparisons spatially just showing obs. points
+    # - Plot up comparisons spatially just showing obs. points
     savetitle = 'Oi_prj_spatiall_comp_obs_vs_predict_at_points'
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
     # reset settings as plotting maps
@@ -390,7 +394,7 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         plt.show()
     plt.close()
 
-    # --- plot up bias by param
+    # - plot up bias by param
     units = 'nM'
     # - plot for entire dataset
     fixcb = np.array([-100, 100])
@@ -585,12 +589,20 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
 
     Parameters
     -------
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    dpi (int): resolution to use for saved image (dots per square inch)
+    plot_avg_as_median (bool): use median as the average in plots
+    just_plot_existing_params (bool): just plot up the existing parameterisations
+    plot_up_param_iodide (bool): plot parameterised iodide
+    shade_std (bool): shae in a standard deviation around the predictions
+    context (str): seaborn context to use for plotting (e.g. paper, poster, talk...)
+    target (str): Name of the target variable (e.g. iodide)
+    show_plot (bool): show the plot on screen
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.set(color_codes=True)
@@ -601,9 +613,8 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
     # Get observations
     df_obs = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get predicted values
-#    folder = '/shared/scratch/hpc2/users/ts551/labbook/Python_progs/'
     if isinstance(ds, type(None)):
-        folder = get_file_locations('data_root')
+        folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
         filename = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'
         if rm_Skagerrak_data:
             filename = filename.format(target, '_No_Skagerrak')
@@ -621,7 +632,6 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
     df = get_spatial_predictions_0125x0125_by_lat(ds=ds)
     # params to pot
     models2compare = [
-        #    'RFR(TEMP+DEPTH+SAL+NO3+DOC)', 'RFR(TEMP+SAL+Prod)', 'RFR(TEMP+DEPTH+SAL)'
         'RFR(Ensemble)'
     ]
     params = ['Chance2014_STTxx2_I', u'MacDonald2014_iodide']
@@ -629,7 +639,6 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      'Iodide': 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     if just_plot_existing_params:
         params2plot = params
@@ -707,25 +716,32 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
     plt.close()
 
 
-def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodide',
-                                                           plot_avg_as_median=False,
-                                                           show_plot=False,
-                                                           shade_std=True,
-                                                           just_plot_existing_params=False,
-                                                           plot_up_param_iodide=True,
-                                                           context="paper", ds=None,
-                                                           rm_Skagerrak_data=False):
+def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
+                                                  plot_avg_as_median=False,
+                                                  show_plot=False,
+                                                  shade_std=True,
+                                                  just_plot_existing_params=False,
+                                                  plot_up_param_iodide=True,
+                                                  context="paper", ds=None,
+                                                  rm_Skagerrak_data=False):
     """
     Plot a figure of iodide vs laitude
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    target (str): Name of the target variable (e.g. iodide)
+    dpi (int): resolution to use for saved image (dots per square inch)
+    context (str): seaborn context to use for plotting (e.g. paper, poster, talk...)
+    just_plot_existing_params (bool): just plot up the existing parameterisations
+    plot_up_param_iodide (bool): plot parameterised iodide
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
+    plot_avg_as_median (bool): use median as the average in plots
+    show_plot (bool): show the plot on screen
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.set(color_codes=True)
@@ -737,11 +753,11 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodi
     df_obs = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get predicted values
 #    folder = '/shared/scratch/hpc2/users/ts551/labbook/Python_progs/'
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     filename = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'
     ds = xr.open_dataset(folder + filename.format(target, '_No_Skagerrak'))
     # Get data with Skagerrak data too.
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     ds2 = xr.open_dataset(folder + filename.format(''))
     # Rename to a more concise name
     try:
@@ -763,7 +779,6 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodi
     df2 = get_spatial_predictions_0125x0125_by_lat(ds=ds2)
     # params to pot
     models2compare = [
-        #    'RFR(TEMP+DEPTH+SAL+NO3+DOC)', 'RFR(TEMP+SAL+Prod)', 'RFR(TEMP+DEPTH+SAL)'
         'RFR(Ensemble)'
     ]
     params = ['Chance2014_STTxx2_I', u'MacDonald2014_iodide']
@@ -771,7 +786,6 @@ def plot_predicted_iodide_vs_lat_figure_with_Skagerrak_too(dpi=320, target='iodi
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
                      'Iodide': 'Obs.',
-                     #                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
     if just_plot_existing_params:
         params2plot = params
@@ -900,19 +914,25 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
                                                  plot_avg_as_median=False, RFR_dict=None,
                                                  res='0.125x0.125', target='iodide',
                                                  show_plot=False, close_plot=True,
-                                                 save_plot=False, shade_std=True,
+                                                 save2png=False, shade_std=True,
                                                  folder=None, ds=None, topmodels=None):
     """
     Plot a figure of iodide vs laitude - showing all ensemble members
 
     Parameters
     -------
+    RFR_dict (dict): dictionary of core variables and data
+    target (str): Name of the target variable (e.g. iodide)
+    dpi (int): resolution to use for saved image (dots per square inch)
+    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
+    plot_avg_as_median (bool): use median as the average in plots
+    topmodels (list): list of models to make spatial predictions for
+    show_plot (bool): show the plot on screen
+    save2png (bool): save the plot as png
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     from collections import OrderedDict
     import seaborn as sns
@@ -922,7 +942,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
     df_obs = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get predicted values
     if isinstance(folder, type(None)):
-        folder = get_file_locations('data_root')
+        folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     if isinstance(ds, type(None)):
         filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
         ds = xr.open_dataset(folder + filename)
@@ -937,7 +957,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
     if isinstance(topmodels, type(None)):
         # Get RFR_dict if not provide
         if isinstance(RFR_dict, type(None)):
-            RFR_dict = build_or_get_models()
+            RFR_dict = build_or_get_models_iodide()
         topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     params2plot = topmodels
     # assign colors
@@ -1011,7 +1031,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
 
     # save or show?
     filename = 'Oi_prj_global_predicted_vals_vs_lat_ENSEMBLE_{}{}.png'
-    if save_plot:
+    if save2png:
         plt.savefig(filename.format(res, extr_str), dpi=dpi)
     if show_plot:
         plt.show()
@@ -1035,12 +1055,12 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     CB_color_cycle = AC.get_CB_color_cycle()
     colors_dict = dict(zip(rename_titles.keys(),  CB_color_cycle))
 
-    # --- Get dataset where there is more than a 2 months of data at the same loc
+    # - Get dataset where there is more than a 2 months of data at the same loc
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Exclude data with values above 400 nM
 #    df = df.loc[ df['Iodide'].values < 400, : ]
     # Exclude outliers
-    df = df.loc[df['Iodide'] <= get_outlier_value(df=df, var2use='Iodide'), :]
+    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
     # get metadata
     md_df = get_iodide_obs_metadata()
     datasets = md_df[u'Data_Key']
@@ -1064,7 +1084,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
             if (len(ds_lats) <= 2) and (len(ds_lons) <= 2):
                 ds_seas += [ds]
 
-    # --- Loop these datasets and plot the three parameterisation s predictions
+    # - Loop these datasets and plot the three parameterisation s predictions
     savetitle = 'Oi_prj_seasonality_of_iodide'
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
     # Add a title slide
@@ -1105,7 +1125,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
         ax.set_xticklabels(labels, rotation=45)
         # Add a legend
         plt.legend()
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -1151,7 +1171,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
         ax.set_xticklabels(labels, rotation=45)
         # Add a legend
         plt.legend()
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -1198,7 +1218,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
         ax.set_xticklabels(labels, rotation=45)
         # Add a legend
         plt.legend()
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -1245,7 +1265,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
         ax.set_xticklabels(labels, rotation=45)
         # Add a legend
         plt.legend()
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -1257,8 +1277,6 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     if show_plot:
         plt.show()
     plt.close()
-
-    # elephant
 
 
 def test_model_sensitiivty2training_test_split(models2compare=None,
@@ -1272,7 +1290,7 @@ def test_model_sensitiivty2training_test_split(models2compare=None,
     # Get the unprocessed obs and variables as a DataFrame
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get variables to use for each model
-    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
+    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
     # setup a DataFrame to store statistics
     dfs = {}
     # Now models and assess the sensitivity to the training/test set
@@ -1286,24 +1304,29 @@ def test_model_sensitiivty2training_test_split(models2compare=None,
                                                 model=model, df=df,
                                                 training_features=training_features)
 
-    # Compare different bias for the difference test sets with existing params.
-
-    # Plot these  as a line graph...
-
 
 def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
                                                       rm_Skagerrak_data=False):
     """
-    Calculation of model selection bias
+    Calculate the error caused by model selection
+
+    Parameters
+    -------
+    RFR_dict (dict): dictionary of core variables and data
+    rm_Skagerrak_data (bool): Remove specific data
+
+    Returns
+    -------
+    (None)
     """
-    # --- Set local variables
+    # - Set local variables
     if rm_Skagerrak_data:
         extr_str = '_nSkagerrak'
     else:
         extr_str = ''
     # Get key data as a dictionary
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models(
+        RFR_dict = build_or_get_models_iodide(
             rm_Skagerrak_data=rm_Skagerrak_data,
         )
     # select dataframe with observations and predictions in it
@@ -1314,7 +1337,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     if isinstance(topmodels, type(None)):
         topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
 
-    # ---- Get data at observation points
+    # - Get data at observation points
     # add lines extract data from files...
 #	filename = 'Oi_prj_models_built_stats_on_models_at_obs_points.csv'
 #	folder ='../'
@@ -1322,6 +1345,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
 #	dfP.index = dfP['Unnamed: 0'].values
  # Just select the
     df = RFR_dict['df']
+    testset='Test set (strat. 20%)'
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
     dfP = get_stats_on_models(RFR_dict=RFR_dict, df=df,
@@ -1329,7 +1353,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     # only consider topmodels
     dfP = dfP.T[topmodels].T
 
-    # ---- Get data at spatial points
+    # -  Get data at spatial points
     # add lines extract data from files...
 
     # just use outputted file for now.
@@ -1343,7 +1367,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     # - Set summary stats and print to a txt file
     file2save = 'Oi_prj_Error_calcs_model_selction{}{}.txt'
     a = open(file2save.format(res, extr_str), 'w')
-    # ----  Calculate model selection error spatially
+    # -  Calculate model selection error spatially
     print('---- Model choice affect spatially /n', file=a)
     # get stats
     var2use = u'mean (weighted)'
@@ -1358,7 +1382,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     ptr_str = 'Model choice affect on mean: {:.5g}-{:.5g} %'
     print(ptr_str.format(range_/max_*100, range_/min_*100), file=a)
 
-    # ----  Calculate model selection error at observational points
+    # - Calculate model selection error at observational points
     print('---- Model choice affect at point locations (mean) \n', file=a)
     # get stats
     var2use = u'mean'
@@ -1396,6 +1420,19 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
                                               rm_Skagerrak_data=False, topmodels=None):
     """
     Analyse the variation in spatial prediction on a per model basis
+
+    Parameters
+    -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    RFR_dict (dict): dictionary of core variables and data
+    remake_NetCDFs (bool): remake the NetCDF files of pseudo-random repeated builds
+    rebuild_models (bool): rebuild all of the models?
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    topmodels (list): list of models to make spatial predictions for
+
+    Returns
+    -------
+    (None)
     """
     from multiprocessing import Pool
     from functools import partial
@@ -1406,7 +1443,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         extr_str = ''
     # Get key data as a dictionary
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models(
+        RFR_dict = build_or_get_models_iodide(
             rm_Skagerrak_data=rm_Skagerrak_data
         )
     # select dataframe with observations and predictions in it
@@ -1428,7 +1465,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
                                                 rm_Skagerrak_data=rm_Skagerrak_data
                                                 )
 
-    # --- Predict the surface concentrations for each of members' repeat builds
+    # - Predict the surface concentrations for each of members' repeat builds
     if remake_NetCDFs:
         # Initialise pool to parrellise over
         p = Pool(len(topmodels))
@@ -1440,7 +1477,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         # close the pool
         p.close()
 
-        # --------- Get data
+    # - Get data
     # Get the data for the variance in the prediction of members (spatially)
     # - Get stats on the model builds
     dfs = {}
@@ -1462,7 +1499,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         features_used = features_used_dict[model_name]
         features_used = features_used.split('+')
         # Now build 20 separate initiations of the model
-        dfs[model_name] = get_stats4mulitple_model_builds(
+        dfs[model_name] = RFRanalysis.get_stats4mulitple_model_builds(
             model_name=model_name,
             features_used=features_used, df=df,
             RFR_dict=RFR_dict
@@ -1472,8 +1509,8 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     save_str = 'Oi_prj_RAW_stats_on_ENSEMBLE_predictions_at_obs_locs{}.csv'
     dfP.to_csv(save_str.format(extr_str))
 
-    # --------- Do analysis
-    # --- analyse the variance in the prediction of members (spatially)
+    # --- Do analysis
+    # - analyse the variance in the prediction of members (spatially)
     # - Get summary stats and print to a txt file
     file2save = 'Oi_prj_Error_calcs_dataset_selction{}{}.txt'
     a = open(file2save.format(res, extr_str), 'w')
@@ -1660,7 +1697,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     # for "dataset error" on RMSE
     ptr_str = 'Dataset split effect on RMSE: {:.5g}-{:.5g} %'
     print(ptr_str.format(min_/Emax*100, max_/Emin*100), file=a)
-    print(ptr_str.format(Emin, Emax), file=a)
+#    print(ptr_str.format(Emin, Emax), file=a)
     # for "dataset error" on mean
     Emin = dfPbP[MerrPCmin].min()
     Emax = dfPbP[MerrPCmax].max()
@@ -1713,17 +1750,21 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
+    context (str): seaborn context to use for plotting (e.g. paper, poster, talk...)
+    show_plot (bool): show the plot on screen
+    df (pd.DataFrame): dataframe containing target and feature variables
 
     Returns
     -------
+    (None)
 
-    Notes
-    -----
     """
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # select dataframe with observations and predictions in it
     if isinstance(RFR_dict, type(None)):
         features_used_dict = RFR_dict['features_used_dict']
@@ -1731,7 +1772,7 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
     if isinstance(df, type(None)):
         df = RFR_dict['df']
 
-    # --- Evaluate model using various approaches
+    # - Evaluate model using various approaches
     import seaborn as sns
     sns.set(color_codes=True)
     if context == "paper":
@@ -1743,17 +1784,7 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
     savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_ODR_WINDOW'
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
     # models to compare
-    models2compare = [
-        # Earlier well performing models
-        #    'RFR(TEMP+SAL+Prod)',
-        #    'RFR(TEMP)',
-        # Later well performing models
-        #    'RFR(TEMP+DEPTH+SAL+NO3+DOC)', 'RFR(TEMP+SAL+NO3)',
-        #    'RFR(TEMP+DOC+Phos)', 'RFR(TEMP+SWrad+NO3+MLD+SAL)',
-        #    'RFR(TEMP+SAL+NO3)',
-        #    'RFR(TEMP+DEPTH+SAL)',
-        'RFR(Ensemble)',
-    ]
+    models2compare = [ 'RFR(Ensemble)',]
     # rename titles
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
@@ -1840,7 +1871,7 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
             ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                         textcoords='axes fraction', fontsize=f_size,
                         color=color_d[split])
-        # Beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-10, 410)
         ax.set_xlabel('Obs. {} ({})'.format(Iaq, units))
@@ -1861,7 +1892,7 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
         wspace = 0.075
     fig.subplots_adjust(top=top, right=right, left=left, bottom=bottom,
                         wspace=wspace)
-    # Save plot
+    # Save the plot
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     # Save entire pdf
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
@@ -1879,18 +1910,20 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
+    context (str): seaborn context to use for plotting (e.g. paper, poster, talk...)
+    show_plot (bool): show the plot on screen
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
-    # --- Get data
+    # - Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
     features_used_dict = RFR_dict['features_used_dict']
@@ -1898,7 +1931,7 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
     # get stats on models in RFR_dict
 #    stats = get_stats_on_models( RFR_dict=RFR_dict, verbose=False )
 
-    # --- Evaluate model using various approaches
+    # - Evaluate model using various approaches
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context(context)
@@ -1980,14 +2013,14 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
             ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                         textcoords='axes fraction', fontsize=f_size,
                         color=color_d[split])
-        # Beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-10, 410)
         #
         plt.ylabel('{} {} ({})'.format(param, Iaq, units))
         plt.xlabel('Obs. {} ({})'.format(Iaq, units))
 #        plt.title('Obs. vs param. for entire dataset')
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2004,17 +2037,19 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
 
     Parameters
     -------
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
+    show_plot (bool): show the plot on screen
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
-    # --- Get data
+    # - Get data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # select dataframe with observations and predictions in it
     df = RFR_dict['df']
     features_used_dict = RFR_dict['features_used_dict']
@@ -2022,7 +2057,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     # get stats on models in RFR_dict
     stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
 
-    # --- Evaluate model using various approaches
+    # - Evaluate model using various approaches
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper")
@@ -2055,7 +2090,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data
         sns.regplot(x='Iodide', y=param, data=df)
-        # beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-10, 410)
         plt.title('Obs. vs param. for entire dataset')
@@ -2065,7 +2100,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         alt_text = alt_text_str.format(stats_tmp[stat_var][0], N)
         ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                     textcoords='axes fraction', fontsize=f_size*1.5)
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2082,7 +2117,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data
         sns.regplot(x='Iodide', y=param, data=df_tmp)
-        # beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-10, 410)
         plt.title('Obs. vs param. for test dataset')
@@ -2092,7 +2127,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         alt_text = alt_text_str.format(stats_tmp[stat_var][0], N)
         ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                     textcoords='axes fraction', fontsize=f_size*1.5)
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2110,7 +2145,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data
         sns.regplot(x='Iodide', y=param, data=df_tmp)
-        # beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-10, 410)
         plt.title('Obs. vs param. for coastal test dataset')
@@ -2120,7 +2155,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         alt_text = alt_text_str.format(stats_tmp[stat_var][0], N)
         ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                     textcoords='axes fraction', fontsize=f_size*1.5)
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2138,7 +2173,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data
         sns.regplot(x='Iodide', y=param, data=df_tmp)
-        # beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-10, 410)
         plt.title('Obs. vs param. for non-coastal test dataset')
@@ -2148,7 +2183,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         alt_text = alt_text_str.format(stats_tmp[stat_var][0], N)
         ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                     textcoords='axes fraction', fontsize=f_size*1.5)
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2168,7 +2203,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.plot(x_121, [0]*len(x_121), alpha=0.5, color='k', ls='--')
         # Plot up data
         sns.regplot(x='Iodide', y=param+'-residual', data=df)
-        # beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-150, 150)
         plt.title('Residual (param.-Obs.) for entire dataset')
@@ -2178,7 +2213,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         alt_text = alt_text_str.format(stats_tmp[stat_var][0], N)
         ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                     textcoords='axes fraction', fontsize=f_size*1.5)
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2195,7 +2230,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.plot(x_121, [0]*len(x_121), alpha=0.5, color='k', ls='--')
         # Plot up data
         sns.regplot(x='Iodide', y=param+'-residual', data=df_tmp)
-        # beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-150, 150)
         plt.title('Residual (param.-Obs.) for test dataset')
@@ -2205,7 +2240,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         alt_text = alt_text_str.format(stats_tmp[stat_var][0], N)
         ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                     textcoords='axes fraction', fontsize=f_size*1.5)
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2223,7 +2258,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.plot(x_121, [0]*len(x_121), alpha=0.5, color='k', ls='--')
         # Plot up data
         sns.regplot(x='Iodide', y=param+'-residual', data=df_tmp)
-        # beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-150, 150)
         plt.title('Residual (param.-Obs.) for coastal test dataset')
@@ -2233,7 +2268,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         alt_text = alt_text_str.format(stats_tmp[stat_var][0], N)
         ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                     textcoords='axes fraction', fontsize=f_size*1.5)
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2251,7 +2286,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.plot(x_121, [0]*len(x_121), alpha=0.5, color='k', ls='--')
         # Plot up data
         sns.regplot(x='Iodide', y=param+'-residual', data=df_tmp)
-        # beautify
+        # Beautify the plot/figure
         plt.xlim(-10, 410)
         plt.ylim(-150, 150)
         plt.title('Residual (param.-Obs.) for non-coastal test dataset')
@@ -2261,7 +2296,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         alt_text = alt_text_str.format(stats_tmp[stat_var][0], N)
         ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
                     textcoords='axes fraction', fontsize=f_size*1.5)
-        # save plot
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -2272,14 +2307,24 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
 
 
 def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
-                           obs_var='Obs.')
+                           obs_var='Obs.'):
     """
     Plot up the X vs. Y performance by region - using core s2s functions
+
+    Parameters
+    -------
+    df (pd.DataFrame): DataFrame of data
+    LatVar (str): variable name in DataFrame for latitude
+    LonVar (str): variable name in DataFrame for longitude
+    params2plot (list): parameterisations to plot
+
+    Returns
+    -------
+    (None)
     """
-    #
+    # Local hardwired settings
     rm_Skagerrak_data = True
     rebuild = False
-#    rm_Skagerrak_data = False
     # Use top models from full dataset  ( now: nOutliers + nSkagerak
     RFR_dict = build_or_get_models_iodide(
         rebuild=rebuild,
@@ -2332,8 +2377,8 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
 
     Returns
     -------
@@ -2341,7 +2386,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
     """
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
         df = RFR_dict['df']
     # Select parameterisations
     models2compare = ['RFR(Ensemble)']
@@ -2358,7 +2403,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
     dfNEW['Coastal'] = df['Coastal']
     df = dfNEW
 
-    # --- Split dataset by testset, training, all, etc...
+    # - Split dataset by testset, training, all, etc...
     dfs = {}
     # Entire dataset
     dfs['Entire'] = df.copy()
@@ -2374,7 +2419,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
     # maintain ordering of plotting
     datasets = dfs.keys()
 
-    # --- Loop by data and write out stats
+    # - Loop by data and write out stats
     print(" -----  -----  -----  -----  ----- ")
     # write out by dataset and by param
     dataset_stats = {}
@@ -2382,7 +2427,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
         # print header
         ptr_str = " ----- For dataset split '{}' ----- "
         print(ptr_str.format(dataset))
-        # get data
+        # Get data
         df = dfs[dataset]
         # Loop by param, print values and save overalls
         param_stats = {}
@@ -2436,21 +2481,22 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    plot_up_CDF (bool): plot up as a cumulative distribution function
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper", font_scale=0.75)
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
         df = RFR_dict['df']
     # Get a dictionary of different dataset splits
     dfs = {}
@@ -2491,25 +2537,25 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
     if plot_up_CDF:
         savetitle += '_CDF'
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
-    # --- Plot up CDF and PDF plots for the dataset and residuals
+    # - Plot up CDF and PDF plots for the dataset and residuals
     for dataset in datasets:
-        # get data
+        # Get data
         df = dfs[dataset]
 
         # - Plot up PDF plots for the dataset
-        # plot observations
+        # Plot observations
         var_ = 'Obs.'
         obs_arr = df[target].values
         ax = sns.distplot(obs_arr, axlabel=axlabel, label=var_,
                           color='k',)
-        # loop and plot model values
+        # Loop and plot model values
         for param in params2plot:
             arr = df[param].values
             ax = sns.distplot(arr, axlabel=axlabel, label=param,
                               color=color_d[param], ax=ax)
-        # force y axis extend to be correct
+        # Force y axis extent to be correct
         ax.autoscale()
-        # Beautify
+        # Beautify the plot/figure
         title = 'PDF of {} data ({}) at obs. locations'
         plt.title(title.format(dataset, axlabel))
         plt.legend()
@@ -2518,23 +2564,23 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
         plt.close()
 
         # - Plot up CDF plots for the dataset
-        # plot observations
+        # Plot observations
         if plot_up_CDF:
             var_ = 'Obs.'
             obs_arr = df[target].values
             ax = sns.distplot(arr, axlabel=axlabel, label=var_, color='k',
                               hist_kws=dict(cumulative=True),
                               kde_kws=dict(cumulative=True))
-            # loop and plot model values
+            # Loop and plot model values
             for param in params2plot:
                 arr = df[param].values
                 ax = sns.distplot(arr, axlabel=axlabel, label=param,
                                   color=color_d[param], ax=ax,
                                   hist_kws=dict(cumulative=True),
                                   kde_kws=dict(cumulative=True))
-            # force y axis extend to be correct
+            # Force y axis extent to be correct
             ax.autoscale()
-            # Beautify
+            # Beautify the plot/figure
             title = 'CDF of {} data ({}) at obs. locations'
             plt.title(title.format(dataset, axlabel))
             plt.legend()
@@ -2546,14 +2592,14 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
         # get observations
         obs_arr = df[target].values
         fig, ax = plt.subplots()
-        # loop and plot model values
+        # Loop and plot model values
         for param in params2plot:
             arr = df[param].values - obs_arr
             ax = sns.distplot(arr, axlabel=axlabel, label=param,
                               color=color_d[param], ax=ax)
-        # force y axis extend to be correct
+        # Force y axis extent to be correct
         ax.autoscale()
-        # Beautify
+        # Beautify the plot/figure
         title = 'PDF of residual in {} data ({}) at obs. locations'
         plt.title(title.format(dataset, axlabel))
         plt.legend()
@@ -2563,19 +2609,19 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
 
         # - Plot up CDF plots for the residual  dataset
         if plot_up_CDF:
-            # plot observations
+            # Plot observations
             obs_arr = df[target].values
             fig, ax = plt.subplots()
-            # loop and plot model values
+            # Loop and plot model values
             for param in params2plot:
                 arr = df[param].values - obs_arr
                 ax = sns.distplot(arr, axlabel=axlabel, label=param,
                                   color=color_d[param], ax=ax,
                                   hist_kws=dict(cumulative=True),
                                   kde_kws=dict(cumulative=True))
-            # force y axis extend to be correct
+            # Force y axis extent to be correct
             ax.autoscale()
-            # Beautify
+            # Beautify the plot/figure
             title = 'CDF of residual in {} data ({}) at obs. locations'
             plt.title(title.format(dataset, axlabel))
             plt.legend()
@@ -2589,28 +2635,31 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
 
 def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
                                               testset='Test set (strat. 20%)',
-                                              target='Iodide', df=None, plot_up_CDF=False,
+                                              target='Iodide', df=None,
+                                              plot_up_CDF=False,
                                               dpi=320):
     """
     Plot up CDF and PDF plots to explore point-vs-point data
 
     Parameters
     -------
-    target (str), Name of the target variable (e.g. iodide)
-    testset (str), Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    df (pd.DataFrame): DataFrame of data
+    plot_up_CDF (bool): plot up as a cumulative distribution function
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper", font_scale=0.75)
     # Get data
     if isinstance(df, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
         df = RFR_dict['df']
     # Get a dictionary of different dataset splits
     dfs = {}
@@ -2652,27 +2701,27 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
     for n_dataset, dataset in enumerate(datasets):
         # set Axis for abosulte PDF
         ax1 = fig.add_subplot(3, 2, [1, 3, 5][n_dataset])
-        # get data
+        # Get data
         df = dfs[dataset]
         N_ = df.shape
         print(dataset, N_)
         # - Plot up PDF plots for the dataset
-        # plot observations
+        # Plot observations
         var_ = 'Obs.'
         obs_arr = df[target].values
         ax = sns.distplot(obs_arr, axlabel=axlabel, label=var_,
                           color='k', ax=ax1)
-        # loop and plot model values
+        # Loop and plot model values
         for param in params2plot:
             arr = df[param].values
             ax = sns.distplot(arr, axlabel=axlabel,
                               label=rename_titles[param],
                               color=color_d[param], ax=ax1)
-        # force y axis extent to be correct
+        # Force y axis extent to be correct
         ax1.autoscale()
-        # force x axis to be constant
+        # Force x axis to be constant
         ax1.set_xlim(xlim_iodide, 420)
-        # Beautify
+        # Beautify the plot/figure
         ylabel = 'Frequency \n ({})'
         ax1.set_ylabel(ylabel.format(dataset))
         # Add legend to first plot
@@ -2684,20 +2733,20 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
         ax2 = fig.add_subplot(3, 2, [2, 4, 6][n_dataset])
         # get observations
         obs_arr = df[target].values
-        # loop and plot model values
+        # Loop and plot model values
         for param in params2plot:
             arr = df[param].values - obs_arr
             ax = sns.distplot(arr, axlabel=axlabel,
                               label=rename_titles[param],
                               color=color_d[param], ax=ax2)
-        # force y axis extent to be correct
+        # Force y axis extent to be correct
         ax2.autoscale()
-        # force x axis to be constant
+        # Force x axis to be constant
         ax2.set_xlim(-320, 220)
         # Add legend to first plot
         if (n_dataset == 0):
             ax2.set_title('Bias')
-    # save whole figure
+    # Save whole figure
     plt.savefig(savetitle)
 
 
@@ -2710,18 +2759,25 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodid
 
     Parameters
     -------
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    target (str): Name of the target variable (e.g. iodide)
+    stats (pd.DataFrame): dataframe of statistics on model/obs.
+    fillcontinents (bool): plot up data with continents greyed out
+    save2png (bool): save the plot as png
+    skipna (bool): exclude NaNs from analysis
+    rm_non_water_boxes (bool): fill all non-water grid boxes with NaNs
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.reset_orig()
     # get predicted target data
     filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
@@ -2731,7 +2787,7 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodid
     # --- Now plot up by month
     var2plot = 'Ensemble_Monthly_mean'
     if rm_non_water_boxes:
-        ds = add_LWI2array(ds=ds, res=res, var2template=var2plot)
+        ds = utils.add_LWI2array(ds=ds, res=res, var2template=var2plot)
         # set non water boxes to np.NaN
         ds[var2plot] = ds[var2plot].where(ds['IS_WATER'] == True)
     #
@@ -2778,9 +2834,8 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodid
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                fig=fig, ax=ax, xlabel=xlabel, ylabel=ylabel,
                                title_x=title_x, window=True, f_size=f_size)
-#        AC.map_plot( arr, res=res )
     # Adjust figure
-    # Adjust plot ascetics
+    # Adjust plot aesthetics
     bottom = 0.05
     left = 0.05
     hspace = 0.075
@@ -2803,12 +2858,19 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    save2png (bool): save the plot as png
+    rm_non_water_boxes (bool): fill all non-water grid boxes with NaNs
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    target (str): name of the target variable being predicted by the feature variables
+    fillcontinents (bool): plot up data with continents greyed out
+    stats (pd.DataFrame): dataframe of statistics on model/obs.
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.reset_orig()
@@ -2818,7 +2880,7 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
     else:
         extr_str = ''
     filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
@@ -2831,7 +2893,7 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
 #    var2plot = 'RFR(TEMP+SWrad+NO3+MLD+SAL)'
     # only select boxes where that are fully water (seasonal)
     if rm_non_water_boxes:
-        ds = add_LWI2array(ds=ds, res=res, var2template=var2plot)
+        ds = utils.add_LWI2array(ds=ds, res=res, var2template=var2plot)
         # set non water boxes to np.NaN
         ds[var2plot] = ds[var2plot].where(ds['IS_WATER'] == True)
     units = 'nM'
@@ -2862,9 +2924,7 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                fig=fig, ax=ax, xlabel=xlabel, ylabel=ylabel,
                                title_x=title_x, window=True, f_size=f_size)
-#        AC.map_plot( arr, res=res )
-    # Adjust figure
-    # Adjust plot ascetics
+    # Adjust plot aesthetics
     bottom = 0.05
     left = 0.05
     hspace = 0.075
@@ -2887,18 +2947,23 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
 
     Parameters
     -------
+    target (str): name of the target variable being predicted by the feature variables
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    save2png (bool): save the plot as png
+    fillcontinents (bool): plot up data with continents greyed out
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    stats (pd.DataFrame): dataframe of statistics on model/obs.
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.reset_orig()
     # Get data predicted target data
     filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     ds = xr.open_dataset(folder + filename)
     # use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
@@ -2939,7 +3004,7 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
         # add A/B label
         ax.annotate(['(A)', '(B)'][n_var], xy=(0.025, 1.02),
                     textcoords='axes fraction', fontsize=f_size)
-    # Adjust plot ascetics
+    # Adjust plot aesthetics
     bottom = 0.025
     left = 0.075
     hspace = 0.075
@@ -2963,12 +3028,20 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    save2png (bool): save the plot as png
+    rm_non_water_boxes (bool): fill all non-water grid boxes with NaNs
+    fillcontinents (bool): plot up data with continents greyed out
+    skipna (bool): exclude NaNs from analysis
+    stats (pd.DataFrame): dataframe of statistics on model/obs.
+    verbose (bool): print out verbose output?
+    debug (bool): print out debugging output?
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.reset_orig()
@@ -2979,7 +3052,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extr_str = ''
     # Get spatial data from saved NetCDF
     filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     ds = xr.open_dataset(folder + filename)
     # setup a PDF
     savetitle = 'Oi_prj_spatial_avg_and_std_ensemble_models_{}_{}'
@@ -2994,7 +3067,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     vars2plot = ['Ensemble_Monthly_mean']
     #
     if rm_non_water_boxes:
-        ds = add_LWI2array(ds=ds, res=res, var2template=vars2plot[0])
+        ds = utils.add_LWI2array(ds=ds, res=res, var2template=vars2plot[0])
         for var2mask in ['Ensemble_Monthly_mean', 'Ensemble_Monthly_std']:
             # set non water boxes to np.NaN
             ds[var2mask] = ds[var2mask].where(ds['IS_WATER'] == True)
@@ -3014,8 +3087,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3041,8 +3114,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3068,8 +3141,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3095,8 +3168,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3125,8 +3198,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3155,8 +3228,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3184,8 +3257,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
                                fillcontinents=fillcontinents, centre=centre, units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3208,21 +3281,25 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
 
     Parameters
     -------
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
+    show_plot (bool): show the plot on screen
+    save2png (bool): save the plot as png
+    fillcontinents (bool): plot up data with continents greyed out
+    window (bool): plot up with larger plot text as part of a window plot
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.reset_orig()
     # Get dictionary of shared data if not provided
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # get XR Dataset of data
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')+'/data/'
     ds = xr.open_dataset(folder + filename)
     # setup a PDF
     savetitle = 'Oi_prj_input_ancillaries_spatailly_{}'.format(res)
@@ -3273,8 +3350,8 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
                                fillcontinents=fillcontinents, centre=centre,
                                f_size=f_size, units=None, window=window)
 #        AC.map_plot( arr, res=res )
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3283,23 +3360,6 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
         if save2png:
             plt.savefig(png_filename, dpi=dpi, bbox_inches='tight')
         plt.close()
-
-    # as a maximum
-#     for var in vars2plot:
-#         arr = ds[var].max(dim='time').values
-#         # Plot up
-#         title = 'Annual maximum I ({})'.format( var )
-#         fixcb, nticks = np.array( [0., 240.] ), 5
-#         extend='max'
-#         AC.plot_spatial_figure( arr, fixcb=fixcb, nticks=nticks, \
-#             extend=extend, res=res, show=False, title=title, \
-#             fillcontinents=fillcontinents, centre=centre )
-# #        AC.map_plot( arr, res=res )
-#         # beautify
-#         # save plot
-#         AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
-#         if show_plot: plt.show()
-#         plt.close()
 
         # as fraction of mean
     for var in vars2plot:
@@ -3336,8 +3396,8 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
                                extend=extend, res=res, show=False, title=title,
                                fillcontinents=fillcontinents, centre=centre,
                                f_size=f_size, units=None, window=window)
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3360,18 +3420,21 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodi
 
     Parameters
     -------
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    save2png (bool): save the plot as png
+    fillcontinents (bool): plot up data with continents greyed out
+    f_size (float): fontsize to use for plotting
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import seaborn as sns
     sns.reset_orig()
-    # get data
+    # Get data
     filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     ds = xr.open_dataset(folder + filename)
     # setup a PDF
     savetitle = 'Oi_prj_spatial_comparison_models_{}'.format(res)
@@ -3400,8 +3463,8 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodi
                                extend=extend, res=res, show=False, title=title,
                                fillcontinents=fillcontinents, centre=centre,
                                f_size=f_size, units=units, window=window)
-        # beautify
-        # save plot
+        # Beautify the plot/figure
+        # Save the plot
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
@@ -3442,372 +3505,48 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
         value = AC.get_2D_arr_weighted_by_X(arr.T,  s_area=s_area)
         print(param, value)
 
-#
-# def get_diagnostic_plots_analysis4model(res='4x5', extr_str='', target='Iodide'):
-#     """ Plot up a selection of diagnostic plots the model (& exsiting param) """
-#     # res='4x5'; extr_str='tree_X_STRAT_JUST_TEMP_K_GEBCO_SALINTY'
-#     # Get the model
-#     model = get_current_model(extr_str=extr_str)
-#     features_used = ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO']
-#     target_name = [target]
-#     # Initialise a dictionary to store data
-#     ars_dict = {}
-#
-#     # get array of predictor for lats and lons (at res... )
-#     df_predictors = get_predict_lat_lon_array(res=res)
-#     # now make predictions for target ("y") from loaded predictors
-#     target_predictions = model.predict(df_predictors[features_used])
-#     # Convert output vector to 2D lon/lat array
-#     model_name = "RandomForestRegressor '{}'"
-#     model_name = model_name.format('+'.join(features_used))
-#     ars_dict[model_name] = mk_uniform_2D_array(df_predictors=df_predictors,
-#                                                target_name=target_name, res=res,
-#                                                target_predictions=target_predictions)
-#
-#     # - Also get arrays of data for Chance et al and MacDonald et al...
-#     param_name = 'Chance et al (2014)'
-#     ars_dict[param_name] = get_equiv_Chance_arr(res=res,
-#                                                     target_predictions=target_predictions,
-#                                                      df=df_predictors,
-#                                                      features_used=features_used)
-#     param_name = 'MacDonald et al (2014)'
-#     ars_dict[param_name] = get_equiv_MacDonald_arr(res=res,
-#                                                     target_predictions=target_predictions,
-#                                                         df=df_predictors,
-#                                                         features_used=features_used)
-#     # -- Also get the working output from processed file for obs.
-#     pro_df = pd.read_csv(get_file_locations(
-#         'data_root')+'Iodine_obs_WOA.csv')
-#     # Exclude v. high values (N=4 -  in intial dataset)
-#     # Exclude v. high values (N=7 -  in final dataset)
-#     pro_df = pro_df.loc[pro_df[target] < 400.]
-#
-#     # sort a fixed order of param names
-#     param_names = sorted(ars_dict.keys())
-#
-#     # - Also build 2D arrays for input testing variables
-#     feature_dict = {}
-#     extras = [u'SeaWIFs_ChlrA', u'WOA_Nitrate']
-#     for feature in features_used + extras:
-#         feature_dict[feature] = mk_uniform_2D_array(
-#             df_predictors=df_predictors, target_name=target_name, res=res,
-#             target_predictions=df_predictors[feature])
-#
-#     # - Also build 2D arrays for input testing point data
-# #     NOTE: This needs to be updates to consider overlapping data points.
-# #     point_dict_ars ={}
-# #     for feature in features_used + extras + target_name:
-# #
-# #
-# #         point_dict_ars[feature] = mk_uniform_2D_array(
-# #         df_predictors=pro_df, target_name=target_name, res=res,
-# #         target_predictions=pro_df[feature] )
-#
-#     # ---- Create diagnostics and save as a PDF
-#     # misc. shared variables
-#     axlabel = '[I$^{-}_{aq}$] (nM)'
-#     # setup PDf
-#     savetitle = 'Oi_prj_param_plots_{}_{}'.format(res, extr_str)
-#     dpi = 320
-#     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
-#     # colours to use?
-#     import seaborn as sns
-#     sns.reset_orig()
-# #    current_palette = sns.color_palette()
-#     current_palette = sns.color_palette("colorblind")
-#     colour_dict = dict(zip(param_names, current_palette[:len(param_names)]))
-#     colour_dict['Obs.'] = 'K'
-#     #  --- Plot up locations of old and new data
-#     plot_up_data_locations_OLD_and_new(save_plot=False, show_plot=False)
-#     # Save to PDF and close plot
-#     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-#     plt.close()
-#
-#     # --- Plot up parameterisations as spatial plot
-#     # reset Seaborn settings
-#     import seaborn as sns
-#     sns.reset_orig()
-#
-# #    plot_current_parameterisations()
-#     for param_name in param_names:
-#         plot_up_surface_iodide(arr=ars_dict[param_name], title=param_name,
-#                                res=res)
-#         # Save to PDF and close plot
-#         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-#         plt.close()
-#
-#     # ---- plot up input fields for Temp, salinity, GEBCO
-#     # reset Seaborn settings
-#     import seaborn as sns
-#     sns.reset_orig()
-#
-# #    plot_current_parameterisations()
-#     for feature in feature_dict.keys():
-#         arr = feature_dict[feature]
-#         fixcb = np.array([arr.min(), arr.max()])
-#         extend = 'neither'
-#         nticks = 10
-# #        plot_up_surface_iodide( arr=, title=feature,\
-# #            res=res, fixcb, extend=extend )
-#         title = feature + '(inputed feature)'
-#
-#         #
-#         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
-#                                res=res, units=None, title=title, show=False)
-#         # Save to PDF and close plot
-#         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-#         plt.close()
-#
-#     # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
-#     # ( as before, but- normalised to the mean )
-#     # reset Seaborn settings
-#     import seaborn as sns
-#     sns.reset_orig()
-#
-# #    plot_current_parameterisations()
-#     for feature in feature_dict.keys():
-#         arr = feature_dict[feature].copy()
-#         arr = arr / arr.mean()
-#         arr = np.ma.log(arr)
-#         fixcb = np.array([arr.min(), arr.max()])
-#         extend = 'neither'
-#         nticks = 10
-#         if fixcb[0] == 0:
-#             fixcb[0] = 0.01
-#             extend = 'min'
-# #        plot_up_surface_iodide( arr=, title=feature,\
-# #            res=res, fixcb, extend=extend )
-#         title = feature + '( log fraction of mean )'
-#         #
-#         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
-#                                res=res, units=axlabel, title=title, show=False, )
-#         # Save to PDF and close plot
-#         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-#         plt.close()
-#
-#     # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
-#     # ( as before, but- normalised to the median )
-#     # reset Seaborn settings
-#     import seaborn as sns
-#     sns.reset_orig()
-#
-# #    plot_current_parameterisations()
-#     for feature in feature_dict.keys():
-#         print(feature)
-#         arr = feature_dict[feature].copy()
-#         arr = arr / np.median(arr)
-#         arr = np.ma.log(arr)
-#         fixcb = np.array([arr.min(), arr.max()])
-#         extend = 'neither'
-#         nticks = 10
-#         if fixcb[0] == 0:
-#             fixcb[0] = 0.01
-#             extend = 'min'
-# #        plot_up_surface_iodide( arr=, title=feature,\
-# #            res=res, fixcb, extend=extend )
-#         title = feature + '( log fraction of median )'
-#         #
-#         if arr.mask.all():
-#             #            np.min(arr[~arr.mask])
-#             # check if array is completely masked
-#             # ValueError: zero-size array to reduction operation minimum which
-#             # has no identity
-#             ax, fig = plt.subplots()
-#             msg = 'WARNING: entire array masked for {}'.format(feature)
-#             plt.text(0.1, 0.5, msg)
-#             plt.title(title)
-#             print(msg)
-#         else:
-#             AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-#                                    extend=extend,
-#                                    res=res, units=axlabel, title=title, show=False, )
-#         # Save to PDF and close plot
-#         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-#         plt.close()
-#
-#     # --- Plot up parameterisations as a PDF
-#     import seaborn as sns
-#     sns.set(color_codes=True)
-#     sns.set_context("paper")
-#     # plot 1st model...
-#     param_name = param_names[0]
-#     arr = ars_dict[param_name].flatten()
-#     ax = sns.distplot(arr, axlabel=axlabel, label=param_name,
-#                       color=colour_dict[param_name])
-#     # Then loop rest of params
-#     for param_name in param_names[1:]:
-#         arr = ars_dict[param_name].flatten()
-#         ax = sns.distplot(arr, axlabel=axlabel,
-#                           label=param_name,
-#                           color=colour_dict[param_name], ax=ax)
-#     # force y axis extend to be correct
-#     max_yval = max([h.get_height() for h in ax.patches])
-#     plt.ylim(0, max_yval+max_yval*0.025)
-#     # Beautify
-#     plt.title('PDF of predicted ocean surface '+axlabel)
-#     plt.legend()
-#     # Save to PDF and close plot
-#     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-#     plt.close()
-#
-#     # --- Plot up parameterisations as a CDF
-#     # plot 1st model...
-#     param_name = param_names[0]
-#     arr = ars_dict[param_name].flatten()
-#     ax = sns.distplot(arr, axlabel=axlabel, label=param_name,
-#                       color=colour_dict[param_name],
-#                       hist_kws=dict(cumulative=True), kde_kws=dict(cumulative=True))
-#     # Then loop rest of params
-#     for param_name in param_names[1:]:
-#         arr = ars_dict[param_name].flatten()
-#         ax = sns.distplot(arr, axlabel=axlabel,
-#                           label=param_name,
-#                           color=colour_dict[param_name], ax=ax,
-#                           hist_kws=dict(cumulative=True), kde_kws=dict(cumulative=True))
-#     # force y axis extend to be correct
-#     max_yval = max([h.get_height() for h in ax.patches])
-#     plt.ylim(0, max_yval+max_yval*0.025)
-#     # Beautify
-#     plt.title('CDF of predicted ocean surface '+axlabel)
-#     plt.legend()
-#     # Save to PDF and close plot
-#     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-#     plt.close()
-#
-#     # --- --- --- --- --- --- --- ---
-#     # --- Calculate differs between point observations and params
-#
-#     # --- All of observational dataset
-#
-#     # --- Just the test set of observations (20% of original data )
-#
-#     # ---- plot up input fields for Temp, salinity, GEBCO
-#     # ---- plot up ***normalised*** input fields for Temp, salinity, GEBCO
-#     # reset Seaborn settings
-# #     import seaborn as sns
-# #     sns.reset_orig()
-# #
-# # #    plot_current_parameterisations()
-# #     for feature in feature_dict.keys():
-# #         arr = pro_df[feature].copy()
-# #         #
-# #
-# #         fixcb = np.array([ arr.min(), arr.max() ] )
-# #         extend = 'neither'
-# #         nticks =10
-# #         if fixcb[0] == 0:
-# #             fixcb[0] = 0.01
-# #             extend = 'min'
-# # #        plot_up_surface_iodide( arr=, title=feature,\
-# # #            res=res, fixcb, extend=extend )
-# #         title = feature + '( log fraction of median )'
-# #         #
-# #         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
-# #             res=res, units=axlabel, title=title, show=False, )
-# #         # Save to PDF and close plot
-# #         AC.plot2pdfmulti( pdff, savetitle, dpi=dpi )
-# #         plt.close()
-# #
-#
-#     # -- Save entire pdf
-#     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
-#
-#
 
 
-# def get_equiv_Chance_arr(df=None, target_predictions=None,
-#                          features_used=None, target_name=['Iodide'], res='4x5'):
+# def get_hexbin_plot(x=None, y=None, xlabel=None, ylabel=None, log=False,
+#                     title=None, add_ODR_trendline2plot=True):
 #     """
-#     Calculate Iodide from Chance parametistaion and input data
+#     Plot up a hexbin comparison with marginals
+#
+#     Parameters
+#     -------
+#
+#     Returns
+#     -------
+#
+#     Notes
+#     -----
 #     """
-#     # calculate dependency of iodide from Chance et al 2014
-#     C = (df['WOA_TEMP'].values)**2
-#     arr = (0.225*C) + 19.
-#     # Transpose to be a 2D array, that can then be plotted
-#     arr = mk_uniform_2D_array(df_predictors=df, target_predictions=arr,
-#                               target_name=target_name, res=res)
-#     return arr
-
-
-# def get_equiv_MacDonald_arr(df=None, target_predictions=None,
-#                             features_used=None, target_name=['Iodide'],
-#                             res='4x5'):
-#     """
-#     Calculate Iodide from Chance parametistaion and input data
-#     """
-#     # calculate dependency of iodide from MacDonald et al 2014
-#     # NOTE: conversion of M to nM of I-
-#     C = (df['WOA_TEMP'].values+273.15)
-# #    C = df['WOA_TEMP_K']
-#     # NOTE: conversion of M to nM of I-
-#     arr = 1.45E6 * (np.exp((-9134. / C))) * 1E9
-#     # Transpose to be a 2D array, that can then be plotted
-#     arr = mk_uniform_2D_array(df_predictors=df, target_predictions=arr,
-#                               target_name=target_name, res=res)
-#     return arr
-
-
-def plot_up_surface_iodide(arr=None, res='4x5', title=None, plot4poster=False,
-                           fixcb=np.array([0., 240.]), nticks=5, extend='max',
-                           show_plot=False,
-                           f_size=15, window=False, axlabel='[I$^{-}_{aq}$] (nM)'):
-    """
-    Plot up surface concentrations of Iodide
-    """
-    # local params
-    if plot4poster:
-        title = None
-        f_size = 30
-        window = True
-    # Use AC_tools...
-    AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, extend=extend,
-                           res=res, units=axlabel, title=title, show=False,
-                           f_size=f_size, window=window)
-#    if save_plot:
-    if show_plot:
-        AC.show_plot()
-
-
-def get_hexbin_plot(x=None, y=None, xlabel=None, ylabel=None, log=False,
-                    title=None, add_ODR_trendline2plot=True):
-    """
-    Plot up a hexbin comparison with marginals
-
-    Parameters
-    -------
-
-    Returns
-    -------
-
-    Notes
-    -----
-    """
-    # detail: http://seaborn.pydata.org/examples/hexbin_marginals.html
-    import numpy as np
-    import seaborn as sns
-    # Setup regression plot
-    sns.set(style="ticks")
-    g = sns.jointplot(x, y, kind="hex",
-                      # set bins to log to increase contrast.
-                      #            bins='log' , \
-                      #        stat_func=kendalltau,
-                      color="#4CB391")
-    # Set X and Y ranges to be equal?
-    x0, x1 = g.ax_joint.get_xlim()
-    y0, y1 = g.ax_joint.get_ylim()
-    print('ranges of data:', x0, x1, y0, y1)
-    # Or just add a 1:1 line?
-    lims = [max(x0, y0), min(x1, y1)]
-    g.ax_joint.plot(lims, lims, ':k')
-    if all((not isinstance(xlabel, type(None)),
-            (not isinstance(ylabel, type(None))))):
-        g.set_axis_labels(xlabel, ylabel)
-    # Add ODR best fit line
-    if add_ODR_trendline2plot:
-        plot_ODR_linear(X=x, Y=y, ax=g.ax_joint)
-    if not isinstance(title, type(None)):
-        g.fig.suptitle(title)
-    return g
+#     # detail: http://seaborn.pydata.org/examples/hexbin_marginals.html
+#     import numpy as np
+#     import seaborn as sns
+#     # Setup regression plot
+#     sns.set(style="ticks")
+#     g = sns.jointplot(x, y, kind="hex",
+#                       # set bins to log to increase contrast.
+#                       #            bins='log' , \
+#                       #        stat_func=kendalltau,
+#                       color="#4CB391")
+#     # Set X and Y ranges to be equal?
+#     x0, x1 = g.ax_joint.get_xlim()
+#     y0, y1 = g.ax_joint.get_ylim()
+#     print('ranges of data:', x0, x1, y0, y1)
+#     # Or just add a 1:1 line?
+#     lims = [max(x0, y0), min(x1, y1)]
+#     g.ax_joint.plot(lims, lims, ':k')
+#     if all((not isinstance(xlabel, type(None)),
+#             (not isinstance(ylabel, type(None))))):
+#         g.set_axis_labels(xlabel, ylabel)
+#     # Add ODR best fit line
+#     if add_ODR_trendline2plot:
+#         plot_ODR_linear(X=x, Y=y, ax=g.ax_joint)
+#     if not isinstance(title, type(None)):
+#         g.fig.suptitle(title)
+#     return g
 
 
 def get_ensemble_predicted_iodide(df=None,
@@ -3819,19 +3558,24 @@ def get_ensemble_predicted_iodide(df=None,
 
     Parameters
     -------
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    use_vals_from_NetCDF (bool): use the values for the prediction from offline NetCDF
+    RFR_dict (dict): dictionary of core variables and data
+    stats (pd.DataFrame): dataframe of statistics on model/obs.
+    verbose (bool): print out verbose output?
+    debug (bool): print out debugging output?
+    topmodels (list): list of models to make spatial predictions for
 
     Returns
     -------
-
-    Notes
-    -----
+    (pd.DataFrame)
     """
     # Just use top 10 models are included
     # ( with derivative variables )
     if isinstance(topmodels, type(None)):
         # extract the models...
         if isinstance(RFR_dict, type(None)):
-            RFR_dict = build_or_get_models(
+            RFR_dict = build_or_get_models_iodide(
                 rm_Skagerrak_data=rm_Skagerrak_data
             )
         # get stats on models in RFR_dict
@@ -3914,37 +3658,39 @@ def plot_difference2_input_PDF_on_update_of_var(res='4x5'):
     pass
 
 
-def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
-        RFR_dict=None, stats=None, res='4x5', dpi=320,
-        perturb_by_mutiple=False, save_str='', show_plot=False):
+def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=None,
+                                                         res='4x5', dpi=320,
+                                                         perturb_by_mutiple=False,
+                                                         save_str='', show_plot=False):
     """
     Graphically plot the sensitivity of iodide in input variables
 
     Parameters
     -------
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
+    show_plot (bool): show the plot on screen
+    stats (pd.DataFrame): dataframe of statistics on model/obs.
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import matplotlib
-#    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     matplotlib.style.use('ggplot')
     import seaborn as sns
     sns.set()
     # Get the dictionary of shared data
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # Get the stats on the models built
     if isinstance(stats, type(None)):
         stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
     # Get the core input variables
-    data_root = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')+'/data/'
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    ds = xr.open_dataset(data_root + filename)
+    ds = xr.open_dataset(folder + filename)
     # set up a dictionary for different dataset splits
     dss = {}
     # Keep the base case to use as a reference
@@ -3995,7 +3741,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
                                                  res=res,
                                                  save2NetCDF=False)
         # add LWI and surface area to array
-        ds_tmp = add_LWI2array(ds=ds_tmp, res=res,
+        ds_tmp = utils.add_LWI2array(ds=ds_tmp, res=res,
                                var2template='Chance2014_STTxx2_I')
         # save to dict
         dssI[key_] = ds_tmp
@@ -4089,7 +3835,7 @@ def plot_spatial_area4core_decisions(res='4x5'):
         value = d[var]['value']
         std = d[var]['std']
         # plot up threshold
-        plot_threshold_plus_SD_spatially(var=var, value=value, std=std,
+        misc.plot_threshold_plus_SD_spatially(var=var, value=value, std=std,
                                          res=res)
 
 
@@ -4100,24 +3846,26 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
     Parameters
     -------
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
+    verbose (bool): print out verbose output?
+    debug (bool): print out debugging output?
 
     Returns
     -------
-
-    Notes
-    -----
+    (None)
     """
     import gc
     # res='4x5'; dpi=320
     # --- Local variables
     Iaq = '[I$^{-}_{aq}$]'
     # Get the core input variables
-    data_root = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')+'/data/'
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    ds = xr.open_dataset(data_root + filename)
+    ds = xr.open_dataset(folder + filename)
     # Get the models
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     topmodels = list(set(topmodels))
     # other local settings?
@@ -4175,7 +3923,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 #         plt.savefig( savestr, dpi=320 )
 #         plt.close()
 #     # rebuild (just the top models)
-#     RFR_dict_d[VarName] = build_or_get_models( df=df,
+#     RFR_dict_d[VarName] = build_or_get_models_iodide( df=df,
 #         model_names = topmodels,
 #         save_model_to_disk=False,
 #         read_model_from_disk=False,
@@ -4184,7 +3932,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
     # - no where obs where low temperature and coastal (NH)
     VarName = 'No outliers'
-    bool1 = dfA[target] > get_outlier_value(df=dfA, var2use=target)
+    bool1 = dfA[target] > utils.get_outlier_value(df=dfA, var2use=target)
     index2drop = dfA.loc[bool1, :].index
     df = dfA.drop(index2drop)
     # reset index of updated DataFrame (and save out the rm'd data prior)
@@ -4221,7 +3969,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plt.savefig(savestr, dpi=320)
         plt.close()
     # rebuild (just the top models)
-    RFR_dict_d[VarName] = build_or_get_models(df=df,
+    RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                               model_names=topmodels,
                                               save_model_to_disk=False,
                                               read_model_from_disk=False,
@@ -4230,7 +3978,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
     # - No outliers or skaggerak
     VarName = 'No outliers \or Skagerrak'
-    bool1 = dfA['Iodide'] > get_outlier_value(df=dfA, var2use=target)
+    bool1 = dfA['Iodide'] > utils.get_outlier_value(df=dfA, var2use=target)
     bool2 = dfA['Data_Key'].values == 'Truesdale_2003_I'
     index2drop = dfA.loc[bool1 | bool2, :].index
     df = dfA.drop(index2drop)
@@ -4268,12 +4016,12 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plt.savefig(savestr, dpi=320)
         plt.close()
     # rebuild (just the top models)
-    RFR_dict_d[VarName] = build_or_get_models(df=df,
-                                              model_names=topmodels,
-                                              save_model_to_disk=False,
-                                              read_model_from_disk=False,
-                                              delete_existing_model_files=False
-                                              )
+    RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
+                                                     model_names=topmodels,
+                                                     save_model_to_disk=False,
+                                                     read_model_from_disk=False,
+                                                     delete_existing_model_files=False
+                                                     )
 
     # --- Include options that didn't improve things in PDF
     if plt_option_tried_but_only_slightly_helped:
@@ -4313,7 +4061,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                     plt.savefig( savestr, dpi=320 )
         #                     plt.close()
         #                 rebuild (just the top models)
-        #                 RFR_dict_d[VarName] = build_or_get_models( df=df,
+        #                 RFR_dict_d[VarName] = build_or_get_models_iodide( df=df,
         #                     model_names = topmodels,
         #                     save_model_to_disk=False,
         #                     read_model_from_disk=False,
@@ -4357,7 +4105,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #                     plt.savefig( savestr, dpi=320 )
         #                     plt.close()
         #                 rebuild (just the top models)
-        #                 RFR_dict_d[VarName] = build_or_get_models( df=df,
+        #                 RFR_dict_d[VarName] = build_or_get_models_iodide( df=df,
         #                     model_names = topmodels,
         #                     save_model_to_disk=False,
         #                     read_model_from_disk=False,
@@ -4413,7 +4161,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4443,7 +4191,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4473,7 +4221,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4521,7 +4269,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4574,7 +4322,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4628,7 +4376,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             plt.savefig(savestr, dpi=320)
             plt.close()
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4658,7 +4406,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4691,7 +4439,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4721,7 +4469,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4750,7 +4498,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4783,7 +4531,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4815,7 +4563,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4845,7 +4593,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4877,7 +4625,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4909,7 +4657,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4939,7 +4687,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -4972,7 +4720,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         if verbose:
             print(prt_str.format(N, N/NA*100, VarName))
         # rebuild (just the top models)
-        RFR_dict_d[VarName] = build_or_get_models(df=df,
+        RFR_dict_d[VarName] = build_or_get_models_iodide(df=df,
                                                   model_names=topmodels,
                                                   save_model_to_disk=False,
                                                   read_model_from_disk=False,
@@ -5036,7 +4784,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         plot_predicted_iodide_vs_lat_figure_ENSEMBLE(ds=dssI[key_].copy(),
                                                      RFR_dict=RFR_dict, res=res,
                                                      show_plot=False, close_plot=False,
-                                                     save_plot=False, topmodels=topmodels,
+                                                     save2png=False, topmodels=topmodels,
                                                      )
         plt_str = "Obs.+Params. vs Lat for '{}' (N={}, {:.2f}% of dataset)"
         plt.title(plt_str.format(key_, Nvals[key_], Nvals[key_]/NA*100))
@@ -5055,12 +4803,12 @@ def explore_sensitivity_of_65N(res='4x5'):
     """
     # --- Local variables
     # Get the core input variables
-    data_root = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/data/'
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    ds = xr.open_dataset(data_root + filename)
+    ds = xr.open_dataset(folder + filename)
     # Get the models
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
 
     # set up a dictionary for different dataset splits
@@ -5371,7 +5119,7 @@ def explore_sensitivity_of_65N(res='4x5'):
         plot_predicted_iodide_vs_lat_figure_ENSEMBLE(ds=dssI[key_].copy(),
                                                      RFR_dict=RFR_dict, res=res,
                                                      show_plot=False, close_plot=False,
-                                                     save_plot=False, topmodels=topmodels,
+                                                     save2png=False, topmodels=topmodels,
                                                      )
         plt.title("Obs.+Params. vs Lat for '{}'".format(key_))
         # Save to PDF and close plot
@@ -5387,18 +5135,34 @@ def explore_sensitivity_of_65N(res='4x5'):
 def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
                                      plot_avg_as_median=False, RFR_dict=None,
                                      res='0.125x0.125', target='iodide',
-                                     show_plot=False, close_plot=True, save_plot=False,
+                                     show_plot=False, close_plot=True, save2png=False,
                                      folder=None, ds=None, topmodels=None):
-    """ Plot a figure of iodide vs laitude - showing all ensemble members """
+    """
+    Plot a figure of iodide vs laitude - showing all ensemble members
+
+    Parameters
+    -------
+    target (str): name of the target variable being predicted by the feature variables
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    save2png (bool): save the plot as png
+    plot_avg_as_median (bool): use median as the average in plots
+    close_plot (bool): close the plot?
+    ds (xr.Dataset): xarray dataset to use for plotting
+
+    Returns
+    -------
+    (None)
+    """
     import seaborn as sns
     sns.set(color_codes=True)
     sns.set_context("paper", font_scale=0.75)
     # Get RFR_dict if not provide
     if isinstance(RFR_dict, type(None)):
-        RFR_dict = build_or_get_models()
+        RFR_dict = build_or_get_models_iodide()
     # Get predicted values
     if isinstance(folder, type(None)):
-        folder = get_file_locations('data_root')
+        folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     if isinstance(ds, type(None)):
         filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
         ds = xr.open_dataset(folder + filename)
@@ -5417,9 +5181,8 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
     CB_color_cycle = AC.get_CB_color_cycle()
     CB_color_cycle += ['darkgreen']
     color_d = dict(zip(params2plot, CB_color_cycle))
-    # --- plot up vs. lat
+    # - plot up vs. lat
     fig, ax = plt.subplots()
-    #
     for param in params2plot:
         # Set color for param
         color = color_d[param]
@@ -5453,11 +5216,10 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
     plt.ylim(-20, 420)
     plt.ylabel('[I$^{-}_{aq}$] (nM)')
     plt.xlabel('Latitude ($^{\\rm o}$N)')
-#    plt.xlim(-80, 80 )
     plt.legend()
     # save or show?
     filename = 'Oi_prj_global_predicted_vals_vs_lat_ENSEMBLE_{}{}'
-    if save_plot:
+    if save2png:
         plt.savefig(filename.format(res, extr_str), dpi=dpi)
     if show_plot:
         plt.show()
@@ -5476,20 +5238,25 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
 
     Parameters
     -------
+    lat_above2set (float): latitude to set values above
+    fixed_value2use (float): value to set selected latitudes (lat_above2set)
+    var2set (str): variable in dataset to set to new value
+    res (str): horizontal resolution of dataset (e.g. 4x5)
+    only_consider_water_boxes (bool): only update non-water grid boxes
+    ds (xr.Dataset): xarray dataset to use for plotting
+    save2NetCDF (bool): save outputted dataset as a NetCDF file
 
     Returns
     -------
-
-    Notes
-    -----
+    (xr.Dataset)
     """
     print(var2set)
     # local variables
-    data_root = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root')+'/data/'
     # Get existing file
     if isinstance(ds, type(None)):
         filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-        ds = xr.open_dataset(data_root + filename)
+        ds = xr.open_dataset(folder + filename)
     # get the average value at lat
     avg = ds[var2set].sel(lat=lat_above2set, method='nearest')
     # get index of lat to set values from
@@ -5512,9 +5279,7 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
     if only_consider_water_boxes:
         # add LWI to array
         if res == '0.125x0.125':
-            #            folderLWI = '/shared/earthfs//NASA/nature_run/LWI/monthly/'
-            #            filenameLWI = 'nature_run_lev_72_res_0.125_spec_LWI_monthly_ctm.nc'
-            folderLWI = get_file_locations('AC_tools')
+            folderLWI = utils.get_file_locations('AC_tools')
             folderLWI += '/data/LM/TEMP_NASA_Nature_run/'
             filenameLWI = 'ctm.nc'
             LWI = xr.open_dataset(folderLWI+filenameLWI)
@@ -5588,6 +5353,239 @@ def set_SAL_and_NIT_above_65N_to_avg(res='0.125x0.125'):
                                                fixed_value2use=fixed_value2use)
 
 
+
+def do_analysis_processing_linked_to_depth_variable():
+    """
+    Function to do analysis specific to removing depth variable
+    """
+    from plotting_and_analysis import get_ensemble_predicted_iodide
+    # Get the base topmodels
+    vars2exclude = ['DOC', 'Prod', ]
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
+    topmodels_BASE = topmodels.copy()
+
+    # add the ensemble to the dataframe and over write this as the dictionary
+    var2use='RFR(Ensemble)'
+#     df = RFR_dict['df']
+#     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
+#                                        var2use=var2use)
+#     RFR_dict['df'] =  df
+#     # now get the stats
+#     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, inc_ensemble=True)
+#
+#     # - Now do the same thing, but calculate the prediction with depth
+#     var2use = 'RFR(Ensemble_nDepth)'
+    # Get topmodels without
+    vars2exclude = ['DOC', 'Prod', 'DEPTH']
+    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
+    topmodels_DEPTH = topmodels.copy()
+    # Now calculate the ensemble prediction
+#     df = RFR_dict['df']
+#     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
+#                                        var2use=var2use)
+#     RFR_dict['df'] =  df
+#     # now get the stats
+#     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, df=df, inc_ensemble=True,
+#                                             var2use=var2use)
+
+    topmodels2use = topmodels_DEPTH + topmodels_BASE
+    topmodels2use = list(set(topmodels2use))
+    # Make a spatial prediction
+    xsave_str = '_TEST_DEPTH_'
+    # make NetCDF predictions from the main ancillary arrays
+    save2NetCDF = True
+    # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
+    res = '0.125x0.125'
+#    res = '4x5'
+#    res = '2x2.5'
+#     mk_iodide_predictions_from_ancillaries(None, res=res, RFR_dict=RFR_dict,
+#                                            use_updated_predictor_NetCDF=False,
+#                                            save2NetCDF=save2NetCDF,
+#                                            rm_Skagerrak_data=rm_Skagerrak_data,
+#                                            topmodels=topmodels2use,
+#                                            xsave_str=xsave_str, add_ensemble2ds=True)
+
+    # Plot up the annual average predictions from the top models with depth
+    filename = 'Oi_prj_predicted_Iodide_0.125x0.125_TEST_DEPTH__No_Skagerrak.nc'
+    folder = './'
+    ds = xr.open_dataset( folder+filename )
+    # ... and without
+    var2use4Ensemble = 'Ensemble_Monthly_mean'
+    var2use4std = 'Ensemble_Monthly_std'
+    ds = add_ensemble_avg_std_to_dataset(ds=ds, var2use4std=var2use4std,
+                                         var2use4Ensemble=var2use4Ensemble,
+                                         topmodels=topmodels_BASE,
+                                         save2NetCDF=False
+                                         )
+
+    # Plot the same way for the no depth data
+    var2use4Ensemble = 'Ensemble_Monthly_mean_nDepth'
+    var2use4std = 'Ensemble_Monthly_std_nDepth'
+    ds = add_ensemble_avg_std_to_dataset(ds=ds, var2use4std=var2use4std,
+                                         var2use4Ensemble=var2use4Ensemble,
+                                         topmodels=topmodels_DEPTH,
+                                         save2NetCDF=False
+                                         )
+
+    # Save as a NetCDF to use for plotting
+    ds.to_netcdf('Oi_temp_iodide_annual.nc')
+
+
+def plot_spatial_figures_for_ML_paper_with_cartopy():
+    """
+    Plot up all the spatial figures for the ML paper with cartopy
+    """
+    # Add LWI to NEtCDF
+    res ='0.125x0.125'
+    ds = utils.add_LWI2array(ds=ds, res=res, var2template='Ensemble_Monthly_mean')
+    vars2mask = [
+    'Ensemble_Monthly_mean_nDepth', 'Ensemble_Monthly_mean', 'Ensemble_Monthly_std',
+    'Chance2014_STTxx2_I', 'MacDonald2014_iodide',
+    ]
+    for var2mask in vars2mask:
+        # set non water boxes to np.NaN
+        ds[var2mask] = ds[var2mask].where(ds['IS_WATER'] == True)
+    # Average over time
+    ds = ds.mean(dim='time')
+    ds.to_netcdf('Oi_temp_iodide.nc')
+    # Variables for plotting
+    ds = xr.open_dataset('Oi_temp_iodide.nc')
+    target = 'Iodide'
+    dpi = 720
+    projection = ccrs.PlateCarree()
+    vmax = 240
+    vmin = 0
+    cbar_kwargs={
+    'extend':'max', 'pad': 0.025, 'orientation':"vertical", 'label': 'nM',
+#    'fraction' : 0.1
+    'shrink':0.675,
+    'ticks' : np.arange(vmin, vmax+1, 60),
+    }
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+    cmap = AC.get_colormap(arr=np.array([vmin,vmax]))
+
+    # Now plot the core prediction
+    var2use4Ensemble = 'Ensemble_Monthly_mean'
+    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble)'
+    title = None # no title shown in paper's plots
+    plotting.plot_spatial_data(ds=ds, var2plot=var2use4Ensemble, title=title,
+                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               )
+    # And the one without depth
+    var2use4Ensemble = 'Ensemble_Monthly_mean_nDepth'
+    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble-No_depth)'
+    title = None # no title shown in paper's plots
+    plotting.plot_spatial_data(ds=ds, var2plot=var2use4Ensemble, title=title,
+                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               )
+
+
+    # -  Now plot up observations over the top
+    var2use4Ensemble = 'Ensemble_Monthly_mean'
+    title= 'Annual average sea-surface iodide (nM) predicted by RFR(Ensemble)'
+    title = None # no title shown in paper's plots
+    plotting.plot_spatial_data(ds=ds, var2plot=var2use4Ensemble, title=title,
+                               vmin=0, vmax=240, extr_str=var2use4Ensemble,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               save_plot=False,
+                               dpi=dpi,
+                               )
+    # Get the axis
+    ax = plt.gca()
+    # select dataframe with observations and predictions in it
+    if isinstance(RFR_dict, type(None)):
+        RFR_dict = build_or_get_models()
+    df = RFR_dict['df']
+    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
+    s = 15
+    edgecolor = 'k'
+    x = df[u'Longitude'].values
+    y = df[u'Latitude'].values
+    z = df['Iodide'].values
+    ax.scatter(x, y, c=z, s=s, cmap=cmap, norm=norm, edgecolor=edgecolor,
+               transform=projection, zorder=100, linewidth=0.05)
+    # Now save
+    extr_str = '_overlaid_with_obs'
+    filename = 's2s_spatial_{}_{}.png'.format(target, extr_str)
+    plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
+
+    # -
+    # Now plot the core prediction uncertainty (nM)
+    var2use4Ensemble = 'Ensemble_Monthly_mean'
+    var2use4std = 'Ensemble_Monthly_std'
+    title= 'Spatial unceratainty in sea-surface iodide in predicted values (nM)'
+    cbar_kwargs['ticks'] = np.arange(0, 30+1, 6)
+    cbar_kwargs['label'] = 'nM'
+    title = None # no title shown in paper's plots
+    plotting.plot_spatial_data(ds=ds, var2plot=var2use4std, title=title,
+                               vmin=0, vmax=30, extr_str=var2use4std,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               )
+    # Now plot the core prediction uncertainty (%)
+    cbar_kwargs['ticks'] = np.arange(0, 25+1, 5)
+    cbar_kwargs['label'] = '%'
+    var2use4std_pcent = 'Ensemble_Monthly_std_pcent'
+    ds[var2use4std_pcent] = ds[var2use4std] / ds[var2use4Ensemble] *100
+    title= 'Spatial unceratainty in sea-surface iodide in predicted values (%)'
+    title = None # no title shown in paper's plots
+    plotting.plot_spatial_data(ds=ds, var2plot=var2use4std_pcent, title=title,
+                               vmin=0, vmax=25, extr_str=var2use4std_pcent,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               )
+
+    # Now plot the existing parameterisations
+    cbar_kwargs['ticks'] = np.arange(vmin, vmax+1, 60)
+    cbar_kwargs['label'] = 'nM'
+    cbar_kwargs['shrink'] = 0.85
+    fig = plt.figure(figsize=(10, 6))
+    ax1 = fig.add_subplot(2, 1, 1, projection=projection, aspect='auto')
+    var2use = 'Chance2014_STTxx2_I'
+    title= '(A) Chance et al. (2014)'
+    plotting.plot_spatial_data(ds=ds, var2plot=var2use, fig=fig, ax=ax1,
+                               title=title,
+                               vmin=0, vmax=240, extr_str=var2use,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi, xticks=False,
+                               save_plot=False,
+                               )
+
+    ax2 = fig.add_subplot(2, 1, 2, projection=projection, aspect='auto')
+    var2use = 'MacDonald2014_iodide'
+    title= '(B) MacDonald et al. (2014)'
+    plotting.plot_spatial_data(ds=ds, var2plot=var2use, fig=fig, ax=ax2,
+                               title=title,
+                               vmin=0, vmax=240, extr_str=var2use,
+                               target=target, cmap=cmap, projection=projection,
+                               add_meridians_parallels=True,
+                               cbar_kwargs=cbar_kwargs,
+                               dpi=dpi,
+                               save_plot=False,
+                               )
+
+    # Now save
+    extr_str = '_existing_params'
+    filename = 's2s_spatial_{}_{}.png'.format(target, extr_str)
+    plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
+
+
 def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodide',
                                               months=None,
                                               var2extract='Ensemble_Monthly_mean',
@@ -5598,15 +5596,20 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
 
     Parameters
     -------
+    lons (np.array): list of Longitudes to use for spatial extraction
+    lats (np.array): list of latitudes to use for spatial extraction
+    months (np.array): list of months to use for temporal extraction
+    var2extract (str): name of variable to extract data for
+    rm_Skagerrak_data (bool): remove the data from the Skagerrak region
+    verbose (bool): print out verbose output?
+    debug (bool): print out debugging output?
 
     Returns
     -------
-
-    Notes
-    -----
+    (list)
     """
     # Get data from NetCDF as a xarray dataset
-    folder = get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     filename = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(target)
     if rm_Skagerrak_data:
         filename = filename.format('_No_Skagerrak')
@@ -5614,8 +5617,8 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
         filename = filename.format('')
     ds = xr.open_dataset(folder + filename)
     # Now extract the dataset
-    extracted_vars = extract4nearest_points_in_ds(ds=ds, lons=lons, lats=lats,
-                                                  months=months,
-                                                  var2extract=var2extract,
-                                                  verbose=verbose, debug=debug)
+    extracted_vars = utils.extract4nearest_points_in_ds(ds=ds, lons=lons, lats=lats,
+                                                        months=months,
+                                                        var2extract=var2extract,
+                                                        verbose=verbose, debug=debug)
     return extracted_vars
