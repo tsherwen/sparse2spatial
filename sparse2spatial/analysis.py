@@ -35,12 +35,12 @@ def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
     from geopandas.tools import sjoin
     # Get the shapes for the ocean
     featurecla='ocean'
-    group = get_shapes4oceans(rtn_group=True, featurecla=featurecla)
+    group = AC.get_shapes4oceans(rtn_group=True, featurecla=featurecla)
     # Turn the dataframe into a geopandas dataframe
     gdf = geopandas.GeoDataFrame(
         df, geometry=geopandas.points_from_xy(df[LonVar], df[LatVar]))
     # Work out if any of the points are within the polys
-    pointInPolys = sjoin(points, group, how='left')
+    pointInPolys = sjoin(gdf, group, how='left')
     # Check how many were assigned to a region
     Nnew = float(pointInPolys['name'].dropna().shape[0])
     N = float(df.shape[0])

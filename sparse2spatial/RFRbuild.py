@@ -15,6 +15,7 @@ import glob
 import AC_tools as AC
 # s2s imports
 import sparse2spatial.utils as utils
+import sparse2spatial.RFRanalysis as RFRanalysis
 from sparse2spatial.RFRanalysis import get_core_stats_on_current_models
 
 
@@ -747,13 +748,12 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     else:
         extr_str = ''
     # Get location to save file and set filename
-    data_root = utils.get_file_locations('data_root')
+    folder = utils.get_file_locations('data_root') + '/data/'
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
-    dsA = xr.open_dataset(data_root + filename)
+    dsA = xr.open_dataset(folder + filename)
     # Get location to save ensemble builds of models
-    data_root = utils.get_file_locations('data_root')
     folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
-    folder = folder_str.format(data_root, target, extr_str)
+    folder = folder_str.format(folder, target, extr_str)
     # - Make a dataset for each model
     ds_l = []
     # Get list of twenty models built
@@ -976,7 +976,7 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
         features_used_dict = RFR_dict['features_used_dict']
     # Get location to save file and set filename
     if isinstance(folder, type(None)):
-        folder = utils.get_file_locations('data_root')
+        folder = utils.get_file_locations('data_root') + '/data/'
     if isinstance(dsA, type(None)):
         filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
         dsA = xr.open_dataset(folder + filename)
@@ -1014,12 +1014,13 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     if add_ensemble2ds:
         print('WARNING: Using topmodels for ensemble as calculated here')
         var2template = list(ds.data_vars)[0]
-        ds = analysis.add_ensemble_avg_std_to_dataset(ds=ds, res=res, target=target,
-                                                      RFR_dict=RFR_dict,
-                                                      topmodels=topmodels,
-                                                      var2template=var2template,
-                                                      save2NetCDF=False)
-    # add global attributes
+        ds = RFRanalysis.add_ensemble_avg_std_to_dataset(ds=ds, res=res,
+                                                         target=target,
+                                                         RFR_dict=RFR_dict,
+                                                         topmodels=topmodels,
+                                                         var2template=var2template,
+                                                         save2NetCDF=False)
+    # Add global attributes
     ds = utils.add_attrs2target_ds(ds, add_varname_attrs=False)
     # Save to NetCDF
     if save2NetCDF:

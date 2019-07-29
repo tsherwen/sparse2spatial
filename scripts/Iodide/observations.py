@@ -130,6 +130,45 @@ def get_processed_df_obs_mod(reprocess_params=False,
     return df
 
 
+def fill_years4cruises():
+    """
+    Fill the years for the cruises with missing years with values from the metadata sheet
+    """
+    # Only update cells where no year is already present
+    bool1 = ~np.isfinite(df['Year'])
+    # For the Wong_B_1977 dataset set the year to 1973 (values: 'Dec 73?')
+    bool_tmp = df['Data_Key'] == 'Wong_B_1977'
+    df.loc[bool1 & bool_tmp,'Year'] = 1973
+    # For the Tsunogai_H_1971 dataset (Notes on metadata sheet: "1968-1969")
+    bool_tmp = df['Data_Key'] == 'Tsunogai_H_1971'
+    df.loc[bool1 & bool_tmp,'Year'] = 1968
+    # For the Wong_C_1998 dataeset (Notes on metadata sheet: "~1998?")
+    bool_tmp = df['Data_Key'] == 'Wong_C_1998'
+    df.loc[bool1 & bool_tmp,'Year'] = 1998
+    # For the Luther_1988 dataeset (Notes on metadata sheet: "1987")
+    bool_tmp = df['Data_Key'] == 'Luther_1988'
+    df.loc[bool1 & bool_tmp,'Year'] = 1987
+    return df
+
+
+
+def add_datetime2Iodide_df(df=None, DateVar='Datetime'):
+    """
+    Add datetime to iodide obs. dataframe
+    """
+    # Use a local function to add datetime values to dataframe
+    def add_dt2_df(Year=None, Month=None, Day=None):
+        print( Year, Month, Day)
+        # Set the Date to the middle of the month (#=15) if not known value
+        if isinstance(Day, type(None)) or ~np.isfinite(Day):
+            Day = 15
+        return datetime.datetime(int(Year), int(Month), int(Day))
+    # Now apply the function on the whole dataframe
+    df[DateVar] = df.apply(lambda x: add_dt2_df(Year=x['Year'], Month=x['Month'],
+                                                Day=x['Day']), axis=1)
+    return df
+
+
 def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=False,
                                          file_and_path='./sparse2spatial.rc',
                                          target='Iodide', verbose=True):
