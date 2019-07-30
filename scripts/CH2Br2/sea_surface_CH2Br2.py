@@ -22,7 +22,8 @@ import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
 from sparse2spatial.RFRbuild import build_or_get_models
 
-# Get iodide specific functions
+# Get CH2Br2 specific functions
+from observations import get_CH2Br2_obs
 
 
 def main():
@@ -32,9 +33,12 @@ def main():
     """
     # - Set core local variables
     target = 'CH2Br2'
+    # Setup the data directory structure (only needs to be done once))
+    # NOTE: the locations of s2s and data are set in script/<target>'s *.rc file
+#    utils.check_or_mk_directory_structure(target=target)
 
     # - Get the observations? (Not needed for core workflow as also held in RFR_dict)
-    # (This processese the observations and only needs to be done once)
+    # (This processes of the observations and only needs to be done once)
 #    df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
 
     # - build models with the observations
@@ -43,7 +47,8 @@ def main():
 
     # Get stats ont these models
     stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-                                                      target=target, verbose=True, debug=True)
+                                                      target=target, verbose=True,
+                                                      debug=True)
 
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
@@ -72,8 +77,19 @@ def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
                                rebuild=False):
     """
     Wrapper call to build_or_get_models for sea-surface CH2Br2
+
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    rm_outliers (bool): remove the outliers from the observational dataset
+    rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
+    rebuild (bool): rebuild the models or just read them from disc?
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
-    # Get the dictionary  of model names and features (specific to iodide)
+    # Get the dictionary  of model names and features (specific to CH2Br2)
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
@@ -81,14 +97,12 @@ def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
 
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
-                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                        model_feature_dict=model_feature_dict,
                                        df=df, target=target,
                                        read_model_from_disk=False,
                                        delete_existing_model_files=True)
     else:
         RFR_dict = build_or_get_models(save_model_to_disk=False,
-                                       #                                    rm_Skagerrak_data=rm_Skagerrak_data,
                                        model_feature_dict=model_feature_dict,
                                        df=df, target=target,
                                        read_model_from_disk=True,
@@ -102,18 +116,16 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
     """
     Get dataset as a DataFrame with standard munging settings
 
-
     Parameters
     -------
     restrict_data_max (bool): restrict the obs. data to a maximum value?
+    target (str): Name of the target variable (e.g. iodide)
+    rm_outliers (bool): remove the outliers from the observational dataset
+    rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
 
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
-
     """
     from observations import add_extra_vars_rm_some_data
     from observations import get_processed_df_obs_mod
@@ -155,7 +167,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
         # Get settings
         rand_20_80, rand_strat = ways2split_data[key_]
         # Copy a df for splitting
-#        df_tmp = df['Iodide'].copy()
+#        df_tmp = df['CH2Br2'].copy()
         # Now split using existing function
         returned_vars = mk_testing_training_sets(df=df.copy(),
                                                  target=target,

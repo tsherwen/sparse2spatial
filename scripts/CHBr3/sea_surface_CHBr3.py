@@ -26,7 +26,8 @@ import sparse2spatial.plotting as plotting
 #import sparse2spatial.RFRanalysis as analysis
 from sparse2spatial.RFRbuild import build_or_get_models
 
-# Get iodide specific functions
+# Get CHBr3 specific functions
+from observations import get_CHBr3_obs
 
 
 def main():
@@ -36,6 +37,9 @@ def main():
     """
     # - Set core local variables
     target = 'CHBr3'
+    # Setup the data directory structure (only needs to be done once))
+    # NOTE: the locations of s2s and data are set in script/<target>'s *.rc file
+#    utils.check_or_mk_directory_structure(target=target)
 
     # - Get the observations? (Not needed for core workflow as also held in RFR_dict)
 #    df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
@@ -76,7 +80,7 @@ def build_or_get_models_CHBr3(target='CHBr3',
     """
     Wrapper call to build_or_get_models for sea-surface CHBr3
     """
-    # Get the dictionary  of model names and features (specific to iodide)
+    # Get the dictionary  of model names and features (specific to CHBr3)
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
@@ -122,7 +126,7 @@ def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
 #    df = df.loc[df[testset] == True, :]
     # Only consider the variables to be plotted
     obs_var = target
-#    params2plot = [var,  'Chance2014_STTxx2_I', 'MacDonald2014_iodide',]
+#    params2plot = [var,  'Chance2014_STTxx2_I', 'MacDonald2014_CHBr3',]
     params2plot = [var,  ]
     df = df[params2plot+[LonVar, LatVar, obs_var]]
     # Add ocean columns to dataframe
@@ -155,18 +159,16 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
     """
     Get dataset as a DataFrame with standard munging settings
 
-
     Parameters
     -------
     restrict_data_max (bool): restrict the obs. data to a maximum value?
+    target (str): Name of the target variable (e.g. iodide)
+    rm_outliers (bool): remove the outliers from the observational dataset
+    rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
 
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
-
     """
     from observations import add_extra_vars_rm_some_data
     from observations import get_processed_df_obs_mod
@@ -219,14 +221,13 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
         # Get settings
         rand_20_80, rand_strat = ways2split_data[key_]
         # Copy a df for splitting
-#        df_tmp = df['Iodide'].copy()
+#        df_tmp = df['CHBr3'].copy()
         # Now split using existing function
         returned_vars = mk_test_train_sets(df=df.copy(),
                                                  target=target,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
                                                  features_used=df.columns.tolist(),
-                                                 #                                                   features_used=features_used,
                                                  )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values

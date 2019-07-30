@@ -6,6 +6,7 @@ import platform
 import numpy as np
 import pandas as pd
 import xarray as xr
+import os
 import glob
 from netCDF4 import Dataset
 from time import gmtime, strftime
@@ -749,13 +750,37 @@ def get_hyperparameter_dict():
     return hyperparam_dict
 
 
-def check_or_mk_directory_struture():
+def check_or_mk_directory_structure(target='Iodide', verbose=False):
     """
     Check all the required directories are present and make them if not.
     """
-    pstr = 'TODO: Make function to check directory structure and add folders if not'
-    pstr += '\n not present.'
-    print(pstr)
+    # What is the route directory for the target?
+    data_root = get_file_locations('data_root')
+    folder = '{}/{}/'.format(data_root, target)
+    # Set output directory and make (if not already present)
+    folders2check = {}
+    # Input folders - e.g. observational data
+    folders2check['inputs'] = folder + '/inputs/'
+    # Output folders - e.g. predictions of targets at points or spatially
+    folders2check['outputs'] = folder + '/outputs/'
+    # Model folders - e.g. core models made, remaking of models, tuning...
+    folders2check['models'] = folder + '/models/'
+    live_dir = folder + '/models/LIVE/'
+    folders2check['LIVE'] = live_dir
+    folders2check['ENSEMBLE_REPEAT_BUILD'] = live_dir + '/ENSEMBLE_REPEAT_BUILD/'
+    folders2check['OPTIMISED_MODELS'] = live_dir + '/OPTIMISED_MODELS/'
+    folders2check['TEMP_MODELS'] = live_dir + '/TEMP_MODELS/'
+    # Loop and create folders if not present
+    for key in folders2check.keys():
+        # Get folder to make if not present
+        folder = folders2check[key]
+        if verbose:
+            print( 'Checking if folder exists for {} - {}'.format(target, folder))
+        # Create the folder?
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+            if verbose:
+                print( 'Creating folder for {} - {}'.format(target, folder))
 
 
 def set_backup_month_if_unknown(lat=None, var2use='', main_var='',

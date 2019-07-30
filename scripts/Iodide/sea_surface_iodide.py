@@ -66,10 +66,13 @@ def main():
         emissions.py
      -  simply unhash the functions to be run below.
     """
-    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
-    print(model_feature_dict)
-#    print(model_feature_dict['NO3+DOC+Phos'])
     # ---- ---- Over-arching settings
+    #
+    target='Iodide'
+    # Setup the data directory structure (only needs to be done once))
+    # NOTE: the locations of s2s and data are set in script/<target>'s *.rc file
+#    utils.check_or_mk_directory_structure(target=target)
+
     # General settings
     rm_Skagerrak_data = True
     rebuild = False
@@ -84,6 +87,10 @@ def main():
 #    print(topmodels)
     # Check statistics on prediction
 #    print(stats)
+    # Get the dictionary of models and their features
+    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
+    print(model_feature_dict)
+#    print(model_feature_dict['NO3+DOC+Phos'])
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
     # ----- ----- Evaluating input datasets

@@ -28,15 +28,18 @@ def main():
     Driver for module's man if run directly from command line. unhash
     functionalitliy to call.
     """
-    # Set core local variables
+    # - Set core local variables
     target = 'example'
+    # Setup the data directory structure (only needs to be done once))
+    # NOTE: the locations of s2s and data are set in script/<target>'s *.rc file
+#    utils.check_or_mk_directory_structure(target=target)
 
-    # Get the observations?
+    # - Get the observations?
     # NOTE(S): This processes the observations and only needs to be done once.
     #          Not needed for core workflow as also held in RFR_dict.
 #    df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
 
-    # Build models with the observations and ancillary variables
+    # - Build models with the observations and ancillary variables
     # build the models (just run once!)
 #    RFR_dict = build_or_get_models_example(rebuild=True, target=target)
     # afterwards, just read in the models saved to disk
@@ -51,7 +54,7 @@ def main():
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
                                      vars2exclude=['DOC', 'Prod'], n=10)
 
-    # - Predict values globally (only use 0.125)
+    # - Predict values globally (4x5 for testing, then use 0.125x0.125 for production)
     # extra strig for NetCDF save name
     xsave_str = '_INITIAL'
     # make NetCDF predictions from the main array

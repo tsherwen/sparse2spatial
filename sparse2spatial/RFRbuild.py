@@ -117,7 +117,7 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
                     joblib.dump(model, folder+model_savename)
                 except FileNotFoundError:
                     prt_str = "WARNING: Failed to save file - @ '{}' with name '{}'"
-                    print( prt_str.format(folder+model_savenam))
+                    print( prt_str.format(folder+model_savename))
                     utils.check_or_mk_directory_struture()
             # Also keep models online in dictionary
             models_dict[model_name] = model
