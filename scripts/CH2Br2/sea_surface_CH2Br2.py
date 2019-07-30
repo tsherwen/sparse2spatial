@@ -17,7 +17,7 @@ import pandas as pd
 import xarray as xr
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
-from sparse2spatial.RFRbuild import mk_testing_training_sets
+from sparse2spatial.RFRbuild import mk_test_train_sets
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
 from sparse2spatial.RFRbuild import build_or_get_models
@@ -43,16 +43,13 @@ def main():
 
     # - build models with the observations
     RFR_dict = build_or_get_models_CH2Br2(rebuild=False, target=target)
-    #
-
     # Get stats ont these models
     stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
                                                       target=target, verbose=True,
                                                       debug=True)
-
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
-                                     NO_DERIVED=True, n=10)
+                                     vars2exclude=['DOC', 'Prod'], n=10)
 
     # --- Predict values globally (only use 0.125)
     # extra strig for NetCDF save name
@@ -69,6 +66,14 @@ def main():
                                          models2compare=topmodels,
                                          topmodels=topmodels,
                                          xsave_str=xsave_str, add_ensemble2ds=True)
+
+
+    # --- Plot up the performance of the models
+    df = RFR_dict['df']
+    # Plot performance of models
+    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    # Plot up also without derivative variables
+    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
 
 def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
@@ -91,10 +96,9 @@ def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
     """
     # Get the dictionary  of model names and features (specific to CH2Br2)
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
-
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
-
+    # Now extract built models or build new models
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
                                        model_feature_dict=model_feature_dict,
@@ -136,8 +140,6 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
     # - The following settings are set to False as default
     # settings for incoming feature data
     restrict_min_salinity = False
-#    use_median_value_for_chlor_when_NaN = False
-#    add_modulus_of_lat = False
     # Apply transforms to data?
     do_not_transform_feature_data = True
     # Just use the forest outcomes and do not optimise
@@ -169,7 +171,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
         # Copy a df for splitting
 #        df_tmp = df['CH2Br2'].copy()
         # Now split using existing function
-        returned_vars = mk_testing_training_sets(df=df.copy(),
+        returned_vars = mk_test_train_sets(df=df.copy(),
                                                  target=target,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,

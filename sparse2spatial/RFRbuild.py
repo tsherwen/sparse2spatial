@@ -999,17 +999,17 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     # Combine datasets
     ds = xr.merge(ds_l)
     # - Also get values for parameterisations
-    if target == 'Iodide':
-        # Chance et al (2013)
-        param = u'Chance2014_STTxx2_I'
-        arr = utils.calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
-        ds[param] = ds[modelname]  # use existing array as dummy to fill
-        ds[param].values = arr
-        # MacDonald et al (2013)
-        param = 'MacDonald2014_iodide'
-        arr = utils.calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
-        ds[param] = ds[modelname]  # use existing array as dummy to fill
-        ds[param].values = arr
+#     if target == 'Iodide':
+#         # Chance et al (2013)
+#         param = u'Chance2014_STTxx2_I'
+#         arr = utils.calc_I_Chance2014_STTxx2_I(dsA['WOA_TEMP'].values)
+#         ds[param] = ds[modelname]  # use existing array as dummy to fill
+#         ds[param].values = arr
+#         # MacDonald et al (2013)
+#         param = 'MacDonald2014_iodide'
+#         arr = utils.calc_I_MacDonald2014(dsA['WOA_TEMP'].values)
+#         ds[param] = ds[modelname]  # use existing array as dummy to fill
+#         ds[param].values = arr
     # Add ensemble to ds too
     if add_ensemble2ds:
         print('WARNING: Using topmodels for ensemble as calculated here')

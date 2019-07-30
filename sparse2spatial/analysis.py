@@ -510,10 +510,6 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
         # extract the models...
         if isinstance(RFR_dict, type(None)):
             RFR_dict = build_or_get_models()
-        # Get stats on models in RFR_dict
-        if isinstance(stats, type(None)):
-            stats = get_stats_on_models(RFR_dict=RFR_dict,
-                                        verbose=False)
         # Get list of
         topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Now get average concentrations and std dev. per month

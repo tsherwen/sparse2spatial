@@ -38,7 +38,7 @@ import sparse2spatial.archiving as archiving
 import sparse2spatial.analysis as analysis
 import sparse2spatial.RFRanalysis as RFRanalysis
 import sparse2spatial.plotting as plotting
-from sparse2spatial.RFRanalysis import get_stats_on_models
+#from sparse2spatial.RFRanalysis import get_stats_on_models
 from sparse2spatial.analysis import add_ensemble_avg_std_to_dataset
 from sparse2spatial.RFRbuild import get_top_models
 from sparse2spatial.RFRbuild import build_or_get_models
@@ -1129,6 +1129,324 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
                                        model_sub_dir=model_sub_dir,
                                        delete_existing_model_files=False)
     return RFR_dict
+
+def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
+                        target='Iodide', inc_ensemble=False,
+                        analysis4coastal=False, var2use='RFR(Ensemble)',
+                        plot_up_model_performance=True, RFR_dict=None,
+                        add_sklean_metrics=False, verbose=True, debug=False):
+    """
+    Analyse the stats on of params and obs.
+
+    Parameters
+    -------
+    analysis4coastal (bool): include analysis of data split by coastal/non-coastal
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    inc_ensemble (bool): include the ensemble (var2use) in the analysis
+    var2use (str): var to use as main model prediction
+    debug (bool): print out debugging output?
+    add_sklean_metrics (bool): include core sklearn metrics
+
+    Returns
+    -------
+    (pd.DataFrame)
+    """
+    # --- Get data
+    if isinstance(RFR_dict, type(None)):
+        RFR_dict = build_or_get_models()
+    # select dataframe with observations and predictions in it
+    if isinstance(df, type(None)):
+        df = RFR_dict['df']
+    # model names
+    model_names = RFR_dict['model_names']
+    features_used_dict = RFR_dict['features_used_dict']
+    N_features_used = RFR_dict['N_features_used']
+    oob_scores = RFR_dict['oob_scores']
+    # - Evaluate performance of models (e.g. Root Mean Square Error (RMSE) )
+    # Also evaluate parameterisations
+    param_names = []
+    if target == 'Iodide':
+        param_names += [u'Chance2014_STTxx2_I', u'MacDonald2014_iodide',
+                        # u'Chance2014_Multivariate',
+                        ]
+    # Aslo include the ensemble parameters
+    if inc_ensemble:
+        param_names += [var2use]
+    # Calculate performance
+    stats = calc_performance_of_params(df=df,
+                                       params=param_names+model_names)
+    # Just test on test set
+    df_tmp = df.loc[df[testset] == True, :]
+    stats_sub1 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
+                                       df=df_tmp[[target]+model_names+param_names],
+                                       dataset_str=testset,
+                                       target=target,
+                                       add_sklean_metrics=add_sklean_metrics).T
+    stats2concat = [stats, stats_sub1]
+    if analysis4coastal:
+        # Add testing on coastal
+        dataset_split = 'Coastal'
+        df_tmp = df.loc[(df['Coastal'] == 1), :]
+        stats_sub2 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
+                                           dataset_str=dataset_split,
+                                           add_sklean_metrics=add_sklean_metrics).T
+        # Add testing on non-coastal
+        dataset_split = 'Non coastal'
+        df_tmp = df.loc[(df['Coastal'] == 0), :]
+        stats_sub3 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
+                                           dataset_str=dataset_split,
+                                           add_sklean_metrics=add_sklean_metrics).T
+        # Add testing on coastal
+        dataset_split = 'Coastal ({})'.format(testset)
+        df_tmp = df.loc[(df['Coastal'] == 1) & (df[testset] == True), :]
+        stats_sub4 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
+                                           dataset_str=dataset_split,
+                                           add_sklean_metrics=add_sklean_metrics).T
+        # Add testing on non-coastal
+        dataset_split = 'Non coastal ({})'.format(testset)
+        df_tmp = df.loc[(df['Coastal'] == 0) & (df[testset] == True), :]
+        stats_sub5 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
+                                           df=df_tmp[[target]+model_names+param_names],
+                                           target=target,
+                                           dataset_str=dataset_split,
+                                           add_sklean_metrics=add_sklean_metrics).T
+        # Statistics to concat
+        stats2concat += [stats_sub2, stats_sub3, stats_sub4, stats_sub5, ]
+    # Combine all stats (RMSE and general stats)
+    stats = pd.concat(stats2concat)
+    # Add number of features too
+    stats = stats.T
+    feats = pd.DataFrame(index=model_names)
+    N_feat_Var = '# features'
+    feats[N_feat_Var] = [N_features_used[i] for i in model_names]
+    # and the feature names
+    feat_Var = 'features_used'
+    feats[feat_Var] = [features_used_dict[i] for i in model_names]
+    # and the oob score
+    feats['OOB score'] = [oob_scores[i] for i in model_names]
+    # combine with the rest of the stats
+    stats = pd.concat([stats, feats], axis=1)
+    # which vars to sort by
+#    var2sortby = ['RMSE (all)', N_feat]
+#    var2sortby = 'RMSE (all)'
+    var2sortby = 'RMSE ({})'.format(testset)
+    # print useful vars to screen
+    vars2inc = [
+        'RMSE (all)', 'RMSE ({})'.format(testset),
+        #    'MSE ({})'.format(testset),'MSE (all)',
+    ]
+    vars2inc += feats.columns.tolist()
+    # Sort df by RMSE
+    stats.sort_values(by=var2sortby, axis=0, inplace=True)
+    # sort columns
+    first_columns = [
+        'mean', 'std', '25%', '50%', '75%',
+        'RMSE ({})'.format(testset),  'RMSE (all)',
+    ]
+    rest_of_columns = [i for i in stats.columns if i not in first_columns]
+    stats = stats[first_columns + rest_of_columns]
+    # Rename columns (50% to median and ... )
+    df.rename(columns={'50%': 'median', 'std': 'std. dev.'})
+    # Set filename and save detail on models
+    csv_name = 'Oi_prj_stats_on_{}_models_built_at_obs_points'.format(target)
+    stats.round(2).to_csv(csv_name+'.csv')
+    # Also print to screen
+    if verbose:
+        print(stats[vars2inc+[N_feat_Var]])
+    if verbose:
+        print(stats[vars2inc])
+    # Without testing features
+    vars2inc.pop(vars2inc.index('features_used'))
+    if verbose:
+        print(stats[vars2inc])
+    if verbose:
+        print(stats[['RMSE ({})'.format(testset), 'OOB score', ]])
+    # Save statistics to csv
+    csv_name += '_selected'
+    stats[vars2inc].round(2).to_csv(csv_name+'.csv')
+
+    # - also save a version that doesn't include the derived dataset
+    params2inc = stats.T.columns
+    params2inc = [i for i in params2inc if 'DOC' not in i]
+    params2inc = [i for i in params2inc if 'Prod' not in i]
+    # select these variables from the list
+    tmp_stats = stats.T[params2inc].T
+    # save a reduced csv
+    vars2inc_REDUCED = [
+        'mean', 'std', '25%', '50%', '75%',
+        'RMSE ({})'.format(testset),  'RMSE (all)',
+    ]
+    # add the coastal testsets to the data?
+    if analysis4coastal:
+        vars2inc_REDUCED += [
+            u'RMSE (Coastal)', u'RMSE (Non coastal)',
+            'RMSE (Coastal (Test set (strat. 20%)))',
+            u'RMSE (Non coastal (Test set (strat. 20%)))',
+        ]
+    # Save a csv with reduced infomation
+    csv_name = 'Oi_prj_models_built_stats_on_models_at_obs_points'
+    csv_name += '_REDUCED_NO_DERIVED.csv'
+    tmp_stats[vars2inc_REDUCED].round(2).to_csv(csv_name)
+
+    # - plot up model performance against the testset
+    if plot_up_model_performance:
+        #
+        rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
+                         u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
+                         'Ensemble_Monthly_mean': 'RFR(Ensemble)',
+                         'Iodide': 'Obs.',
+                         }
+        # also compare existing parameters
+        params = [
+            'Chance et al. (2014)',
+            'MacDonald et al. (2014)',
+        ]
+        # Plot performance of models
+        plt_stats_by_model_DERIV(stats=stats, df=df, target=target, params=params,
+                                 rename_titles=rename_titles )
+        # Plot up also without derivative variables
+        plt_stats_by_model_DERIV(stats=stats, df=df, target=target, params=params,
+                                 rename_titles=rename_titles )
+
+
+def test_performance_of_params(target='Iodide', features_used=None):
+    """
+    Test the performance of the parameters
+
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    features_used (list): list of the features within the model_name model
+
+    Returns
+    -------
+    (None)
+    """
+    # - Get the data
+    # get processed data
+    # settings for incoming feature data
+    restrict_data_max = False
+    restrict_min_salinity = False
+    use_median4chlr_a_NaNs = True
+    add_modulus_of_lat = False
+    # apply transforms to  data?
+    do_not_transform_feature_data = True
+    # just use the forest out comes
+    use_forest_without_optimising = True
+    # Which "features" (variables) to use
+    if isinstance(features_used, type(None)):
+        features_used = [
+            'WOA_TEMP_K',
+            'WOA_Salinity',
+            'Depth_GEBCO',
+        ]
+    # Local variables for use in this function
+    param_rename_dict = {
+        u'Chance2014_STTxx2_I': 'Chance2014',
+        u'MacDonald2014_iodide': 'MacDonald2014',
+        u'Iodide': 'Obs.',
+    }
+    param_names = param_rename_dict.keys()
+    param_names.pop(param_names.index(target))
+    # Set-up a dictionary of test set variables
+    random_split_var = 'rn. 20%'
+    strat_split_var = 'strat. 20%'
+    model_names_dict = {
+        'TEMP+DEPTH+SAL (rs)': random_split_var,
+        'TEMP+DEPTH+SAL': strat_split_var,
+    }
+    model_names = model_names_dict.keys()
+    # Get data as a DataFrame
+    df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
+    # Add extra variables and remove some data.
+    df = add_extra_vars_rm_some_data(df=df,
+                                     restrict_data_max=restrict_data_max,
+                                     restrict_min_salinity=restrict_min_salinity,
+                                     add_modulus_of_lat=add_modulus_of_lat,
+                                     use_median4chlr_a_NaNs=use_median4chlr_a_NaNs,
+                                     )    # add
+    # add boolean for test and training dataset
+    splits_dict = {
+        random_split_var: (True, False), strat_split_var: (False, True),
+    }
+    # Loop test sets
+    for test_split in splits_dict.keys():
+        rand_20_80, rand_strat = splits_dict[test_split]
+        # Select just the features used and the target variable
+        df_tmp = df[features_used+[target]].copy()
+        # split into the training and test sets
+        returned_vars = build.mk_test_train_sets(df=df_tmp,
+                                                 rand_20_80=rand_20_80,
+                                                 rand_strat=rand_strat,
+                                                 features_used=features_used,
+                                                 )
+        train_set, test_set, test_set_targets = returned_vars
+        # Add this to the dataframe using the passed shape as a template
+        dummy = np.zeros(df.shape[0])
+        dummy[test_set.index] = True
+        df['test ({})'.format(test_split)] = dummy
+
+    # Add model predictions
+    for model_name in model_names:
+        df[model_name] = get_model_predictions4obs_point(df=df,
+                                                         model_name=model_name)
+
+    # - Get stats on whole dataset?
+    stats = calc_performance_of_params(df=df,
+                                       params=param_names+model_names)
+
+    # - Get stats for model on just its test set dataset
+    model_stats = []
+    for modelname in model_names:
+        test_set = model_names_dict[modelname]
+        dataset_str = 'test ({})'.format(test_set)
+        print(modelname, test_set, dataset_str)
+        df_tmp = df.loc[df[dataset_str] == True]
+        print(df_tmp.shape, df_tmp[target].mean())
+        model_stats.append(utils.get_df_stats_MSE_RMSE(
+            df=df_tmp[[target, modelname]+param_names],
+            params=param_names+[modelname],
+            dataset_str=test_set, target=target).T)
+    # Add these to core dataset
+    stats = pd.concat([stats] + model_stats)
+
+    # - get stats for coastal values
+    # Just ***NON*** coastal values
+    df_tmp = df.loc[df['coastal_flagged'] == False]
+    test_set = '>30 Salinty'
+    print(df_tmp.shape)
+    # Calculate...
+    stats_open_ocean = utils.get_df_stats_MSE_RMSE(
+        df=df_tmp[[target]+model_names+param_names],
+        params=param_names+model_names,
+        dataset_str=test_set, target=target).T
+    # Just  ***coastal*** values
+    df_tmp = df.loc[df['coastal_flagged'] == True]
+    test_set = '<30 Salinty'
+    print(df_tmp.shape)
+    # Calculate...
+    stats_coastal = utils.get_df_stats_MSE_RMSE(
+        df=df_tmp[[target]+model_names+param_names],
+        params=param_names+model_names,
+        dataset_str=test_set, target=target).T
+    # Add these to core dataset
+    stats = pd.concat([stats] + [stats_coastal, stats_open_ocean])
+
+    # - Minor processing and save
+    # rename the columns for re-abliiity
+    stats.rename(columns=param_rename_dict, inplace=True)
+    # round the columns to one dp.
+    stats = stats.round(1)
+    print(stats)
+    # Save as a csv
+    stats.to_csv('Oi_prj_param_performance.csv')
 
 # ---------------------------------------------------------------------------
 # ---------- Wrappers for s2s -------------

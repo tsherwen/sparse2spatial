@@ -46,13 +46,10 @@ def main():
 
     # - build models with the observations
     RFR_dict = build_or_get_models_CHBr3(rebuild=False, target=target)
-    #
-
     # Get stats ont these models
     stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
                                                       target=target, verbose=True,
                                                       debug=True)
-
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
                                      vars2exclude=['DOC', 'Prod'], n=10)
@@ -72,6 +69,12 @@ def main():
                                          topmodels=topmodels,
                                          xsave_str=xsave_str, add_ensemble2ds=True)
 
+    # --- Plot up the performance of the models
+    df = RFR_dict['df']
+    # Plot performance of models
+    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    # Plot up also without derivative variables
+    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
 
 def build_or_get_models_CHBr3(target='CHBr3',
@@ -82,10 +85,9 @@ def build_or_get_models_CHBr3(target='CHBr3',
     """
     # Get the dictionary  of model names and features (specific to CHBr3)
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
-
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
-
+    # Now extract built models or build new models
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
                                        model_feature_dict=model_feature_dict,
@@ -179,16 +181,10 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
     # - The following settings are set to False as default
     # settings for incoming feature data
     restrict_min_salinity = False
-#    use_median_value_for_chlor_when_NaN = False
-#    add_modulus_of_lat = False
     # Apply transforms to data?
     do_not_transform_feature_data = True
     # Just use the forest outcomes and do not optimise
     use_forest_without_optimising = True
-    # KLUDGE - this is for N=85
-#    median_4MLD_when_NaN_or_less_than_0 = False  # This is no longer needed?
-    # KLUDGE -  this is for depth values greater than zero
-#    median_4depth_when_greater_than_0 = False
     # - Get data as a DataFrame
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Add extra vairables and remove some data.
@@ -204,13 +200,6 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CHBr3',
     print('WARNING: Reindexed to shape of DataFrame processed for ML ({})'.format(N1))
 
     # - Add test and training set assignment to columns
-#    print( 'WARNING - What testing had been done on training set selection?!' )
-    # Choose a sub set of data to exclude from the input data...
-#     from sklearn.model_selection import train_test_split
-#     targets = df[ target_name ]
-#     # Use a standard 20% test set.
-#     train_set, test_set =  train_test_split( targets, test_size=0.2, \
-#         random_state=42 )
     # standard split vars?  (values=  rand_20_80, rand_strat )
     ways2split_data = {
         'rn. 20%': (True, False),
