@@ -12,7 +12,6 @@ import numpy as np
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
 
 
-
 def read_in_DMS_file_and_select_data(limit_depth_to=20):
     """
     Read in the DMS file
@@ -143,6 +142,7 @@ def add_extra_vars_rm_some_data(df=None, target='DMS',
 
     Parameters
     -------
+
     Returns
     -------
     (pd.DataFrame)

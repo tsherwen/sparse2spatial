@@ -74,7 +74,7 @@ def build_or_get_models_DMS(target='DMS',
 
     Parameters
     -------
-    target (str): Name of the target variable (e.g. iodide)
+    target (str): Name of the target variable (e.g. DMS)
     rm_outliers (bool): remove the outliers from the observational dataset
     rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
     rebuild (bool): rebuild the models or just read them from disc?
@@ -83,12 +83,11 @@ def build_or_get_models_DMS(target='DMS',
     -------
     (pd.DataFrame)
     """
-    # Get the dictionary  of model names and features (specific to iodide)
+    # Get the dictionary  of model names and features (specific to DMS)
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
-
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
-
+    # Now extract built models or build new models
     if rebuild:
         RFR_dict = build_or_get_models(save_model_to_disk=True,
                                        model_feature_dict=model_feature_dict,
@@ -114,7 +113,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='DMS',
     Parameters
     -------
     restrict_data_max (bool): restrict the obs. data to a maximum value?
-    target (str): Name of the target variable (e.g. iodide)
+    target (str): Name of the target variable (e.g. DMS)
     rm_outliers (bool): remove the outliers from the observational dataset
     rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
 
@@ -160,7 +159,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='DMS',
         # Get settings
         rand_20_80, rand_strat = ways2split_data[key_]
         # Copy a df for splitting
-#        df_tmp = df['Iodide'].copy()
+#        df_tmp = df['DMS'].copy()
         # Now split using existing function
         returned_vars = mk_test_train_sets(df=df.copy(),
                                                  target=target,
@@ -175,3 +174,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='DMS',
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
     return df
+
+
+if __name__ == "__main__":
+    main()
