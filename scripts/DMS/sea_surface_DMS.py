@@ -29,6 +29,9 @@ def main():
     """
     # - Set core local variables
     target = 'DMS'
+    # Setup the data directory structure (only needs to be done once))
+    # NOTE: the locations of s2s and data are set in script/<target>'s *.rc file
+#    utils.check_or_mk_directory_structure(target=target)
 
     # - Get the observations? (Not needed for core workflow as also held in RFR_dict)
     # (This processese the observations and only needs to be done once)
@@ -49,7 +52,7 @@ def main():
 
     # --- Predict values globally (only use 0.125)
     # Extra string for NetCDF save name
-    xsave_str = '_INITIAL'
+    xsave_str = 'v0_0_0'
     # Save predictions to NetCDF
     save2NetCDF = True
     # Resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
@@ -61,7 +64,6 @@ def main():
                                          topmodels=topmodels,
                                          xsave_str=xsave_str, add_ensemble2ds=True)
 
-    #
 
 def build_or_get_models_DMS(target='DMS',
                             rm_LOD_filled_data=False,
@@ -69,6 +71,17 @@ def build_or_get_models_DMS(target='DMS',
                             rebuild=False):
     """
     Wrapper call to build_or_get_models for sea-surface DMS
+
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    rm_outliers (bool): remove the outliers from the observational dataset
+    rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
+    rebuild (bool): rebuild the models or just read them from disc?
+
+    Returns
+    -------
+    (pd.DataFrame)
     """
     # Get the dictionary  of model names and features (specific to iodide)
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
@@ -98,18 +111,16 @@ def get_dataset_processed4ML(restrict_data_max=False, target='DMS',
     """
     Get dataset as a DataFrame with standard munging settings
 
-
     Parameters
     -------
     restrict_data_max (bool): restrict the obs. data to a maximum value?
+    target (str): Name of the target variable (e.g. iodide)
+    rm_outliers (bool): remove the outliers from the observational dataset
+    rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
 
     Returns
     -------
     (pd.DataFrame)
-
-    Notes
-    -----
-
     """
     from observations import add_extra_vars_rm_some_data
     from observations import get_processed_df_obs_mod
