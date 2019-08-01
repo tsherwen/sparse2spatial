@@ -9,28 +9,171 @@ import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import sparse2spatial.utils as utils
+import gc
 
 def main():
     """
     Driver to download all of the ancillary data files
     """
     # Get data from World Ocean (WOA) 2013 version 2
-    get_WOA13_data()
+#    get_WOA13_data()
     # Get data from NODC (Levitus) World Ocean Atlas 1994
-    get_WOA94_data()
+#    get_WOA94_data()
     # Get data from NODC World Ocean Atlas 2001
-    get_WOA01_data()
+#    get_WOA01_data()
     # GEBCO’s gridded bathymetric data set
-    get_GEBCO_data()
+#    get_GEBCO_data()
     # Get data for Dissolved Organic Carbon (DOC)
-    get_DOC_data()
+#    get_DOC_data()
     # Get data for Shortwave radiation (Large and Yeager, 2009)
-    get_SWrad_data()
+#    get_SWrad_data()
     # Get data for chlorophyll-a from SeaWIFS
-    get_SeaWIFS_data()
+#    get_SeaWIFS_data()
     # Get data for Productivity (Behrenfeld and Falkowski, 1997)
-    get_productivity_data()
+#    get_productivity_data()
+    # Get
+
+
+def get_WOA18_data(automatically_download=False, target='Iodide'):
+    """
+    Get data from World Ocean (WOA) 2018 version 2
+
+    Notes
+    -------
+    https://www.nodc.noaa.gov/OC5/woa18/woa18-preliminary-notes.html
+    """
+    # Use the data settings for Iodide
+    file_and_path = './{}/sparse2spatial.rc'.format(target)
+    data_root = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder = '{}/data/{}/'.format(data_root, 'WOA18')
+    # Now loop through the list of variables to donwload
+    vars_dict2download = store_of_values2download4WOA18()
+    for n in vars_dict2download.keys():
+        print(n, vars_dict2download[n].items())
+        # Extract variables
+        d = vars_dict2download[n]
+        var = d['var']
+        res = d['res']
+        period =d['period']
+        # Which specific subfolder to save data to?
+        sfolder = '{}/{}/'.format(folder, var)
+        # If seasonal data (decadal averaged) then download the monthd
+        if (period == 'decav') or (period == 'all'):
+            # get monthly and seasonal files
+            seasons = ['{:0>2}'.format(i+1) for i in np.arange(16)]
+            # download files for season
+            for season in seasons:
+                WOA18_data4var_period(folder=sfolder, season=season, period=period,
+                                      res=res, var=var)
+        # If decadal split data, down load by season
+        else:
+            # just get seasonal files
+            seasons = ['{:0>2}'.format(i) for i in [13,14,15,16]]
+            # download files for season
+            for season in seasons:
+                WOA18_data4var_period(folder=sfolder, season=season, period=period,
+                                      res=res, var=var)
+
+
+def store_of_values2download4WOA18():
+    """
+    Store a dictionary of which files to download at which resolutions
+    """
+    d = {
+    # Climatological data fields - temperature
+    1 : {'var':'temperature', 'res':'0.25', 'period':'decav'},
+    # Decadal temperature fields - temperature
+    2 : {'var':'temperature', 'res':'0.25', 'period':'5564'},
+    3 : {'var':'temperature', 'res':'0.25', 'period':'6574'},
+    4 : {'var':'temperature', 'res':'0.25', 'period':'7584'},
+    5 : {'var':'temperature', 'res':'0.25', 'period':'8594'},
+    6 : {'var':'temperature', 'res':'0.25', 'period':'95A4'},
+    7 : {'var':'temperature', 'res':'0.25', 'period':'A5B7'},
+    # Climatological data fields - salinity
+    8 : {'var':'salinity', 'res':'0.25', 'period':'decav'},
+    # Decadal salinity fields - salinity
+    9 : {'var':'salinity', 'res':'0.25', 'period':'5564'},
+    10 : {'var':'salinity', 'res':'0.25', 'period':'6574'},
+    11 : {'var':'salinity', 'res':'0.25', 'period':'7584'},
+    12 : {'var':'salinity', 'res':'0.25', 'period':'8594'},
+    13 : {'var':'salinity', 'res':'0.25', 'period':'95A4'},
+    14 : {'var':'salinity', 'res':'0.25', 'period':'A5B7'},
+    # Climatological data fields - nitrate
+    15 : {'var':'nitrate', 'res':'1.00', 'period':'all'},
+    # Climatological data fields - phosphate
+    16 : {'var':'phosphate', 'res':'1.00', 'period':'all'},
+    # Climatological data fields - oxygen
+    17 : {'var':'oxygen', 'res':'1.00', 'period':'all'},
+    # Climatological data fields - silicate
+    18 : {'var':'silicate', 'res':'1.00', 'period':'all'},
+    }
+    return d
+
+
+def WOA18_data4var_period(var='temperature', res='0.25', period='decav', season='16',
+                          res_str=None, folder=None, verbose=False):
+    """
+    Download a specific file via opendap from the NOAA/NCEI host for WOA
+    """
+    # Print a status message on which files are being downloaded
+    if verbose:
+        ptr_str = "ATTEMPTING: access+download of '{}' for '{}' (res={}, season={})"
+        print(locals())
+    # Root URL str
+    URL_root = 'https://data.nodc.noaa.gov/'
+    # Folder name
+    folder_str = '/thredds/dodsC/ncei/woa/{var}/{period}/{res}/'
+    folder_str = folder_str.format(var=var, period=period, res=res)
+    # Get the resolution string used in filename str for given folder res.
+    if isinstance(res_str, type(None)):
+        res_str = get_res_str4WOA18(res)
+    # Get the prefix for a given variable
+    prefix = get_prefix4WOA18(var)
+    # filename (e.g. woa18_decav_t16_04.nc)
+    filestr = 'woa18_{}_{}{}_{}.nc'.format(period, prefix, season, res_str )
+    # Using xarray (issues found with NASA OpenDAP data model - via PyDAP)
+    url_str = URL_root+folder_str+filestr
+    print( url_str )
+    ds = xr.open_dataset(url_str, decode_times=False)
+    # Print a status message on which files are being downloaded
+    if verbose:
+        print('RETRIEVED: {}'.format(url_str))
+    # Save the dataset locally.
+    ds.to_netcdf(folder+filestr)
+    # Print a status message on which files are being downloaded
+    if verbose:
+        print('SAVED: {}'.format(folder+filestr))
+    # Remove the dataset from memory and call the garbage collector
+    del ds
+    gc.collect()
+
+
+def get_res_str4WOA18(input):
+    """
+    Convert WOA foler resolution str into file res. str.
+    """
+    d = {
+    '0.25': '04',
+    '1.00': '01',
+    '5deg': '5d',
+    }
+    return d[input]
+
+
+def get_prefix4WOA18(input):
+    """
+    Convert WOA foler resolution str into file res. str.
+    """
+    d = {
+    'temperature': 't',
+    'salinity': 's',
+    'phosphate': 'p',
+    'nitrate':'n',
+    'oxygen':'o',
+    'silicate':'i',
+    }
+    return d[input]
 
 
 def get_WOA13_data(automatically_download=False):
