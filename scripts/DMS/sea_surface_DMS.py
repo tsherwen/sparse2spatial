@@ -72,8 +72,7 @@ def main():
     # Plot up also without derivative variables
     analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
-    # ----
-    # Explore the predicted concentrations
+    # ---- Explore the predicted concentrations
     # Get the data
     ds = utils.get_predicted_3D_values(target=target)
     # plot up an annual mean
