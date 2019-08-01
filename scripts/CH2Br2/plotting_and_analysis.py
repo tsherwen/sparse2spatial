@@ -22,7 +22,7 @@ def main():
     target = 'CH2Br2'
     # - Explore the predicted concentrations
     # Get the data
-    ds = analysis.get_predicted_3D_values(target=target)
+    ds = utils.get_predicted_3D_values(target=target)
     # plot up an annual mean
     plotting.plot_up_annual_averages_of_prediction(ds=ds, target=target)
 

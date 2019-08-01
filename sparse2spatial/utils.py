@@ -975,7 +975,7 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
     (xr.Dataset)
     """
     # Location of data
-    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder = get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/outputs/'.format(target)
     # Set filename string, then open the NetCDF
     filename = 'Oi_prj_predicted_{}_{}_{}.nc'.format(target, res, version)
