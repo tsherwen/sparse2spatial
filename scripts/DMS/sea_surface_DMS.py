@@ -52,17 +52,35 @@ def main():
 
     # --- Predict values globally (only use 0.125)
     # Extra string for NetCDF save name
-    xsave_str = 'v0_0_0'
+    xsave_str = '_v0_0_0'
     # Save predictions to NetCDF
     save2NetCDF = True
     # Resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
-#    res = '0.125x0.125'
-    res = '4x5'
+    res = '0.125x0.125'
+#    res = '4x5'
     build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
                                          save2NetCDF=save2NetCDF, target=target,
                                          models2compare=topmodels,
                                          topmodels=topmodels,
                                          xsave_str=xsave_str, add_ensemble2ds=True)
+
+
+    # --- Plot up the performance of the models
+    df = RFR_dict['df']
+    # Plot performance of models
+    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    # Plot up also without derivative variables
+    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+
+    # ----
+    # Explore the predicted concentrations
+    # Get the data
+    ds = utils.get_predicted_3D_values(target=target)
+    # plot up an annual mean
+    plotting.plot_up_annual_averages_of_prediction(ds=ds, target=target)
+    # Plot up the values by season
+    plotting.plot_up_seasonal_averages_of_prediction(ds=ds, target=target)
+
 
 
 def build_or_get_models_DMS(target='DMS',
