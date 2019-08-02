@@ -32,8 +32,8 @@ def main():
 #    get_SeaWIFS_data()
     # Get data for Productivity (Behrenfeld and Falkowski, 1997)
 #    get_productivity_data()
-    # Get
-
+    # Get the data from World Ocean Atlas 2018
+    get_WOA18_data()
 
 def get_WOA18_data(automatically_download=False, target='Iodide'):
     """
@@ -130,7 +130,7 @@ def WOA18_data4var_period(var='temperature', res='0.25', period='decav', season=
         res_str = get_res_str4WOA18(res)
     # Get the prefix for a given variable
     prefix = get_prefix4WOA18(var)
-    # filename (e.g. woa18_decav_t16_04.nc)
+    # Setup the filename to downlaod (e.g. woa18_decav_t16_04.nc)
     filestr = 'woa18_{}_{}{}_{}.nc'.format(period, prefix, season, res_str )
     # Using xarray (issues found with NASA OpenDAP data model - via PyDAP)
     url_str = URL_root+folder_str+filestr
@@ -151,7 +151,7 @@ def WOA18_data4var_period(var='temperature', res='0.25', period='decav', season=
 
 def get_res_str4WOA18(input):
     """
-    Convert WOA foler resolution str into file res. str.
+    Convert WOA folder resolution str into filename's resolution str.
     """
     d = {
     '0.25': '04',
@@ -163,7 +163,7 @@ def get_res_str4WOA18(input):
 
 def get_prefix4WOA18(input):
     """
-    Convert WOA foler resolution str into file res. str.
+    Convert WOA18 variable name string into the prefix used on files
     """
     d = {
     'temperature': 't',
