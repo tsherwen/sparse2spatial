@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """
 
 This module contains analysis done for the Ocean iodide (Oi!) project
@@ -10,7 +12,8 @@ import numpy as np
 import pandas as pd
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
-
+import matplotlib
+import matplotlib.pyplot as plt
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 
@@ -1770,7 +1773,8 @@ def plt_predicted_iodide_vs_obs_Q1_Q3(dpi=320, show_plot=False,
     plt.close()
 
 
-def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False):
+def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False,
+                                       extension='eps', dpi=720):
     """
     Plot up old and new data on map
     """
@@ -1778,14 +1782,14 @@ def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False):
     sns.reset_orig()
     # - Setup plot
     figsize = (11, 5)
-    fig, ax = plt.subplots(figsize=figsize, dpi=320)
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
     p_size = 25
     alpha = 0.5
     window = True
     axis_titles = False
     # - Get all observational data
     df, md_df = obs.get_iodide_obs()
-    # Seperate into new and old
+    # Seperate into new and old data
     ChanceStr = 'In Chance2014?'
     df[ChanceStr] = None
     for ds in list(set(md_df['Data_Key'])):
@@ -1838,7 +1842,90 @@ def plot_up_data_locations_OLD_and_new(save_plot=True, show_plot=False):
     leg = plt.legend(fancybox=True, loc='upper right')
     leg.get_frame().set_alpha(0.95)
     if save_plot:
-        plt.savefig('Oi_prj_Obs_locations.png', bbox_inches='tight')
+        savename = 'Oi_prj_Obs_locations.{}'.format(extension)
+        plt.savefig(savename, bbox_inches='tight', dpi=dpi)
+    if show_plot:
+        plt.show()
+
+
+def plot_up_data_locations_OLD_and_new_CARTOPY(save_plot=True, show_plot=False,
+                                       extension='eps', dpi=720):
+    """
+    Plot up old and new data on map
+    """
+    import seaborn as sns
+    sns.reset_orig()
+    # - Setup plot
+#    figsize = (11, 5)
+    figsize = (11*2, 5*2)
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+#    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+    fig, ax = None, None
+    p_size = 15
+    alpha = 0.5
+    window = True
+    axis_titles = False
+    # - Get all observational data
+    df, md_df = obs.get_iodide_obs()
+    # Seperate into new and old data
+    ChanceStr = 'In Chance2014?'
+    df[ChanceStr] = None
+    for ds in list(set(md_df['Data_Key'])):
+        bool = df['Data_Key'] == ds
+        IsChance = md_df.loc[md_df['Data_Key'] == ds,  ChanceStr].values[0]
+        df.loc[bool, ChanceStr] = IsChance
+
+    new_metadata_df = md_df.loc[
+        md_df['In Chance2014?'] == 'N'
+    ]
+    new_Data_Keys = new_metadata_df['Data_Key'].values
+    bool = df['Data_Key'].isin(new_Data_Keys)
+    # old data
+    df1 = df.loc[~bool]
+    # new data
+    df2 = df.loc[bool]
+    # ---  add existing data
+    # Get existing data... (Chance et al 2014 )
+#    folder = utils.get_file_locations('data_root')
+#    f = 'Iodine_obs_WOA.csv'
+#    df1 = pd.read_csv(folderf, encoding='utf-8' )
+    # Select lons and lats
+    lats1 = df1['Latitude'].values
+    lons1 = df1['Longitude'].values
+    # Plot up and return basemap axis
+    label = 'Chance et al. (2014) (N={})'.format(
+        df1['Iodide'].dropna().shape[0])
+    ax = plot_lons_lats_spatial_on_map_CARTOPY(lons=lons1, lats=lats1,
+                                         fig=fig, ax=ax, color='blue', label=label,
+                                         alpha=alpha, dpi=dpi,
+#                                         window=window, axis_titles=axis_titles,
+#                                         return_axis=True,
+#                                         add_detailed_map=True,
+                                         add_background_image=False,
+                                         add_gridlines=False,
+                                         s=p_size)
+
+    # - Add in new data following Chance2014?
+    # this is ~ 5 samples from the Atlantic (and some from Indian ocean?)
+    # ... get this at a later date...
+
+    # - Add in SOE-9 data
+#    f = 'Iodine_climatology_ISOE9.xlsx'
+#    df2 = pd.read_excel(folder'/Liselotte_data/'+f, skiprows=1 )
+    # Data from SOE-9
+    lats2 = df2['Latitude'].values
+    lons2 = df2['Longitude'].values
+    color = 'red'
+    label = 'Additional data (N={})'
+    label = label.format(df2['Iodide'].dropna().shape[0])
+    ax.scatter(lons2, lats2, edgecolors=color, c=color, marker='o',
+              s=p_size, alpha=alpha, label=label, zorder=1000)
+    # - Save out / show
+    leg = plt.legend(fancybox=True, loc='upper right', prop={'size': 6})
+    leg.get_frame().set_alpha(0.95)
+    if save_plot:
+        savename = 'Oi_prj_Obs_locations.{}'.format(extension)
+        plt.savefig(savename, bbox_inches='tight', dpi=dpi)
     if show_plot:
         plt.show()
 

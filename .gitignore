@@ -114,6 +114,7 @@ venv.bak/
 *.png
 *.jpg
 *.pdf
+*.eps
 
 # Do not include bash scripts 
 *.sh

@@ -325,7 +325,7 @@ def add_attrs2target_ds_global_and_iodide_param(ds):
 
 
 def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
-                        varname='Ensemble_Monthly_mean',
+                        varname='Ensemble_Monthly_mean', target='Iodide',
                         add_global_attrs=True, add_varname_attrs=True,
                         rm_spaces_from_vars=False,
                         global_attrs_dict={},
@@ -336,6 +336,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
     Parameters
     -------
     convert_to_kg_m3 (bool): convert the output units to kg/m3
+    species (str): chemical name of species to use for kg/m3 conversion
     rm_spaces_from_vars (bool): remove spaces from variable names
     global_attrs_dict (dict): dictionary of global attributes
     convert2HEMCO_time (bool): convert to a HEMCO-compliant time format
@@ -355,10 +356,10 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
             #            print('Update of units not implimented')
             #            sys.exit()
             # Convert units from nM to kg/m3 (=> M => mass => /m3 => /kg)
-            ds[varname] = ds[varname]/1E9 * 127 * 1E3 / 1E3
+            ds[varname] = ds[varname]/1E9 * AC.species_mass(species) * 1E3 / 1E3
             # for variable
             attrs_dict['units'] = "kg/m3"
-            attrs_dict['units_longname'] = "kg/m3"
+            attrs_dict['units_longname'] = "kg({})/m3".format(target)
         else:
             # for variable
             attrs_dict['units'] = "nM"
