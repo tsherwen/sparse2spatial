@@ -8,6 +8,7 @@ import sparse2spatial.utils as utils
 import sparse2spatial as s2s
 import pandas as pd
 import numpy as np
+import glob
 
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
 
@@ -109,6 +110,149 @@ def get_processed_df_obs_mod(reprocess_params=False, target='CH3I',
     return df
 
 
+def get_ground_surface_CH3I_obs(file_and_path='./sparse2spatial.rc',):
+    """
+    Get the NOAA/ESRL observations for CH3I (and other species)
+    """
+    # Location of files
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/../NOAA/ground_based/'
+    # Get files
+    prefix = 'Montzka_sitenumber_'
+    files = glob.glob( '{}{}*.txt'.format(folder, prefix) )
+    # extract sites from file names
+    sites = [i.split(prefix)[-1].split('_')[-1][:-4] for i in files]
+    # Update site names to be the same as used elsewhere
+    NOAA_name2GAW = {
+        'CapeGrim': 'CGO',
+        'Alert': 'Alert',
+        'MaceHead': 'MHD',
+        'PalmerStation': 'Palmer Station',
+        'Summit': 'Summit',
+        'CapeKumuhaki': 'Cape Kumukahi',
+        'MaunaLoa': 'MLO',
+        'ParkFallsWisconsin': 'Park Falls Wisconsin',
+        'Barrow': 'BRW',
+        'SouthPole': 'SPO',
+        'TrinidadHead': 'THD',
+        'NiwotRidge': 'Niwot Ridge'
+
+    }
+    for n in range(len(sites)):
+        sites[n] = NOAA_name2GAW[sites[n]]
+    # Extract the observations to a DataFrame
+    dfs ={}
+    for n,site in enumerate(sites):
+#        df = pd.read_csv(files[n], delimiter=';')
+        df = pd.read_csv(files[n], delimiter=';', header=None, skiprows=1)
+        #
+        with open(files[n], 'r') as lines:
+            header = [i for i in lines][0]
+            print(header )
+            header = header.split(';')
+
+        dfs[site] = df
+    # load summit as a separate .csv file
+    site = 'Summit'
+    dfs[site] = pd.read_csv(folder +'Montzka_sitenumber_2_Summit.csv')
+    # Set flagged values to NaNs
+    for n,site in enumerate(sites):
+        df = dfs[site]
+        df[df==-999] = np.NaN
+        dfs[site] = df
+    # set a function to map a datetime.datetime from columns
+    def add_dt2_df(year=None, month=None, day=None, debug=False
+#                   hour=None, min=None
+                   ):
+        """
+        compile a datetime from DataFrame columns
+        """
+        if debug:
+            print( year, month, day)
+#        print( year, month, day, hour, min)
+        # Set the Date to the middle of the month (#=15) if not known value
+        if isinstance(day, type(None)) or ~np.isfinite(day):
+            Day = 15
+        return datetime.datetime(int(year), int(month), int(day),
+#                                int(hour), int(min)
+                                )
+
+    # Add a date string
+    DateVar= 'Datetime'
+    for n,site in enumerate(sites):
+        print(site)
+        df = dfs[site]
+        #
+        try:
+            year_var = 'year'
+            month_var = 'month'
+            day_var = 'day'
+#            hour_var = 'hour'
+#            min_var = 'min'
+#            df_tmp = df[[year_var,month_var,day_var,hour_var,min_var]]
+            df_tmp = df[[year_var,month_var,day_var]]
+
+            # Now apply the function on the whole dataframe
+            df[DateVar] = df_tmp.apply(lambda x: add_dt2_df(year=x[year_var],
+                                                            month=x[month_var],
+                                                            day=x[day_var],
+#                                                            hour=x[hour_var],
+#                                                            min=x[min_var],
+                                                            ),axis=1)
+
+        except:
+            year_var = 'Date'
+            month_var = 'Gear'
+            day_var = 'Sampling'
+#            hour_var = '(UTC)'
+#            min_var = 'and'
+#            df_tmp = df[[year_var,month_var,day_var,hour_var,min_var]]
+            df_tmp = df[[year_var,month_var,day_var]]
+
+            # Now apply the function on the whole dataframe
+            df[DateVar] = df_tmp.apply(lambda x: add_dt2_df(year=x[year_var],
+                                                        month=x[month_var],
+                                                        day=x[day_var],
+#                                                        hour=x[hour_var],
+#                                                        min=x[min_var],
+                                                        ),axis=1)
+
+        #
+        dfs[site] = df.copy()
+        del df
+
+    return dfs
+
+
+def expand_NOAA_name(input, invert=True):
+    """
+    Get the expanded NOAA name of observation station
+    """
+    NOAA_name2GAW = {
+        'CapeGrim': 'CGO',
+        'Alert': 'Alert',
+        'MaceHead': 'MHD',
+        'PalmerStation': 'Palmer Station',
+        'Summit': 'Summit',
+        'CapeKumuhaki': 'Cape Kumukahi',
+        'MaunaLoa': 'MLO',
+        'ParkFallsWisconsin': 'Park Falls Wisconsin',
+        'Barrow': 'BRW',
+        'SouthPole': 'SPO',
+        'TrinidadHead': 'THD',
+        'NiwotRidge': 'Niwot Ridge'
+
+    }
+    # invert
+    if invert:
+        NOAA_name2GAW = {v: k for k, v in list(NOAA_name2GAW.items())}
+
+    if rtn_dict:
+        return NOAA_name2GAW
+    else:
+        return NOAA_name2GAW[input]
+
+
 def add_extra_vars_rm_some_data(df=None, target='CH3I',
                                 restrict_data_max=False, restrict_min_salinity=False,
                                 rm_outliers=False, verbose=True, debug=False):
@@ -117,6 +261,7 @@ def add_extra_vars_rm_some_data(df=None, target='CH3I',
 
     Parameters
     -------
+
     Returns
     -------
     (pd.DataFrame)

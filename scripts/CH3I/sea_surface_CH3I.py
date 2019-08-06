@@ -69,7 +69,301 @@ def main():
                                          topmodels=topmodels,
                                          xsave_str=xsave_str, add_ensemble2ds=True)
 
+    # --- Plot up the performance of the models
+    df = RFR_dict['df']
+    # Plot performance of models
+    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    # Plot up also without derivative variables
+    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+
+    # ---- Explore the predicted concentrations
+    # Get the data
+    ds = utils.get_predicted_3D_values(target=target)
+    # plot up an annual mean
+    plotting.plot_up_annual_averages_of_prediction(ds=ds, target=target)
+    # Plot up the values by season
+    plotting.plot_up_seasonal_averages_of_prediction(ds=ds, target=target)
+
+    # ---- Check analysis for original emissions from Bell et al.
+    # Check budgets
+
+    # plot
+
+
+
+def check_budgets_from_Bell_emiss():
+    """
+    """
+    # target species for analysis
+    target = 'CH3I'
+    # Root data directory
+    root = '/mnt/lustre/groups/chem-acm-2018/earth0_data/'
+    root += 'GEOS//ExtData/HEMCO/'
+    # Folder of CH3I emissions
+    folder = root + 'CH3I/v2014-07/'
+    # - Get the wetland emissions
+    filename = 'ch4_wetl.geos.4x5.nc'
+    dsW = xr.open_dataset( folder + filename )
+    var2plot = 'CH4_SRCE__CH4cl'
+    # Plot up the annual average emissions
+    ds2plot = dsW[[var2plot]].mean(dim='time')
+    # Set a title for the plot
+    extr_str = 'Wetland_emissions_CH3I'
+    units = dsW[var2plot].units
+    title = "Wetland emissions of {} ({})".format(target, units)
+    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                               fillcontinents=False,
+                               target=target, title=title, units=units)
+
+    # - Get the rice emissions
+    filename = 'ch4_rice.geos.4x5.nc'
+    dsR = xr.open_dataset( folder + filename )
+    var2plot = 'CH4_SRCE__CH4an'
+    # Plot up the annual average emissions
+    ds2plot = dsR[[var2plot]].mean(dim='time')
+    # Set a title for the plot
+    extr_str = 'Rice_emissions_CH3I'
+    units = dsR[var2plot].units
+    title = "Rice emissions of {} ({})".format(target, units)
+    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                               fillcontinents=False,
+                               target=target, title=title, units=units)
+
+
+    # - Get the ocean concentrations
+    filename = 'ocean_ch3i.geos.4x5.nc'
+    dsO = xr.open_dataset( folder + filename )
+    var2plot = 'CH3I_OCEAN'
+    # Plot up the annual average concentrations
+    ds2plot = dsO[[var2plot]].mean(dim='time')
+    # Set a title for the plot
+    extr_str = 'Ocean_concs_CH3I'
+    units = dsO[var2plot].units
+    title = "Ocean concentrations of {} ({})".format(target, units)
+    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                                target=target, title=title, units=units)
+
+
+    # - Get the ocean concentrations (assuming HEMCO conversion error)
+    filename = 'ocean_ch3i.geos.4x5.nc'
+    dsO = xr.open_dataset( folder + filename )
+    var2plot = 'CH3I_OCEAN'
+    # Plot up the annual average concentrations
+    ds2plot = dsO[[var2plot]].mean(dim='time')
     #
+    ds2plot[var2plot] = ds2plot[var2plot] / ( 141.9 * 1E-9 )
+    # Set a title for the plot
+    extr_str = 'Ocean_concs_CH3I_nM'
+    units = 'nM'
+    title = "Ocean concentrations of {} \n ".format(target)
+    title += "({} - assuming HEMCO conversion)".format( 'nM')
+    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                                target=target, title=title, units=units)
+
+    # - Get the ocean concentrations
+    filename = 'ocean_ch3i.geos.4x5.nc'
+    dsO = xr.open_dataset( folder + filename )
+    var2plot = 'CH3I_OCEAN'
+    # Plot up the annual average concentrations
+    ds2plot = dsO[[var2plot]].mean(dim='time')
+    #
+    ds2plot[var2plot] = ds2plot[var2plot] / ( 141.9 * 1E-9 ) *10
+    # Set a title for the plot
+    extr_str = 'Ocean_concs_CH3I_nM_Assume_error'
+    units = 'nM'
+    title = "Ocean concentrations of {} \n ".format(target)
+    title += "({} - assuming error of x10)".format('nM')
+    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                                target=target, title=title, units=units)
+
+    # - plot up the new kg/m3 concs.
+    folder2 = '/users/ts551/scratch/data/s2s/CH3I/outputs/'
+    filename = 'Oi_prj_predicted_CH3I_0.125x0.125_kg_m3.nc'
+    dsML = xr.open_dataset( folder2 + filename )
+    var2plot = 'Ensemble_Monthly_mean_kg_m3'
+    # Plot up the annual average concentrations
+    ds2plot = dsML[[var2plot]].mean(dim='time')
+    # Set a title for the plot
+    extr_str = 'Ocean_concs_CH3I_ML'
+    units = dsML[var2plot].units
+    title = "ML ocean concentrations of {} ({})".format(target, units)
+    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                                target=target, title=title, units=units)
+
+
+
+def plot_seasaonl_model_vs_obs(dpi=320):
+    """
+    Plot seasonal comparisons of observations and models
+    """
+    # Get observational data
+    dfs = get_ground_surface_CH3I_obs()
+    sites = list(dfs.keys())
+    # get model_data
+    run_root = '/users/ts551/scratch/GC/rundirs/'
+    run_dict = {
+    'Ordonez2012': run_root+'geosfp_4x5_tropchem.v12.2.1.AQSA.GFAS/'
+    }
+    runs = list(run_dict.keys())
+
+    # loop and extract by site
+    res='4x5'
+    model_data = {}
+    for run in runs:
+        # Get data location and filename
+        wd = run_dict[run]
+        filename = 'ctm.nc'
+        # open the file
+        ds = xr.open_dataset(wd+filename)
+        # select the nearest location to a given site
+        df = pd.DataFrame()
+        for site in sites:
+            print(site)
+            # Get: lat, lon, alt (m)
+            lat, lon, alt, = AC.get_loc(site)
+            # Nearest lat
+            ds_tmp = ds['IJ_AVG_S__'+'CH3I'].sel(latitude=lat, method='nearest')
+            # Nearest lon
+            ds_tmp = ds_tmp.sel(longitude=lon, method='nearest')
+            # take the bottom-=most box
+            ds_tmp = ds_tmp.sel(model_level_number=1)
+            # convert to pptv
+            ds_tmp = ds_tmp *1E3
+            # colaspe to a series and save to dataframe
+            df[site] = ds_tmp.to_pandas().copy()
+            del ds_tmp
+        # Save the data to a DataFrame
+        model_data[run] = df.copy()
+        del df
+
+    # Now loop by site and plot up
+    for site in sites:
+        print(site)
+#        fig = plt.figure(figsize=(16, 10))
+        fig = plt.figure()
+        #
+#        ax = fig.add_subplot(*axn)
+        ax = fig.add_subplot()
+        # Get Obs. for site
+        DateVar = 'Datetime'
+        DataVar = 'CH3I'
+        df = dfs[site][[DateVar, DataVar]].dropna()
+        dates = df[DateVar].values
+        data = df[DataVar].values
+        print(dates.shape, data.shape)
+        title = site
+        # Plot up observations
+        AC.BASIC_seasonal_plot(data=data, dates=dates, color='k', label='Obs.',
+                               title=title)
+        # plot up model data
+        for run in runs:
+            df = model_data[run]
+            #
+            dates = df.index.values
+            data = df[site].values
+            # Plot up observations
+            AC.BASIC_seasonal_plot(data=data, dates=dates, color='red', label=run)
+
+
+        #
+        filename = 's2s_{}_seasonal_cycle_{}'.format( target, site)
+        filename = AC.rm_spaces_and_chars_from_str(filename)
+        plt.savefig(filename)
+
+
+def quick_check_of_CH3I_emissions():
+    """
+    """
+    #
+    root = '/users/ts551/scratch/GC/rundirs/'
+    file_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.GFAS.{}'
+    run_dict = {
+    'Ordonez2012' : root + file_str.format('CH3I.Ordonez2012/spin_up/'),
+    'Bell2002' : root + file_str.format('CH3I/spin_up/'),
+    'Bell2002x10' : root + file_str.format('CH3I.x10/spin_up/'),
+    'ML'    : root + file_str.format('CH3I.ML/spin_up/'),
+    }
+    wds = run_dict # for debugging...
+    #
+    filename = 'HEMCO_diagnostics.201401010000.nc'
+    # Get a dictionary of all the data
+    dsDH = GetEmissionsFromHEMCONetCDFsAsDatasets(wds=run_dict)
+
+    #
+    for run in dsDH.keys():
+        print(run)
+
+        print( dsDH[run].sum() )
+
+
+def check_units_of_Bell2002_files():
+    """
+    convert kg/m3 to ng/L
+    """
+    #
+    pass
+
+
+
+
+def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None, average_over_time=False):
+    """
+    Get the emissions from the HEMCO NetCDF files as a dictionary of datasets.
+    """
+    import AC_tools as AC
+    # Look at emissions through HEMCO
+    # Get data locations and run names as a dictionary
+    if isinstance(wds, type(None)):
+        wds = get_run_dict4EGU_runs()
+    runs = list(wds.keys())
+    # variables to extract
+    vars2use = [
+        # Testing vars from v5.0
+#         'TOTAL_CH3I_L', 'TOTAL_SEA_CH3I', 'TOTAL_CH3I_a', 'TOTAL_CH2BR2', 'TOTAL_CHBR3',
+#         'TOTAL_CH2I2', 'TOTAL_CH2ICL', 'TOTAL_CH2IBR', 'TOTAL_HOI', 'TOTAL_I2',
+#         'TOTAL_ISOP'
+        #
+        'EmisCH3I_ordonez', 'EmisCH3I_SEAFLUX', 'EmisCH3I_TOTAL',
+        'EmisCH2I2_Ocean', 'EmisCH2ICl_Ocean', 'EmisCH2IBr_Ocean', 'EmisI2_Ocean',
+        'EmisHOI_Ocean', 'EmisI2_Ocean_Total', 'EmisHOI_Ocean_Total',
+        'EmisCH2Br2_Ocean', 'EmisCHBr3_Ocean'
+    ]
+    # Make sure there are no double ups in the list
+    vars2use = list(set(vars2use))
+    # Loop and extract files
+    dsDH = {}
+    for run in runs:
+        wd = wds[run]
+        print(run, wd)
+        dsDH[run] = AC.get_HEMCO_diags_as_ds(wd=wd)
+    # Get actual species
+    specs = [i.split('Emis')[-1].split('_')[0] for i in vars2use]
+#     specs = [
+#     'CH3I','CH3I', 'CH3I', 'CH2Br2', 'CHBr3', 'CH2I2', 'CH2ICl', 'CH2IBr',
+#     'HOI', 'I2', 'ISOP'
+#     ]
+    var_species_dict = dict(zip(vars2use, specs))
+    # Only include core species in dataset
+    for key in dsDH.keys():
+        dsDH[key] = dsDH[ key ][ ['AREA']+vars2use  ]
+
+    # Convert to Gg
+    for run in runs:
+        dsREF = dsDH[run].copy()
+        # Average over the time dimension?
+        if average_over_time:
+            ds = dsDH[run].copy().mean(dim='time')
+            for var in dsREF.data_vars:
+                ds[var].attrs = dsREF[var].attrs
+            ds2use = ds
+        else:
+            ds2use = dsREF
+        # Convert the units
+        ds = AC.convert_HEMCO_ds2Gg_per_yr(ds2use, vars2convert=vars2use,
+                                           var_species_dict=var_species_dict)
+        # Update the dictionary
+        dsDH[run] = ds
+    return dsDH
 
 
 def plot_up_obs_data_by_year( target='CH3I',):
