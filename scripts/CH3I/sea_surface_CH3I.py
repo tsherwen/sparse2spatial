@@ -22,11 +22,12 @@ from sparse2spatial.RFRbuild import mk_test_train_sets
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as RFRanalysis
 import sparse2spatial.analysis as analysis
-import sparse2spatial.plotting as plotting
+import sparse2spatial.plotting as s2splotting
 from sparse2spatial.RFRbuild import build_or_get_models
 
 # Get CH3I specific functions
 from observations import get_CH3I_obs
+import observations as obs
 
 
 def main():
@@ -80,9 +81,9 @@ def main():
     # Get the data
     ds = utils.get_predicted_3D_values(target=target)
     # plot up an annual mean
-    plotting.plot_up_annual_averages_of_prediction(ds=ds, target=target)
+    s2splotting.plot_up_annual_averages_of_prediction(ds=ds, target=target)
     # Plot up the values by season
-    plotting.plot_up_seasonal_averages_of_prediction(ds=ds, target=target)
+    s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds, target=target)
 
     # ---- Check analysis for original emissions from Bell et al.
     # Check budgets
@@ -111,7 +112,7 @@ def check_budgets_from_Bell_emiss():
     extr_str = 'Wetland_emissions_CH3I'
     units = dsW[var2plot].units
     title = "Wetland emissions of {} ({})".format(target, units)
-    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
                                fillcontinents=False,
                                target=target, title=title, units=units)
 
@@ -125,7 +126,7 @@ def check_budgets_from_Bell_emiss():
     extr_str = 'Rice_emissions_CH3I'
     units = dsR[var2plot].units
     title = "Rice emissions of {} ({})".format(target, units)
-    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
                                fillcontinents=False,
                                target=target, title=title, units=units)
 
@@ -140,44 +141,152 @@ def check_budgets_from_Bell_emiss():
     extr_str = 'Ocean_concs_CH3I'
     units = dsO[var2plot].units
     title = "Ocean concentrations of {} ({})".format(target, units)
-    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
                                 target=target, title=title, units=units)
 
 
-    # - Get the ocean concentrations (assuming HEMCO conversion error)
+    # - Get the ocean concentrations (assuming no HEMCO conversion error)
     filename = 'ocean_ch3i.geos.4x5.nc'
     dsO = xr.open_dataset( folder + filename )
     var2plot = 'CH3I_OCEAN'
     # Plot up the annual average concentrations
     ds2plot = dsO[[var2plot]].mean(dim='time')
     #
-    ds2plot[var2plot] = ds2plot[var2plot] / ( 141.9 * 1E-9 )
+    ds2plot[var2plot] = ds2plot[var2plot] / ( 141.9 * 1E-12 )
     # Set a title for the plot
-    extr_str = 'Ocean_concs_CH3I_nM'
-    units = 'nM'
-    title = "Ocean concentrations of {} \n ".format(target)
-    title += "({} - assuming HEMCO conversion)".format( 'nM')
-    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                                target=target, title=title, units=units)
+    extr_str = 'Ocean_concs_CH3I_pM_fixed'
+    vmin, vmax = 0, 15
+    units = 'pM'
+    title = "Ocean concentrations of {} ".format(target)
+    title += "({})".format( 'pM')
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                               vmin=vmin, vmax=vmax,
+                               target=target, title=title, units=units)
+
+   # - Get the ocean concentrations (assuming HEMCO conversion error)
+    filename = 'ocean_ch3i.geos.4x5.nc'
+    dsO = xr.open_dataset( folder + filename )
+    var2plot = 'CH3I_OCEAN'
+    # Plot up the annual average concentrations
+    ds2plot = dsO[[var2plot]].mean(dim='time')
+    # convert units
+    ds2plot[var2plot] = ds2plot[var2plot] * 1E9 /10
+    # Set a title for the plot
+    extr_str = 'Ocean_concs_CH3I_ng_L'
+#    vmin, vmax = 0, 15
+    units = 'ng L$^{-1}$'
+    title = "Ocean concentrations of {} ".format(target)
+    title += "({} - x10 assumeing HEMCO conversion error)".format( units)
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+#                               vmin=vmin, vmax=vmax,
+                               target=target, title=title, units=units)
+    # Also plot seasonally
+    vmin, vmax = 0, 2
+#    vmin, vmax = 0, 1
+#    extr_str = 'Ocean_concs_CH3I_ng_L_capped_at_1'
+    ds2plot = dsO[[var2plot]]
+    ds2plot[var2plot] = ds2plot[var2plot] * 1E9 /10
+    s2splotting.plot_up_seasonal_averages_of_prediction_TEST(ds=ds2plot, target=target,
+                                                     var2plot=var2plot,
+                                                     var2plot_longname='Bell et al 2002',
+                                                     version='_assume_x10_error',
+                                                     vmin=vmin, vmax=vmax,
+                                                     seperate_plots=False,
+                                                     units=units)
+
+
+
+
+    # - Plot the ocean concentrations from Ziska et al 2013
+    folder3 = '/mnt/lustre/users/ts551/data/HalOcAt/Ziska_2013_SI_files/'
+    filename = 'Ziska_CH3I.nc'
+    dsZ = xr.open_dataset( folder3 + filename )
+    dsZ = dsZ.rename(name_dict={'RF - ocean' : 'CH3I'})
+    var2plot = 'CH3I'
+    # Plot up the annual average concentrations (no time dimension so no action)
+    ds2plot = dsZ[[var2plot]]
+    # convert units (pM to ng/L)
+    ds2plot[var2plot] = ds2plot[var2plot] /1E12 *141.9 * 1E9
+    # Set a title for the plot
+    extr_str = 'Ziska_Ocean_concs_CH3I_ng_L'
+#    vmin, vmax = 0, 15
+    units = 'ng L$^{-1}$'
+    title = "Ziska et al (2013) ocean concentrations of {} ".format(target)
+    title += "({})".format( units)
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+#                               vmin=vmin, vmax=vmax,
+                               target=target, title=title, units=units)
+
 
     # - Get the ocean concentrations
-    filename = 'ocean_ch3i.geos.4x5.nc'
-    dsO = xr.open_dataset( folder + filename )
-    var2plot = 'CH3I_OCEAN'
+#     filename = 'ocean_ch3i.geos.4x5.nc'
+#     dsO = xr.open_dataset( folder + filename )
+#     var2plot = 'CH3I_OCEAN'
+#     # Plot up the annual average concentrations
+#     ds2plot = dsO[[var2plot]].mean(dim='time')
+#     #
+#     ds2plot[var2plot] = ds2plot[var2plot] / ( 141.9 * 1E-9 ) *10
+#     # Set a title for the plot
+#     extr_str = 'Ocean_concs_CH3I_nM_Assume_error'
+#     units = 'nM'
+#     title = "Ocean concentrations of {} \n ".format(target)
+#     title += "({} - assuming error of x10)".format('nM')
+#     s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+#                                 target=target, title=title, units=units)
+
+
+    # - plot up the new field  in pM concs.
+    folder2 = '/users/ts551/scratch/data/s2s/CH3I/outputs/'
+    filename = 'Oi_prj_predicted_CH3I_0.125x0.125.nc'
+    dsML = xr.open_dataset( folder2 + filename )
+    var2plot = 'Ensemble_Monthly_mean'
     # Plot up the annual average concentrations
-    ds2plot = dsO[[var2plot]].mean(dim='time')
-    #
-    ds2plot[var2plot] = ds2plot[var2plot] / ( 141.9 * 1E-9 ) *10
+    ds2plot = dsML[[var2plot]].mean(dim='time')
     # Set a title for the plot
-    extr_str = 'Ocean_concs_CH3I_nM_Assume_error'
-    units = 'nM'
-    title = "Ocean concentrations of {} \n ".format(target)
-    title += "({} - assuming error of x10)".format('nM')
-    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                                target=target, title=title, units=units)
+    extr_str = 'Ocean_concs_CH3I_ML_fixed'
+    vmin, vmax = 0, 15
+    units = dsML[var2plot].units
+    title = "ML ocean concentrations of {} ({})".format(target, 'pM')
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                               vmin=vmin, vmax=vmax,
+                               target=target, title=title, units=units)
+
+
+    # - plot up the new fie3ld  in pM concs.
+    folder2 = '/users/ts551/scratch/data/s2s/CH3I/outputs/'
+    filename = 'Oi_prj_predicted_CH3I_0.125x0.125.nc'
+    dsML = xr.open_dataset( folder2 + filename )
+    var2plot = 'Ensemble_Monthly_mean'
+    # Plot up the annual average concentrations
+    ds2plot = dsML[[var2plot]].mean(dim='time') / 1E12 * 141.9 *1E9
+    # Set a title for the plot
+    extr_str = 'Ocean_concs_CH3I_ML_ng_L'
+#    vmin, vmax = 0, 15
+    units = dsML[var2plot].units
+    title = "ML ocean concentrations of {} ({})".format(target, 'ng L$^{-1}$')
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+#                               vmin=vmin, vmax=vmax,
+                               target=target, title=title, units=units)
+
+    # Also plot seasonally
+    vmin, vmax = 0, 2
+#    vmin, vmax = 0, 1
+#    extr_str = 'Ocean_concs_CH3I_ML_ng_L_capped_at_one'
+    ds2plot = dsML[[var2plot]]
+    ds2plot[var2plot] = ds2plot[var2plot] /1E12 *141.9 * 1E9
+    units= 'ng L$^{-1}$'
+    s2splotting.plot_up_seasonal_averages_of_prediction_TEST(ds=ds2plot, target=target,
+                                                     var2plot=var2plot,
+                                                     var2plot_longname='ML field',
+                                                     version=extr_str,
+                                                     vmin=vmin, vmax=vmax,
+                                                     seperate_plots=False,
+                                                     units=units)
+
 
     # - plot up the new kg/m3 concs.
     folder2 = '/users/ts551/scratch/data/s2s/CH3I/outputs/'
+#    filename = 'Oi_prj_predicted_CH3I_0.125x0.125.nc'
     filename = 'Oi_prj_predicted_CH3I_0.125x0.125_kg_m3.nc'
     dsML = xr.open_dataset( folder2 + filename )
     var2plot = 'Ensemble_Monthly_mean_kg_m3'
@@ -186,33 +295,433 @@ def check_budgets_from_Bell_emiss():
     # Set a title for the plot
     extr_str = 'Ocean_concs_CH3I_ML'
     units = dsML[var2plot].units
-    title = "ML ocean concentrations of {} ({})".format(target, units)
-    plotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                                target=target, title=title, units=units)
+    title = "ML ocean concentrations of {} ({})".format(target, 'pM')
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+                               target=target, title=title, units=units)
 
 
 
-def plot_seasaonl_model_vs_obs(dpi=320):
+
+def setup_ML_and_other_feilds():
+    """
+    Set up alternative fields to Bell et al (2002) to be read by HEMCO
+    """
+    # - Convert ML field for use in HEMCO GEOS-Chem
+
+    # - Ziska et al 2013 fields
+    folder3 = '/mnt/lustre/users/ts551/data/HalOcAt/Ziska_2013_SI_files/'
+    filename = 'Ziska_CH3I.nc'
+    dsZ = xr.open_dataset( folder3 + filename )
+    dsZ = dsZ.rename(name_dict={'RF - ocean' : 'CH3I'})
+    var2use = 'CH3I'
+    new_var  = 'RF_CH3I_kg_m3'
+    dsZ = add_field2HEMCO_in_kg_m3( dsZ, new_var=new_var, var2use=var2use )
+    # save just the variable to use
+    dsZ[[new_var]].to_netcdf( folder3+'Ziska_CH3I_kg_m3.nc' )
+
+
+def compare_performance_of_parameters_against_observations():
+    """
+    """
+    # - Get the observations and
+    # Get the dataframe of observations and predictions
+    df = RFR_dict['df']
+    # Add ensemble to the df
+    LatVar = 'Latitude'
+    LonVar = 'Longitude'
+    ds = utils.get_predicted_values_as_ds(target=target)
+    vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df['Month'].values,
+                                              var2extract='Ensemble_Monthly_mean',)
+    var = 'RFR(Ensemble)'
+    params = [var]
+
+    df[var] = vals
+    # Just withheld data?
+    just_withheld_data = False
+    if just_withheld_data:
+        testset = 'Test set (strat. 20%)'
+        df = df.loc[df[testset] == True, :]
+    # Only consider the variables to be plotted
+    obs_var = target
+#    params2plot = [var,  'Chance2014_STTxx2_I', 'MacDonald2014_iodide',]
+    params2plot = [var,  ]
+    df = df[params2plot+[LonVar, LatVar, obs_var]]
+    # Add ocean columns to dataframe
+    df = AC.add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
+    # Split by regions
+    regions = list(set(df['ocean'].dropna()))
+    dfs = [df.loc[df['ocean']==i,:] for i in regions]
+    dfs = dict(zip(regions,dfs))
+    # Also get an open ocean dataset
+    # TODO ...
+    # Use an all data for now
+    dfs['all'] = df.copy()
+    regions += ['all']
+    # loop and plot by region
+    for region in regions:
+        print(region)
+        df = dfs[region]
+        extr_str=region+' (withheld)'
+#        extr_str=region
+        # Now plot
+        s2splotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                             obs_var=obs_var,
+                                             extr_str=extr_str)
+
+    # Extract the Ziska et al dataset
+    folder3 = '/mnt/lustre/users/ts551/data/HalOcAt/Ziska_2013_SI_files/'
+    filename = 'Ziska_CH3I.nc'
+    dsZ = xr.open_dataset( folder3 + filename )
+    var2extract = 'RF - ocean'
+    #
+    var = 'Ziska13'
+    params += [var]
+
+    vals = utils.extract4nearest_points_in_ds(ds=dsZ, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df[LatVar].values,
+                                              select_within_time_dim=False,
+                                              var2extract=var2extract,)
+    df[var] = vals
+
+    # Extract the Bell et al 2002 dataset
+    # Root data directory
+    root = '/mnt/lustre/groups/chem-acm-2018/earth0_data/'
+    root += 'GEOS//ExtData/HEMCO/'
+    # Folder of CH3I emissions
+    folder = root + 'CH3I/v2014-07/'
+    filename = 'ocean_ch3i.geos.4x5.nc'
+    dsO = xr.open_dataset( folder + filename )
+    var2extract = 'CH3I_OCEAN'
+    # convert units
+    # convert kg/m3 => ng/L
+#    dsO[var2extract] = dsO[var2extract].copy() * 1E9
+#    dsO[var2extract] = dsO[var2extract].copy() * 1E9 / 10 # assume a x10 error
+    # convert kg/m3 to pM
+    dsO[var2extract] = dsO[var2extract].copy() / ( 141.9 * 1E-12 )  / 10 # assume a x10 error
+    #
+#    var = 'Bell02 /10' # assume a x10 error
+    var = 'Bell02'
+    params += [var]
+    vals = utils.extract4nearest_points_in_ds(ds=dsO, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df['Month'].values,
+                                              select_within_time_dim=True,
+                                              var2extract=var2extract,)
+    df[var] = vals
+
+    # Get stats
+    params = list(set(params))
+    stats = utils.get_df_stats_MSE_RMSE(df=df, params=params, target=target, )
+
+    # - Plot up an orthogonal distance regression.
+
+    # ODr plot
+    ylim = (0, 15)
+    xlim = (0, 15)
+    plot_ODR_window_plot(df=df, params=params, units='pM', target=target, ylim=ylim,
+                         xlim=xlim)
+
+    # Plot up a PDF of concs and bias
+    ylim = (-3, 15)
+    plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params, units='pM',
+                                              target=target, xlim=xlim)
+    #
+
+    #
+
+
+def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
+                                              testset='Test set (strat. 20%)',
+                                              target='Iodide', df=None,
+                                              plot_up_CDF=False, units='pM',
+                                              xlim=None,
+                                              dpi=320):
+    """
+    Plot up CDF and PDF plots to explore point-vs-point data
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    df (pd.DataFrame): DataFrame of data
+    plot_up_CDF (bool): plot up as a cumulative distribution function
+    Returns
+    -------
+    (None)
+    """
+    import seaborn as sns
+    sns.set(color_codes=True)
+    sns.set_context("paper", font_scale=0.75)
+    # Get data
+    if isinstance(df, type(None)):
+        RFR_dict = build_or_get_models_iodide()
+        df = RFR_dict['df']
+    # Get a dictionary of different dataset splits
+    dfs = {}
+    # Entire dataset
+    dfs['Entire'] = df.copy()
+    # Testdataset
+    dfs['All (withheld)'] = df.loc[df[testset] == True, :].copy()
+    # Coastal testdataset
+    # maintain ordering of plotting
+    datasets = dfs.keys()
+    # setup color dictionary
+    CB_color_cycle = AC.get_CB_color_cycle()
+    color_d = dict(zip(params, CB_color_cycle))
+    # plotting variables
+
+    # set a PDF to save data to
+    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_PDF_WINDOW'
+    # --- Plot up CDF and PDF plots for the dataset and residuals
+    fig = plt.figure(dpi=dpi)
+    nrows = len(datasets)
+    ncols = 2
+    for n_dataset, dataset in enumerate(datasets):
+        # set Axis for abosulte PDF
+        axn = np.arange(1, (nrows*ncols)+1)[::ncols][n_dataset]
+        ax1 = fig.add_subplot(nrows, ncols, axn)
+        # Get data
+        df = dfs[dataset]
+        # Drop NaNs
+        df = df.dropna()
+        # Numer of data points
+        N_ = df.shape
+        print(dataset, N_)
+        # Only add an axis label on to the bottommost plots
+        axlabel = None
+        if n_dataset in np.arange(1, (nrows*ncols)+1)[::ncols]:
+            axlabel = '[{}$_{}$] ({})'.format( target, '{aq}', units )
+        # - Plot up PDF plots for the dataset
+        # Plot observations
+        var_ = 'Obs.'
+        obs_arr = df[target].values
+        ax = sns.distplot(obs_arr, axlabel=axlabel, label=var_,
+                          color='k', ax=ax1)
+        # Loop and plot model values
+        for param in params:
+            arr = df[param].values
+            ax = sns.distplot(arr, axlabel=axlabel,
+                              label=param,
+                              color=color_d[param], ax=ax1)
+        # Force y axis extent to be correct
+        ax1.autoscale()
+        # Force x axis to be constant
+        ax1.set_xlim(xlim)
+        # Beautify the plot/figure
+        ylabel = 'Frequency \n ({})'
+        ax1.set_ylabel(ylabel.format(dataset))
+        # Add legend to first plot
+        if (n_dataset == 0):
+            plt.legend()
+            ax1.set_title('Concentration')
+        # - Plot up PDF plots for the residual dataset
+        # set Axis for abosulte PDF
+        axn = np.arange(1, (nrows*ncols)+1)[1::ncols][n_dataset]
+        ax2 = fig.add_subplot(nrows, ncols, axn)
+        # get observations
+        obs_arr = df[target].values
+        # Loop and plot model values
+        for param in params:
+            arr = df[param].values - obs_arr
+            ax = sns.distplot(arr, axlabel=axlabel,
+                              label=param,
+                              color=color_d[param], ax=ax2)
+        # Force y axis extent to be correct
+        ax2.autoscale()
+        # Force x axis to be constant
+        ax2.set_xlim(-xlim[1],  xlim[1])
+        # Add legend to first plot
+        if (n_dataset == 0):
+            ax2.set_title('Bias')
+    # Save whole figure
+    plt.savefig(savetitle)
+
+
+def plot_ODR_window_plot(params=[], show_plot=False, df=None,
+                         testset='Test set (strat. 20%)', units='pM',
+                         target='Iodide', context="paper", xlim=None, ylim=None,
+                         dpi=720):
+    """
+    Show the correlations between obs. and params. as window plot
+
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
+    context (str): seaborn context to use for plotting (e.g. paper, poster, talk...)
+    show_plot (bool): show the plot on screen
+    df (pd.DataFrame): dataframe containing target and feature variables
+
+    Returns
+    -------
+    (None)
+    """
+    # select dataframe with observations and predictions in it
+    if isinstance(df, type(None)):
+        print('Please provide DataFrame with data')
+
+    # - Evaluate model using various approaches
+    import seaborn as sns
+    sns.set(color_codes=True)
+    if context == "paper":
+        sns.set_context("paper")
+    else:
+        sns.set_context("talk", font_scale=1.0)
+
+    # - Evaluate point for point
+    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_ODR_WINDOW'
+    pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
+    # iodide in aq
+    target_label = '[{}$_{}$]'.format(target, 'aq')
+    # set location for alt_text
+    f_size = 10
+    N = int(df.shape[0])
+    # split data into groups
+    dfs = {}
+    # Entire dataset
+    dfs['Entire'] = df.copy()
+    # Testdataset
+    dfs['Withheld'] = df.loc[df[testset] == True, :].copy()
+    dsplits = dfs.keys()
+    # assign colors
+    CB_color_cycle = AC.get_CB_color_cycle()
+    color_d = dict(zip(dsplits, CB_color_cycle))
+    # Intialise figure and axis
+    fig, axs = plt.subplots(1, 3, sharex=True, sharey=True, dpi=dpi, \
+                            #        figsize=(12, 5)
+                            figsize=(11, 4)
+                            )
+    # Loop by param and compare against whole dataset
+    for n_param, param in enumerate(params):
+        # set axis to use
+        ax = axs[n_param]
+        # Use the same asecpt for X and Y
+        ax.set_aspect('equal')
+        # Add a title the plots
+        ax.text(0.5, 1.05, param, horizontalalignment='center',
+                verticalalignment='center', transform=ax.transAxes)
+        # Add a 1:1 line
+        x_121 = np.arange(ylim[0]-(ylim[1]*0.05),ylim[1]*1.05 )
+        ax.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
+        # Plot up data by dataset split
+        for nsplit, split in enumerate(dsplits):
+            # select the subset of the data
+            df = dfs[split].copy()
+            # Remove any NaNs
+            df = df.dropna()
+            # get X
+            X = df[target].values
+            # get Y
+            Y = df[param].values
+            # get N
+            N = float(df.shape[0])
+            # get RMSE
+            RMSE = np.sqrt(((Y-X)**2).mean())
+            # Plot up just the entire and testset data
+            if split in ('Entire', 'Withheld'):
+                ax.scatter(X, Y, color=color_d[split], s=3, facecolor='none')
+            # add ODR line
+            xvalues, Y_ODR = AC.get_linear_ODR(x=X, y=Y, xvalues=x_121,
+                                               return_model=False, maxit=10000)
+
+            myoutput = AC.get_linear_ODR(x=X, y=Y, xvalues=x_121,
+                                         return_model=True, maxit=10000)
+            print(param, split, myoutput.beta)
+
+            ax.plot(xvalues, Y_ODR, color=color_d[split])
+            # Add RMSE ( and N value as alt text )
+            alt_text_x = 0.01
+            alt_text_y = 0.95-(0.05*nsplit)
+#            alt_text = 'RMSE={:.1f} ({}, N={:.0f})'.format( RMSE, split, N )
+            alt_text = 'RMSE={:.1f} ({})'.format(RMSE, split)
+            ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
+                        textcoords='axes fraction', fontsize=f_size,
+                        color=color_d[split])
+        # Beautify the plot/figure
+        plt.xlim(xlim)
+        plt.ylim(ylim)
+        ax.set_xlabel('Obs. {} ({})'.format(target_label, units))
+        if (n_param == 0):
+            ax.set_ylabel('Parameterised {} ({})'.format(target_label, units))
+    # Adjust the subplots
+    if context == "paper":
+        top = 0.94
+        bottom = 0.1
+        left = 0.05
+        right = 0.975
+        wspace = 0.075
+    else:
+        top = 0.94
+        bottom = 0.14
+        left = 0.075
+        right = 0.975
+        wspace = 0.075
+    fig.subplots_adjust(top=top, right=right, left=left, bottom=bottom,
+                        wspace=wspace)
+    # Save the plot
+    AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
+    # Save entire pdf
+    AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
+    plt.savefig(savetitle, dpi=dpi)
+    if show_plot:
+        plt.show()
+    plt.close()
+
+
+
+def add_field2HEMCO_in_kg_m3(ds, var2use='Ensemble_Monthly_mean', RMM=141.9,
+                            target='CH3I', new_var='Ensemble_Monthly_mean_kg_m3'):
+    """
+    Convert the CH3I prediction from pM to kg/m3
+    """
+    # Convert pM to kn/3
+    ds[new_var] = ds[var2use].copy() /1E12 *RMM /1E3 *1E3
+    # Add attributes (needed for HEMCO checks)
+    attrs_dict = ds[new_var].attrs
+    attrs_dict['units'] = "kg/m3"
+    attrs_dict['units_longname'] = "kg({})/m3".format(target)
+    ds[new_var].attrs = attrs_dict
+    return ds
+
+
+def plot_seasaonl_model_vs_obs(dpi=320, target='CH3I', use_hourly_files=True ):
     """
     Plot seasonal comparisons of observations and models
     """
     # Get observational data
-    dfs = get_ground_surface_CH3I_obs()
+    dfs = obs.get_ground_surface_CH3I_obs_DIRECT()
     sites = list(dfs.keys())
+    # sort the sites by latitude
+    sites = AC.sort_locs_by_lat(sites)
     # get model_data
     run_root = '/users/ts551/scratch/GC/rundirs/'
+    run_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.'
     run_dict = {
-    'Ordonez2012': run_root+'geosfp_4x5_tropchem.v12.2.1.AQSA.GFAS/'
+    'Ordonez2012': run_root + run_str + 'GFAS/',
+    'ML (partial)': run_root + run_str  +'GFAS.CH3I.ML.repeat.II/',
+#    'Bell2002 (partial)': run_root + run_str  +'GFAS.CH3I.repeat/',
+    'Bell2002 (x10, partial)': run_root + run_str  +'GFAS.CH3I.repeat.III/test_6months/',
+#    'Bell2002 (x10)': run_root + run_str  +'GFAS.CH3I.repeat.IV/test_7_months/',
     }
     runs = list(run_dict.keys())
-
+    # Setup a colour dictionary
+    colour_dicts = dict( zip(runs, AC.get_CB_color_cycle()[::-1] ))
     # loop and extract by site
     res='4x5'
     model_data = {}
     for run in runs:
         # Get data location and filename
         wd = run_dict[run]
-        filename = 'ctm.nc'
+        if use_hourly_files:
+            filename = 'ts_ctm.nc'
+        else:
+            filename = 'ctm.nc'
         # open the file
         ds = xr.open_dataset(wd+filename)
         # select the nearest location to a given site
@@ -225,8 +734,11 @@ def plot_seasaonl_model_vs_obs(dpi=320):
             ds_tmp = ds['IJ_AVG_S__'+'CH3I'].sel(latitude=lat, method='nearest')
             # Nearest lon
             ds_tmp = ds_tmp.sel(longitude=lon, method='nearest')
-            # take the bottom-=most box
-            ds_tmp = ds_tmp.sel(model_level_number=1)
+            # take the bottom-most box if using 3D output
+            if use_hourly_files:
+                pass
+            else:
+                ds_tmp = ds_tmp.sel(model_level_number=1)
             # convert to pptv
             ds_tmp = ds_tmp *1E3
             # colaspe to a series and save to dataframe
@@ -235,15 +747,50 @@ def plot_seasaonl_model_vs_obs(dpi=320):
         # Save the data to a DataFrame
         model_data[run] = df.copy()
         del df
+        del ds
 
-    # Now loop by site and plot up
-    for site in sites:
+
+    # Now loop by site and plot up - one plot per site
+#     for site in sites:
+#         print(site)
+#         fig = plt.figure()
+#         ax = fig.add_subplot()
+#         # Get Obs. for site
+#         DateVar = 'Datetime'
+#         DataVar = 'CH3I'
+#         df = dfs[site][[DateVar, DataVar]].dropna()
+#         dates = df[DateVar].values
+#         data = df[DataVar].values
+#         print(dates.shape, data.shape)
+#         title = site
+#         # Plot up observations
+#         AC.BASIC_seasonal_plot(data=data, dates=dates, color='k', label='Obs.',
+#                                title=title)
+#         # plot up model data
+#         for run in runs:
+#             df = model_data[run]
+#             #
+#             dates = df.index.values
+#             data = df[site].values
+#             # Plot up observations
+#             AC.BASIC_seasonal_plot(data=data, dates=dates, color=colour_dicts[run],
+#                                 label=run)
+#         #
+#         filename = 's2s_{}_seasonal_cycle_{}'.format( target, site)
+#         filename = AC.rm_spaces_and_chars_from_str(filename)
+#         plt.savefig(filename)
+
+    # Plot as a single mutiple panel figure
+#    fig = plt.figure()
+    fig = plt.figure(figsize=(16, 10))
+    # leave a space for the figure caption
+    subplots2use = [1,2, 3,4] +  list(np.arange(16)[6:] )
+    units = 'pptv'
+    for nsite, site in enumerate( sites ):
         print(site)
-#        fig = plt.figure(figsize=(16, 10))
-        fig = plt.figure()
         #
-#        ax = fig.add_subplot(*axn)
-        ax = fig.add_subplot()
+        axn = (3, 5, subplots2use[nsite] )
+        ax = fig.add_subplot(*axn)
         # Get Obs. for site
         DateVar = 'Datetime'
         DataVar = 'CH3I'
@@ -251,37 +798,78 @@ def plot_seasaonl_model_vs_obs(dpi=320):
         dates = df[DateVar].values
         data = df[DataVar].values
         print(dates.shape, data.shape)
-        title = site
+        title = AC.site_code2name(site)
+        # Only have axis labels on bottom line and far left
+        xlabel, ylabel, rm_yticks = False, None, False
+        if subplots2use[nsite] in np.arange(1,16)[-5:]:
+            xlabel = True
+        if subplots2use[nsite] in np.arange(1,16)[::5]:
+            ylabel = '{} ({})'.format(target, units )
+            rm_yticks = False
         # Plot up observations
         AC.BASIC_seasonal_plot(data=data, dates=dates, color='k', label='Obs.',
-                               title=title)
-        # plot up model data
+                            title=title, xlabel=xlabel, ylabel=ylabel,
+                            plot_Q1_Q3=True,
+                            rm_yticks=rm_yticks)
+        # Add location to plot as text
+        lon, lat, alt = AC.get_loc(site)
+        alt_text = '({:.2f}{}, {:.2f}{})'.format(lon, '$^{o}$E', lat, '$^{o}$N')
+        plt.text(0.05, 0.95, alt_text, ha='left', va='center', color='black',
+#             fontsize=15,
+             alpha=0.75, transform=ax.transAxes)
+        # Plot up model data
         for run in runs:
             df = model_data[run]
             #
             dates = df.index.values
             data = df[site].values
             # Plot up observations
-            AC.BASIC_seasonal_plot(data=data, dates=dates, color='red', label=run)
+            AC.BASIC_seasonal_plot(data=data, dates=dates, color=colour_dicts[run],
+                                label=run,
+                                plot_Q1_Q3=True,
+                                xlabel=xlabel, ylabel=ylabel,
+                                rm_yticks=rm_yticks )
+    # Add a legend
+    axn = (3, 5, 5 )
+    ax = fig.add_subplot(*axn)
+    #
+    legend_text = 'Obs.'
+    plt.text(0.5, 0.95, legend_text, ha='center', va='center', color='black',
+             fontsize=15, transform=ax.transAxes)
+    # Now add colours for model lines
+    buffer = 0.085
+    for nrun, run in enumerate( runs ):
+        plt.text(0.5, 0.95-(buffer+(buffer*nrun)), '{}'.format(run),
+                color=colour_dicts[run], fontsize=15,
+                ha='center', va='center', transform=ax.transAxes)
 
-
-        #
-        filename = 's2s_{}_seasonal_cycle_{}'.format( target, site)
-        filename = AC.rm_spaces_and_chars_from_str(filename)
-        plt.savefig(filename)
+#    plt.legend()
+#    plt.legend(['First List','Second List'], loc='upper left')
+    plt.axis('off')
+    #
+    filename = 's2s_{}_seasonal_cycle_ALL_ground_sites'.format( target )
+    filename = AC.rm_spaces_and_chars_from_str(filename)
+    plt.savefig(filename, dpi=dpi)
+    plt.close('all')
 
 
 def quick_check_of_CH3I_emissions():
     """
+    Analyse the
     """
     #
     root = '/users/ts551/scratch/GC/rundirs/'
-    file_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.GFAS.{}'
+    file_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.GFAS{}'
     run_dict = {
-    'Ordonez2012' : root + file_str.format('CH3I.Ordonez2012/spin_up/'),
-    'Bell2002' : root + file_str.format('CH3I/spin_up/'),
-    'Bell2002x10' : root + file_str.format('CH3I.x10/spin_up/'),
-    'ML'    : root + file_str.format('CH3I.ML/spin_up/'),
+    # intial test runs
+#     'Ordonez2012' : root + file_str.format('.CH3I.Ordonez2012/spin_up/'),
+#     'Bell2002' : root + file_str.format('.CH3I/spin_up/'),
+#     'Bell2002x10' : root + file_str.format('.CH3I.x10/spin_up/'),
+#     'ML'    : root + file_str.format('.CH3I.ML/spin_up/'),
+    # repeat tests
+    'Ordonez2012' : root + file_str.format('.CH3I.Ordonez2012/spin_up/'),
+    'Bell2002' : root + file_str.format('.CH3I.repeat/'),
+    'ML'  : root + file_str.format( '.CH3I.ML.repeat.II/' ),
     }
     wds = run_dict # for debugging...
     #
@@ -497,7 +1085,7 @@ def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
         extr_str=region+' (withheld)'
 #        extr_str=region
         # Now plot
-        plotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+        s2splotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
                                              obs_var=obs_var,
                                              extr_str=extr_str)
 

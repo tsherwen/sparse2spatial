@@ -93,9 +93,11 @@ def get_processed_df_obs_mod(reprocess_params=False, target='CH3I',
 
     Parameters
     -------
+
     Returns
     -------
     (pd.DataFrame)
+
     Notes
     -----
     """
@@ -110,9 +112,36 @@ def get_processed_df_obs_mod(reprocess_params=False, target='CH3I',
     return df
 
 
+
+def get_ground_surface_CH3I_obs_DIRECT(file_and_path='./sparse2spatial.rc',):
+    """
+    Extract the halocarbon data direct from Steve Montzka
+    """
+    # Location of files
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/../NOAA/NOAA_HalOcAt/'
+    #
+    prefix = 'halo_'
+    files = glob.glob( '{}{}*.xls'.format(folder, prefix) )
+    sites = [ i.split(prefix)[-1].split('.xls')[0].upper() for i in files]
+    # Extract the observations to a DataFrame
+    dfs ={}
+    for n, site in enumerate(sites):
+#        df = pd.read_csv(files[n], delimiter=';')
+        df = pd.read_excel(files[n], sheet_name='summary')
+        # Get datetime from
+        df['Datetime'] = df['yymmdd hhmm'].values
+        # Set flagged values to NaNs
+        df[df==-999] = np.NaN
+        # Save DataFrame to dictionary
+        dfs[site] = df
+        del df
+    return dfs
+
+
 def get_ground_surface_CH3I_obs(file_and_path='./sparse2spatial.rc',):
     """
-    Get the NOAA/ESRL observations for CH3I (and other species)
+    Get the NOAA/ESRL observations for CH3I (and other species) from geomar
     """
     # Location of files
     folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
@@ -138,6 +167,8 @@ def get_ground_surface_CH3I_obs(file_and_path='./sparse2spatial.rc',):
         'NiwotRidge': 'Niwot Ridge'
 
     }
+    #
+
     for n in range(len(sites)):
         sites[n] = NOAA_name2GAW[sites[n]]
     # Extract the observations to a DataFrame
@@ -217,10 +248,9 @@ def get_ground_surface_CH3I_obs(file_and_path='./sparse2spatial.rc',):
 #                                                        min=x[min_var],
                                                         ),axis=1)
 
-        #
+        # Save the site into the dictionary
         dfs[site] = df.copy()
         del df
-
     return dfs
 
 
