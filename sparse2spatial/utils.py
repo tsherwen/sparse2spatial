@@ -894,6 +894,7 @@ def add_sklean_metrics2df(df=None, stats=None, target='Iodide',
 
 def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
                                  var2extract='Ensemble_Monthly_mean',
+                                 select_within_time_dim=True,
                                  target='Iodide', verbose=True, debug=False):
     """
     Extract requested variable for nearest point and time from NetCDF
@@ -904,7 +905,7 @@ def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
     lats (np.array): list of latitudes to use for spatial extraction
     months (np.array): list of months to use for temporal extraction
     var2extract (str): name of variable to extract data for
-    rm_Skagerrak_data (bool): remove the data for the Skagerrak region
+    select_within_time_dim (bool): select the nearest point in time?
     debug (bool): print out debugging output?
 
     Returns
@@ -924,12 +925,15 @@ def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
         lat_ = lats[n_lon]
         month_ = months[n_lon]
         # Select for monnth
-        ds_tmp = ds[var2extract].sel(time=(ds['time.month'] == month_))
+        ds_tmp = ds[var2extract]
+        if select_within_time_dim:
+            ds_tmp = ds_tmp.sel(time=(ds['time.month'] == month_))
         # Select nearest data
         vals = ds_tmp.sel(lat=lat_, lon=lon_, method='nearest')
         if debug:
-            print(vals)
-        extracted_vars += [vals.values[0]]
+            pstr = '#={} ({:.2f}%) - vals:'
+            print(pstr.format(n_lon, float(n_lon)/len(lons)*100), vals)
+        extracted_vars += [float(vals.values)]
     return extracted_vars
 
 
