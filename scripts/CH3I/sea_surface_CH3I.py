@@ -707,7 +707,7 @@ def plot_seasaonl_model_vs_obs(dpi=320, target='CH3I', use_hourly_files=True ):
     'ML (partial)': run_root + run_str  +'GFAS.CH3I.ML.repeat.II/',
 #    'Bell2002 (partial)': run_root + run_str  +'GFAS.CH3I.repeat/',
     'Bell2002 (x10, partial)': run_root + run_str  +'GFAS.CH3I.repeat.III/test_6months/',
-#    'Bell2002 (x10)': run_root + run_str  +'GFAS.CH3I.repeat.IV/test_7_months/',
+    'Bell2002 (x10)': run_root + run_str  +'GFAS.CH3I.repeat.IV/test_7_months/',
     }
     runs = list(run_dict.keys())
     # Setup a colour dictionary
