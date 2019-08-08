@@ -394,3 +394,241 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
         filename = 's2s_spatial_{}_{}.png'.format(target, extr_str)
         plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
     return plt_object
+
+
+def plot_ODR_window_plot(params=[], show_plot=False, df=None,
+                         testset='Test set (strat. 20%)', units='pM',
+                         target='Iodide', context="paper", xlim=None, ylim=None,
+                         dpi=720, verbose=False):
+    """
+    Show the correlations between obs. and params. as window plot
+
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    RFR_dict (dict): dictionary of core variables and data
+    context (str): seaborn context to use for plotting (e.g. paper, poster, talk...)
+    show_plot (bool): show the plot on screen
+    df (pd.DataFrame): dataframe containing target and feature variables
+    units (str): units of the target in the dataframe
+    xlim (tuple): limits for plotting x axis
+    ylim (tuple): limits for plotting y axis
+
+    Returns
+    -------
+    (None)
+    """
+    # Make sure a dataFrame has been provided
+    assert type(df) == pd.DataFrame, "Please provide DataFrame ('df') with data"
+    # Setup seabonr plotting environment
+    import seaborn as sns
+    sns.set(color_codes=True)
+    if context == "paper":
+        sns.set_context("paper")
+    else:
+        sns.set_context("talk", font_scale=1.0)
+    # Name of PDF to save plots to
+    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_ODR_WINDOW'
+    pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
+    # label to use for taget on plots
+    target_label = '[{}$_{}$]'.format(target, 'aq')
+    # Set location for alt_text
+    f_size = 10
+    N = int(df.shape[0])
+    # Split data into groups
+    dfs = {}
+    # Entire dataset
+    dfs['Entire'] = df.copy()
+    # Testdataset
+    dfs['Withheld'] = df.loc[df[testset] == True, :].copy()
+    dsplits = dfs.keys()
+    # Assign colors to splits
+    CB_color_cycle = AC.get_CB_color_cycle()
+    color_d = dict(zip(dsplits, CB_color_cycle))
+    # Intialise figure and axis
+    fig, axs = plt.subplots(1, 3, sharex=True, sharey=True, dpi=dpi, figsize=(11, 4))
+    # Loop by param and compare against whole dataset
+    for n_param, param in enumerate(params):
+        # set axis to use
+        ax = axs[n_param]
+        # Use the same asecpt for X and Y
+        ax.set_aspect('equal')
+        # Add a title the plots
+        ax.text(0.5, 1.05, param, horizontalalignment='center',
+                verticalalignment='center', transform=ax.transAxes)
+        # Add a 1:1 line
+        x_121 = np.arange(ylim[0]-(ylim[1]*0.05),ylim[1]*1.05 )
+        ax.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
+        # Plot up data by dataset split
+        for nsplit, split in enumerate(dsplits):
+            # select the subset of the data
+            df = dfs[split].copy()
+            # Remove any NaNs
+            df = df.dropna()
+            # get X
+            X = df[target].values
+            # get Y
+            Y = df[param].values
+            # get N
+            N = float(df.shape[0])
+            # get RMSE
+            RMSE = np.sqrt(((Y-X)**2).mean())
+            # Plot up just the entire and testset data
+            if split in ('Entire', 'Withheld'):
+                ax.scatter(X, Y, color=color_d[split], s=3, facecolor='none')
+            # add ODR line
+            xvalues, Y_ODR = AC.get_linear_ODR(x=X, y=Y, xvalues=x_121,
+                                               return_model=False, maxit=10000)
+
+            myoutput = AC.get_linear_ODR(x=X, y=Y, xvalues=x_121,
+                                         return_model=True, maxit=10000)
+            # print out the parameters from the ODR
+            if verbose:
+                print(param, split, myoutput.beta)
+
+            ax.plot(xvalues, Y_ODR, color=color_d[split])
+            # Add RMSE ( and N value as alt text )
+            alt_text_x = 0.01
+            alt_text_y = 0.95-(0.05*nsplit)
+#            alt_text = 'RMSE={:.1f} ({}, N={:.0f})'.format( RMSE, split, N )
+            alt_text = 'RMSE={:.1f} ({})'.format(RMSE, split)
+            ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
+                        textcoords='axes fraction', fontsize=f_size,
+                        color=color_d[split])
+        # Beautify the plot/figure
+        plt.xlim(xlim)
+        plt.ylim(ylim)
+        ax.set_xlabel('Obs. {} ({})'.format(target_label, units))
+        if (n_param == 0):
+            ax.set_ylabel('Parameterised {} ({})'.format(target_label, units))
+    # Adjust the subplots
+    if context == "paper":
+        top = 0.94
+        bottom = 0.1
+        left = 0.05
+        right = 0.975
+        wspace = 0.075
+    else:
+        top = 0.94
+        bottom = 0.14
+        left = 0.075
+        right = 0.975
+        wspace = 0.075
+    fig.subplots_adjust(top=top, right=right, left=left, bottom=bottom,
+                        wspace=wspace)
+    # Save the plot
+    AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
+    # Save entire pdf
+    AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
+    plt.savefig(savetitle, dpi=dpi)
+    if show_plot:
+        plt.show()
+    plt.close()
+
+
+def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
+                                              testset='Test set (strat. 20%)',
+                                              target='Iodide', df=None,
+                                              units='pM', xlim=None, dpi=320):
+    """
+    Plot up CDF and PDF plots to explore point-vs-point data
+
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
+    dpi (int): resolution to use for saved image (dots per square inch)
+    show_plot (bool): show the plot on screen
+    df (pd.DataFrame): DataFrame of data
+    units (str): units of the target in the dataframe
+    xlim (tuple): limits for plotting x axis
+    ylim (tuple): limits for plotting y axis
+
+    Returns
+    -------
+    (None)
+    """
+    import seaborn as sns
+    sns.set(color_codes=True)
+    sns.set_context("paper", font_scale=0.75)
+    # Make sure a dataFrame has been provided
+    assert type(df) == pd.DataFrame, "Please provide DataFrame ('df') with data"
+    # Get a dictionary of different dataset splits
+    dfs = {}
+    # Entire dataset
+    dfs['Entire'] = df.copy()
+    # Testdataset
+    dfs['All (withheld)'] = df.loc[df[testset] == True, :].copy()
+    # Maintain ordering of plotting
+    datasets = dfs.keys()
+    # Setup color dictionary
+    CB_color_cycle = AC.get_CB_color_cycle()
+    color_d = dict(zip(params, CB_color_cycle))
+    # set a name of file to save data to
+    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_PDF_WINDOW'
+    # - Plot up CDF and PDF plots for the dataset and residuals
+    fig = plt.figure(dpi=dpi)
+    nrows = len(datasets)
+    ncols = 2
+    for n_dataset, dataset in enumerate(datasets):
+        # set Axis for abosulte PDF
+        axn = np.arange(1, (nrows*ncols)+1)[::ncols][n_dataset]
+        ax1 = fig.add_subplot(nrows, ncols, axn)
+        # Get data
+        df = dfs[dataset]
+        # Drop NaNs
+        df = df.dropna()
+        # Numer of data points
+        N_ = df.shape
+        print(dataset, N_)
+        # Only add an axis label on to the bottommost plots
+        axlabel = None
+        if n_dataset in np.arange(1, (nrows*ncols)+1)[::ncols]:
+            axlabel = '[{}$_{}$] ({})'.format( target, '{aq}', units )
+        # - Plot up PDF plots for the dataset
+        # Plot observations
+        var_ = 'Obs.'
+        obs_arr = df[target].values
+        ax = sns.distplot(obs_arr, axlabel=axlabel, label=var_,
+                          color='k', ax=ax1)
+        # Loop and plot model values
+        for param in params:
+            arr = df[param].values
+            ax = sns.distplot(arr, axlabel=axlabel,
+                              label=param,
+                              color=color_d[param], ax=ax1)
+        # Force y axis extent to be correct
+        ax1.autoscale()
+        # Force x axis to be constant
+        ax1.set_xlim(xlim)
+        # Beautify the plot/figure
+        ylabel = 'Frequency \n ({})'
+        ax1.set_ylabel(ylabel.format(dataset))
+        # Add legend to first plot
+        if (n_dataset == 0):
+            plt.legend()
+            ax1.set_title('Concentration')
+        # Plot up PDF plots for the residual dataset
+        # set Axis for abosulte PDF
+        axn = np.arange(1, (nrows*ncols)+1)[1::ncols][n_dataset]
+        ax2 = fig.add_subplot(nrows, ncols, axn)
+        # get observations
+        obs_arr = df[target].values
+        # Loop and plot model values
+        for param in params:
+            arr = df[param].values - obs_arr
+            ax = sns.distplot(arr, axlabel=axlabel,
+                              label=param,
+                              color=color_d[param], ax=ax2)
+        # Force y axis extent to be correct
+        ax2.autoscale()
+        # Force x axis to be constant
+        ax2.set_xlim(-xlim[1],  xlim[1])
+        # Add legend to first plot
+        if (n_dataset == 0):
+            ax2.set_title('Bias')
+    # Save whole figure
+    plt.savefig(savetitle)
+
