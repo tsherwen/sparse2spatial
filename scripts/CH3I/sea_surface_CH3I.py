@@ -316,6 +316,20 @@ def setup_ML_and_other_feilds():
     var2use = 'CH3I'
     new_var  = 'RF_CH3I_kg_m3'
     dsZ = add_field2HEMCO_in_kg_m3( dsZ, new_var=new_var, var2use=var2use )
+    # for lat...
+    attrs_dict = dsZ['lat'].attrs
+    attrs_dict['long_name'] = "latitude"
+    attrs_dict['units'] = "degrees_north"
+    attrs_dict["standard_name"] = "latitude"
+    attrs_dict["axis"] = "Y"
+    dsZ['lat'].attrs = attrs_dict
+    # And lon...
+    attrs_dict = dsZ['lon'].attrs
+    attrs_dict['long_name'] = "longitude"
+    attrs_dict['units'] = "degrees_east"
+    attrs_dict["standard_name"] = "longitude"
+    attrs_dict["axis"] = "X"
+    dsZ['lon'].attrs = attrs_dict
     # save just the variable to use
     dsZ[[new_var]].to_netcdf( folder3+'Ziska_CH3I_kg_m3.nc' )
 
@@ -706,8 +720,8 @@ def plot_seasaonl_model_vs_obs(dpi=320, target='CH3I', use_hourly_files=True ):
     'Ordonez2012': run_root + run_str + 'GFAS/',
     'ML (partial)': run_root + run_str  +'GFAS.CH3I.ML.repeat.II/',
 #    'Bell2002 (partial)': run_root + run_str  +'GFAS.CH3I.repeat/',
-    'Bell2002 (x10, partial)': run_root + run_str  +'GFAS.CH3I.repeat.III/test_6months/',
-    'Bell2002 (x10)': run_root + run_str  +'GFAS.CH3I.repeat.IV/test_7_months/',
+    'Bell2002 (x10, partial)': run_root + run_str  +'GFAS.CH3I.repeat.III//',
+    'Bell2002 (x10)': run_root + run_str  +'GFAS.CH3I.repeat.IV/',
     }
     runs = list(run_dict.keys())
     # Setup a colour dictionary
@@ -914,7 +928,10 @@ def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None, average_over_time=False):
         'EmisCH3I_ordonez', 'EmisCH3I_SEAFLUX', 'EmisCH3I_TOTAL',
         'EmisCH2I2_Ocean', 'EmisCH2ICl_Ocean', 'EmisCH2IBr_Ocean', 'EmisI2_Ocean',
         'EmisHOI_Ocean', 'EmisI2_Ocean_Total', 'EmisHOI_Ocean_Total',
-        'EmisCH2Br2_Ocean', 'EmisCHBr3_Ocean'
+        'EmisCH2Br2_Ocean', 'EmisCHBr3_Ocean',
+        #
+        'EmisCH3I_B02_RICE', 'EmisCH3I_B02_WETL',
+
     ]
     # Make sure there are no double ups in the list
     vars2use = list(set(vars2use))
