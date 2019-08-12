@@ -595,6 +595,58 @@ def calc_I_Chance2014_multivar(TEMP=None, MOD_LAT=None, NO3=None,
     return iodide
 
 
+def calc_I2_flux_Carpenter2013_eqn19(I=None, O3=None, WS=None, ):
+    """
+    Calculate ocean-atmosphere I2 flux using Eqn 19 from Carpenter et al 2013 (main)
+
+    Parameters
+    -------
+    I (float): Iodide concentration (M)
+    O3 (float): Ozone surface concentration (ppbv)
+    WS (float): Windspeed (m/s)
+
+    Returns
+    -------
+    (float)
+    """
+    return O3 * (I**1.3) * ( 1.74E9 - (6.54E8 * np.log(WS)) )
+
+
+def calc_HOI_flux_Carpenter2013_eqn20(I=None, O3=None, WS=None, ):
+    """
+    Calculate ocean-atmosphere HOI flux using Eqn 20 from Carpenter et al 2013 (main)
+
+    Parameters
+    -------
+    I (float): Iodide concentration (M)
+    O3 (float): Ozone surface concentration (ppbv)
+    WS (float): Windspeed (m/s)
+
+    Returns
+    -------
+    (float)
+    """
+    return O3 * ((4.15E5 * (np.sqrt(I) / WS)) -
+                 (20.6 / WS) - (2.36E4 * np.sqrt(I)))
+
+
+def calc_HOI_flux_Carpenter2013_eqn21(I=None, O3=None, WS=None, ):
+    """
+    Calculate ocean-atmosphere HOI flux using Eqn 21 from Carpenter et al 2013 (simpler)
+
+    Parameters
+    -------
+    I (float): Iodide concentration (M)
+    O3 (float): Ozone surface concentration (ppbv)
+    WS (float): Windspeed (m/s)
+
+    Returns
+    -------
+    (float)
+    """
+    return O3 * np.sqrt(I) * ((3.56E5/WS) - 2.16E4)
+
+
 def is_number(s):
     """
     check if input is a number (check via conversion to string)
