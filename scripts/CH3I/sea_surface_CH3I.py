@@ -186,7 +186,7 @@ def check_budgets_from_Bell_emiss():
 #    extr_str = 'Ocean_concs_CH3I_ng_L_capped_at_1'
     ds2plot = dsO[[var2plot]]
     ds2plot[var2plot] = ds2plot[var2plot] * 1E9 /10
-    s2splotting.plot_up_seasonal_averages_of_prediction_TEST(ds=ds2plot, target=target,
+    s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds2plot, target=target,
                                                      var2plot=var2plot,
                                                      var2plot_longname='Bell et al 2002',
                                                      version='_assume_x10_error',
@@ -275,7 +275,7 @@ def check_budgets_from_Bell_emiss():
     ds2plot = dsML[[var2plot]]
     ds2plot[var2plot] = ds2plot[var2plot] /1E12 *141.9 * 1E9
     units= 'ng L$^{-1}$'
-    s2splotting.plot_up_seasonal_averages_of_prediction_TEST(ds=ds2plot, target=target,
+    s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds2plot, target=target,
                                                      var2plot=var2plot,
                                                      var2plot_longname='ML field',
                                                      version=extr_str,
@@ -717,11 +717,14 @@ def plot_seasaonl_model_vs_obs(dpi=320, target='CH3I', use_hourly_files=True ):
     run_root = '/users/ts551/scratch/GC/rundirs/'
     run_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.'
     run_dict = {
-    'Ordonez2012': run_root + run_str + 'GFAS/',
+#    'Ordonez2012': run_root + run_str + 'GFAS/',
     'ML (partial)': run_root + run_str  +'GFAS.CH3I.ML.repeat.II/',
 #    'Bell2002 (partial)': run_root + run_str  +'GFAS.CH3I.repeat/',
     'Bell2002 (x10, partial)': run_root + run_str  +'GFAS.CH3I.repeat.III//',
     'Bell2002 (x10)': run_root + run_str  +'GFAS.CH3I.repeat.IV/',
+    'Bell2002 (All fixes)': run_root + run_str  +'GFAS.CH3I.ALL/',
+    'Bell2002 (AF+DMS Sc)': run_root + run_str  +'GFAS.CH3I.ALL.UseDMS_Sc/',
+    'Ziska2013': run_root + run_str  +'GFAS.CH3I.Ziska13/',
     }
     runs = list(run_dict.keys())
     # Setup a colour dictionary
@@ -867,13 +870,13 @@ def plot_seasaonl_model_vs_obs(dpi=320, target='CH3I', use_hourly_files=True ):
     plt.close('all')
 
 
-def quick_check_of_CH3I_emissions():
+def quick_check_of_CH3I_emissions(target='CH3I'):
     """
-    Analyse the
+    Analyse the emissions of methyl iodide through HEMCO
     """
     #
     root = '/users/ts551/scratch/GC/rundirs/'
-    file_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.GFAS{}'
+    file_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.{}'
     run_dict = {
     # intial test runs
 #     'Ordonez2012' : root + file_str.format('.CH3I.Ordonez2012/spin_up/'),
@@ -881,21 +884,89 @@ def quick_check_of_CH3I_emissions():
 #     'Bell2002x10' : root + file_str.format('.CH3I.x10/spin_up/'),
 #     'ML'    : root + file_str.format('.CH3I.ML/spin_up/'),
     # repeat tests
-    'Ordonez2012' : root + file_str.format('.CH3I.Ordonez2012/spin_up/'),
-    'Bell2002' : root + file_str.format('.CH3I.repeat/'),
-    'ML'  : root + file_str.format( '.CH3I.ML.repeat.II/' ),
+#    'Ordonez2012' : root + file_str.format('GFAS.CH3I.Ordonez2012/spin_up/'),
+#    'Bell2002' : root + file_str.format('GFAS.CH3I.repeat/'),
+#    'ML'  : root + file_str.format( 'GFAS.CH3I.ML.repeat.II/' ),
+    #
+#    'Bell2002 (All fixes)': run_root + run_str  +'GFAS.CH3I.ALL/',
+#    'Bell2002 (AF+DMS Sc)': run_root + run_str  +'GFAS.CH3I.ALL.UseDMS_Sc/',
+#    'Ziska2013 ()': run_root + run_str  +'GFAS.CH3I.Ziska13/',
     }
+    # use the run_dict from - obs.get_ground_surface_CH3I_obs_DIRECT
     wds = run_dict # for debugging...
     #
     filename = 'HEMCO_diagnostics.201401010000.nc'
     # Get a dictionary of all the data
     dsDH = GetEmissionsFromHEMCONetCDFsAsDatasets(wds=run_dict)
-
-    #
+    # - Analysis the totals
+    # Extract the annual totals to a dataFrame
+    df = pd.DataFrame()
     for run in dsDH.keys():
         print(run)
+        # Get the values and variable names
+        vars2use = [i for i in dsDH[run].data_vars if i != 'AREA']
+        vars2use = list(sorted(vars2use))
+        vals = [ dsDH[run][i].sum().values for i in vars2use ]
+        # Save the summed values to the dataframe
+        df[run] = pd.Series( dict(zip(vars2use, vals)) )
+#        print( dsDH[run].sum() )
+    # Print the DataFrame to screen
+    print(df)
 
-        print( dsDH[run].sum() )
+    # - Analysis the spatially the emissions
+    # which variables to plot
+    vars2plot = [
+    'ML (partial)', 'Bell2002 (All fixes)', 'Bell2002 (AF+DMS Sc)', 'Ziska2013'
+    ]
+    #
+    units2use = ['ng m$^{-2}$ s$^{-1}$', 'pmol m$^{-2}$ hr$^{-1}$']
+    target='CH3I'
+    # loop by variable and plot
+    var2plot = 'EmisCH3I_SEAFLUX'
+    for var in vars2plot:
+        # Loop units too
+        for units in units2use:
+            # get the dataset as a temporary copy
+            print(var, units)
+            ds = dsDH[var].copy()
+            # convert the values
+            if units == 'ng m$^{-2}$ s$^{-1}$':
+                # convert to /m2, then Gg => g, the g=>ng
+                ds[var2plot] = ds[var2plot] / ds['AREA'] *1E9 *1E9
+                # convert from /yr to /s
+                ds[var2plot] = ds[var2plot] / 365/24/60/60
+            elif units=='pmol m$^{-2}$ hr$^{-1}$':
+                # convert to /m2, then Gg => g
+                ds[var2plot] = ds[var2plot] / ds['AREA'] *1E9
+                # convert from /yr to /hr
+                ds[var2plot] = ds[var2plot] / 365/24
+                # convert g to mol , then to pmol
+                ds[var2plot] = ds[var2plot] / AC.species_mass(target) *1E12
+#                / AC.constants('AVG')
+
+            else:
+                sys.exit()
+                print('WARNING: unit conversion not setup')
+            # plot the seasonally resoved flux
+
+            plot_up_seasonal_averages_of_prediction_TEST(ds=ds, target=target,
+                                                     var2plot=var2plot,
+                                                     var2plot_longname=var,
+                                                     version='{}_{}'.format(var, units),
+                                                     vmin=None, vmax=None,
+                                                     seperate_plots=False,
+                                                     units=units)
+            # plot the annual average resoved flux
+            extr_str ='{}_{}'.format(var, units)
+            # Set a title for the plot
+            title = "Annual average '{}' ({})".format(var2plot, units)
+            # Now plot
+            plot_spatial_data_TEST(ds=ds[[var2plot]].mean(dim='time'), var2plot=var2plot,
+                              extr_str=extr_str, target=target,
+                              title=title)
+            plt.close()
+
+
 
 
 def check_units_of_Bell2002_files():
@@ -930,7 +1001,8 @@ def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None, average_over_time=False):
         'EmisHOI_Ocean', 'EmisI2_Ocean_Total', 'EmisHOI_Ocean_Total',
         'EmisCH2Br2_Ocean', 'EmisCHBr3_Ocean',
         #
-        'EmisCH3I_B02_RICE', 'EmisCH3I_B02_WETL',
+        'EmisCH3I_B02_RICE', 'EmisCH3I_B02_WETL', 'EmisCH3I_B02_BIOBURN',
+        'EmisCH3I_B02_BIOFUEL',
 
     ]
     # Make sure there are no double ups in the list
@@ -950,7 +1022,14 @@ def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None, average_over_time=False):
     var_species_dict = dict(zip(vars2use, specs))
     # Only include core species in dataset
     for key in dsDH.keys():
-        dsDH[key] = dsDH[ key ][ ['AREA']+vars2use  ]
+        ds = dsDH[key][ ['AREA'] ]
+        # Try and add al of the requested variables too
+        for var in vars2use:
+            try:
+                ds[var] = dsDH[ key ][ var ]
+            except KeyError:
+                print("WARNING: Skipped '{}' for '{}'".format(key, var) )
+        dsDH[key] = ds
 
     # Convert to Gg
     for run in runs:
