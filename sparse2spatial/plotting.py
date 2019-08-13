@@ -26,7 +26,7 @@ import cartopy.crs as ccrs
 
 
 def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0',
-                                          var2plot='Ensemble_Monthly_mean'):
+                                          var2plot='Ensemble_Monthly_mean', units=None):
     """
     Wrapper to plot up the annual averages of the predictions
 
@@ -45,7 +45,7 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
 
     ds = ds[[var2plot]].mean(dim='time')
     # Set a title for the plot
-    title = "Annual average ensemble prediction for '{}' (pM)".format(target)
+    title = "Annual average ensemble prediction for '{}' ({}})".format(target, units)
     # Now plot
     plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version, target=target,
         title=title)
@@ -54,7 +54,7 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
 def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_0',
         seperate_plots=False, units='pM', var2plot='Ensemble_Monthly_mean',
         vmin=None, vmax=None, dpi=320, show_plot=False, save_plot=True,
-        var2plot_longname='ensemble prediction', verbose=False ):
+        var2plot_longname='ensemble prediction', extension='png', verbose=False ):
     """
     Wrapper to plot up the annual averages of the predictions
 
@@ -75,8 +75,8 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
     ds = ds.groupby('time.season').mean(dim='time')
     # Calculate minimums and maximums over all months to use for all plots
     if isinstance(vmin, type(None)) and isinstance(vmin, type(None)):
-        vmin = dsp[var2plot].min()
-        vmax = dsp[var2plot].max()
+        vmin = float(ds[var2plot].min().values)
+        vmax = float(ds[var2plot].max().values)
     # Dictionary to convert season acronyms to readable text
     season2text = {
     'DJF':'Dec-Jan-Feb', 'MAM': 'Mar-Apr-May', 'JJA': 'Jun-Jul-Aug', 'SON':'Sep-Oct-Nov'
@@ -140,8 +140,9 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
         if show_plot:
             plt.show()
         if save_plot:
-            filename = 's2s_spatial_by_season_{}_{}.png'.format(target, version)
-            plt.savefig(filename, dpi=dpi)
+            filename = 's2s_spatial_by_season_{}_{}'.format(target, version)
+            filename = AC.rm_spaces_and_chars_from_str( filename )
+            plt.savefig('{}.{}'.format(filename, extension), dpi=dpi)
 
 
 def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
@@ -290,16 +291,14 @@ def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
     plt.savefig(png_filename, dpi=dpi)
 
 
-
-
-
 def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
                       extr_str='', fillcontinents=True, target=None, units=None,
                       show_plot=False, save_plot=True, title=None,
                       projection=ccrs.Robinson(), fig=None, ax=None, cmap=None,
                       vmin=None, vmax=None, add_meridians_parallels=False,
                       add_borders_coast=True, set_aspect=True, cbar_kwargs=None,
-                      xticks=True, yticks=True, rm_colourbar=False, dpi=320):
+                      xticks=True, yticks=True, rm_colourbar=False, extension='png',
+                      dpi=320):
     """
     Plot up 2D spatial plot of latitude vs. longitude
 
@@ -318,10 +317,11 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
     save_plot (bool): save the plot as png
     show_plot (bool): show the plot on screen
     dpi (int): resolution to use for saved image (dots per square inch)
-    projection (cartopy ccrs object), projection to use for spatial plots
+    projection (cartopy ccrs object): projection to use for spatial plots
     rm_colourbar (bool): do not include a colourbar with the plot
-    fig (figure instance), figure instance to plot onto
-    ax (axis instance), axis to use for plotting
+    fig (figure instance): figure instance to plot onto
+    extension (str): extension to save file with (e.g. .tiff, .eps, .png)
+    ax (axis instance): axis to use for plotting
 
     Returns
     -------
@@ -391,7 +391,8 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
     if show_plot:
         plt.show()
     if save_plot:
-        filename = 's2s_spatial_{}_{}.png'.format(target, extr_str)
+        filename = 's2s_spatial_{}_{}'.format(target, extr_str)
+        filename = '{}.{}'.format(AC.rm_spaces_and_chars_from_str(filename), extension)
         plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
     return plt_object
 
