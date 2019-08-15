@@ -894,6 +894,7 @@ def quick_check_of_CH3I_emissions(target='CH3I'):
     }
     # use the run_dict from - obs.get_ground_surface_CH3I_obs_DIRECT
     wds = run_dict # for debugging...
+    target = 'CH3I' # for testing
     #
     filename = 'HEMCO_diagnostics.201401010000.nc'
     # Get a dictionary of all the data
@@ -948,8 +949,7 @@ def quick_check_of_CH3I_emissions(target='CH3I'):
                 sys.exit()
                 print('WARNING: unit conversion not setup')
             # plot the seasonally resoved flux
-
-            plot_up_seasonal_averages_of_prediction_TEST(ds=ds, target=target,
+            s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds, target=target,
                                                      var2plot=var2plot,
                                                      var2plot_longname=var,
                                                      version='{}_{}'.format(var, units),
@@ -961,7 +961,8 @@ def quick_check_of_CH3I_emissions(target='CH3I'):
             # Set a title for the plot
             title = "Annual average '{}' ({})".format(var2plot, units)
             # Now plot
-            plot_spatial_data_TEST(ds=ds[[var2plot]].mean(dim='time'), var2plot=var2plot,
+            s2splotting.plot_spatial_data(ds=ds[[var2plot]].mean(dim='time'),
+                            var2plot=var2plot,
                               extr_str=extr_str, target=target,
                               title=title)
             plt.close()
@@ -1003,6 +1004,9 @@ def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None, average_over_time=False):
         #
         'EmisCH3I_B02_RICE', 'EmisCH3I_B02_WETL', 'EmisCH3I_B02_BIOBURN',
         'EmisCH3I_B02_BIOFUEL',
+        # Also get values for
+#        'EmisACET_Ocean', 'EmisALD2_Ocean',
+        'EmisDMS_Ocean',
 
     ]
     # Make sure there are no double ups in the list
