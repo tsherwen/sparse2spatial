@@ -3,7 +3,7 @@ Sparse2Spatial (s2s)
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3349646.svg
    :target: http://doi.org/10.5281/zenodo.3271677
    :alt: Zenodo DOI
-   
+
 **Sparse2Spatial** contains routines to convert sparse observations into spatially and temporally resolved datasets using machine learning algorithms.
 
 This package uses packages from the existing Python stack (e.g. dask_, xarray_,
@@ -30,26 +30,28 @@ Usage
 ------------
 
 Example analysis code for using **sparse2spatial** is available in the
-scripts folder.
+scripts folder, along with predictions for sea-surface iodide, CHBr3, and CH2Br2.
 
-A seperate package (TreeSurgeon_) is availible for plotting output the from sklearn_
-RandomForestRegressors models. Scripts are provided in **sparse2spatial** for making 
+A separate package (TreeSurgeon_) is available for plotting output the from sklearn_
+RandomForestRegressors models. Scripts are provided in **sparse2spatial** for making
 the input `.csv` files required by TreeSurgeon_.
 
 Work using Sparse2Spatial (s2s)
 ^^^^^^^^^^^^
 
-A subfolder in the scripts folder is present for the following work using s2s.
+A subfolder in the scripts folder is present per species for work using s2s. This currently includes predictions for sea-surface iodide, CHBr3, and CH2Br2.
 
-+ Research paper *in review* on predicting sea-surface iodide using machine learning
+Publications using **sparse2spatial** are detailed below:
+
++ Research paper on predicting sea-surface iodide using machine learning
 
 For details on this work please see the paper referenced below.
 
-Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data Discuss., https://doi.org/10.5194/essd-2019-40, *in review*, 2019.
+Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data, https://doi.org/10.5194/essd-2019-40, 1-40, 2019.
 
 A file to process the of the csv file of observational data used by the above paper is also included in the scripts/Iodide folder. The observational data can be found at the archived location below.
 
-Chance R.; Tinel L.; Sherwen T.; Baker A.; Bell T.; Brindle J.; Campos M.L.A.M.; Croot P.; Ducklow H.; He P.; Hoogakker B.; Hopkins F.E.; Hughes C.; Jickells T.; Loades D.; Reyes Macaya D.A.; Mahajan A.S.; Malin G.; Phillips D.P.; Sinha A.K.; Sarkar A.; Roberts I.J.; Roy R.; Song X.; Winklebauer H.A.; Wuttig K.; Yang M.; Zhou P.; Carpenter L.J.(2019). Global sea-surface iodide observations, 1967-2018. British Oceanographic Data Centre - Natural Environment Research Council, UK. doi:10/czhx.
+Chance R.; Tinel L.; Sherwen T.; Baker A.; Bell T.; Brindle J.; Campos M.L.A.M.; Croot P.; Ducklow H.; He P.; Hoogakker B.; Hopkins F.E.; Hughes C.; Jickells T.; Loades D.; Reyes Macaya D.A.; Mahajan A.S.; Malin G.; Phillips D.P.; Sinha A.K.; Sarkar A.; Roberts I.J.; Roy R.; Song X.; Winklebauer H.A.; Wuttig K.; Yang M.; Zhou P.; Carpenter L.J. (2019). Global sea-surface iodide observations, 1967-2018. British Oceanographic Data Centre - Natural Environment Research Council, UK. https://doi.org/10/czhx
 
 
 License

@@ -30,16 +30,16 @@ Observations of sea-surface iodide gave been compiled and [archived at the Briti
 
 ### Overview
 
-Please see the *paper in open-access review* linked below for more details on this work. This work used the observational dataset as described in the data descriptor paper and archived data linked above. 
+Please see the research paper linked below for more details on this work. This work used the observational dataset as described in the data descriptor paper and archived data linked above.
 
 ### References
 
 - Research paper on predicting sea-surface iodide using machine learning
 
-[Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data Discuss., https://doi.org/10.5194/essd-2019-40, *in review*, 2019.](https://doi.org/10.5194/essd-2019-40)
+[Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data, https://doi.org/10.5194/essd-2019-40, 1-40, 2019.](https://doi.org/10.5194/essd-2019-40)
 
 - Archived NetCDF files of predicted sea-surface iodide
 
-[Sherwen, T.; Chance, R.J.; Tinel, L.; Ellis, D.; Evans, M.J.; Carpenter, L.J. (2019): Global predicted sea-surface iodide concentrations v0.0.1. Centre for Environmental Data Analysis, 30 April 2019. doi:10.5285/6448e7c92d4e48188533432f6b26fe22. http://dx.doi.org/10.5285/6448e7c92d4e48188533432f6b26fe22](http://dx.doi.org/10.5285/6448e7c92d4e48188533432f6b26fe22)
+[Sherwen, T.; Chance, R.J.; Tinel, L.; Ellis, D.; Evans, M.J.; Carpenter, L.J. (2019): Global predicted sea-surface iodide concentrations v0.0.1. Centre for Environmental Data Analysis, 30 April 2019. doi:10.5285/6448e7c92d4e48188533432f6b26fe22.  http://dx.doi.org/10.5285/6448e7c92d4e48188533432f6b26fe22](http://dx.doi.org/10.5285/6448e7c92d4e48188533432f6b26fe22)
 
 
