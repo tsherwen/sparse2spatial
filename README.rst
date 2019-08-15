@@ -1,7 +1,7 @@
 Sparse2Spatial (s2s)
 ======================================
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3349646.svg
-   :target: http://doi.org/10.5281/zenodo.3271677
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3369212.svg
+   :target: https://doi.org/10.5281/zenodo.3369212
    :alt: Zenodo DOI
 
 **Sparse2Spatial** contains routines to convert sparse observations into spatially and temporally resolved datasets using machine learning algorithms.
