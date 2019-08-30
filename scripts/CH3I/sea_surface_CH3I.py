@@ -253,8 +253,8 @@ def check_budgets_from_Bell_emiss():
 
 
     # - plot up the new fie3ld  in pM concs.
-    folder2 = '/users/ts551/scratch/data/s2s/CH3I/outputs/'
-    filename = 'Oi_prj_predicted_CH3I_0.125x0.125.nc'
+    folder2 = '/users/ts551/scratch/data/s2s/{}/outputs/'.format(target)
+    filename = 'Oi_prj_predicted_{}_0.125x0.125.nc'.format(target)
     dsML = xr.open_dataset( folder2 + filename )
     var2plot = 'Ensemble_Monthly_mean'
     # Plot up the annual average concentrations
@@ -285,9 +285,9 @@ def check_budgets_from_Bell_emiss():
 
 
     # - plot up the new kg/m3 concs.
-    folder2 = '/users/ts551/scratch/data/s2s/CH3I/outputs/'
+    folder2 = '/users/ts551/scratch/data/s2s/{}}/outputs/'.format(target)
 #    filename = 'Oi_prj_predicted_CH3I_0.125x0.125.nc'
-    filename = 'Oi_prj_predicted_CH3I_0.125x0.125_kg_m3.nc'
+    filename = 'Oi_prj_predicted_{}_0.125x0.125_kg_m3.nc'.format(target)
     dsML = xr.open_dataset( folder2 + filename )
     var2plot = 'Ensemble_Monthly_mean_kg_m3'
     # Plot up the annual average concentrations
@@ -315,7 +315,7 @@ def setup_ML_and_other_feilds():
     dsZ = dsZ.rename(name_dict={'RF - ocean' : 'CH3I'})
     var2use = 'CH3I'
     new_var  = 'RF_CH3I_kg_m3'
-    dsZ = add_field2HEMCO_in_kg_m3( dsZ, new_var=new_var, var2use=var2use )
+    dsZ = utils.add_converted_field_pM_2_kg_m3( dsZ, new_var=new_var, var2use=var2use )
     # for lat...
     attrs_dict = dsZ['lat'].attrs
     attrs_dict['long_name'] = "latitude"
@@ -694,7 +694,7 @@ def add_field2HEMCO_in_kg_m3(ds, var2use='Ensemble_Monthly_mean', RMM=141.9,
     """
     Convert the CH3I prediction from pM to kg/m3
     """
-    # Convert pM to kn/3
+    # Convert pM to kg/m3
     ds[new_var] = ds[var2use].copy() /1E12 *RMM /1E3 *1E3
     # Add attributes (needed for HEMCO checks)
     attrs_dict = ds[new_var].attrs
