@@ -1196,3 +1196,20 @@ def get_model_features_used_dict(model_name=None, rtn_dict=False):
         return d
     else:
         return d[model_name]
+
+
+def add_converted_field_pM_2_kg_m3(ds, var2use='Ensemble_Monthly_mean', RMM=141.9,
+                                   target='CH3I',
+                                   new_var='Ensemble_Monthly_mean_kg_m3'):
+    """
+    Convert the target prediction from pM to kg/m3
+    """
+    # Convert pM to kg/m3
+    ds[new_var] = ds[var2use].copy() /1E12 *RMM /1E3 *1E3
+    # Add attributes (needed for HEMCO checks)
+    attrs_dict = ds[new_var].attrs
+    attrs_dict['units'] = "kg/m3"
+    attrs_dict['units_longname'] = "kg({})/m3".format(target)
+    ds[new_var].attrs = attrs_dict
+    return ds
+

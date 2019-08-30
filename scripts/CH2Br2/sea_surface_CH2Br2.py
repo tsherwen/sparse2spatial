@@ -76,6 +76,24 @@ def main():
     analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
 
+    # --- Save out the field in kg/m3 for use in models
+    version = 'v0_0_0'
+    folder = '/users/ts551/scratch/data/s2s/{}/outputs/'.format(target)
+    filename = 'Oi_prj_predicted_{}_0.125x0.125_{}'.format(target, version)
+    ds = xr.open_dataset( folder + filename+'.nc' )
+    # Convert to kg/m3
+    RMM = 173.83
+    new_var = 'Ensemble_Monthly_mean_kg_m3'
+    ds = add_converted_field_pM_2_kg_m3(ds=ds, var2use='Ensemble_Monthly_mean',
+                                        target=target, RMM=RMM,
+                                        new_var=new_var)
+    # Save with just the kg/m3 field to a NetCDF file
+    ds = ds[[new_var]]
+    ds = ds.rename(name_dict={new_var:'Ensemble_Monthly_mean'})
+    ds.to_netcdf( folder + filename+'{}.nc'.format('_kg_m3') )
+
+
+
 def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
                                rm_LOD_filled_data=False,
                                rm_outliers=True,
