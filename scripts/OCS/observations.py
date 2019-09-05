@@ -32,6 +32,24 @@ def get_OCS_obs(target='OCS', limit_depth_to=20,):
 #     TimeVar1 = 'Date (UTC) and time'
 #     TimeVar2 = 'Sampling date/time (UT)'
     month_var = 'Month'
+    dt_var = 'Date'
+    #
+    def combine2dt( Year='Year', Month='Month', Day='Day' ):
+        """
+        Helper function to combine separate time columns to datetime
+        """
+#        try:
+#            Hour = int(Hour)
+#        except:
+        try:
+            return datetime.datetime( int(Year), int(Month), int(Day) )
+        except:
+            return np.NaN
+    # Add datetime
+    # NOTE: This will include 346 NaNs for OCS
+    df[dt_var] = df.apply(lambda x: combine2dt(Year=x['Year'], Month=x['Month'],
+                                              Day=x['Day'], ), axis=1)
+
 #     dt = pd.to_datetime(
 #         df[TimeVar1], format='%Y-%m-%d %H:%M:%S', errors='coerce')
 #     df['datetime'] = dt
@@ -47,7 +65,7 @@ def get_OCS_obs(target='OCS', limit_depth_to=20,):
     # Update names to use
 #    cols2use = df.columns
 #    cols2use = ['datetime', 'Month', LatVar1, LonVar1, Varname]
-    cols2use = ['Hour', 'Month', LatVar1, LonVar1, Varname]
+    cols2use = [dt_var, 'Hour', 'Month', LatVar1, LonVar1, Varname]
     name_dict = {
         LatVar1: 'Latitude', LonVar1: 'Longitude', month_var: 'Month', Varname: target
     }
@@ -55,7 +73,6 @@ def get_OCS_obs(target='OCS', limit_depth_to=20,):
     # Add a unique identifier
     df['NEW_INDEX'] = range(1, df.shape[0]+1)
     # Kludge for now to just a name then number
-
     def get_unique_Data_Key_ID(x):
         return 'HC_{:0>6}'.format(int(x))
     df['Data_Key_ID'] = df['NEW_INDEX'].map(get_unique_Data_Key_ID)
