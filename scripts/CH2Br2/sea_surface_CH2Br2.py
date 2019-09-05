@@ -44,7 +44,7 @@ def main():
     # - build models with the observations
     RFR_dict = build_or_get_models_CH2Br2(rebuild=False, target=target)
     # Get stats ont these models
-    stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
+    stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
                                                       target=target, verbose=True,
                                                       debug=True)
     # Get the top ten models
@@ -57,8 +57,8 @@ def main():
     # make NetCDF predictions from the main array
     save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
-#    res = '0.125x0.125'
-    res = '4x5'
+    res = '0.125x0.125'
+#    res = '4x5'
 #    res='2x2.5'
     build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
                                          use_updated_predictor_NetCDF=False,
@@ -71,9 +71,9 @@ def main():
     # --- Plot up the performance of the models
     df = RFR_dict['df']
     # Plot performance of models
-    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
     # Plot up also without derivative variables
-    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+    RFRanalysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
 
     # --- Save out the field in kg/m3 for use in models

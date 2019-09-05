@@ -47,7 +47,7 @@ def main():
     # - build models with the observations
     RFR_dict = build_or_get_models_CHBr3(rebuild=False, target=target)
     # Get stats ont these models
-    stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
+    stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
                                                       target=target, verbose=True,
                                                       debug=True)
     # Get the top ten models
@@ -72,9 +72,9 @@ def main():
     # --- Plot up the performance of the models
     df = RFR_dict['df']
     # Plot performance of models
-    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
     # Plot up also without derivative variables
-    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+    RFRanalysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
     # --- Save out the field in kg/m3 for use in models
     version = 'v0_0_0'
