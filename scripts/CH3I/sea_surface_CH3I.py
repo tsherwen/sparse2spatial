@@ -1007,7 +1007,8 @@ def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None, average_over_time=False):
         # Also get values for
 #        'EmisACET_Ocean', 'EmisALD2_Ocean',
         'EmisDMS_Ocean',
-
+        #
+        'EmisCH2Br2_SEAFLUX', 'EmisCHBr3_SEAFLUX',
     ]
     # Make sure there are no double ups in the list
     vars2use = list(set(vars2use))
@@ -1293,6 +1294,61 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH3I',
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
     return df
+
+
+def check_flux_variables():
+    """
+    """
+    filename = 'GCv12.2.1_GFAS.geos.log_TEST_4'
+    folder = '/users/ts551/scratch/GC/rundirs'
+    folder += '/geosfp_4x5_tropchem.v12.2.1.AQSA.GFAS.CH3I.'
+    folder += 'ALL.test_other_sources.repeat.TESTING/'
+    # variables to extract
+    vars2use = [
+    'Schmidt number in air', 'Drag coefficient', 'Friction velocity',
+    'Airside resistance',
+    'Schmidt number in water', 'Schmidt number of CO2', 'Waterside resistance',
+    ]
+    # lists for storing data
+    lists = [[]]*len(vars2use)
+    list_of_vars = []
+    # loop by line and add to lists
+    with open(folder+filename) as file:
+        for line in file:
+            for n, var in enumerate( vars2use ):
+                if line.startswith(' '+var):
+#                    lists[n].append(float(line.split(':')[-1].strip()) )
+#                    lists[n].append( line )
+                    list_of_vars.append( line )
+#                else:
+#                    pass
+    # Now split off by variable
+    list_of_lists = []
+    for n, var in enumerate( vars2use ):
+        new_list = []
+        for nitem, item in enumerate( list_of_vars ):
+                if item.startswith(' '+var):
+#                    print( item, n, item.startswith(' '+var) )
+#                    new_list.append( item  )
+                    new_list.append( float(item.split(':')[-1].strip())  )
+
+        list_of_lists += [new_list ]
+
+    # turn into a single array
+    a = np.array(list_of_lists)
+    # Then a dataframe with labels
+    df = pd.DataFrame( a.T )
+    df.columns = vars2use
+    # Now quickly plot these up.
+    for var in vars2use:
+
+        sns.distplot( df[var] )
+        savename = 's2s_CH3I_{}'.format(var)
+        savename = AC.rm_spaces_and_chars_from_str( savename )
+        plt.savefig( savename, dpi=320 )
+
+        plt.close()
+
 
 
 if __name__ == "__main__":
