@@ -62,8 +62,8 @@ def main():
     # Save predictions to NetCDF
     save2NetCDF = True
     # Resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
-#    res = '0.125x0.125'
-    res = '4x5'
+    res = '0.125x0.125'
+#    res = '4x5'
     build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
                                          save2NetCDF=save2NetCDF, target=target,
                                          models2compare=topmodels,
@@ -73,9 +73,9 @@ def main():
     # --- Plot up the performance of the models
     df = RFR_dict['df']
     # Plot performance of models
-    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
     # Plot up also without derivative variables
-    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+    RFRanalysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
     # ---- Explore the predicted concentrations
     # Get the data
