@@ -42,10 +42,9 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
     (None)
     """
     # Get annual average of the variable in the dataset
-
     ds = ds[[var2plot]].mean(dim='time')
     # Set a title for the plot
-    title = "Annual average ensemble prediction for '{}' ({}})".format(target, units)
+    title = "Annual average ensemble prediction for '{}' ({})".format(target, units)
     # Now plot
     plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version, target=target,
         title=title)
@@ -539,7 +538,7 @@ def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat',
     Wrapper to plot up the X vs. Y performance by region
     """
     # Only consider the variables to be plotted
-    params2plot = [var,  ]
+    params2plot = [target,  ]
     df = df[params2plot+[LonVar, LatVar, target, testset]]
     # Add ocean columns to dataframe
     df = AC.add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
@@ -564,9 +563,12 @@ def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat',
         else:
             extr_str=region
         # Now plot
-        s2splotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
-                                                obs_var=target,
-                                                extr_str=extr_str)
+        try:
+            plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                        obs_var=target, extr_str=extr_str)
+        except ValueError:
+            print("WARNING: Not plotting for region ('{}') due to ValueError")
+
         #
         # TODO ... Update to plot withheld and full dataset on a single plot
 
