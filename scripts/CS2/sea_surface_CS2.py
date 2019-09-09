@@ -69,17 +69,72 @@ def main():
                                          topmodels=topmodels,
                                          xsave_str=xsave_str, add_ensemble2ds=True)
 
+    # - Plot up the predicted field
+    # get the predicted data as saved offline
+    ds = utils.get_predicted_values_as_ds(target=target, )
+    # annual average
+    s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=ds)
+    # seasonally resolved average
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds)
+
 
     # --- Plot up the performance of the models
     df = RFR_dict['df']
     #
-
+    df = add_ensemble_prediction2df(df=df, target=target)
     # Plot performance of models
     RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
     # Plot up also without derivative variables
     RFRanalysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
 
+    # - Plot comparisons against observations
+    # Plot up an orthogonal distance regression (ODR) plot
+    ylim = (0, 20)
+    xlim = (0, 20)
+#    xlim, ylim =  None, None
+    params =  ['RFR(Ensemble)']
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
+                                     ylim=ylim, xlim=xlim)
+
+    # Plot up a PDF of concs and bias
+    ylim = (0, 20)
+    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params,
+                                                          units='pM',
+                                                          target=target,
+                                                          xlim=xlim)
+    #
+
+
+def add_ensemble_prediction2df(df=None, LatVar='Latitude', LonVar='Longitude',
+                               target='Iodide', version='_v0_0_0',
+                               var='RFR(Ensemble)', MonthVar='Month',
+                               var2extract='Ensemble_Monthly_mean'):
+    """
+    Wrapper function to add the ensemble prediction to a dataframe from NetCDF
+
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    LatVar (str): variable name in DataFrame for latitude
+    LonVar (str): variable name in DataFrame for longitude
+    MonthVar (str): variable name in DataFrame for month
+    version (str): Version number or string (present in NetCDF names etc)
+    var2extract (str): variable to extract from the
+
+    Returns
+    -------
+    (pd.DataFrame)
+    """
+    # Get the 3D prediction as a dataset
+    ds = utils.get_predicted_values_as_ds(target=target, version=version)
+    # extract the nearest values
+    vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df[MonthVar].values,
+                                              var2extract=var2extract,)
+    df[var] = vals
+    return df
 
 
 def explore_values_per_hour(df, target='CS2', dpi=320, debug=False):
