@@ -431,10 +431,11 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     else:
         sns.set_context("talk", font_scale=1.0)
     # Name of PDF to save plots to
-    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_ODR_WINDOW'
+    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_ODR_WINDOW_{}'
+    savetitle = savetitle.format(target)
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
     # label to use for taget on plots
-    target_label = '[{}$_{}$]'.format(target, 'aq')
+    target_label = '[{}'.format(target) + '$_{aq}$]'
     # Set location for alt_text
     f_size = 10
     N = int(df.shape[0])
@@ -529,6 +530,47 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     plt.close()
 
 
+
+def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat',
+                           LonVar='lon', target='CH3I',
+                           obs_var='Obs.', testset='Test set (strat. 20%)',
+                           just_plt_testset=False):
+    """
+    Wrapper to plot up the X vs. Y performance by region
+    """
+    # Only consider the variables to be plotted
+    params2plot = [var,  ]
+    df = df[params2plot+[LonVar, LatVar, target, testset]]
+    # Add ocean columns to dataframe
+    df = AC.add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
+    # Split by regions
+    regions = list(set(df['ocean'].dropna()))
+    dfs = [df.loc[df['ocean']==i,:] for i in regions]
+    dfs = dict(zip(regions,dfs))
+    # Only consider withheld data
+    if just_plt_testset:
+        df = df.loc[df[testset] == True, :]
+    # Also get an open ocean dataset
+    # Use an all data for now
+    dfs['all'] = df.copy()
+    regions += ['all']
+    # loop and plot by region
+    for region in regions:
+        print(region)
+        df = dfs[region]
+        # What variable to use in titles?
+        if just_plt_testset:
+            extr_str=region+' (withheld)'
+        else:
+            extr_str=region
+        # Now plot
+        s2splotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                                obs_var=target,
+                                                extr_str=extr_str)
+        #
+        # TODO ... Update to plot withheld and full dataset on a single plot
+
+
 def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
                                               testset='Test set (strat. 20%)',
                                               target='Iodide', df=None,
@@ -568,7 +610,8 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(params, CB_color_cycle))
     # set a name of file to save data to
-    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_PDF_WINDOW'
+    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_PDF_WINDOW_{}'
+    savetitle = savetitle.format( target )
     # - Plot up CDF and PDF plots for the dataset and residuals
     fig = plt.figure(dpi=dpi)
     nrows = len(datasets)
@@ -587,7 +630,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
         # Only add an axis label on to the bottommost plots
         axlabel = None
         if n_dataset in np.arange(1, (nrows*ncols)+1)[::ncols]:
-            axlabel = '[{}$_{}$] ({})'.format( target, '{aq}', units )
+            axlabel = '[{}'.format(target) +'$_{aq}$]'+' ({})'.format(units)
         # - Plot up PDF plots for the dataset
         # Plot observations
         var_ = 'Obs.'
