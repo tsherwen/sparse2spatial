@@ -435,258 +435,32 @@ def compare_performance_of_parameters_against_observations():
     # ODr plot
     ylim = (0, 15)
     xlim = (0, 15)
-    plot_ODR_window_plot(df=df, params=params, units='pM', target=target, ylim=ylim,
-                         xlim=xlim)
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
+                                     ylim=ylim, xlim=xlim)
 
     # Plot up a PDF of concs and bias
     ylim = (-3, 15)
-    plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params, units='pM',
-                                              target=target, xlim=xlim)
+    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params,
+                                                          units='pM',
+                                                          target=target,
+                                                          xlim=xlim)
+
+
+    # - Plot up X vs. Y comparisons
+    # Note below function expects model prediction to be present
+#     df = RFR_dict['df']
+#     # Add ensemble to the df
+#     LatVar = 'Latitude'
+#     LonVar = 'Longitude'
+#     ds = utils.get_predicted_values_as_ds(target=target)
+#     vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
+#                                               lats=df[LatVar].values,
+#                                               months=df['Month'].values,
+#                                               var2extract='Ensemble_Monthly_mean',)
+#     var = 'RFR(Ensemble)'
+#     df[var] = vals
     #
-
-    #
-
-
-def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
-                                              testset='Test set (strat. 20%)',
-                                              target='Iodide', df=None,
-                                              plot_up_CDF=False, units='pM',
-                                              xlim=None,
-                                              dpi=320):
-    """
-    Plot up CDF and PDF plots to explore point-vs-point data
-    Parameters
-    -------
-    target (str): Name of the target variable (e.g. iodide)
-    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
-    dpi (int): resolution to use for saved image (dots per square inch)
-    show_plot (bool): show the plot on screen
-    df (pd.DataFrame): DataFrame of data
-    plot_up_CDF (bool): plot up as a cumulative distribution function
-    Returns
-    -------
-    (None)
-    """
-    import seaborn as sns
-    sns.set(color_codes=True)
-    sns.set_context("paper", font_scale=0.75)
-    # Get data
-    if isinstance(df, type(None)):
-        RFR_dict = build_or_get_models_iodide()
-        df = RFR_dict['df']
-    # Get a dictionary of different dataset splits
-    dfs = {}
-    # Entire dataset
-    dfs['Entire'] = df.copy()
-    # Testdataset
-    dfs['All (withheld)'] = df.loc[df[testset] == True, :].copy()
-    # Coastal testdataset
-    # maintain ordering of plotting
-    datasets = dfs.keys()
-    # setup color dictionary
-    CB_color_cycle = AC.get_CB_color_cycle()
-    color_d = dict(zip(params, CB_color_cycle))
-    # plotting variables
-
-    # set a PDF to save data to
-    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_PDF_WINDOW'
-    # --- Plot up CDF and PDF plots for the dataset and residuals
-    fig = plt.figure(dpi=dpi)
-    nrows = len(datasets)
-    ncols = 2
-    for n_dataset, dataset in enumerate(datasets):
-        # set Axis for abosulte PDF
-        axn = np.arange(1, (nrows*ncols)+1)[::ncols][n_dataset]
-        ax1 = fig.add_subplot(nrows, ncols, axn)
-        # Get data
-        df = dfs[dataset]
-        # Drop NaNs
-        df = df.dropna()
-        # Numer of data points
-        N_ = df.shape
-        print(dataset, N_)
-        # Only add an axis label on to the bottommost plots
-        axlabel = None
-        if n_dataset in np.arange(1, (nrows*ncols)+1)[::ncols]:
-            axlabel = '[{}$_{}$] ({})'.format( target, '{aq}', units )
-        # - Plot up PDF plots for the dataset
-        # Plot observations
-        var_ = 'Obs.'
-        obs_arr = df[target].values
-        ax = sns.distplot(obs_arr, axlabel=axlabel, label=var_,
-                          color='k', ax=ax1)
-        # Loop and plot model values
-        for param in params:
-            arr = df[param].values
-            ax = sns.distplot(arr, axlabel=axlabel,
-                              label=param,
-                              color=color_d[param], ax=ax1)
-        # Force y axis extent to be correct
-        ax1.autoscale()
-        # Force x axis to be constant
-        ax1.set_xlim(xlim)
-        # Beautify the plot/figure
-        ylabel = 'Frequency \n ({})'
-        ax1.set_ylabel(ylabel.format(dataset))
-        # Add legend to first plot
-        if (n_dataset == 0):
-            plt.legend()
-            ax1.set_title('Concentration')
-        # - Plot up PDF plots for the residual dataset
-        # set Axis for abosulte PDF
-        axn = np.arange(1, (nrows*ncols)+1)[1::ncols][n_dataset]
-        ax2 = fig.add_subplot(nrows, ncols, axn)
-        # get observations
-        obs_arr = df[target].values
-        # Loop and plot model values
-        for param in params:
-            arr = df[param].values - obs_arr
-            ax = sns.distplot(arr, axlabel=axlabel,
-                              label=param,
-                              color=color_d[param], ax=ax2)
-        # Force y axis extent to be correct
-        ax2.autoscale()
-        # Force x axis to be constant
-        ax2.set_xlim(-xlim[1],  xlim[1])
-        # Add legend to first plot
-        if (n_dataset == 0):
-            ax2.set_title('Bias')
-    # Save whole figure
-    plt.savefig(savetitle)
-
-
-def plot_ODR_window_plot(params=[], show_plot=False, df=None,
-                         testset='Test set (strat. 20%)', units='pM',
-                         target='Iodide', context="paper", xlim=None, ylim=None,
-                         dpi=720):
-    """
-    Show the correlations between obs. and params. as window plot
-
-    Parameters
-    -------
-    target (str): Name of the target variable (e.g. iodide)
-    testset (str): Testset to use, e.g. stratified sampling over quartiles for 20%:80%
-    dpi (int): resolution to use for saved image (dots per square inch)
-    RFR_dict (dict): dictionary of core variables and data
-    context (str): seaborn context to use for plotting (e.g. paper, poster, talk...)
-    show_plot (bool): show the plot on screen
-    df (pd.DataFrame): dataframe containing target and feature variables
-
-    Returns
-    -------
-    (None)
-    """
-    # select dataframe with observations and predictions in it
-    if isinstance(df, type(None)):
-        print('Please provide DataFrame with data')
-
-    # - Evaluate model using various approaches
-    import seaborn as sns
-    sns.set(color_codes=True)
-    if context == "paper":
-        sns.set_context("paper")
-    else:
-        sns.set_context("talk", font_scale=1.0)
-
-    # - Evaluate point for point
-    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_ODR_WINDOW'
-    pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
-    # iodide in aq
-    target_label = '[{}$_{}$]'.format(target, 'aq')
-    # set location for alt_text
-    f_size = 10
-    N = int(df.shape[0])
-    # split data into groups
-    dfs = {}
-    # Entire dataset
-    dfs['Entire'] = df.copy()
-    # Testdataset
-    dfs['Withheld'] = df.loc[df[testset] == True, :].copy()
-    dsplits = dfs.keys()
-    # assign colors
-    CB_color_cycle = AC.get_CB_color_cycle()
-    color_d = dict(zip(dsplits, CB_color_cycle))
-    # Intialise figure and axis
-    fig, axs = plt.subplots(1, 3, sharex=True, sharey=True, dpi=dpi, \
-                            #        figsize=(12, 5)
-                            figsize=(11, 4)
-                            )
-    # Loop by param and compare against whole dataset
-    for n_param, param in enumerate(params):
-        # set axis to use
-        ax = axs[n_param]
-        # Use the same asecpt for X and Y
-        ax.set_aspect('equal')
-        # Add a title the plots
-        ax.text(0.5, 1.05, param, horizontalalignment='center',
-                verticalalignment='center', transform=ax.transAxes)
-        # Add a 1:1 line
-        x_121 = np.arange(ylim[0]-(ylim[1]*0.05),ylim[1]*1.05 )
-        ax.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
-        # Plot up data by dataset split
-        for nsplit, split in enumerate(dsplits):
-            # select the subset of the data
-            df = dfs[split].copy()
-            # Remove any NaNs
-            df = df.dropna()
-            # get X
-            X = df[target].values
-            # get Y
-            Y = df[param].values
-            # get N
-            N = float(df.shape[0])
-            # get RMSE
-            RMSE = np.sqrt(((Y-X)**2).mean())
-            # Plot up just the entire and testset data
-            if split in ('Entire', 'Withheld'):
-                ax.scatter(X, Y, color=color_d[split], s=3, facecolor='none')
-            # add ODR line
-            xvalues, Y_ODR = AC.get_linear_ODR(x=X, y=Y, xvalues=x_121,
-                                               return_model=False, maxit=10000)
-
-            myoutput = AC.get_linear_ODR(x=X, y=Y, xvalues=x_121,
-                                         return_model=True, maxit=10000)
-            print(param, split, myoutput.beta)
-
-            ax.plot(xvalues, Y_ODR, color=color_d[split])
-            # Add RMSE ( and N value as alt text )
-            alt_text_x = 0.01
-            alt_text_y = 0.95-(0.05*nsplit)
-#            alt_text = 'RMSE={:.1f} ({}, N={:.0f})'.format( RMSE, split, N )
-            alt_text = 'RMSE={:.1f} ({})'.format(RMSE, split)
-            ax.annotate(alt_text, xy=(alt_text_x, alt_text_y),
-                        textcoords='axes fraction', fontsize=f_size,
-                        color=color_d[split])
-        # Beautify the plot/figure
-        plt.xlim(xlim)
-        plt.ylim(ylim)
-        ax.set_xlabel('Obs. {} ({})'.format(target_label, units))
-        if (n_param == 0):
-            ax.set_ylabel('Parameterised {} ({})'.format(target_label, units))
-    # Adjust the subplots
-    if context == "paper":
-        top = 0.94
-        bottom = 0.1
-        left = 0.05
-        right = 0.975
-        wspace = 0.075
-    else:
-        top = 0.94
-        bottom = 0.14
-        left = 0.075
-        right = 0.975
-        wspace = 0.075
-    fig.subplots_adjust(top=top, right=right, left=left, bottom=bottom,
-                        wspace=wspace)
-    # Save the plot
-    AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
-    # Save entire pdf
-    AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
-    plt.savefig(savetitle, dpi=dpi)
-    if show_plot:
-        plt.show()
-    plt.close()
-
+    plt_X_vs_Y_for_regions()
 
 
 def add_field2HEMCO_in_kg_m3(ds, var2use='Ensemble_Monthly_mean', RMM=141.9,
@@ -1139,57 +913,6 @@ def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
     # Save plotted figure
     savename = 's2s_{}_data_by_year_region'.format(target)
     plt.savefig(savename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
-
-
-
-def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
-                           LonVar='lon', target='CH3I',
-                           obs_var='Obs.'):
-    """
-    Plot up the X vs. Y performance by region - using core s2s functions
-    """
-    # Get the dataframe of observations and predictions
-    df = RFR_dict['df']
-    # Add ensemble to the df
-    LatVar = 'Latitude'
-    LonVar = 'Longitude'
-    ds = utils.get_predicted_values_as_ds(target=target)
-    vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
-                                              lats=df[LatVar].values,
-                                              months=df['Month'].values,
-                                              var2extract='Ensemble_Monthly_mean',)
-    var = 'RFR(Ensemble)'
-    df[var] = vals
-    # Just withheld data?
-    testset = 'Test set (strat. 20%)'
-    df = df.loc[df[testset] == True, :]
-    # Only consider the variables to be plotted
-    obs_var = target
-#    params2plot = [var,  'Chance2014_STTxx2_I', 'MacDonald2014_iodide',]
-    params2plot = [var,  ]
-    df = df[params2plot+[LonVar, LatVar, obs_var]]
-    # Add ocean columns to dataframe
-    df = AC.add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
-    # Split by regions
-    regions = list(set(df['ocean'].dropna()))
-    dfs = [df.loc[df['ocean']==i,:] for i in regions]
-    dfs = dict(zip(regions,dfs))
-    # Also get an open ocean dataset
-    # TODO ...
-    # Use an all data for now
-    dfs['all'] = df.copy()
-    regions += ['all']
-    # loop and plot by region
-    for region in regions:
-        print(region)
-        df = dfs[region]
-        extr_str=region+' (withheld)'
-#        extr_str=region
-        # Now plot
-        s2splotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
-                                             obs_var=obs_var,
-                                             extr_str=extr_str)
-
 
 
 def build_or_get_models_CH3I(target='CH3I',
