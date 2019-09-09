@@ -70,6 +70,14 @@ def main():
                                          xsave_str=xsave_str, add_ensemble2ds=True)
 
 
+    # - Plot up the predicted field
+    # get the predicted data as saved offline
+    ds = utils.get_predicted_values_as_ds(target=target, )
+    # annual average
+    s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=ds)
+    # seasonally resolved average
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds)
+
     # --- Plot up the performance of the models
     df = RFR_dict['df']
     #
@@ -96,6 +104,9 @@ def main():
                                                           target=target,
                                                           xlim=xlim)
     #
+    LonVar = 'Longitude'
+    LatVar = 'Latitude'
+    s2splotting.plt_X_vs_Y_for_regions(df=df, target=target, LonVar=LonVar, LatVar=LatVar)
 
 
 
@@ -126,7 +137,6 @@ def add_ensemble_prediction2df(df=None, LatVar='Latitude', LonVar='Longitude',
                                               lats=df[LatVar].values,
                                               months=df[MonthVar].values,
                                               var2extract=var2extract,)
-
     df[var] = vals
     return df
 
