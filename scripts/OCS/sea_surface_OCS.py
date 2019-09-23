@@ -35,6 +35,7 @@ from sparse2spatial.RFRbuild import get_top_models
 # Local modules specific to OCS work
 import observations as obs
 
+
 def main():
     """
     Driver for module's man if run directly from command line. unhash
@@ -125,6 +126,60 @@ def main():
     ds = ds.rename(name_dict={new_var:'Ensemble_Monthly_mean'})
     ds.to_netcdf( folder + filename+'{}.nc'.format('_kg_m3') )
 
+
+    # --- Do analysis and comparisons to existing predictions/fields
+
+
+
+def plot_existing_fields_from_Lennartz_2017():
+    """
+    Plot up the existing Lennartz et al. 2017 fields spatially and get general stats
+    """
+    # Local variables
+    target = 'OCS'
+    units = 'pM'
+    version = '_Lennartz_2017'
+    # Get the OCS files from Lennartz et al. 2017
+    ds = get_OCS_fields_from_Lennartz_2017_as_ds()
+    # plot these up as an annual average
+    var2plot = 'cwocs'
+    s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=ds,
+                                                      version=version,
+                                                      var2plot=var2plot,
+                                                      units=units)
+    # plot these up  - seasonally resolved average
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds)
+
+
+    # plot up seasonally, but with the same colourbar as the ML prediction
+
+
+
+
+
+def get_OCS_fields_from_Kettle1999():
+    """
+    Get a dataset of OCS fields from Kettle et al. 1997
+    """
+    folder = '/users/ts551/scratch/data/s2s/OCS/inputs/'
+    filename = 'Kettle_for_GC.nc'
+    ds = xr.open_dataset( folder + filename )
+    return ds
+
+
+def get_OCS_fields_from_Lennartz_2017_as_ds():
+    """
+    Get a dataset of OCS fields from Lennartz et al. 2017
+    """
+    folder = '/users/ts551/scratch/data/s2s/OCS/inputs/'
+    filename = 'ocs_concentration.nc'
+    ds = xr.open_dataset( folder + filename )
+    return ds
+
+
+
+
+def add_prediction
 
 
 
