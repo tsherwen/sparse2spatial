@@ -26,6 +26,8 @@ import cartopy.crs as ccrs
 
 
 def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0',
+                                          LatVar='lat', LonVar='lon',
+                                          vmin=None, vmax=None, title=None,
                                           var2plot='Ensemble_Monthly_mean', units=None):
     """
     Wrapper to plot up the annual averages of the predictions
@@ -36,6 +38,8 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
     var2plot (str): variable in dataset to be plotted
+    LatVar, LonVar (str): variables to use for latitude and longitude
+    vmin, vmax (float): minimum and maximum values to limit colorbar to
 
     Returns
     -------
@@ -44,15 +48,17 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
     # Get annual average of the variable in the dataset
     ds = ds[[var2plot]].mean(dim='time')
     # Set a title for the plot
-    title = "Annual average ensemble prediction for '{}' ({})".format(target, units)
+    if isinstance(title, type(None)):
+        title = "Annual average ensemble prediction for '{}' ({})".format(target, units)
     # Now plot
     plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version, target=target,
-        title=title)
+        LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax, title=title)
 
 
 def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_0',
         seperate_plots=False, units='pM', var2plot='Ensemble_Monthly_mean',
         vmin=None, vmax=None, dpi=320, show_plot=False, save_plot=True,
+        title=None,
         var2plot_longname='ensemble prediction', extension='png', verbose=False ):
     """
     Wrapper to plot up the annual averages of the predictions
@@ -63,6 +69,9 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
     var2plot (str): which variable should be plotted?
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
+    LatVar, LonVar (str): variables to use for latitude and longitude
+    vmin, vmax (float): minimum and maximum values to limit colorbar to
+    title (str): title to use for single seasonal plot (default=None)
     seperate_plots (bool): plot up output as separate plots
     verbose (bool): print out verbose output?
 
@@ -123,9 +132,10 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
         cax = fig.add_axes([0.85, pad*2, 0.035, 1-(pad*4)])
         fig.colorbar(im, cax=cax, orientation='vertical', label=units)
         # Set a title
-        title = "Seasonally averaged '{}' ({})"
-        title = title.format(var2plot_longname, units)
-        fig.suptitle( title )
+        if isinstance(title, type(None)):
+            title = "Seasonally averaged '{}' ({})"
+            title = title.format(var2plot_longname, units)
+            fig.suptitle( title )
         # Adjust plot aesthetics
         bottom = pad/4
         top = 1-(pad)
@@ -312,6 +322,7 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
     xticks, yticks (bool): include ticks on y and/or x axis?
     title (str): title to add use for plot
     LatVar, LonVar (str): variables to use for latitude and longitude
+    vmin, vmax (float): minimum and maximum values to limit colorbar to
     add_meridians_parallels (bool): add the meridians and parallels?
     save_plot (bool): save the plot as png
     show_plot (bool): show the plot on screen

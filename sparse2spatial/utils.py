@@ -384,25 +384,9 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
                 pass
     # Coordinate and global values
     if add_global_attrs:
-        # for lat...
-        attrs_dict = ds['lat'].attrs
-        attrs_dict['long_name'] = "latitude"
-        attrs_dict['units'] = "degrees_north"
-        attrs_dict["standard_name"] = "latitude"
-        attrs_dict["axis"] = "Y"
-        ds['lat'].attrs = attrs_dict
-        # And lon...
-        attrs_dict = ds['lon'].attrs
-        attrs_dict['long_name'] = "longitude"
-        attrs_dict['units'] = "degrees_east"
-        attrs_dict["standard_name"] = "longitude"
-        attrs_dict["axis"] = "X"
-        ds['lon'].attrs = attrs_dict
-        # And time
-        attrs_dict = ds['time'].attrs
-        attrs_dict["standard_name"] = "time"
-        attrs_dict['long_name'] = attrs_dict["standard_name"]
-        attrs_dict["axis"] = "T"
+        # Add core attributes to coordinates and global attrs dictionary
+        ds = add_get_core_attributes2ds(ds)
+        # Also update HEMCO time?
         if convert2HEMCO_time:
             attrs_dict['units'] = 'hours since 2000-01-01 00:00:00'
             attrs_dict['calendar'] = 'standard'
@@ -412,15 +396,46 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
             hours = [(i-REFdatetime).days*24. for i in dts]
 #            times = [ AC.add_months(REFdatetime, int(i) ) for i in range(13) ]
             ds['time'].values = hours
-        ds['time'].attrs = attrs_dict
-        # Add details to the global attribute dictionary
-        History_str = 'Last Modified on: {}'
-        global_attrs_dict['History'] = History_str.format(
-            strftime("%B %d %Y", gmtime()))
-        global_attrs_dict['Conventions'] = "COARDS"
+            ds['time'].attrs = attrs_dict
+        # Add a variable for the main parameterisation variable
+        global_attrs_dict = ds.attrs
         global_attrs_dict['Main parameterisation variable'] = varname
-        global_attrs_dict['format'] = 'NetCDF-4'
         ds.attrs = global_attrs_dict
+    return ds
+
+
+def add_get_core_attributes2ds(ds):
+    """
+    Make sure the core coordinates and global variabel attributes are in dataset
+    """
+    # - Coordinates
+    # for lat...
+    attrs_dict = ds['lat'].attrs
+    attrs_dict['long_name'] = "latitude"
+    attrs_dict['units'] = "degrees_north"
+    attrs_dict["standard_name"] = "latitude"
+    attrs_dict["axis"] = "Y"
+    ds['lat'].attrs = attrs_dict
+    # And lon...
+    attrs_dict = ds['lon'].attrs
+    attrs_dict['long_name'] = "longitude"
+    attrs_dict['units'] = "degrees_east"
+    attrs_dict["standard_name"] = "longitude"
+    attrs_dict["axis"] = "X"
+    ds['lon'].attrs = attrs_dict
+    # And time
+    attrs_dict = ds['time'].attrs
+    attrs_dict["standard_name"] = "time"
+    attrs_dict['long_name'] = attrs_dict["standard_name"]
+    attrs_dict["axis"] = "T"
+    ds['time'].attrs = attrs_dict
+    # - Global variables
+    global_attrs_dict = ds.attrs
+    History_str = 'Last Modified on: {}'
+    global_attrs_dict['History'] = History_str.format(strftime("%B %d %Y", gmtime()))
+    global_attrs_dict['Conventions'] = "COARDS"
+    global_attrs_dict['format'] = 'NetCDF-4'
+    ds.attrs = global_attrs_dict
     return ds
 
 
