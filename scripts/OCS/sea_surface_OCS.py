@@ -34,6 +34,8 @@ from sparse2spatial.RFRbuild import get_top_models
 #from sparse2spatial.RFRanalysis import get_stats_on_multiple_global_predictions
 # Local modules specific to OCS work
 import observations as obs
+# Temporarily included
+import xesmf as xe
 
 
 def main():
@@ -63,12 +65,12 @@ def main():
     res = '0.125x0.125'
 #    res = '4x5'
 #    res='2x2.5'
-    build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
-                                         use_updated_predictor_NetCDF=False,
-                                         save2NetCDF=save2NetCDF, target=target,
-                                         models2compare=topmodels,
-                                         topmodels=topmodels,
-                                         xsave_str=xsave_str, add_ensemble2ds=True)
+#     build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
+#                                          use_updated_predictor_NetCDF=False,
+#                                          save2NetCDF=save2NetCDF, target=target,
+#                                          models2compare=topmodels,
+#                                          topmodels=topmodels,
+#                                          xsave_str=xsave_str, add_ensemble2ds=True)
 
 
     # - Plot up the predicted field
@@ -78,12 +80,18 @@ def main():
     s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=ds)
     # seasonally resolved average
     s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds)
+    # seasonally resolved average, with the same colourbar as the OCS values
+    # from Lentt
+    vmin, vmax = 0, 75
+    version = 'ML_v0.0.0_limited_colourbar'
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds)
+
 
     # --- Plot up the performance of the models
+    # Get the main DataFrame for analysis of output
     df = RFR_dict['df']
-    #
+    # Add the ensemble prediction
     df = add_ensemble_prediction2df(df=df, target=target)
-
     # Plot performance of models
     RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
     # Plot up also without derivative variables
@@ -104,7 +112,7 @@ def main():
                                                           units='pM',
                                                           target=target,
                                                           xlim=xlim)
-    #
+    # plot out comparisons with observations by region
     LonVar = 'Longitude'
     LatVar = 'Latitude'
     s2splotting.plt_X_vs_Y_for_regions(df=df, target=target, LonVar=LonVar, LatVar=LatVar)
@@ -128,7 +136,189 @@ def main():
 
 
     # --- Do analysis and comparisons to existing predictions/fields
+    # Plot the existing fields from Lennartz et al 2017
+    plot_existing_fields_from_Lennartz_2017()
+    # Do analysis on Lennartz et al 2017 fields
+    do_analysis_on_existing_fields_from_Lennartz_2017()
 
+
+    # --- Do analysis of online OCS fluxes
+    # Quickly check the output
+    quick_check_of_OCS_emissions()
+    # Check the fluxes from Kettle
+
+
+def check_Kettle1999_fluxes():
+    """
+    """
+    # Get the Kettle fluxes
+    dsK = get_OCS_fields_from_Kettle1999()
+    vars2use =  [i for i in dsK.data_vars]
+    # Add the AREA
+#    AC.calc_surface_area_in_grid(res='1x1')
+    EMEP_folder = '/mnt/lustre/groups/chem-acm-2018/earth0_data/GEOS//ExtData/'
+    EMEP_folder += 'HEMCO//EMEP/v2015-03/'
+    EMEP_filename = 'EMEP.geos.1x1.nc'
+    dsE = xr.open_dataset(EMEP_folder + EMEP_filename)
+    lon = dsE['lon'].values
+    lat = dsE['lat'].values
+    AREA = AC.calc_surface_area_in_grid(lon_e=lon, lat_e=lat, lon_c=lon, lat_c=lat )
+    dsK['AREA'] = dsK['OCS_oc_dir'].copy().mean(dim='time')
+    dsK['AREA'].values = AREA.T
+    # loop by variable
+    # setup a dictionary
+    var_species_dict = dict(zip(vars2use, ['OCS']*len(vars2use) ) )
+
+    # Convert the units
+#    ds = AC.convert_HEMCO_ds2Gg_per_yr(ds2use, vars2convert=vars2use,
+#                                       var_species_dict=var_species_dict)
+    df = pd.DataFrame()
+    for var in vars2use:
+        # - Get the gross flux
+        # Get the data
+        arr = dsK[var].copy().values
+        # only consider the positive fluxes
+#        arr = np.where(arr<0, 0)
+        arr[arr<0] = 0
+        # convert to kg/s
+#        arr = arr * dsK['AREA']
+        arr = arr * dsK['AREA'].values[None, ...]
+        # convert to kg/month
+        arr = arr * 60 * 60 * 24 * 31
+        # kg to Gg
+        arr = arr / 1E6
+        # Sum to get Gross
+#        Gross = float(arr.sum().values)
+        Gross = arr.sum()
+
+        # - Get the net total
+        # Get the data
+        arr = dsK[var].copy()
+        # convert to kg/s
+        arr = arr * dsK['AREA']
+        # convert to kg/month
+        arr = arr * 60 * 60 * 24 * 31
+        # kg to Gg
+        arr = arr / 1E6
+        # Sum to get Net
+        Net = float(arr.sum().values)
+        # Save to a dataframe
+        s = pd.Series({'Net': Net, 'Gross': Gross })
+        df[var] = s
+
+#        print(var, arr.sum())
+
+
+#    for var in dsK.data_vars:
+
+
+        vals = dsK[var].copy() * dsK['AREA']
+        vals
+
+
+
+def quick_check_of_OCS_emissions(target='OCS'):
+    """
+    Analyse the emissions of methyl iodide through HEMCO
+    """
+    #
+    root = '/users/ts551/scratch/GC/rundirs/'
+    file_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.{}'
+    run_dict = {
+    # intial test runs
+    'OCS_TEST' : root + file_str.format('CH3I.ALL.test_other_sources.repeat.II.OCS/',
+    }
+    # use the run_dict from - obs.get_ground_surface_OCS_obs_DIRECT
+    wds = run_dict # for debugging...
+    target = 'OCS' # for testing
+    #
+    filename = 'HEMCO_diagnostics.201401010000.nc'
+    # Get a dictionary of all the data
+    dsDH = GetEmissionsFromHEMCONetCDFsAsDatasets(wds=run_dict)
+    # - Analysis the totals
+    # Extract the annual totals to a dataFrame
+    df = pd.DataFrame()
+    for run in dsDH.keys():
+        print(run)
+        # Get the values and variable names
+        vars2use = [i for i in dsDH[run].data_vars if i != 'AREA']
+        vars2use = list(sorted(vars2use))
+        vals = [ dsDH[run][i].sum().values for i in vars2use ]
+        # Save the summed values to the dataframe
+        df[run] = pd.Series( dict(zip(vars2use, vals)) )
+#        print( dsDH[run].sum() )
+    # Print the DataFrame to screen
+    print(df)
+
+
+
+
+def do_analysis_on_existing_fields_from_Lennartz_2017():
+    """
+    Plot up the existing Lennartz et al. 2017 fields spatially and get general stats
+    """
+    # regrid the existing field to ~12x12km resolution
+    # NOTE: Just run once, so hased out for now.
+#    regrid_Lennartz2017_OCS_feild()
+    # open regrided field
+    filename = 'OCS_concentration_0.125x0.125.nc'
+    ds = xr.open_dataset( folder+ filename )
+    # interpolate where there are values?
+    # e.g. using the interpolate_array_with_GRIDDATA
+    # plot up spatial to sanity check the outputted values
+    vmin, vmax = 0, 75
+    version = 'Lennartz_2017_limited_colourbar_regridded_0.125x0.125'
+    var2plot = 'cwocs'
+    target = 'OCS'
+    units = 'pM'
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target,
+#                                                        ds=ds,
+                                                        ds=ds_NEW,
+                                                        version=version,
+                                                        var2plot=var2plot,
+                                                        vmin=vmin, vmax=vmax,
+                                                        units=units)
+
+    # Analysis on the reigridded existing field
+    # Get the main dataframe of values
+    df = RFR_dict['df']
+    # Add the ML values to this
+    df = add_ensemble_prediction2df(df=df, target=target)
+    # Add the Lennetz values to this.
+    LonVar = 'Londitude'
+    LatVar='Latitude'
+    LonVar='Longitude'
+    MonthVar='Month'
+
+    # extract the nearest values
+    vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df[MonthVar].values,
+                                              var2extract='cwocs',)
+    var2use = 'Lennartz2017'
+    df[var2use] = vals
+    # - Plot up the performance
+
+    # Plot performance of models
+#    RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    # Plot up also without derivative variables
+#    RFRanalysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+
+    # - Plot comparisons against observations
+    # Plot up an orthogonal distance regression (ODR) plot
+    ylim = (0, 80)
+    xlim = (0, 80)
+#    xlim, ylim =  None, None
+    params =  ['RFR(Ensemble)', 'Lennartz2017' ]
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
+                                     ylim=ylim, xlim=xlim)
+
+    # Plot up a PDF of concs and bias
+    ylim = (0, 80)
+    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params,
+                                                          units='pM',
+                                                          target=target,
+                                                          xlim=xlim)
 
 
 def plot_existing_fields_from_Lennartz_2017():
@@ -138,7 +328,7 @@ def plot_existing_fields_from_Lennartz_2017():
     # Local variables
     target = 'OCS'
     units = 'pM'
-    version = '_Lennartz_2017'
+    version = 'Lennartz_2017'
     # Get the OCS files from Lennartz et al. 2017
     ds = get_OCS_fields_from_Lennartz_2017_as_ds()
     # plot these up as an annual average
@@ -147,14 +337,60 @@ def plot_existing_fields_from_Lennartz_2017():
                                                       version=version,
                                                       var2plot=var2plot,
                                                       units=units)
+    # plot these up as an annual average but with the same colourbar as Lennartz2017
+    var2plot = 'cwocs'
+    version = 'Lennartz_2017_limited_colourbar'
+    title = 'Annual average OCS values from Lennartz2017'
+#    s2splotting.
+    plot_up_annual_averages_of_prediction(target=target, ds=ds,
+                                                      version=version,
+                                                      var2plot=var2plot,
+                                                      vmin=vmin, vmax=vmax,
+                                                      title=title,
+                                                      units=units)
+
+
     # plot these up  - seasonally resolved average
-    s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds)
-
-
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds,
+                                                        version=version,
+                                                        var2plot=var2plot,
+                                                        units=units)
     # plot up seasonally, but with the same colourbar as the ML prediction
+    vmin, vmax = 0, 75
+    version = 'Lennartz_2017_limited_colourbar'
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds,
+                                                        version=version,
+                                                        var2plot=var2plot,
+                                                        vmin=vmin, vmax=vmax,
+                                                        units=units)
+    # - also plot ML prediction with the same colourbar
+    # get the predicted data as saved offline
+    ds = utils.get_predicted_values_as_ds(target=target, )
+    # seasonally resolved avg. - using same colourbar as the OCS values Lennartz2017
+    vmin, vmax = 0, 75
+    version = 'ML_v0.0.0_limited_colourbar'
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds,
+                                                       version=version,
+#                                                      var2plot=var2plot,
+                                                       vmin=vmin, vmax=vmax,
+                                                       units=units)
 
 
-
+def regrid_Lennartz2017_OCS_feild():
+    """
+    Regrid Lennartz2017 data field to G5NR 0.125x0.125
+    """
+    # Set name and location for re-gridded file
+    folder2save = get_file_locations('data_root')+'/{}/inputs/'.format(target)
+    filename2save = 'OCS_concentration_0.125x0.125.nc'
+    # regrid the dataset
+#    ds_NEW = regrid_ds_field2G5NR_res(ds, folder2save=folder2save,
+#                                   filename2save=filename2save)
+    # Save locally for now
+#    ds_NEW.to_netcdf('TEST.nc')
+    # Just process an save online using s2s functions
+    regrid_ds_field2G5NR_res(ds, folder2save=folder2save,save2netCDF=True,
+                             filename2save=filename2save)
 
 
 def get_OCS_fields_from_Kettle1999():
@@ -174,12 +410,22 @@ def get_OCS_fields_from_Lennartz_2017_as_ds():
     folder = '/users/ts551/scratch/data/s2s/OCS/inputs/'
     filename = 'ocs_concentration.nc'
     ds = xr.open_dataset( folder + filename )
+    # rename the coordinate fields to be consistent with other files used here
+    LatVar = 'lat'
+    LonVar = 'lon'
+    name_dict = {'latitude': LatVar, 'longitude' : LonVar}
+    ds = ds.rename(name_dict )
+    # Make time an arbitrary year
+    dt = [datetime.datetime(2001, i+1, 1) for i in np.arange(12)]
+    ds.time.values = dt
+    # for the ordering of the dimensions to be time, lat, lon
+    ds = ds.transpose('time', 'lat', 'lon')
+    # Update the Lon values to start at -180
+    NewLon = ds['lon'].values.copy() -180
+    var2use = 'cwocs'
+    ds = ds.roll({'lon': -64} )
+    ds['lon'].values = NewLon
     return ds
-
-
-
-
-def add_prediction
 
 
 
@@ -209,7 +455,7 @@ def add_ensemble_prediction2df(df=None, LatVar='Latitude', LonVar='Longitude',
     vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
                                               lats=df[LatVar].values,
                                               months=df[MonthVar].values,
-                                              var2extract=var2extract,)
+                                              var2extract=var2extract)
     df[var] = vals
     return df
 
@@ -384,6 +630,78 @@ def get_dataset_processed4ML(restrict_data_max=False, target='OCS',
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
     return df
+
+
+def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None, average_over_time=False):
+    """
+    Get the emissions from the HEMCO NetCDF files as a dictionary of datasets.
+    """
+    import AC_tools as AC
+    # Look at emissions through HEMCO
+    # Get data locations and run names as a dictionary
+    if isinstance(wds, type(None)):
+        wds = get_run_dict4EGU_runs()
+    runs = list(wds.keys())
+    # variables to extract
+    vars2use = [
+        #
+        'EmisCH3I_ordonez', 'EmisCH3I_SEAFLUX', 'EmisCH3I_TOTAL',
+        'EmisCH2I2_Ocean', 'EmisCH2ICl_Ocean', 'EmisCH2IBr_Ocean', 'EmisI2_Ocean',
+        'EmisHOI_Ocean', 'EmisI2_Ocean_Total', 'EmisHOI_Ocean_Total',
+        'EmisCH2Br2_Ocean', 'EmisCHBr3_Ocean',
+        #
+        'EmisCH3I_B02_RICE', 'EmisCH3I_B02_WETL', 'EmisCH3I_B02_BIOBURN',
+        'EmisCH3I_B02_BIOFUEL',
+        # Also get values for
+#        'EmisACET_Ocean', 'EmisALD2_Ocean',
+        'EmisDMS_Ocean',
+        #
+        'EmisCH2Br2_SEAFLUX', 'EmisCHBr3_SEAFLUX',
+        'EmisOCS_SEAFLUX',
+    ]
+    # Make sure there are no double ups in the list
+    vars2use = list(set(vars2use))
+    # Loop and extract files
+    dsDH = {}
+    for run in runs:
+        wd = wds[run]
+        print(run, wd)
+        dsDH[run] = AC.get_HEMCO_diags_as_ds(wd=wd)
+    # Get actual species
+    specs = [i.split('Emis')[-1].split('_')[0] for i in vars2use]
+#     specs = [
+#     'CH3I','CH3I', 'CH3I', 'CH2Br2', 'CHBr3', 'CH2I2', 'CH2ICl', 'CH2IBr',
+#     'HOI', 'I2', 'ISOP'
+#     ]
+    var_species_dict = dict(zip(vars2use, specs))
+    # Only include core species in dataset
+    for key in dsDH.keys():
+        ds = dsDH[key][ ['AREA'] ]
+        # Try and add al of the requested variables too
+        for var in vars2use:
+            try:
+                ds[var] = dsDH[ key ][ var ]
+            except KeyError:
+                print("WARNING: Skipped '{}' for '{}'".format(key, var) )
+        dsDH[key] = ds
+
+    # Convert to Gg
+    for run in runs:
+        dsREF = dsDH[run].copy()
+        # Average over the time dimension?
+        if average_over_time:
+            ds = dsDH[run].copy().mean(dim='time')
+            for var in dsREF.data_vars:
+                ds[var].attrs = dsREF[var].attrs
+            ds2use = ds
+        else:
+            ds2use = dsREF
+        # Convert the units
+        ds = AC.convert_HEMCO_ds2Gg_per_yr(ds2use, vars2convert=vars2use,
+                                           var_species_dict=var_species_dict)
+        # Update the dictionary
+        dsDH[run] = ds
+    return dsDH
 
 
 
