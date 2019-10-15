@@ -21,6 +21,7 @@ from sparse2spatial.RFRbuild import mk_test_train_sets
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
 from sparse2spatial.RFRbuild import build_or_get_models
+import sparse2spatial.plotting as s2splotting
 
 # Get CH2Br2 specific functions
 from observations import get_CH2Br2_obs
@@ -69,12 +70,30 @@ def main():
 
 
     # --- Plot up the performance of the models
+    # Get the main DataFrame for analysis of output
     df = RFR_dict['df']
+    # Add the ensemble prediction
+    df = add_ensemble_prediction2df(df=df, target=target)
     # Plot performance of models
     RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
     # Plot up also without derivative variables
     RFRanalysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
+    # - Plot comparisons against observations
+    # Plot up an orthogonal distance regression (ODR) plot
+    ylim = (0, 9)
+    xlim = (0, 9)
+#    xlim, ylim =  None, None
+    params = ['RFR(Ensemble)']
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
+                                     ylim=ylim, xlim=xlim)
+
+    # Plot up a PDF of concs and bias
+    ylim = (0, 9)
+    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params,
+                                                          units='pM',
+                                                          target=target,
+                                                          xlim=xlim)
 
     # --- Save out the field in kg/m3 for use in models
     version = 'v0_0_0'
@@ -91,6 +110,8 @@ def main():
     ds = ds[[new_var]]
     ds = ds.rename(name_dict={new_var:'Ensemble_Monthly_mean'})
     ds.to_netcdf( folder + filename+'{}.nc'.format('_kg_m3') )
+
+
 
 
 
