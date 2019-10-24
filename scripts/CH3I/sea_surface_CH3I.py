@@ -89,6 +89,122 @@ def main():
     # Check budgets
 
     # plot
+    compare_performance_of_parameters_against_observations()
+
+    # Evalute deposition totals via HEMCO
+
+
+def evaluate_deposition_of_ocean_emissions(ds=None):
+    """
+    Get the net emission budget from the oceans
+    """
+    if isinstance(ds, type(None)):
+        # Set location of data
+        folder = '/users/ts551/scratch/GC/rundirs/'
+        folder += 'geosfp_4x5_tropchem.v12.6.0.OF.Bell02.1day/'
+        folder += '/OutputDir/'
+        # Get
+        ds = AC.get_HEMCO_diags_as_ds(wd=folder)
+    # create a function to convert kg/m2/s to Gg/yr
+    def convert_kg_m2_s_2_Gg_per_yr(ds, var2use=None, AREA=None):
+        """
+        Calculate annual total from kg/m2/s
+        """
+        # Get area if not provided
+        if isinstance(AREA, type(None)):
+            AREA = ds['AREA']
+        # do conversion and update values (kg/m/s => Gg/year)
+        ds[var2use] = ds[var2use] * AREA * 60 * 60 *24 *365 / 1E9
+        return ds
+
+    # create a function to convert molec/cm2/s to Gg/yr
+    def convert_molec_cm2_s_2_Gg_per_yr(ds, spec=None, var2use=None, AREA=None):
+        """
+        Calculate annual total from kg/m2/s
+        """
+        # Get area if not provided
+        if isinstance(AREA, type(None)):
+            AREA = ds['AREA']
+        # do conversion and update values (molec/cm2/s => mols/s)
+        ds[var2use] = ds[var2use] * AREA*1E4 / AC.constants('AVG')
+        # do conversion and update values (mols/s => Gg/year)
+        ds[var2use] = ds[var2use] * spec.RMM * 60 * 60 * 24 *365 / 1E9
+        return ds
+
+    # Convert deposition flux from s-1 to kg/m2/s
+#           dflx(I,J,:) = dflx(I,J,:) * State_Met%AD(I,J,1) / &
+#                     GET_AREA_M2( I, J, 1 )
+    # Need StateMet object
+#    StateMet = AC.get_StateMet_ds(wd=folder)
+#    AD = StateMet.isel(lev=ds.lev==ds.lev.values[0] )['Met_AD'].squeeze()
+#     def convert_per_s_2_Gg_per_yr(ds, var2use=None, AREA=None, StateMet=None,
+#                                   folder=None, AD=None):
+#         """
+#         Calculate annual total from kg/m2/s
+#         """
+#         # Get area if not provided
+#         if isinstance(AREA, type(None)):
+#             AREA = ds['AREA']
+#         # Get air denisty (AD) if not provided
+#         if isinstance(AD, type(None)):
+#             # Get StateMet if not provided
+#             if isinstance(StateMet, type(None)):
+#                 StateMet = AC.get_StateMet_ds(wd=folder)
+#             # Get air density at the surface
+#             AD = StateMet.isel(lev=ds.lev==ds.lev.values[0] )['Met_AD'].squeeze()
+#         # do conversion and update values
+#         ds[var2use] = ds[var2use] * AD / AREA
+#         # do conversion and update values (kg/m/s => Gg/year)
+#         ds[var2use] = ds[var2use] * AREA * 60 * 60 *24 *365 / 1E9
+#         return ds
+    # Get dry dep feilds directly
+    dsD = AC.get_DryDep_ds(wd=folder)
+
+    # Species to investigate
+    specs2use = ['DMS','ALD2', 'ACET', 'OCS', 'CHBr3', 'CH2Br2', 'CH3I' ]
+#    specs2use = ['DMS','ALD2', 'ACET',  'CHBr3', 'CH3I' ]
+    # Get species classes
+    species_list = [AC.species(i) for i in specs2use]
+    AREA = ds['AREA']
+    df = pd.DataFrame()
+    # Loop by species
+    for spec in species_list:
+        S = pd.Series()
+        # - Get deposition
+#        varname = 'DRYDEP_VEL_'+spec
+        varname = 'DryDep_' + spec.name
+        #
+#        dep4spec = ds[[varname]].copy()
+        dep4spec = dsD[[varname]].copy()
+        # convert to Gg/year
+#        dep4spec = convert_per_s_2_Gg_per_yr(dep4spec, var2use=varname, AREA=AREA,
+#                                             StateMet=StateMet, AD=AD)
+#        dep4spec = convert_kg_m2_s_2_Gg_per_yr(dep4spec, var2use=varname, AREA=AREA)
+        dep4spec = convert_molec_cm2_s_2_Gg_per_yr(dep4spec, spec=spec,
+                                                   var2use=varname, AREA=AREA)
+
+        # save total
+        S['Dep.'] = dep4spec[varname].values.sum()
+        # - Get emission
+        try:
+            varname = 'Emis{}_SEAFLUX'.format( spec.name )
+            emiss4spec = ds[[varname]].copy()
+        except KeyError:
+            varname = 'Emis{}_Ocean'.format( spec.name )
+            emiss4spec = ds[[varname]].copy()
+        # convert to Gg/year
+        emiss4spec = convert_kg_m2_s_2_Gg_per_yr(emiss4spec, var2use=varname, AREA=AREA)
+        # save total
+        S['Emiss.'] = emiss4spec[varname].values.sum()
+
+        # - Calculate Net
+        net4spec = emiss4spec.to_array()  - dep4spec.to_array()
+        S['Net'] = (emiss4spec.to_array()  - dep4spec.to_array() ).values.sum()
+
+        # - Save the Series of species' budget to a dataframe
+        df[ spec.name ] = S
+    # Get emissions
+    print( df )
 
 
 
@@ -336,6 +452,7 @@ def setup_ML_and_other_feilds():
 
 def compare_performance_of_parameters_against_observations():
     """
+    Compare performance on parameterisations with existing values from Bell01
     """
     # - Get the observations and
     # Get the dataframe of observations and predictions
