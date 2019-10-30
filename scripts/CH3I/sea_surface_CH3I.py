@@ -114,7 +114,7 @@ def evaluate_deposition_of_ocean_emissions(ds=None):
         if isinstance(AREA, type(None)):
             AREA = ds['AREA']
         # do conversion and update values (kg/m/s => Gg/year)
-        ds[var2use] = ds[var2use] * AREA * 60 * 60 *24 *365 / 1E9
+        ds[var2use] = ds[var2use] * AREA * 60 * 60 *24 *365 *1E3 / 1E9
         return ds
 
     # create a function to convert molec/cm2/s to Gg/yr
@@ -172,34 +172,34 @@ def evaluate_deposition_of_ocean_emissions(ds=None):
         S = pd.Series()
         # - Get deposition
 #        varname = 'DRYDEP_VEL_'+spec
-        varname = 'DryDep_' + spec.name
+        Dvarname = 'DryDep_' + spec.name
         #
 #        dep4spec = ds[[varname]].copy()
-        dep4spec = dsD[[varname]].copy()
+        dep4spec = dsD[[Dvarname]].copy()
         # convert to Gg/year
 #        dep4spec = convert_per_s_2_Gg_per_yr(dep4spec, var2use=varname, AREA=AREA,
 #                                             StateMet=StateMet, AD=AD)
 #        dep4spec = convert_kg_m2_s_2_Gg_per_yr(dep4spec, var2use=varname, AREA=AREA)
         dep4spec = convert_molec_cm2_s_2_Gg_per_yr(dep4spec, spec=spec,
-                                                   var2use=varname, AREA=AREA)
-
+                                                   var2use=Dvarname, AREA=AREA)
         # save total
-        S['Dep.'] = dep4spec[varname].values.sum()
+        S['Dep.'] = dep4spec[Dvarname].values.sum()
+
         # - Get emission
         try:
-            varname = 'Emis{}_SEAFLUX'.format( spec.name )
-            emiss4spec = ds[[varname]].copy()
+            Evarname = 'Emis{}_SEAFLUX'.format( spec.name )
+            emiss4spec = ds[[Evarname]].copy()
         except KeyError:
-            varname = 'Emis{}_Ocean'.format( spec.name )
-            emiss4spec = ds[[varname]].copy()
+            Evarname = 'Emis{}_Ocean'.format( spec.name )
+            emiss4spec = ds[[Evarname]].copy()
         # convert to Gg/year
-        emiss4spec = convert_kg_m2_s_2_Gg_per_yr(emiss4spec, var2use=varname, AREA=AREA)
+        emiss4spec = convert_kg_m2_s_2_Gg_per_yr(emiss4spec, var2use=Evarname, AREA=AREA)
         # save total
-        S['Emiss.'] = emiss4spec[varname].values.sum()
+        S['Emiss.'] = emiss4spec[Evarname].values.sum()
 
         # - Calculate Net
-        net4spec = emiss4spec.to_array()  - dep4spec.to_array()
-        S['Net'] = (emiss4spec.to_array()  - dep4spec.to_array() ).values.sum()
+        net4spec = emiss4spec[Evarname].values - dep4spec[Dvarname].values
+        S['Net'] = net4spec.sum()
 
         # - Save the Series of species' budget to a dataframe
         df[ spec.name ] = S
