@@ -12,6 +12,7 @@ import datetime as datetime
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 # specific s2s imports
+import sparse2spatial
 import sparse2spatial.utils as utils
 import sparse2spatial.ancillaries as ancillaries
 

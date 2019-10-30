@@ -16,7 +16,6 @@ import AC_tools as AC
 # s2s imports
 import sparse2spatial.utils as utils
 import sparse2spatial.RFRanalysis as RFRanalysis
-from sparse2spatial.RFRanalysis import get_core_stats_on_current_models
 
 
 def build_or_get_models(df=None, testset='Test set (strat. 20%)',
@@ -209,7 +208,7 @@ def get_top_models(n=10, stats=None, RFR_dict=None, vars2exclude=None,
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     if isinstance(stats, type(None)):
-        stats = get_core_stats_on_current_models(
+        stats = RFRanalysis.get_core_stats_on_current_models(
             RFR_dict=RFR_dict, verbose=False)
     # Don't count the Ensemble in the top ranking models
     if exclude_ensemble:

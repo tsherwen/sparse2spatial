@@ -15,7 +15,6 @@ from affine import Affine
 import AC_tools as AC
 # Internal loads within s2s
 import sparse2spatial.utils as utils
-from sparse2spatial.utils import get_df_stats_MSE_RMSE
 
 
 def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
