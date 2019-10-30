@@ -11,7 +11,6 @@ import xesmf as xe
 import sparse2spatial.utils as utils
 
 
-
 def regrid_ds_field2G5NR_res(ds=None, res='0.125x0.125', target='Iodide',
                              filename2save=None, folder2save=None,
                              save2netCDF=False, vars2regrid=None):
@@ -47,7 +46,7 @@ def regrid_ds_field2G5NR_res(ds=None, res='0.125x0.125', target='Iodide',
     for var2use in vars2regrid:
         # Create a dataset to re-grid into
         ds_out = xr.Dataset({
-            #'time': ( ['time'], dsA['time'] ),
+            # 'time': ( ['time'], dsA['time'] ),
             'lat': (['lat'], lat),
             'lon': (['lon'], lon),
         })

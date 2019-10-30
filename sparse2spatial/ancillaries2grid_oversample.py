@@ -423,7 +423,7 @@ def get_ancillaries4df_locs(df=None,
     if TEMP_K_var not in df.columns:
         df[TEMP_K_var] = df[TEMP_var].values + 273.15
     # Also consider variables for Chance2014 multivariante eqn.
-    consider_extra_vars4Chance2014_multivariate_eqn=False
+    consider_extra_vars4Chance2014_multivariate_eqn = False
     if consider_extra_vars4Chance2014_multivariate_eqn:
         sumMLDpt_sum_var = 'WOA_MLDpt_sum'
         #
@@ -762,7 +762,8 @@ def get_WOA_array_025x025_indices(lons=None, lats=None, month=9, debug=False):
     (list, list)
     """
     # Set folder that files are in (using temperatures arrays)
-    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
+    folder = utils.get_file_locations(
+        'data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file (abituaryily using September )
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -887,7 +888,7 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
-                                             var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Directory?
@@ -1025,7 +1026,7 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
-                                             var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Open file
@@ -1464,7 +1465,7 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
-                                             var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Open file
@@ -1863,7 +1864,7 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
-                                             var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # - Open file
@@ -1981,8 +1982,8 @@ def get_MLD_4_loc(var2use='pt', lat=None, lon=None, month=None,
         # Kludge - no annual values, so just use a fix SH/NH month for now.
         if month == 0:
             month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='MLD',
-                                                 var2use=var2use,
-                                                 Data_key_ID_=Data_key_ID_)
+                                                       var2use=var2use,
+                                                       Data_key_ID_=Data_key_ID_)
         else:
             month_ = month
         # Now extract
@@ -2199,7 +2200,7 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
-                                             var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Directory?
@@ -2283,7 +2284,7 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
-                                             var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Directory?
@@ -2585,7 +2586,8 @@ def get_WOA_TEMP4indices(lat_idx=None, lon_idx=None, month=None,
        contain at least one measurement." ;
     """
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
+    folder = utils.get_file_locations(
+        'data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)
@@ -2639,7 +2641,8 @@ def get_WOA_TEMP_4_loc(lat=None, lon=None, month=None, var2use='t_an',
     if debug:
         print(locals())
     # Set folder that files are in
-    folder = utils.get_file_locations('data_root') + '/WOA13/Temperature_025x025/'
+    folder = utils.get_file_locations(
+        'data_root') + '/WOA13/Temperature_025x025/'
     # Select the correct file
     # (The file below is a decadal average ("decav"))
     filename = 'woa13_decav_t{:0>2}_04v2.nc'.format(month)

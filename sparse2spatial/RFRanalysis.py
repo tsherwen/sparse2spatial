@@ -641,7 +641,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     df_tmp = df.loc[df[testset] == True, :]
     stats_sub1 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
                                              df=df_tmp[[target]+model_names +
-                                             param_names], dataset_str=testset,
+                                                       param_names], dataset_str=testset,
                                              target=target,
                                              add_sklean_metrics=add_sklean_metrics).T
     stats2concat = [stats, stats_sub1]
@@ -741,24 +741,26 @@ def plt_stats_by_model_DERIV(vars2exclude=['DOC', 'Prod', 'Ensemble'],
     if debug:
         print(stats.shape, df.shape)
     params2use = stats.T.columns
-    params2use = [i for i in params2use if not any(ii in i for ii in vars2exclude)]
+    params2use = [i for i in params2use if not any(
+        ii in i for ii in vars2exclude)]
     # remove these models from the stats dataframe
     stats = stats.T
     stats = stats[params2use]
     stats = stats.T
     # also remove from dataframe
     params2use = df.columns
-    params2use = [i for i in params2use if not any(ii in i for ii in vars2exclude)]
+    params2use = [i for i in params2use if not any(
+        ii in i for ii in vars2exclude)]
     df = df[params2use]
     if debug:
         print(stats.shape, df.shape)
     # new savename
     savename = 's2s_{}_model_performance_NO_DERIV.png'.format(target)
     # do a call to the existing plotting function
-    plt_stats_by_model(df=df, stats=stats, savename=savename,testset=testset,
+    plt_stats_by_model(df=df, stats=stats, savename=savename, testset=testset,
                        target=target, rename_titles=rename_titles, params=params,
                        n=n, dpi=dpi, ylim=ylim, bold_topten=bold_topten, title=title,
-                       verbose=verbose, debug=debug )
+                       verbose=verbose, debug=debug)
 
 
 def plt_stats_by_model(df=None, stats=None, testset='Test set (strat. 20%)',
@@ -797,7 +799,8 @@ def plt_stats_by_model(df=None, stats=None, testset='Test set (strat. 20%)',
     CB_color_cycle = AC.get_CB_color_cycle()
     # Setup names update dataframe (with unless others are provided) then update df
     if isinstance(rename_titles, type(None)):
-        rename_titles = {'Ensemble_Monthly_mean': 'RFR(Ensemble)',target: 'Obs.' }
+        rename_titles = {
+            'Ensemble_Monthly_mean': 'RFR(Ensemble)', target: 'Obs.'}
     stats.rename(index=rename_titles, inplace=True)
     # Setup plot
     fig, ax = plt.subplots(dpi=dpi)
@@ -817,7 +820,7 @@ def plt_stats_by_model(df=None, stats=None, testset='Test set (strat. 20%)',
     ax.scatter(X, df_tmp.values, color=CB_color_cycle[0])
     # Beatify
     if isinstance(title, type(None)):
-        plt.title( title)
+        plt.title(title)
     ax.set_xticks(X)
     ax.set_xticklabels(params2plot[::-1], rotation=90)
     # limit the y axis if ylim provided
@@ -876,7 +879,7 @@ def calc_performance_of_params(df=None, target='Iodide', params=[]):
     stats = pd.DataFrame(stats).T
     # - Now add own stats
     new_stats = utils.get_df_stats_MSE_RMSE(df=df, target=target, params=params,
-                                      dataset_str='all')
+                                            dataset_str='all')
     # Add new stats to standard stats
     stats = pd.concat([stats, new_stats.T])
     # - add other stats? (mean, standard deviation )
@@ -911,7 +914,8 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # Get the top model names
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
+    topmodels = get_top_models(
+        RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     # Set the folder
     data_root = utils.get_file_locations('data_root')
     folder = '{}/{}/models/LIVE/TEMP_MODELS/'.format(data_root, target)
@@ -1034,7 +1038,8 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
         RFR_dict = build_or_get_models()
     # models to analyse?
     models2compare = []
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
+    topmodels = get_top_models(
+        RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     models2compare = topmodels
     # get strings to update variable names to
     name_dict = utils.convert_fullname_to_shortname(rtn_dict=True)

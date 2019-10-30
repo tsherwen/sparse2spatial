@@ -15,6 +15,7 @@ import datetime as datetime
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 
+
 def mk_LWI_avg_array():
     """
     Make an array of average Land Water Ice (LWI) indices from NASA "nature run" output
@@ -356,7 +357,8 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
             #            print('Update of units not implimented')
             #            sys.exit()
             # Convert units from nM to kg/m3 (=> M => mass => /m3 => /kg)
-            ds[varname] = ds[varname]/1E9 * AC.species_mass(species) * 1E3 / 1E3
+            ds[varname] = ds[varname]/1E9 * \
+                AC.species_mass(species) * 1E3 / 1E3
             # for variable
             attrs_dict['units'] = "kg/m3"
             attrs_dict['units_longname'] = "kg({})/m3".format(target)
@@ -432,7 +434,8 @@ def add_get_core_attributes2ds(ds):
     # - Global variables
     global_attrs_dict = ds.attrs
     History_str = 'Last Modified on: {}'
-    global_attrs_dict['History'] = History_str.format(strftime("%B %d %Y", gmtime()))
+    global_attrs_dict['History'] = History_str.format(
+        strftime("%B %d %Y", gmtime()))
     global_attrs_dict['Conventions'] = "COARDS"
     global_attrs_dict['format'] = 'NetCDF-4'
     ds.attrs = global_attrs_dict
@@ -513,7 +516,8 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
         ds['IS_LAND'].values = (LWI['LWI'] == 1)
         # get surface area
 #        s_area = AC.calc_surface_area_in_grid(res=res).T  # m2 land map (Calculate)
-        s_area = AC.get_surface_area(res)[..., 0]  # m2 land map (Use CDO value)
+        # m2 land map (Use CDO value)
+        s_area = AC.get_surface_area(res)[..., 0]
         ds['AREA'] = ds[var2template].mean(dim='time')
         ds['AREA'].values = s_area
     else:
@@ -601,7 +605,7 @@ def calc_I_Chance2014_STTxx2_I(TEMP):
 
 
 def calc_I_Chance2014_multivar(TEMP=None, MOD_LAT=None, NO3=None,
-                                        sumMLDpt=None, salinity=None):
+                               sumMLDpt=None, salinity=None):
     """
     Take variable and returns multivariate parameterised iodide from Chance2014
     """
@@ -624,7 +628,7 @@ def calc_I2_flux_Carpenter2013_eqn19(I=None, O3=None, WS=None, ):
     -------
     (float)
     """
-    return O3 * (I**1.3) * ( 1.74E9 - (6.54E8 * np.log(WS)) )
+    return O3 * (I**1.3) * (1.74E9 - (6.54E8 * np.log(WS)))
 
 
 def calc_HOI_flux_Carpenter2013_eqn20(I=None, O3=None, WS=None, ):
@@ -835,7 +839,8 @@ def check_or_mk_directory_structure(target='Iodide', verbose=False):
     folders2check['models'] = folder + '/models/'
     live_dir = folder + '/models/LIVE/'
     folders2check['LIVE'] = live_dir
-    folders2check['ENSEMBLE_REPEAT_BUILD'] = live_dir + '/ENSEMBLE_REPEAT_BUILD/'
+    folders2check['ENSEMBLE_REPEAT_BUILD'] = live_dir + \
+        '/ENSEMBLE_REPEAT_BUILD/'
     folders2check['OPTIMISED_MODELS'] = live_dir + '/OPTIMISED_MODELS/'
     folders2check['TEMP_MODELS'] = live_dir + '/TEMP_MODELS/'
     # Loop and create folders if not present
@@ -843,12 +848,12 @@ def check_or_mk_directory_structure(target='Iodide', verbose=False):
         # Get folder to make if not present
         folder = folders2check[key]
         if verbose:
-            print( 'Checking if folder exists for {} - {}'.format(target, folder))
+            print('Checking if folder exists for {} - {}'.format(target, folder))
         # Create the folder?
         if not os.path.exists(folder):
             os.makedirs(folder)
             if verbose:
-                print( 'Creating folder for {} - {}'.format(target, folder))
+                print('Creating folder for {} - {}'.format(target, folder))
 
 
 def set_backup_month_if_unknown(lat=None, var2use='', main_var='',
@@ -1220,11 +1225,10 @@ def add_converted_field_pM_2_kg_m3(ds, var2use='Ensemble_Monthly_mean', RMM=141.
     Convert the target prediction from pM to kg/m3
     """
     # Convert pM to kg/m3
-    ds[new_var] = ds[var2use].copy() /1E12 *RMM /1E3 *1E3
+    ds[new_var] = ds[var2use].copy() / 1E12 * RMM / 1E3 * 1E3
     # Add attributes (needed for HEMCO checks)
     attrs_dict = ds[new_var].attrs
     attrs_dict['units'] = "kg/m3"
     attrs_dict['units_longname'] = "kg({})/m3".format(target)
     ds[new_var].attrs = attrs_dict
     return ds
-

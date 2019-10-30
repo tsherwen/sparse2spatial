@@ -33,7 +33,7 @@ def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
     """
     from geopandas.tools import sjoin
     # Get the shapes for the ocean
-    featurecla='ocean'
+    featurecla = 'ocean'
     group = AC.get_shapes4oceans(rtn_group=True, featurecla=featurecla)
     # Turn the dataframe into a geopandas dataframe
     gdf = geopandas.GeoDataFrame(
@@ -45,7 +45,7 @@ def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
     N = float(df.shape[0])
     if N != Nnew:
         pstr = 'WARNING: Only {:.2f}% assigned ({} of {})'
-        print( pstr.format( (Nnew/N)*100, int(Nnew), int(N)) )
+        print(pstr.format((Nnew/N)*100, int(Nnew), int(N)))
     # Add the ocean assignment
     df[featurecla] = pointInPolys['name'].values
     return df
@@ -264,7 +264,8 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
     # add LWI to ds
     vars2plot = list(ds.data_vars)
     # add LWI and surface area to array
-    ds = utils.add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
+    ds = utils.add_LWI2array(
+        ds=ds, res=res, var2template='Chance2014_STTxx2_I')
     # ----
     df = pd.DataFrame()
     # -- get general annual stats
@@ -351,7 +352,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
     # Variables to consider
     vars2analyse = list(ds.data_vars)
     # Add LWI and surface area to array
-    ds = utils.add_LWI2array(ds=ds, res=res, var2template='Chance2014_STTxx2_I')
+    ds = utils.add_LWI2array(
+        ds=ds, res=res, var2template='Chance2014_STTxx2_I')
     # Set a name for output to saved as
     file_save_str = 'Oi_prj_annual_stats_global_ocean_{}{}'.format(res, ex_str)
     # ---- build an array with general statistics
@@ -475,8 +477,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
 def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Iodide',
                                     stats=None, ds=None, topmodels=None,
                                     var2template='Chance2014_STTxx2_I',
-                                    var2use4Ensemble = 'Ensemble_Monthly_mean',
-                                    var2use4std = 'Ensemble_Monthly_std',
+                                    var2use4Ensemble='Ensemble_Monthly_mean',
+                                    var2use4std='Ensemble_Monthly_std',
                                     save2NetCDF=True):
     """
     Add ensemble average and std to dataset
@@ -510,7 +512,8 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
         if isinstance(RFR_dict, type(None)):
             RFR_dict = build_or_get_models()
         # Get list of
-        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
+        topmodels = get_top_models(
+            RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Now get average concentrations and std dev. per month
     avg_ars = []
     std_ars = []
@@ -532,7 +535,8 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Io
     ds[var2use4std].values = np.stack(std_ars)
     # Save the list of models used to make ensemble to array
     attrs = ds.attrs.copy()
-    attrs['Ensemble_members ({})'.format(var2use4Ensemble)] = ', '.join(topmodels)
+    attrs['Ensemble_members ({})'.format(
+        var2use4Ensemble)] = ', '.join(topmodels)
     ds.attrs = attrs
     # Save to NetCDF
     if save2NetCDF:

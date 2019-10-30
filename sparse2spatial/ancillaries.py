@@ -128,7 +128,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    older = utils.get_file_locations('data_root') +'/DOC/'
+    older = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as a string
     file_str = 'DOCmodelSR.nc'
     # Open dataset
@@ -168,7 +168,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    older = utils.get_file_locations('data_root') +'/DOC/'
+    older = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as a string
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
@@ -204,7 +204,7 @@ def mk_RAD_NetCDF_monthly():
     Resample shortwave radiation NetCDF from daily to monthly
     """
     # Directory?
-    folder = utils.get_file_locations('data_root') +'/GFDL/'
+    folder = utils.get_file_locations('data_root') + '/GFDL/'
     # Filename as a string
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
@@ -374,9 +374,9 @@ def mk_PDF_of_annual_avg_spatial_ancillary_plots():
     Make a PDF of annual avg. spatial values in ancillary NetCDF
     """
     # Get input folder
-    folder = utils.get_file_locations('data_root') +'/data/'
+    folder = utils.get_file_locations('data_root') + '/data/'
     filename = 'Oi_prj_feature_variables_0.125x0.125.nc'
-    ds = xr.open_dataset( folder+filename )
+    ds = xr.open_dataset(folder+filename)
     # version
     extr_str = 'INPUT_VAR'
 
@@ -399,8 +399,8 @@ def mk_PDF_of_annual_avg_spatial_ancillary_plots():
         # Now plot
         s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
                                       target=var2plot,
-#            LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax,
-                                       title=title)
+                                      #            LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax,
+                                      title=title)
 
         plt.close('all')
         del ds2plot
@@ -456,6 +456,7 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125',
     time = ds.time
     # - loop days of year (doy)
     # Custom mask
+
     def is_dayofyear(doy):
         return (doy == doy_)
     # Loop doys
@@ -469,7 +470,8 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125',
             year_ = list(set(ds_tmp['time.year'].values))[0]
             # What is the filename?
             fstr = '{}_lev_{}_res_{}_spec_{}_{}_{:0>3}_ctm.nc'
-            file2save = fstr.format(file_prefix, lev2use, res, spec, year_, str(doy_))
+            file2save = fstr.format(
+                file_prefix, lev2use, res, spec, year_, str(doy_))
             # Now save downloaded data as a NetCDF locally...
             if verbose:
                 print(save_dir+file2save)

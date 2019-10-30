@@ -116,7 +116,7 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
                     joblib.dump(model, folder+model_savename)
                 except FileNotFoundError:
                     prt_str = "WARNING: Failed to save file - @ '{}' with name '{}'"
-                    print( prt_str.format(folder+model_savename))
+                    print(prt_str.format(folder+model_savename))
                     utils.check_or_mk_directory_struture()
             # Also keep models online in dictionary
             models_dict[model_name] = model
@@ -176,7 +176,8 @@ def get_features_used_by_model(models_list=None, RFR_dict=None):
         RFR_dict = build_or_get_models()
     # Get models to use (assume top models, if not provided)
     if isinstance(models_list, type(None)):
-        models_list = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
+        models_list = get_top_models(
+            RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Now plot up in input variables
     features_used_dict = RFR_dict['features_used_dict']
     vars2use = []
@@ -251,7 +252,8 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide', cv=7,
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     # Set models to optimise
-    models2compare = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
+    models2compare = get_top_models(
+        RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     # Get variables needed from core dictionary
     features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
@@ -428,7 +430,8 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     # Save the best estimator now for future use
     if save_best_estimator:
         data_root = utils.get_file_locations('data_root')
-        folder = '{}/{}/models/LIVE/OPTIMISED_MODELS/'.format(data_root, target)
+        folder = '{}/{}/models/LIVE/OPTIMISED_MODELS/'.format(
+            data_root, target)
         model_savename = "my_model_{}.pkl".format(model_name)
         joblib.dump(BEST_ESTIMATOR, folder + model_savename)
     else:
@@ -498,7 +501,7 @@ def Use_RS_CV_to_explore_hyperparams(train_features=None,
 
 def use_GS_CV_to_tune_Hyperparams(param_grid=None,
                                   train_features=None, train_labels=None,
-                                  features_used=None, \
+                                  features_used=None,
                                   scoring='neg_mean_squared_error', cv=3,
                                   ):
     """
@@ -635,6 +638,7 @@ def define_hyperparameter_options2test(features_used=None,
                 'bootstrap': [True],
             }
     # Check the number of variations being tested
+
     def prod(iterable):
         import operator
         return reduce(operator.mul, iterable, 1)
