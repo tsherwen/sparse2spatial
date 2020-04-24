@@ -47,8 +47,10 @@ def get_OCS_obs(target='OCS', limit_depth_to=20,):
             return np.NaN
     # Add datetime
     # NOTE: This will include 346 NaNs for OCS
-    df[dt_var] = df.apply(lambda x: combine2dt(Year=x['Year'], Month=x['Month'],
-                                              Day=x['Day'], ), axis=1)
+    df[dt_var] = df.apply(lambda x: combine2dt(Year=x['Year'],
+                                               Month=x['Month'],
+                                               Day=x['Day'], ),
+                                               axis=1)
 
 #     dt = pd.to_datetime(
 #         df[TimeVar1], format='%Y-%m-%d %H:%M:%S', errors='coerce')

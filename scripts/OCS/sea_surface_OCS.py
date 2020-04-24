@@ -50,7 +50,8 @@ def main():
     RFR_dict = build_or_get_models_OCS(rebuild=False, target=target)
     # Get stats ont these models
     stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-                                                      target=target, verbose=True,
+                                                      target=target,
+                                                      verbose=True,
                                                       debug=True)
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
@@ -61,7 +62,7 @@ def main():
     xsave_str = '_TEST'
     # make NetCDF predictions from the main array
     save2NetCDF = True
-    # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
+    # Resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
     res = '0.125x0.125'
 #    res = '4x5'
 #    res='2x2.5'
@@ -81,7 +82,7 @@ def main():
     # seasonally resolved average
     s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds)
     # seasonally resolved average, with the same colourbar as the OCS values
-    # from Lentt
+    # From Lentt
     vmin, vmax = 0, 75
     version = 'ML_v0.0.0_limited_colourbar'
     s2splotting.plot_up_seasonal_averages_of_prediction(target=target, ds=ds)
@@ -103,7 +104,8 @@ def main():
     xlim = (0, 80)
 #    xlim, ylim =  None, None
     params =  ['RFR(Ensemble)']
-    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM',
+                                     target=target,
                                      ylim=ylim, xlim=xlim)
 
     # Plot up a PDF of concs and bias
@@ -115,7 +117,8 @@ def main():
     # plot out comparisons with observations by region
     LonVar = 'Longitude'
     LatVar = 'Latitude'
-    s2splotting.plt_X_vs_Y_for_regions(df=df, target=target, LonVar=LonVar, LatVar=LatVar)
+    s2splotting.plt_X_vs_Y_for_regions(df=df, target=target,
+                                       LonVar=LonVar, LatVar=LatVar)
 
 
     # --- Save out the field in kg/m3 for use in models
@@ -126,9 +129,10 @@ def main():
     # Convert to kg/m3
     RMM = 60.08
     new_var = 'Ensemble_Monthly_mean_kg_m3'
-    ds = utils.add_converted_field_pM_2_kg_m3(ds=ds, var2use='Ensemble_Monthly_mean',
-                                        target=target, RMM=RMM,
-                                        new_var=new_var)
+    ds = utils.add_converted_field_pM_2_kg_m3(ds=ds,
+                                              var2use='Ensemble_Monthly_mean',
+                                              target=target, RMM=RMM,
+                                              new_var=new_var)
     # Save with just the kg/m3 field to a NetCDF file
     ds = ds[[new_var]]
     ds = ds.rename(name_dict={new_var:'Ensemble_Monthly_mean'})
@@ -162,7 +166,8 @@ def check_Kettle1999_fluxes():
     dsE = xr.open_dataset(EMEP_folder + EMEP_filename)
     lon = dsE['lon'].values
     lat = dsE['lat'].values
-    AREA = AC.calc_surface_area_in_grid(lon_e=lon, lat_e=lat, lon_c=lon, lat_c=lat )
+    AREA = AC.calc_surface_area_in_grid(lon_e=lon, lat_e=lat, lon_c=lon,
+                                        lat_c=lat )
     dsK['AREA'] = dsK['OCS_oc_dir'].copy().mean(dim='time')
     dsK['AREA'].values = AREA.T
     # loop by variable
@@ -224,9 +229,10 @@ def quick_check_of_OCS_emissions(target='OCS'):
     #
     root = '/users/ts551/scratch/GC/rundirs/'
     file_str = 'geosfp_4x5_tropchem.v12.2.1.AQSA.{}'
+    suffix = 'CH3I.ALL.test_other_sources.repeat.II.OCS/'
     run_dict = {
     # intial test runs
-    'OCS_TEST' : root + file_str.format('CH3I.ALL.test_other_sources.repeat.II.OCS/',
+    'OCS_TEST' : root + file_str.format(suffix),
     }
     # use the run_dict from - obs.get_ground_surface_OCS_obs_DIRECT
     wds = run_dict # for debugging...
@@ -255,11 +261,11 @@ def quick_check_of_OCS_emissions(target='OCS'):
 
 def do_analysis_on_existing_fields_from_Lennartz_2017():
     """
-    Plot up the existing Lennartz et al. 2017 fields spatially and get general stats
+    Plot up the existing Lennartz2017 fields spatially and get general stats
     """
-    # regrid the existing field to ~12x12km resolution
+    # Regrid the existing field to ~12x12km resolution
     # NOTE: Just run once, so hased out for now.
-#    regrid_Lennartz2017_OCS_feild()
+#    regrid_Lennartz2017_OCS_field()
     # open regrided field
     filename = 'OCS_concentration_0.125x0.125.nc'
     ds = xr.open_dataset( folder+ filename )
@@ -297,6 +303,10 @@ def do_analysis_on_existing_fields_from_Lennartz_2017():
                                               var2extract='cwocs',)
     var2use = 'Lennartz2017'
     df[var2use] = vals
+
+    # - Get the updated predictions from "Lennartz2020"
+
+
     # - Plot up the performance
 
     # Plot performance of models
@@ -310,7 +320,8 @@ def do_analysis_on_existing_fields_from_Lennartz_2017():
     xlim = (0, 80)
 #    xlim, ylim =  None, None
     params =  ['RFR(Ensemble)', 'Lennartz2017' ]
-    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM',
+                                     target=target,
                                      ylim=ylim, xlim=xlim)
 
     # Plot up a PDF of concs and bias
@@ -321,9 +332,73 @@ def do_analysis_on_existing_fields_from_Lennartz_2017():
                                                           xlim=xlim)
 
 
+
+def extract4nearest_points_in_ds_inc_hr(ds=None, lons=None, lats=None,
+                                        months=None, hours=None,
+                                        var2extract='Ensemble_Monthly_mean',
+                                        select_within_time_dim=True,
+                                        select_nearest_hour=True,
+                                        target='Iodide', verbose=True,
+                                        debug=False):
+    """
+    Extract requested variable for nearest point and time from NetCDF
+
+    Parameters
+    -------
+    lons (np.array): list of Longitudes to use for spatial extraction
+    lats (np.array): list of latitudes to use for spatial extraction
+    months (np.array): list of months to use for temporal extraction
+    var2extract (str): name of variable to extract data for
+    select_within_time_dim (bool): select the nearest point in time?
+    debug (bool): print out debugging output?
+
+    Returns
+    -------
+    (xr.Dataset)
+    """
+    # Get data from NetCDF as a xarray dataset
+    if isinstance(ds, type(None)):
+        ds = get_predicted_values_as_ds(target=target)
+    # Check that the same about of locations have been given for all months
+    lens = [len(i) for i in (lons, lats, months)]
+    assert len(set(lens)) == 1, 'All lists provided must be same length!'
+    # Loop locations and extract
+    extracted_vars = []
+    for n_lon, lon_ in enumerate(lons):
+        # Get lats and month too
+        lat_ = lats[n_lon]
+        month_ = months[n_lon]
+        # Select for month
+        ds_tmp = ds[var2extract]
+        if select_within_time_dim:
+            ds_tmp = ds_tmp.sel(time=(ds['time.month'] == month_))
+            # If
+            if select_nearest_hour:
+                try:
+                    hour_ = hours[n_lon]
+                    if is_number(hour_):
+                        ds_tmp = ds_tmp.sel(hourofday =
+                                            (ds['hourofday'] == hour_)
+                                            )
+                    else:
+                        p_str = "hour '{}' not a # (var #{} @ lat={}, lon={})"
+                        print(p_str.format(hour_,n_lon, lat_, lon_ ))
+                except:
+                    pass
+
+        # Select nearest data in space
+        vals = ds_tmp.sel(lat=lat_, lon=lon_, method='nearest')
+        if debug:
+            pstr = '#={} ({:.2f}%) - vals:'
+            print(pstr.format(n_lon, float(n_lon)/len(lons)*100), vals)
+        extracted_vars += [float(vals.values)]
+    return extracted_vars
+
+
+
 def plot_existing_fields_from_Lennartz_2017():
     """
-    Plot up the existing Lennartz et al. 2017 fields spatially and get general stats
+    Plot up the existing Lennartz2017 fields spatially and get general stats
     """
     # Local variables
     target = 'OCS'
@@ -376,14 +451,14 @@ def plot_existing_fields_from_Lennartz_2017():
                                                        units=units)
 
 
-def regrid_Lennartz2017_OCS_feild():
+def regrid_Lennartz2017_OCS_field():
     """
     Regrid Lennartz2017 data field to G5NR 0.125x0.125
     """
     # Set name and location for re-gridded file
     folder2save = get_file_locations('data_root')+'/{}/inputs/'.format(target)
     filename2save = 'OCS_concentration_0.125x0.125.nc'
-    # regrid the dataset
+    # Regrid the dataset
 #    ds_NEW = regrid_ds_field2G5NR_res(ds, folder2save=folder2save,
 #                                   filename2save=filename2save)
     # Save locally for now
@@ -407,10 +482,11 @@ def get_OCS_fields_from_Lennartz_2017_as_ds():
     """
     Get a dataset of OCS fields from Lennartz et al. 2017
     """
+    # Location and name of file to load
     folder = '/users/ts551/scratch/data/s2s/OCS/inputs/'
     filename = 'ocs_concentration.nc'
     ds = xr.open_dataset( folder + filename )
-    # rename the coordinate fields to be consistent with other files used here
+    # Rename the coordinate fields to be consistent with other files used here
     LatVar = 'lat'
     LonVar = 'lon'
     name_dict = {'latitude': LatVar, 'longitude' : LonVar}
@@ -418,13 +494,46 @@ def get_OCS_fields_from_Lennartz_2017_as_ds():
     # Make time an arbitrary year
     dt = [datetime.datetime(2001, i+1, 1) for i in np.arange(12)]
     ds.time.values = dt
-    # for the ordering of the dimensions to be time, lat, lon
+    # For the ordering of the dimensions to be time, lat, lon
     ds = ds.transpose('time', 'lat', 'lon')
     # Update the Lon values to start at -180
-    NewLon = ds['lon'].values.copy() -180
-    var2use = 'cwocs'
-    ds = ds.roll({'lon': -64} )
-    ds['lon'].values = NewLon
+    NewLon = ds[LonVar].values.copy() -180
+#    var2use = 'cwocs'
+    ds = ds.roll({LonVar: -64} )
+    ds[LonVar].values = NewLon
+    return ds
+
+
+def get_OCS_fields_post_Lennartz_2017_as_ds():
+    """
+    Get a dataset of OCS fields updated in Jan 2020 (based on Lennartz2017)
+    """
+    # Location and name of file to load
+    folder = '/users/ts551/scratch/data/s2s/OCS/inputs/'
+    filename = 'ocs_diel_conc.nc'
+    # Open and update
+    ds = xr.open_dataset( folder + filename )
+    LatVar = 'latitude'
+    LonVar = 'longitude'
+    # Update variables names
+    ds = ds.rename( {'timeofday':'hourofday'} )
+    # Update the Lon values to start at -180
+    NewLon = ds[LonVar].values.copy() -180
+    ds = ds.roll({LonVar: -64} )
+    ds[LonVar].values = NewLon
+    # Unify the time dimension
+#     for month in ds.month.values:
+#         print(month)
+#         ds_tmp = ds_tmp.sel( month=(ds.month == month) )
+#         for hour in ds.hourofday.values:
+#             print(hour)
+#             ds_tmp = ds_tmp.sel( hourofday=(ds.hourofday == hour) )
+
+    # Update the Time dimension
+    dt = [datetime.datetime(2001, i+1, 1) for i in np.arange(12)]
+    ds.month.values = dt
+    # For the ordering of the dimensions to be time, lat, lon
+    ds = ds.transpose('time', 'lat', 'lon')
     return ds
 
 
@@ -618,11 +727,11 @@ def get_dataset_processed4ML(restrict_data_max=False, target='OCS',
 #        df_tmp = df['OCS'].copy()
         # Now split using existing function
         returned_vars = mk_test_train_sets(df=df.copy(),
-                                                 target=target,
-                                                 rand_20_80=rand_20_80,
-                                                 rand_strat=rand_strat,
-                                                 features_used=df.columns.tolist(),
-                                                 )
+                                           target=target,
+                                           rand_20_80=rand_20_80,
+                                           rand_strat=rand_strat,
+                                           features_used=df.columns.tolist(),
+                                           )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
         key_varname = 'Test set ({})'.format(key_)
