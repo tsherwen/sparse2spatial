@@ -453,7 +453,7 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     """
     # Make sure a dataFrame has been provided
     ass_str = "Please provide 'df' of data as a DataFrame type"
-    assert type(df) == pd.DataFrame,
+    assert type(df) == pd.DataFrame, ass_str
     # Setup seabonr plotting environment
     import seaborn as sns
     sns.set(color_codes=True)
