@@ -25,10 +25,12 @@ import cartopy.crs as ccrs
 #from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 
-def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0',
+def plot_up_annual_averages_of_prediction(ds=None, target=None,
+                                          version='v0_0_0',
                                           LatVar='lat', LonVar='lon',
                                           vmin=None, vmax=None, title=None,
-                                          var2plot='Ensemble_Monthly_mean', units=None):
+                                          var2plot='Ensemble_Monthly_mean',
+                                          units=None):
     """
     Wrapper to plot up the annual averages of the predictions
 
@@ -52,15 +54,21 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
         title = "Annual average ensemble prediction for '{}' ({})".format(
             target, units)
     # Now plot
-    plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version, target=target,
-                      LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax, title=title)
+    plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version,
+                      target=target,
+                      LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax,
+                      title=title)
 
 
-def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_0',
-                                            seperate_plots=False, units='pM', var2plot='Ensemble_Monthly_mean',
-                                            vmin=None, vmax=None, dpi=320, show_plot=False, save_plot=True,
+def plot_up_seasonal_averages_of_prediction(ds=None, target=None,
+                                            version='v0_0_0',
+                                            seperate_plots=False, units='pM',
+                                            var2plot='Ensemble_Monthly_mean',
+                                            vmin=None, vmax=None, dpi=320,
+                                            show_plot=False, save_plot=True,
                                             title=None,
-                                            var2plot_longname='ensemble prediction', extension='png', verbose=False):
+                                            var2plot_longname='ensemble prediction',
+                                            extension='png', verbose=False):
     """
     Wrapper to plot up the annual averages of the predictions
 
@@ -156,7 +164,8 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
 
 
 def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
-                          start_from_last_obs=False, drop_bins_without_data=True,
+                          start_from_last_obs=False,
+                          drop_bins_without_data=True,
                           target='Iodide', dpi=320):
     """
     Plot up # of obs. data (Y) binned by region against year (X)
@@ -263,7 +272,8 @@ def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
         print(region)
         df = dfs[region]
         # Now plot
-        plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot, obs_var=obs_var,
+        plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                    obs_var=obs_var,
                                     extr_str=region)
 
 
@@ -289,7 +299,8 @@ def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
             plot_121 = True
         # Now plot a generic X vs. Y plot
         AC.plt_df_X_vs_Y(df=df, fig=fig, ax=ax, y_var=param, x_var=obs_var,
-                         x_label=obs_var, y_label=param, color=color_dict[param],
+                         x_label=obs_var, y_label=param,
+                         color=color_dict[param],
                          save_plot=False, plot_121=plot_121)
     # Add a title
     title_str = "Obs. vs. predictions in '{}'".format(extr_str)
@@ -303,12 +314,15 @@ def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
 
 
 def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
-                      extr_str='', fillcontinents=True, target=None, units=None,
+                      extr_str='', fillcontinents=True, target=None,
+                      units=None,
                       show_plot=False, save_plot=True, title=None,
                       projection=ccrs.Robinson(), fig=None, ax=None, cmap=None,
                       vmin=None, vmax=None, add_meridians_parallels=False,
-                      add_borders_coast=True, set_aspect=True, cbar_kwargs=None,
-                      xticks=True, yticks=True, rm_colourbar=False, extension='png',
+                      add_borders_coast=True, set_aspect=True,
+                      cbar_kwargs=None,
+                      xticks=True, yticks=True, rm_colourbar=False,
+                      extension='png',
                       dpi=320):
     """
     Plot up 2D spatial plot of latitude vs. longitude
@@ -345,8 +359,10 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
         fig = plt.figure(figsize=(10, 6))
     if isinstance(ax, type(None)):
         ax = fig.add_subplot(111, projection=projection, aspect='auto')
-    plt_object = ds[var2plot].plot.imshow(x='lon', y='lat', ax=ax, vmax=vmax, vmin=vmin,
-                                          transform=ccrs.PlateCarree(), cmap=cmap,
+    plt_object = ds[var2plot].plot.imshow(x='lon', y='lat', ax=ax, vmax=vmax,
+                                          vmin=vmin,
+                                          transform=ccrs.PlateCarree(),
+                                          cmap=cmap,
                                           cbar_kwargs=cbar_kwargs)
     # Fill the continents
     if fillcontinents:
@@ -412,7 +428,8 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
 
 def plot_ODR_window_plot(params=[], show_plot=False, df=None,
                          testset='Test set (strat. 20%)', units='pM',
-                         target='Iodide', context="paper", xlim=None, ylim=None,
+                         target='Iodide', context="paper", xlim=None,
+                         ylim=None,
                          dpi=720, verbose=False):
     """
     Show the correlations between obs. and params. as window plot
@@ -435,7 +452,8 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     (None)
     """
     # Make sure a dataFrame has been provided
-    assert type(df) == pd.DataFrame, "Please provide DataFrame ('df') with data"
+    ass_str = "Please provide 'df' of data as a DataFrame type"
+    assert type(df) == pd.DataFrame,
     # Setup seabonr plotting environment
     import seaborn as sns
     sns.set(color_codes=True)

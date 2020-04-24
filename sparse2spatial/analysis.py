@@ -51,7 +51,8 @@ def add_loc_ocean2df(df=None, LatVar='lat', LonVar='lon'):
     return df
 
 
-def mk_NetCDF_of_global_oceans(df=None, LatVar='lat', LonVar='lon', save2NetCDF=False):
+def mk_NetCDF_of_global_oceans(df=None, LatVar='lat', LonVar='lon',
+                               save2NetCDF=False):
     """
     Add the regional location of observations to dataframe
 
@@ -84,10 +85,13 @@ def mk_NetCDF_of_global_oceans(df=None, LatVar='lat', LonVar='lon', save2NetCDF=
         return ds
 
 
-def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodide',
-                                              use_annual_mean=True, filename=None,
-                                              folder=None, just_return_df=False,
-                                              var2template='Chance2014_STTxx2_I',
+def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
+                                              target='Iodide',
+                                              use_annual_mean=True,
+                                              filename=None,
+                                              folder=None,
+                                              just_return_df=False,
+                                            var2template='Chance2014_STTxx2_I',
                                               ):
     """
     Evaluate the spatial predictions between models at a resolution of 4x5 or 2x2.5
@@ -155,9 +159,10 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='', target='Iodi
 
 def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
                                                      target='Iodide',
-                                                     use_annual_mean=False, filename=None,
+                                                     use_annual_mean=False,
+                                                     filename=None,
                                                      folder=None, ds=None,
-                                                     var2template='Chance2014_STTxx2_I',
+                                            var2template='Chance2014_STTxx2_I',
                                                      debug=False):
     """
     Evaluate the spatial predictions between models, binned by latitude
@@ -301,17 +306,21 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
         # Save variables to DataFrame
         var_str = '{} - {}'
         stats_dict = {
-            'mean': s_mean, '75%': s_75, '25%': s_25, 'median': s_50, 'std': s_std,
+            'mean': s_mean, '75%': s_75, '25%': s_25, 'median': s_50,
+            'std': s_std,
         }
         for stat_ in stats_dict.keys():
             df[var_str.format(var_, stat_)] = stats_dict[stat_]
     return df
 
 
-def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iodide',
+def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
+                                               target='Iodide',
                                                RFR_dict=None, ex_str='',
-                                               just_return_df=False, folder=None,
-                                               filename=None, rm_Skagerrak_data=False,
+                                               just_return_df=False,
+                                               folder=None,
+                                               filename=None,
+                                               rm_Skagerrak_data=False,
                                                debug=False):
     """
     Evaluate the spatial predictions between models at 0.125x0.125
@@ -474,7 +483,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True, target='Iod
     a.close()
 
 
-def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None, target='Iodide',
+def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None,
+                                    target='Iodide',
                                     stats=None, ds=None, topmodels=None,
                                     var2template='Chance2014_STTxx2_I',
                                     var2use4Ensemble='Ensemble_Monthly_mean',

@@ -397,7 +397,8 @@ def mk_PDF_of_annual_avg_spatial_ancillary_plots():
         # Set a title for the plot
         title = "Annual average of '{}'".format(var2plot)
         # Now plot
-        s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+        s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                      extr_str=extr_str,
                                       target=var2plot,
                                       #            LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax,
                                       title=title)
@@ -407,8 +408,8 @@ def mk_PDF_of_annual_avg_spatial_ancillary_plots():
 
 
 def download_data4spec(lev2use=72, spec='LWI', res='0.125',
-                       file_prefix='nature_run', doys_list=None, verbose=True,
-                       debug=False):
+                       file_prefix='nature_run', doys_list=None,
+                       verbose=True, debug=False):
     """
     Download all data for a given species at a given resolution
 

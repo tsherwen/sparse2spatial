@@ -42,7 +42,8 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     folder = utils.get_file_locations('data_root')
     dsA = xr.open_dataset(folder + file2regrid)
     # Make sure there are not spaces in variable names
-    dsA = add_attrs2target_ds(dsA, add_varname_attrs=False, add_global_attrs=False,
+    dsA = add_attrs2target_ds(dsA, add_varname_attrs=False,
+                              add_global_attrs=False,
                               rm_spaces_from_vars=True)
     # Remove existing parameters if they are there
     try:

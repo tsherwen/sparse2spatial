@@ -18,10 +18,11 @@ from sparse2spatial.analysis import *
 
 
 def get_stats4mulitple_model_builds(model_name=None, RFR_dict=None,
-                                    features_used=None, df=None, target='Iodide',
+                                    features_used=None, df=None,
+                                    target='Iodide',
                                     verbose=False):
     """
-    Get stats on performance of mutliple model builds on obs. testset
+    Get stats on performance of multiple model builds on obs. testset
 
     Parameters
     -------
@@ -122,7 +123,7 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
     RFR_dict (dict): dictionary of models, data and shared variables
     res (str): horizontal resolution of dataset (e.g. 4x5)
     rm_Skagerrak_data (bool): Remove specific data
-    (above argument is a iodide specific option - remove this)
+    (above argument is an iodide specific option - remove this)
 
     Returns
     -------
@@ -168,7 +169,8 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
 
 
 def build_the_same_model_mulitple_times(model_name, n_estimators=500,
-                                        features_used=None, target='Iodide', df=None,
+                                        features_used=None, target='Iodide',
+                                        df=None,
                                         RFR_dict=None,
                                         testset='Test set (strat. 20%)',
                                         rm_Skagerrak_data=False):
@@ -185,7 +187,7 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
     n_estimators (int), number of estimators (decision trees) to use
     df (pd.DataFrame): dataframe containing of target and features
     rm_Skagerrak_data (bool): Remove specific data
-    (above argument is a iodide specific option - remove this)
+    (above argument is an iodide specific option - remove this)
 
     Returns
     -------
@@ -247,7 +249,8 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
         # build the model - NOTE THIS MUST BE RE-DONE!
         # ( otherwise the model is being re-trained )
         model = RandomForestRegressor(random_state=random_state,
-                                      n_estimators=n_estimators, criterion='mse')
+                                      n_estimators=n_estimators,
+                                      criterion='mse')
         # fit the model
         model.fit(train_features, train_labels)
         # Save the newly built model model
@@ -258,7 +261,8 @@ def build_the_same_model_mulitple_times(model_name, n_estimators=500,
 
 
 def run_tests_on_testing_dataset_split_quantiles(model_name=None,
-                                                 features_used=None, target='Iodide',
+                                                 features_used=None,
+                                                 target='Iodide',
                                                  df=None,
                                                  n_estimators=500):
     """
@@ -360,7 +364,8 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             # build the model - NOTE THIS MUST BE RE-DONE!
             # ( otherwise the model is being re-trained )
             model = RandomForestRegressor(random_state=random_state,
-                                          n_estimators=n_estimators, criterion='mse')
+                                          n_estimators=n_estimators,
+                                          criterion='mse')
             # fit the model
             model.fit(train_features, train_labels)
             # predict the values
@@ -375,8 +380,8 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
             # return stats on bias and variance
             # (just use RMSE and std dev. for now)
             RMSE_l += [np.sqrt(MSE)]
-            del df_tmp, train_features, train_labels, test_features, test_labels
-            del model
+            del df_tmp, train_features, train_labels, test_features
+            del model, test_labels
         # Add to save dictionary
         RMSE_df[Tname] = RMSE_l
 
@@ -518,7 +523,8 @@ def run_tests_on_model_build_options(df=None,
     # transform data
     if do_not_transform_feature_data:
         print('WARNING! '*5, 'Not transforming feature data')
-        print('No transform assumed, as not needed for Decision tree regressor')
+        pstr = 'No transform assumed, as not needed for DecisionTreeRegressor'
+        print(pstr)
         train_set_tr = train_set_full
     else:
         train_set_tr = num_pipeline.fit_transform(train_set_full)
@@ -599,7 +605,8 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
                                      target='Iodide', inc_ensemble=False,
                                      param_names=[],
                                      analysis4coastal=False,
-                                     plot_up_model_performance=True, RFR_dict=None,
+                                     plot_up_model_performance=True,
+                                     RFR_dict=None,
                                      add_sklean_metrics=False, save2csv=True,
                                      verbose=True, debug=False):
     """
@@ -641,9 +648,11 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     df_tmp = df.loc[df[testset] == True, :]
     stats_sub1 = utils.get_df_stats_MSE_RMSE(params=param_names+model_names,
                                              df=df_tmp[[target]+model_names +
-                                                       param_names], dataset_str=testset,
+                                                       param_names],
+                                             dataset_str=testset,
                                              target=target,
-                                             add_sklean_metrics=add_sklean_metrics).T
+                                        add_sklean_metrics=add_sklean_metrics
+                                           ).T
     stats2concat = [stats, stats_sub1]
     # Combine all stats (RMSE and general stats)
     stats = pd.concat(stats2concat)
@@ -703,9 +712,12 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
 
 
 def plt_stats_by_model_DERIV(vars2exclude=['DOC', 'Prod', 'Ensemble'],
-                             df=None, stats=None, testset='Test set (strat. 20%)',
-                             target='Iodide', rename_titles=None, params=None, n=20,
-                             savename=None, dpi=320, bold_topten=True, title=None,
+                             df=None, stats=None,
+                             testset='Test set (strat. 20%)',
+                             target='Iodide', rename_titles=None, params=None,
+                             n=20,
+                             savename=None, dpi=320, bold_topten=True,
+                             title=None,
                              units='nM', ylim=None, verbose=True, debug=False):
     """
     Wrapper to call plt_stats_by_model but not plot models with derived variables
@@ -758,8 +770,10 @@ def plt_stats_by_model_DERIV(vars2exclude=['DOC', 'Prod', 'Ensemble'],
     savename = 's2s_{}_model_performance_NO_DERIV.png'.format(target)
     # do a call to the existing plotting function
     plt_stats_by_model(df=df, stats=stats, savename=savename, testset=testset,
-                       target=target, rename_titles=rename_titles, params=params,
-                       n=n, dpi=dpi, ylim=ylim, bold_topten=bold_topten, title=title,
+                       target=target, rename_titles=rename_titles,
+                       params=params,
+                       n=n, dpi=dpi, ylim=ylim, bold_topten=bold_topten,
+                       title=title,
                        verbose=verbose, debug=debug)
 
 
@@ -878,7 +892,8 @@ def calc_performance_of_params(df=None, target='Iodide', params=[]):
     stats = [df[i].describe() for i in params + [target]]
     stats = pd.DataFrame(stats).T
     # - Now add own stats
-    new_stats = utils.get_df_stats_MSE_RMSE(df=df, target=target, params=params,
+    new_stats = utils.get_df_stats_MSE_RMSE(df=df, target=target,
+                                            params=params,
                                             dataset_str='all')
     # Add new stats to standard stats
     stats = pd.concat([stats, new_stats.T])
@@ -886,7 +901,8 @@ def calc_performance_of_params(df=None, target='Iodide', params=[]):
     return stats
 
 
-def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='Iodide',
+def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7,
+                         target='Iodide',
                          ouput_random_tree_numbers=False, verbose=True, ):
     """
     Extract individual trees from models
@@ -937,11 +953,14 @@ def extract_trees4models(N_trees2output=10, RFR_dict=None, max_depth=7, target='
                                    N_trees2output=N_trees2output,
                                    ouput_random_tree_numbers=ouput_random_tree_numbers,
                                    max_depth=max_depth,
-                                   extr_str=modelname, features_used=features_used)
+                                   extr_str=modelname,
+                                   features_used=features_used)
 
 
-def extract_trees_to_dot_files(folder=None, model_filename=None, target='Iodide',
-                               features_used=None, N_trees2output=10, max_depth=7,
+def extract_trees_to_dot_files(folder=None, model_filename=None,
+                               target='Iodide',
+                               features_used=None, N_trees2output=10,
+                               max_depth=7,
                                ouput_random_tree_numbers=False, extr_str=''):
     """
     Extract individual model trees to .dot files to be plotted in d3
@@ -1048,7 +1067,8 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
         print(model_name)
         get_decision_point_and_values_for_tree(model_name=model_name,
                                                RFR_dict=RFR_dict,
-                                               depth2investigate=depth2investigate)
+                                           depth2investigate=depth2investigate
+                                               )
     # Loop and update the variable names
     for model_name in models2compare:
         print(model_name)

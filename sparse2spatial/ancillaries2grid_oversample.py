@@ -86,7 +86,8 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
         value, flagged = get_WOA_TEMP_4_loc(lat=tmp_lat, lon=tmp_lon,
-                                            month=tmp_month, Data_key_ID_=Data_key_ID_,
+                                            month=tmp_month,
+                                            Data_key_ID_=Data_key_ID_,
                                             buffer_CORDS=buffer_CORDS)
         sub_l += [value]
         labels += [var_]
@@ -309,7 +310,8 @@ def extract_ancillaries_from_external_files(obs_data_df=None,
         if debug:
             print(var_ex_str.format(var_, Data_key_ID_))
         value, flagged = get_DOC_accum_4_loc(lat=tmp_lat, lon=tmp_lon,
-                                             month=tmp_month, var2use='DOCaccum_avg',
+                                             month=tmp_month,
+                                             var2use='DOCaccum_avg',
                                              Data_key_ID_=Data_key_ID_,
                                              buffer_CORDS=buffer_CORDS)
         sub_l += [value]
@@ -436,7 +438,8 @@ def get_ancillaries4df_locs(df=None,
 
 
 def mk_predictor_variable_csv(res='4x5', month=9,
-                              df_lar_var='lat', df_lon_var='lon', df_time_var='month',
+                              df_lar_var='lat', df_lon_var='lon',
+                              df_time_var='month',
                               get_Chance_multi_vars=False):
     """
     Make a predictor array to pass as input for a statistical model
@@ -459,12 +462,14 @@ def mk_predictor_variable_csv(res='4x5', month=9,
     # - Local variables
     # Make array of lon, lat, time
     df = AC.get_2D_df_of_lon_lats_and_time(df_lar_var=df_lar_var, res=res,
-                                           df_lon_var=df_lon_var, df_time_var=df_time_var,
+                                           df_lon_var=df_lon_var,
+                                           df_time_var=df_time_var,
                                            month=month)
     # - Ocean consider ocean grid boxes (e.g. mask for values not in ocean )
     # get Land / Water /Ice fraction
     df['LWI'] = df.apply(lambda x: AC.get_LWI(lat=x[df_lar_var],
-                                              lon=x[df_lon_var], date=x[df_time_var],
+                                              lon=x[df_lon_var],
+                                              date=x[df_time_var],
                                               res=res), axis=1)
     # Drop values not over ocean
     df = df[df['LWI'] == 0]
@@ -571,7 +576,8 @@ def extract_ancillaries_from_compiled_file(df=None, debug=False):
     return df
 
 
-def mk_array_of_indices4locations4res(res='4x5', df_lar_var='lat', df_lon_var='lon',
+def mk_array_of_indices4locations4res(res='4x5', df_lar_var='lat',
+                                      df_lon_var='lon',
                                       df_time_var='month'):
     """
     Make a .csv to store indices to extract location data from
@@ -888,7 +894,8 @@ def get_SeaWIFs_ChlrA_array_9x9km_indices(lons=None, lats=None, month=9,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
-                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use,
+                                                   Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Directory?
@@ -1026,7 +1033,8 @@ def get_Prod_array_1min_indices(lons=None, lats=None, month=9, debug=False):
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
-                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use,
+                                                   Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Open file
@@ -1302,7 +1310,7 @@ def extract_feature_variables2NetCDF(res='4x5',
     # Interpolate NaNs?
     if interpolate_nans:
         ds = ancillaries.interpolate_NaNs_in_feature_variables(ds, res=res,
-                                                               save2NetCDF=False)
+                                                            save2NetCDF=False)
         # Save interpolated version
         ext_str = '_INTERP_NEAREST'
         filename = 'Oi_prj_feature_variables_{}{}.nc'.format(res, ext_str)
@@ -1465,7 +1473,8 @@ def get_Prod_4_loc(lat=None, lon=None, month=None, Data_key_ID_=None,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
-                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use,
+                                                   Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Open file
@@ -1864,7 +1873,8 @@ def get_RAD_4_loc(var2use='SWDN', lat=None, lon=None, month=None,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var=var2use,
-                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use,
+                                                   Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # - Open file
@@ -1955,10 +1965,11 @@ def get_MLD_4_loc(var2use='pt', lat=None, lon=None, month=None,
         file_data_l, flagged_l = [], []
         for month_ in range(1, 13):
             file_data_, flagged = extract_MLD_file_4_loc(var2use=var2use,
-                                                         lat=lat, lon=lon, month=month_,
-                                                         Data_key_ID_=Data_key_ID_,
-                                                         buffer_CORDS=buffer_CORDS,
-                                                         _fill_value=_fill_value,
+                                                         lat=lat, lon=lon,
+                                                         month=month_,
+                                                    Data_key_ID_=Data_key_ID_,
+                                                    buffer_CORDS=buffer_CORDS,
+                                                       _fill_value=_fill_value,
                                                          debug=debug)
             #
             file_data_l += [file_data_]
@@ -1983,12 +1994,13 @@ def get_MLD_4_loc(var2use='pt', lat=None, lon=None, month=None,
         if month == 0:
             month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='MLD',
                                                        var2use=var2use,
-                                                       Data_key_ID_=Data_key_ID_)
+                                                    Data_key_ID_=Data_key_ID_)
         else:
             month_ = month
         # Now extract
         file_data_, flagged = extract_MLD_file_4_loc(var2use=var2use,
-                                                     lat=lat, lon=lon, month=month_,
+                                                     lat=lat, lon=lon,
+                                                     month=month_,
                                                      buffer_CORDS=buffer_CORDS,
                                                      _fill_value=_fill_value,
                                                      debug=debug)
@@ -2036,7 +2048,8 @@ def extract_MLD_file4indices(var2use='pt', lat_idx=None, lon_idx=None,
 
 
 def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
-                           buffer_CORDS=5, _fill_value=-99.9, Data_key_ID_=None,
+                           buffer_CORDS=5, _fill_value=-99.9,
+                           Data_key_ID_=None,
                            verbose=True, debug=False):
     """
     sub-function for get_MLD_4_loc to extract by month.
@@ -2163,7 +2176,8 @@ def extract_MLD_file_4_loc(var2use='pt', lat=None, lon=None, month=None,
 
 
 def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
-                              month=None, var2use='chlor_a', verbose=True, debug=False):
+                              month=None, var2use='chlor_a', verbose=True,
+                              debug=False):
     """
     Extract SeaWIFS (WOA) climatology value for Chlorophyll A (mg m^-3)
 
@@ -2241,7 +2255,8 @@ def get_SeaWIFs_ChlrA4indices(resolution='9km', lat_idx=None, lon_idx=None,
 
 
 def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
-                            lon=None, month=None, buffer_CORDS=5, Data_key_ID_=None,
+                            lon=None, month=None, buffer_CORDS=5,
+                            Data_key_ID_=None,
                             rtn_flag=True,
                             verbose=True, debug=False):
     """
@@ -2284,7 +2299,8 @@ def get_SeaWIFs_ChlrA_4_loc(resolution='9km', var2use='chlor_a', lat=None,
     # Kludge - no annual values, so just use a fix SH/NH month for now.
     if month == 0:
         month_ = utils.set_backup_month_if_unknown(lat=lat, main_var='ChlrA',
-                                                   var2use=var2use, Data_key_ID_=Data_key_ID_)
+                                                   var2use=var2use,
+                                                   Data_key_ID_=Data_key_ID_)
     else:
         month_ = month
     # Directory?
@@ -3319,7 +3335,8 @@ def get_WOA_Dissolved_O2_4indices(lat_idx=None, lon_idx=None, month=None,
 
 
 def get_WOA_Dissolved_O2_4_loc(lat=None, lon=None, month=None, var2use='o_an',
-                               buffer_CORDS=5, rtn_flag=True, Data_key_ID_=None,
+                               buffer_CORDS=5, rtn_flag=True,
+                               Data_key_ID_=None,
                                verbose=True, debug=False):
     """
     Extract Wold ocean atlas (WOA) climatology value for dissolved O2
