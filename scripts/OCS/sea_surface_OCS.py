@@ -154,6 +154,7 @@ def main():
 
 def check_Kettle1999_fluxes():
     """
+    Check the emissions that result from the offline Kettle1999 NetCDF
     """
     # Get the Kettle fluxes
     dsK = get_OCS_fields_from_Kettle1999()
@@ -504,7 +505,7 @@ def get_OCS_fields_from_Lennartz_2017_as_ds():
     return ds
 
 
-def get_OCS_fields_post_Lennartz_2017_as_ds():
+def get_monthly_OCS_fields_post_Lennartz_2017_as_ds():
     """
     Get a dataset of OCS fields updated in Jan 2020 (based on Lennartz2017)
     """
@@ -513,30 +514,98 @@ def get_OCS_fields_post_Lennartz_2017_as_ds():
     filename = 'ocs_diel_conc.nc'
     # Open and update
     ds = xr.open_dataset( folder + filename )
-    LatVar = 'latitude'
-    LonVar = 'longitude'
+    LatVar = 'lat'
+    LonVar =  'lon'
     # Update variables names
-    ds = ds.rename( {'timeofday':'hourofday'} )
+    ds = ds.rename( {
+    'timeofday':'hourofday', 'latitude': LatVar, 'longitude':LonVar
+    } )
     # Update the Lon values to start at -180
     NewLon = ds[LonVar].values.copy() -180
     ds = ds.roll({LonVar: -64} )
     ds[LonVar].values = NewLon
-    # Unify the time dimension
-#     for month in ds.month.values:
-#         print(month)
-#         ds_tmp = ds_tmp.sel( month=(ds.month == month) )
-#         for hour in ds.hourofday.values:
-#             print(hour)
-#             ds_tmp = ds_tmp.sel( hourofday=(ds.hourofday == hour) )
-
+    # - Unify the time dimension
+    vars2use = ['cwocs', 'em_ocs', 'area']
+    ds = ds[vars2use]
     # Update the Time dimension
-    dt = [datetime.datetime(2001, i+1, 1) for i in np.arange(12)]
-    ds.month.values = dt
+    dt = [datetime.datetime(2001, int(i), 15) for i in ds.month.values ]
+    ds = ds.assign_coords({'time': dt})
+    # Template existing dataset, then add new variables
+    dsOLD = ds.copy()
+    ds = ds[[vars2use[0]]].mean(dim='month').rename( {vars2use[0]: 'TEMPLATE'})
+    # loop by variable and add to the dataset
+    for var in vars2use:
+        attrs = dsOLD[var].attrs.copy()
+        #
+        arr = dsOLD[var].values
+        lons = dsOLD[LonVar]
+        lats = dsOLD[LatVar]
+        ds[var] = xr.DataArray(arr,
+                               coords=[dt, lons, lats],
+                               dims=['time', 'lon', 'lat']
+                               )
+        # restore attrs
+        ds[var].attrs = attrs
+    # Remove the template variable
+    del ds['TEMPLATE']
+    ds = ds.squeeze()
     # For the ordering of the dimensions to be time, lat, lon
     ds = ds.transpose('time', 'lat', 'lon')
     return ds
 
 
+
+def get_diel_OCS_fields_post_Lennartz_2017_as_ds():
+    """
+    Get a dataset of OCS fields updated in Jan 2020 (based on Lennartz2017)
+    """
+    # Location and name of file to load
+    folder = '/users/ts551/scratch/data/s2s/OCS/inputs/'
+    filename = 'ocs_diel_conc.nc'
+    # Open and update
+    ds = xr.open_dataset( folder + filename )
+    LatVar = 'lat'
+    LonVar =  'lon'
+    # Update variables names
+    ds = ds.rename( {
+    'timeofday':'hourofday', 'latitude': LatVar, 'longitude':LonVar
+    } )
+    # Update the Lon values to start at -180
+    NewLon = ds[LonVar].values.copy() -180
+    ds = ds.roll({LonVar: -64} )
+    ds[LonVar].values = NewLon
+    # - Unify the time dimension
+    vars2use = ['cwocs_diel', 'em_ocs_diel', 'area']
+    ds = ds[vars2use]
+    # Update the Time dimension
+    dt = []
+    for month in ds.month.values:
+        for hour in ds.hourofday.values:
+
+            dt += [ datetime.datetime(2001, int(month), 15, int(hour)) ]
+    ds = ds.assign_coords({'time': dt})
+    # Template existing dataset, then add new variables
+    dsOLD = ds.copy()
+    ds = ds[[vars2use[0]]].mean(dim='month').rename( {vars2use[0]: 'TEMPLATE'})
+    # loop by variable and add to the dataset
+    for var in vars2use:
+        attrs = dsOLD[var].attrs.copy()
+        #
+        arr = dsOLD[var].values
+        lons = dsOLD[LonVar]
+        lats = dsOLD[LatVar]
+        ds[var] = xr.DataArray(arr,
+                               coords=[dt, lons, lats],
+                               dims=['time', 'lon', 'lat']
+                               )
+        # restore attrs
+        ds[var].attrs = attrs
+    # Remove the template variable
+    del ds['TEMPLATE']
+    ds = ds.squeeze()
+    # For the ordering of the dimensions to be time, lat, lon
+    ds = ds.transpose('time', 'lat', 'lon')
+    return ds
 
 def add_ensemble_prediction2df(df=None, LatVar='Latitude', LonVar='Longitude',
                                target='Iodide', version='_v0_0_0',
