@@ -9,17 +9,19 @@ import xarray as xr
 import gc
 import xesmf as xe
 import sparse2spatial.utils as utils
+import AC_tools as AC
 
 
 def regrid_ds_field2G5NR_res(ds=None, res='0.125x0.125', target='Iodide',
                              filename2save=None, folder2save=None,
-                             save2netCDF=False, vars2regrid=None):
+                             save2netCDF=False, vars2regrid=None,
+                             inc_time_dim=False):
     """
     Re-grid input a dataset's field to G5NR resolution (~12x12km; 0.125x0.125)
 
     Parameters
     -------
-    dsA (xr.Dataset): data to regrid and save to NetCDFs
+    ds (xr.Dataset): data to regrid and save to NetCDFs
     save2netCDF (bool): save re-gridded dataset to NetCDF
     debug (bool): perform debugging and verbose printing?
     res (str): resolution to re-gridd to (e.g. G5NR or ~12x12km)
@@ -34,29 +36,42 @@ def regrid_ds_field2G5NR_res(ds=None, res='0.125x0.125', target='Iodide',
     # Get grid for Nature run resolution
     lon, lat, NIU = AC.get_latlonalt4res(res=res)
     # Create a dataset to re-grid into
-    ds_out = xr.Dataset({
-        # 'time': ( ['time'], dsA['time'] ),
-        'lat': (['lat'], lat),
-        'lon': (['lon'], lon),
-    })
+    if inc_time_dim:
+        ds_out = xr.Dataset({
+            'time': ( ['time'], ds['time'] ),
+            'lat': (['lat'], lat),
+            'lon': (['lon'], lon),
+        })
+    else:
+        ds_out = xr.Dataset({
+            'lat': (['lat'], lat),
+            'lon': (['lon'], lon),
+        })
     # Create a regidder (to be reused )
     regridder = xe.Regridder(ds, ds_out, 'bilinear', reuse_weights=True)
     # Loop and regrid variables
     ds_l = []
     for var2use in vars2regrid:
         # Create a dataset to re-grid into
-        ds_out = xr.Dataset({
-            # 'time': ( ['time'], dsA['time'] ),
-            'lat': (['lat'], lat),
-            'lon': (['lon'], lon),
-        })
+        if inc_time_dim:
+            ds_out = xr.Dataset({
+                'time': ( ['time'], ds['time'] ),
+                'lat': (['lat'], lat),
+                'lon': (['lon'], lon),
+            })
+        else:
+            ds_out = xr.Dataset({
+                'lat': (['lat'], lat),
+                'lon': (['lon'], lon),
+            })
         # Get a DataArray
         dr = ds[var2use]
         # Build regridder
         dr_out = regridder(dr)
         # Important note: Extra dimensions must be on the left, i.e. (time, lev, lat, lon) is correct but (lat, lon, time, lev) would not work. Most data sets should have (lat, lon) on the right (being the fastest changing dimension in the memory). If not, use DataArray.transpose or numpy.transpose to preprocess the data.
         # Exactly the same as input?
-        xr.testing.assert_identical(dr_out['time'], ds['time'])
+        if inc_time_dim:
+            xr.testing.assert_identical(dr_out['time'], ds['time'])
         # Save variable
         ds_l += [dr_out]
     # Setup a new dataset object to hold the new values
