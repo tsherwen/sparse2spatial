@@ -587,6 +587,7 @@ def get_diel_OCS_fields_post_Lennartz_2017_as_ds():
     # Template existing dataset, then add new variables
     dsOLD = ds.copy()
     ds = ds[[vars2use[0]]].mean(dim='month').rename( {vars2use[0]: 'TEMPLATE'})
+    ds = ds.mean(dim='hourofday')
     # loop by variable and add to the dataset
     for var in vars2use:
         attrs = dsOLD[var].attrs.copy()
