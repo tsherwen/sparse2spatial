@@ -27,6 +27,7 @@ import sparse2spatial.analysis as analysis
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.utils as utils
 import sparse2spatial.plotting as s2splotting
+from sparse2spatial.ancillaries2grid import regrid_ds_field2G5NR_res
 from sparse2spatial.RFRbuild import mk_test_train_sets
 from sparse2spatial.RFRbuild import build_or_get_models
 from sparse2spatial.RFRbuild import get_top_models
@@ -36,6 +37,8 @@ from sparse2spatial.RFRbuild import get_top_models
 import observations as obs
 # Temporarily included
 import xesmf as xe
+import xarray as xr
+import datetime as datetime
 
 
 def main():
@@ -333,6 +336,60 @@ def do_analysis_on_existing_fields_from_Lennartz_2017():
                                                           xlim=xlim)
 
 
+def calculate_idx2extract_2D(ds=None, df=None, LonVar='lon', LatVar='lat',
+                             TimeVar='time',
+#                             AltVar='hPa', dsAltVar='lev',
+                             MonthVar='month', HourVar='hour',
+                             dsLonVar='lon', dsLatVar='lat', dsTimeVar='time',
+                             debug=False, testing_mode=False):
+    """
+    Calculated the indexes to extract of a dataset from a dataframe.
+    """
+    # add a datetime column to the
+    df['Date'] = pd.to_datetime( df['Date'] )
+    # Get arrays of the coordinate variables in the dataset
+    ds_lat = ds[dsLatVar].values
+    ds_lon = ds[dsLonVar].values
+    ds_time = ds[dsTimeVar]
+#    ds_month = ds[dsTimeVar+'.month'].values
+#    ds_hour = ds[dsTimeVar+'.hour'].values
+    # Calculate the index individually by coordinate for lat and lon
+    lat_idx = [AC.find_nearest(ds_lat, i) for i in df[LatVar].values]
+    lon_idx = [AC.find_nearest(ds_lon, i) for i in df[LonVar].values]
+    # Add a hour column if not present
+    try:
+        df[MonthVar]
+    except:
+#        df[MonthVar] = df[TimeVar+'.month'].values
+        df[MonthVar] = [i.month for i in AC.dt64_2_dt( df['Date'].values ) ]
+    # for time, first find correct month
+    dfHours = np.array(list(set(ds_hour)))
+#    nearest_hour = [ for i in df[HourVar].values]
+    # map a check of two columns
+    def closest_hr_and_month(month, hour, ds_time=ds_time):
+        """
+        select the time index closest to given month and hour
+        """
+        # First get nearest day
+        ds_tmp = ds_time.sel(time=(ds_time['time.month'] == month) )
+        # Then hour within that day
+        nearest_hour_idx = AC.find_nearest(dfHours, hour)
+        nearest_hour = dfHours[nearest_hour_idx]
+        ds_tmp = ds_tmp.sel(time=(ds_tmp['time.hour'] == nearest_hour) )
+        return int(AC.find_nearest(ds_time, ds_tmp.values))
+    #
+    df['time_idx'] = df[[HourVar, MonthVar]].apply(lambda x:
+                                                   closest_hr_and_month(
+                                                   month=x[MonthVar],
+                                                   hour=x[HourVar]),
+                                                   axis=1
+                                                   )
+    time_idx = df['time_idx'].values
+
+    # Return a dictionary of the values
+    return {LatVar:lat_idx, LonVar:lon_idx, TimeVar:time_idx}
+
+
 
 def extract4nearest_points_in_ds_inc_hr(ds=None, lons=None, lats=None,
                                         months=None, hours=None,
@@ -457,16 +514,33 @@ def regrid_Lennartz2017_OCS_field():
     Regrid Lennartz2017 data field to G5NR 0.125x0.125
     """
     # Set name and location for re-gridded file
-    folder2save = get_file_locations('data_root')+'/{}/inputs/'.format(target)
-    filename2save = 'OCS_concentration_0.125x0.125.nc'
+    data_root = utils.get_file_locations('data_root')
+    folder2save = '{}/{}/inputs/'.format(data_root, target)
+    filename2save = 'OCS_concentration_0.125x0.125'
     # Regrid the dataset
 #    ds_NEW = regrid_ds_field2G5NR_res(ds, folder2save=folder2save,
 #                                   filename2save=filename2save)
     # Save locally for now
 #    ds_NEW.to_netcdf('TEST.nc')
     # Just process an save online using s2s functions
-    regrid_ds_field2G5NR_res(ds, folder2save=folder2save,save2netCDF=True,
+    regrid_ds_field2G5NR_res(ds, folder2save=folder2save, save2netCDF=True,
                              filename2save=filename2save)
+
+    # - Also  regrid the updated fields.
+    ds = get_monthly_OCS_fields_post_Lennartz_2017_as_ds()
+    # monthly field
+    filename2save = 'OCS_concentration_0.125x0.125_v2_monthly'
+    regrid_ds_field2G5NR_res(ds, folder2save=folder2save, save2netCDF=True,
+                             filename2save=filename2save)
+
+
+    # diel
+    ds = get_diel_OCS_fields_post_Lennartz_2017_as_ds()
+    filename2save = 'OCS_concentration_0.125x0.125_v2_diel'
+    regrid_ds_field2G5NR_res(ds, folder2save=folder2save, save2netCDF=True,
+                             filename2save=filename2save)
+
+
 
 
 def get_OCS_fields_from_Kettle1999():
@@ -533,8 +607,12 @@ def get_monthly_OCS_fields_post_Lennartz_2017_as_ds():
     # Template existing dataset, then add new variables
     dsOLD = ds.copy()
     ds = ds[[vars2use[0]]].mean(dim='month').rename( {vars2use[0]: 'TEMPLATE'})
+    # Add area to the dataset
+    AREA_var = 'AREA'
+    ds[AREA_var] = dsOLD[ 'area'].copy()
     # loop by variable and add to the dataset
-    for var in vars2use:
+    vars2use_exc_area = [i for i in vars2use if 'area' not in i.lower() ]
+    for var in vars2use_exc_area:
         attrs = dsOLD[var].attrs.copy()
         #
         arr = dsOLD[var].values
@@ -552,7 +630,6 @@ def get_monthly_OCS_fields_post_Lennartz_2017_as_ds():
     # For the ordering of the dimensions to be time, lat, lon
     ds = ds.transpose('time', 'lat', 'lon')
     return ds
-
 
 
 def get_diel_OCS_fields_post_Lennartz_2017_as_ds():
@@ -581,18 +658,27 @@ def get_diel_OCS_fields_post_Lennartz_2017_as_ds():
     dt = []
     for month in ds.month.values:
         for hour in ds.hourofday.values:
-
             dt += [ datetime.datetime(2001, int(month), 15, int(hour)) ]
     ds = ds.assign_coords({'time': dt})
     # Template existing dataset, then add new variables
     dsOLD = ds.copy()
     ds = ds[[vars2use[0]]].mean(dim='month').rename( {vars2use[0]: 'TEMPLATE'})
     ds = ds.mean(dim='hourofday')
+    # Add area to the dataset
+    AREA_var = 'AREA'
+    ds[AREA_var] = dsOLD[ 'area'].copy()
     # loop by variable and add to the dataset
-    for var in vars2use:
+    vars2use_exc_area = [i for i in vars2use if 'area' not in i.lower() ]
+    for var in vars2use_exc_area:
         attrs = dsOLD[var].attrs.copy()
-        #
-        arr = dsOLD[var].values
+        # extract array ver date and time
+        ds_l = []
+        for month in dsOLD.month.values:
+            for hour in dsOLD.hourofday.values:
+                ds_l += [dsOLD[var].sel(hourofday=hour, month=month).values]
+
+        # Now recombine into a single array and add to dataset
+        arr = np.ma.stack(ds_l)
         lons = dsOLD[LonVar]
         lats = dsOLD[LatVar]
         ds[var] = xr.DataArray(arr,
@@ -607,6 +693,7 @@ def get_diel_OCS_fields_post_Lennartz_2017_as_ds():
     # For the ordering of the dimensions to be time, lat, lon
     ds = ds.transpose('time', 'lat', 'lon')
     return ds
+
 
 def add_ensemble_prediction2df(df=None, LatVar='Latitude', LonVar='Longitude',
                                target='Iodide', version='_v0_0_0',
