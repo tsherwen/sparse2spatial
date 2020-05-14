@@ -17,9 +17,9 @@ def add_longhurst_raster_array_and_LWI_core_NetCDFs(target='Iodide'):
     Driver to add Longhurst Provinces fields to spatial NetCDF files
     """
     Filenames = [
-        'Oi_prj_predicted_{}_0.125x0.125_No_Skagerrak',
-        'Oi_prj_feature_variables_0.125x0.125',
-        'Oi_prj_predicted_{}_0.125x0.125',
+        's2s_predicted_{}_0.125x0.125_No_Skagerrak',
+        's2s_feature_variables_0.125x0.125',
+        's2s_predicted_{}_0.125x0.125',
     ]
     folder = '/work/home/ts551/data/iodide/'
     for name in Filenames:

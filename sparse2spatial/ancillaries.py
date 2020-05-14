@@ -3,7 +3,6 @@
 Processing scripts for ancillary data to used as dependent variable for predition
 
 """
-import xarray as xr
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -39,7 +38,7 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
     # Local variables
     months = np.arange(1, 13)
     # Get Dataset?
-    filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+    filename = 's2s_feature_variables_{}.nc'.format(res)
     if isinstance(ds, type(None)):
         ds = xr.open_dataset(filename)
     for var in ds.data_vars:
@@ -72,8 +71,8 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
             else:
                 ars = [arr]
             # Select grid of interest
-            subX = da['lon'].values
-            subY = da['lat'].values
+#            subX = da['lon'].values
+#            subY = da['lat'].values
             # Define a function to interpolate arrays
             # MOVED TO OUTSIDE FUNCTION
             # Initialise pool to parrellise over
@@ -375,11 +374,10 @@ def mk_PDF_of_annual_avg_spatial_ancillary_plots():
     """
     # Get input folder
     folder = utils.get_file_locations('data_root') + '/data/'
-    filename = 'Oi_prj_feature_variables_0.125x0.125.nc'
+    filename = 's2s_feature_variables_0.125x0.125.nc'
     ds = xr.open_dataset(folder+filename)
     # version
     extr_str = 'INPUT_VAR'
-
     # remove seaborn settings
     # - Not plot all
     # make sure seaborn settings are off

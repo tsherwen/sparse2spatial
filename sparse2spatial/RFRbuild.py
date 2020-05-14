@@ -752,7 +752,7 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
         extr_str = ''
     # Get location to save file and set filename
     folder = utils.get_file_locations('data_root') + '/data/'
-    filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+    filename = 's2s_feature_variables_{}.nc'.format(res)
     dsA = xr.open_dataset(folder + filename)
     # Get location to save ensemble builds of models
     folder_str = '{}/{}/models/LIVE/ENSEMBLE_REPEAT_BUILD{}/'
@@ -806,7 +806,7 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
             plt.title(var_)
             plt.show()
     # Save to NetCDF
-    save_name = 'Oi_prj_predicted_{}_{}_ENSEMBLE_BUILDS_{}_{}.nc'
+    save_name = 's2s_predicted_{}_{}_ENSEMBLE_BUILDS_{}_{}.nc'
     ds.to_netcdf(save_name.format(target, res, model2use, extr_str))
 
 
@@ -981,7 +981,7 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     if isinstance(folder, type(None)):
         folder = utils.get_file_locations('data_root') + '/data/'
     if isinstance(dsA, type(None)):
-        filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+        filename = 's2s_feature_variables_{}.nc'.format(res)
         dsA = xr.open_dataset(folder + filename)
     # - Make a dataset of predictions for each model
     ds_l = []
@@ -1027,7 +1027,7 @@ def mk_predictions_for_3D_features(dsA=None, RFR_dict=None, res='4x5',
     ds = utils.add_attrs2target_ds(ds, add_varname_attrs=False)
     # Save to NetCDF
     if save2NetCDF:
-        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, xsave_str)
+        filename = 's2s_predicted_{}_{}{}.nc'.format(target, res, xsave_str)
         ds.to_netcdf(filename)
     else:
         return ds

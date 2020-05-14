@@ -462,7 +462,7 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     else:
         sns.set_context("talk", font_scale=1.0)
     # Name of PDF to save plots to
-    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_ODR_WINDOW_{}'
+    savetitle = 's2s_point_for_point_comparison_obs_vs_model_ODR_WINDOW_{}'
     savetitle = savetitle.format(target)
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
     # label to use for taget on plots
@@ -644,7 +644,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(params, CB_color_cycle))
     # set a name of file to save data to
-    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_PDF_WINDOW_{}'
+    savetitle = 's2s_point_for_point_comparison_obs_vs_model_PDF_WINDOW_{}'
     savetitle = savetitle.format(target)
     # - Plot up CDF and PDF plots for the dataset and residuals
     fig = plt.figure(dpi=dpi)

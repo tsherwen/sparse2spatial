@@ -62,7 +62,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
     # Get feature values for resolution
     if isinstance(dsA, type(None)):
         data_root = get_file_locations('data_root')
-        filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+        filename = 's2s_feature_variables_{}.nc'.format(res)
         dsA = xr.open_dataset(data_root + filename)
     # Take coordinate variables from dsA
     lat = dsA['lat'].values
@@ -165,7 +165,7 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
     # Get just points that are known
     df = df.unstack().dropna()
     df = df.reset_index(level=[0, 1])
-    # Set the locations and data fro non-nan points
+    # Set the locations and data for non-nan points
     x = df['level_0'].values
     y = df['level_1'].values
     z = df[0].values
@@ -1018,7 +1018,7 @@ def get_predicted_values_as_ds(rm_Skagerrak_data=False, target='Iodide',
     Get predicted values from saved NetCDF file
     """
     folder = get_file_locations('data_root')+'/{}/outputs/'.format(target)
-    filename = 'Oi_prj_predicted_{}_{}'.format(target, res)
+    filename = 's2s_predicted_{}_{}'.format(target, res)
     if rm_Skagerrak_data:
         filename += '_No_Skagerrak'
     if not isinstance(version, type(None)):
@@ -1031,7 +1031,7 @@ def get_feature_variables_as_ds(res='4x5'):
     """
     Get feature variables from saved NetCDF file
     """
-    filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+    filename = 's2s_feature_variables_{}.nc'.format(res)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     return ds
@@ -1059,7 +1059,7 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
     folder = get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/outputs/'.format(target)
     # Set filename string, then open the NetCDF
-    filename = 'Oi_prj_predicted_{}_{}_{}.nc'.format(target, res, version)
+    filename = 's2s_predicted_{}_{}_{}.nc'.format(target, res, version)
     ds = xr.open_dataset(folder+filename)
     return ds
 

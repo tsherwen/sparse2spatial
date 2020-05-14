@@ -405,7 +405,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     # Also add the deviation
     RMSE_stats['Q'] = [i.split('Q=')[-1][:-1] for i in RMSE_stats.index]
     # Save to csv
-    RMSE_stats.to_csv('Oi_prj_test_training_selection_quantiles.csv')
+    RMSE_stats.to_csv('s2s_test_training_selection_quantiles.csv')
 
     # - Setup the datafframes for plotting ( long form needed )
     RMSE_df = RMSE_df.melt()
@@ -458,7 +458,7 @@ def run_tests_on_testing_dataset_split_quantiles(model_name=None,
     right = 0.975
     fig.subplots_adjust(bottom=bottom, top=top, left=left, right=right,)
     # save the plot
-    png_name = 'Oi_prj_test_training_selection_sensitivity_violin_quantiles.png'
+    png_name = 's2s_test_training_selection_sensitivity_violin_quantiles.png'
     plt.savefig(png_name, dpi=dpi)
     plt.close()
 
@@ -598,7 +598,7 @@ def get_feature_importance(RFR_dict=None):
         s = pd.Series(dict(zip(features_used, feature_importances)))
         df_feats[modelname] = s
     # Save as .csv
-    df_feats.T.to_csv('Oi_prj_feature_importances.csv')
+    df_feats.T.to_csv('s2s_feature_importances.csv')
 
 
 def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
@@ -690,7 +690,7 @@ def get_core_stats_on_current_models(df=None, testset='Test set (strat. 20%)',
     # Rename columns (50% to median and ... )
     df.rename(columns={'50%': 'median', 'std': 'std. dev.'})
     # Set filename and save detail on models
-    csv_name = 'Oi_prj_stats_on_{}_models_built_at_obs_points'.format(target)
+    csv_name = 's2s_stats_on_{}_models_built_at_obs_points'.format(target)
     if save2csv:
         stats.round(2).to_csv(csv_name+'.csv')
     # Also print to screen
@@ -1073,7 +1073,7 @@ def analyse_nodes_in_models(RFR_dict=None, depth2investigate=5):
     for model_name in models2compare:
         print(model_name)
         # Now rename variables in columns
-        filestr = 'Oi_prj_features_of*{}*{}*.csv'
+        filestr = 's2s_features_of*{}*{}*.csv'
         filestr = filestr.format(model_name, depth2investigate)
         csv_files = glob.glob(filestr)
         for csv_file in csv_files:
@@ -1141,7 +1141,7 @@ def get_decision_point_and_values_for_tree(depth2investigate=3,
     # Get training_features
     training_features = features_used_dict[model_name].split('+')
     # Core string for saving data to.
-    filename_str = 'Oi_prj_features_of_{}_for_depth_{}{}.{}'
+    filename_str = 's2s_features_of_{}_for_depth_{}{}.{}'
     # Intialise a DataFrame to store values in
     df = pd.DataFrame()
     # Loop by estimator in model

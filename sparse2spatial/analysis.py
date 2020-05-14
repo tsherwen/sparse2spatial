@@ -111,7 +111,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
     """
     # If filename or folder not given, then use defaults
     if isinstance(filename, type(None)):
-        filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
+        filename = 's2s_predicted_{}_{}.nc'.format(target, res)
     if isinstance(folder, type(None)):
         data_root = utils.get_file_locations('data_root')
         folder = '{}/{}/outputs/'.format(data_root, target)
@@ -151,7 +151,7 @@ def get_stats_on_spatial_predictions_4x5_2x25(res='4x5', ex_str='',
     df['mean (weighted)'] = vals
     df = df.T
     # Save or just return the values
-    file_save = 'Oi_prj_annual_stats_global_ocean_{}{}.csv'.format(res, ex_str)
+    file_save = 's2s_annual_stats_global_ocean_{}{}.csv'.format(res, ex_str)
     if just_return_df:
         return df
     df.T.to_csv(file_save)
@@ -182,7 +182,7 @@ def get_stats_on_spatial_predictions_4x5_2x25_by_lat(res='4x5', ex_str='',
     if isinstance(ds, type(None)):
         # If filename or folder not given, then use defaults
         if isinstance(filename, type(None)):
-            filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
+            filename = 's2s_predicted_{}_{}.nc'.format(target, res)
         if isinstance(folder, type(None)):
             data_root = utils.get_file_locations('data_root')
             folder = '{}/{}/outputs/'.format(data_root, target)
@@ -260,7 +260,7 @@ def get_spatial_predictions_0125x0125_by_lat(use_annual_mean=False, ds=None,
     # ----
     # get data
     if isinstance(ds, type(None)):
-        filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
+        filename = 's2s_predicted_{}_{}.nc'.format(target, res)
         folder = '/shared/earth_home/ts551/labbook/Python_progs/'
     #    ds = xr.open_dataset( folder + filename )
         ds = xr.open_dataset(filename)
@@ -352,7 +352,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
             extr_file_str = '_No_Skagerrak'
         else:
             extr_file_str = ''
-        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
+        filename = 's2s_predicted_{}_{}{}.nc'.format(
             target, res, extr_file_str)
     if isinstance(folder, type(None)):
         data_root = utils.get_file_locations('data_root')
@@ -364,7 +364,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
     ds = utils.add_LWI2array(
         ds=ds, res=res, var2template='Chance2014_STTxx2_I')
     # Set a name for output to saved as
-    file_save_str = 'Oi_prj_annual_stats_global_ocean_{}{}'.format(res, ex_str)
+    file_save_str = 's2s_annual_stats_global_ocean_{}{}'.format(res, ex_str)
     # ---- build an array with general statistics
     df = pd.DataFrame()
     # -- get general annual stats
@@ -510,7 +510,7 @@ def add_ensemble_avg_std_to_dataset(res='0.125x0.125', RFR_dict=None,
     (xr.Dataset)
     """
     # Get existing dataset from NetCDF if ds not provided
-    filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
+    filename = 's2s_predicted_{}_{}.nc'.format(target, res)
     if isinstance(ds, type(None)):
         data_root = utils.get_file_locations('data_root')
         folder = '{}/{}/'.format(data_root, target)
