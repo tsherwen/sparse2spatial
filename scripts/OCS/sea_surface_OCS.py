@@ -28,6 +28,7 @@ import sparse2spatial.RFRbuild as build
 import sparse2spatial.utils as utils
 import sparse2spatial.plotting as s2splotting
 from sparse2spatial.ancillaries2grid import regrid_ds_field2G5NR_res
+from sparse2spatial.utils import interpolate_array_with_GRIDDATA
 from sparse2spatial.RFRbuild import mk_test_train_sets
 from sparse2spatial.RFRbuild import build_or_get_models
 from sparse2spatial.RFRbuild import get_top_models
@@ -222,7 +223,60 @@ def check_Kettle1999_fluxes():
 
 
         vals = dsK[var].copy() * dsK['AREA']
-        vals
+
+
+
+def interpolate_NaNs_in_Lennartz_fields():
+    """
+    Interpolate NaNs in Lennartz datasets
+    """
+    # - Load data and
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/inputs/'.format(data_root, target)
+    # Open the monthly dataset as a database
+    filenameM = 'ocs_diel_conc_0.125x0.125_v2_monthly.nc'
+    dsM = xr.open_dataset( folder+ filenameM )
+    # Open the diel dataset as a database
+    filenameD = 'ocs_diel_conc_0.125x0.125_v2_diel.nc'
+    dsD = xr.open_dataset( folder+ filenameD )
+    # - Interpolate the data
+    # monthly data
+    ds = dsM
+    # Get DataArray and coordinates for variable
+    var2use = 'cwocs'
+    da = ds[var2use]
+    coords = [i for i in da.coords]
+    # Loop by month and update the array
+    da_l = []
+    times2use = ds.time.values
+    #
+    p = Pool(12)
+    #
+    ars = [ds[var2use].sel(time=time2use) for i in time2use]
+    ars = p.map(partial(interpolate_array_with_GRIDDATA, da=da), ars)
+    p.close()
+#    if 'time' in coords:
+    da.values = np.ma.array(ars)
+    # Update and save
+    ds[var2use] = da.copy()
+    # Clean memory
+    gc.collect()
+    # save
+    ds.to_netcdf(folder+filenameM.split('nc') +'_interp' )
+
+
+#    else:
+#        da.values = ars[0]
+    #    for time2use in times2use:
+#        print(time2use)
+#        da = .squeeze()
+#        da_l += [interpolate_array_with_GRIDDATA(da.values, da=da)]
+    #
+
+
+    #
+
+
 
 
 
@@ -262,6 +316,135 @@ def quick_check_of_OCS_emissions(target='OCS'):
 
 
 
+def do_analysis_on_existing_fields_from_Lennartz_2017():
+    """
+    Plot up the updated Lennartz2017 fields spatially and get general stats
+    """
+    # elephant
+    # Folder of OCS data
+    data_root = utils.get_file_locations('data_root')
+    folder = '{}/{}/inputs/'.format(data_root, target)
+    # Open the monthly dataset as a database
+    filename = 'ocs_diel_conc_0.125x0.125_v2_monthly.nc'
+    dsM = xr.open_dataset( folder+ filename )
+    # Open the diel dataset as a database
+    filename = 'ocs_diel_conc_0.125x0.125_v2_diel.nc'
+    dsD = xr.open_dataset( folder+ filename )
+
+    # - plot up spatial to sanity check the outputted values
+    sns.reset_orig()
+    # Monthly
+    vmin, vmax = 0, 75
+    version = 'Lennartz_2017_ltd_cbar_regrid_0.125x0.125_updated_2020_monthly'
+    var2plot = 'cwocs'
+    target = 'OCS'
+    units = 'pM'
+    var2plot_longname = 'Lennartz2017 (updated) monthly'
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target,
+#                                                        ds=ds,
+                                                        ds=dsM,
+                                                        version=version,
+                                                        var2plot=var2plot,
+                                         var2plot_longname=var2plot_longname,
+                                                        vmin=vmin, vmax=vmax,
+                                                        units=units)
+    # Diel
+    vmin, vmax = 0, 75
+    version = 'Lennartz_2017_ltd_cbar_regrid_0.125x0.125_updated_2020_diel'
+    var2plot = 'cwocs_diel'
+    target = 'OCS'
+    units = 'pM'
+    var2plot_longname = 'Lennartz2017 (updated) diel'
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target,
+#                                                        ds=ds,
+                                                        ds=dsD,
+                                                        version=version,
+                                         var2plot_longname=var2plot_longname,
+                                                        var2plot=var2plot,
+                                                        vmin=vmin, vmax=vmax,
+                                                        units=units)
+
+
+
+
+    # - Now get all the data together
+    # - Set core local variables
+    target = 'OCS'
+    # retrive models with the observations
+    RFR_dict = build_or_get_models_OCS(rebuild=False, target=target)
+    df = RFR_dict['df']
+    # Add the ML values to this
+    df = add_ensemble_prediction2df(df=df, target=target)
+    # Add the Lennetz values to this.
+    LatVar = 'Latitude'
+    LonVar = 'Longitude'
+    MonthVar = 'Month'
+    # extract the nearest values - from monthly Lennartz2020
+    vals = utils.extract4nearest_points_in_ds(ds=dsM, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df[MonthVar].values,
+                                              var2extract='cwocs',)
+    var2use = 'Lennartz2017_UP_monthly'
+    df[var2use] = vals
+    # now extra the diel values
+    TimeVar = 'Date'
+    HourVar = 'Hour'
+    idx_dict = calculate_idx2extract_2D(df=df, ds=dsD,
+                                        TimeVar=TimeVar, LatVar=LatVar,
+                                        MonthVar=MonthVar, HourVar=HourVar,
+                                        LonVar=LonVar)
+    # Update to ds names
+#    rename_dict = {'Latitude':'lat', 'Longitude':'lon', 'Date':'time'}
+#    idx_dict = { rename_dict[k]: v for k, v in idx_dict.items() }
+    # Loop and extract these points from database
+    # TODO: this must be able to be done en masse!
+    var2extract = 'cwocs_diel'
+    var2use = 'Lennartz2017_UP_diel'
+    idx2use = df.index.values
+    vals = []
+    for n, idx in enumerate( idx2use ):
+        # get the indexes for a specific observation
+        lat_idx = idx_dict[LatVar][n]
+        lon_idx = idx_dict[LonVar][n]
+        time_idx = idx_dict[TimeVar][n]
+        if debug:
+            print(lat_idx, lon_idx, time_idx)
+        # retrive the datapoint
+        ds_tmp = dsD.isel( lat=lat_idx, lon=lon_idx, time=time_idx )
+        if debug:
+            print( ds_tmp[var2extract].values )
+        #
+        vals += [float(ds_tmp[var2extract].values)]
+    df[var2use] = vals
+
+    # - Now plot up ODR and window comparisons
+
+    # Plot up an orthogonal distance regression (ODR) plot
+    ylim = (0, 80)
+    xlim = (0, 80)
+#    ylim = (0, 250)
+#    xlim = (0, 250)
+#    xlim, ylim =  None, None
+    params =  [
+    'RFR(Ensemble)', 'Lennartz2017_UP_monthly', 'Lennartz2017_UP_diel'
+    ]
+    # only points where there is data for both
+    df = df.loc[df[params].dropna().index, :]
+    # ODR
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM',
+                                     target=target,
+                                     ylim=ylim, xlim=xlim)
+
+    # Plot up a PDF of concs and bias
+    ylim = (0, 80)
+#    ylim = (0, 250)
+    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params,
+                                                          units='pM',
+                                                          target=target,
+                                                          xlim=xlim)
+
+
+
 
 def do_analysis_on_existing_fields_from_Lennartz_2017():
     """
@@ -295,10 +478,9 @@ def do_analysis_on_existing_fields_from_Lennartz_2017():
     # Add the ML values to this
     df = add_ensemble_prediction2df(df=df, target=target)
     # Add the Lennetz values to this.
-    LonVar = 'Londitude'
-    LatVar='Latitude'
-    LonVar='Longitude'
-    MonthVar='Month'
+    LatVar = 'Latitude'
+    LonVar = 'Longitude'
+    MonthVar = 'Month'
 
     # extract the nearest values
     vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
@@ -307,9 +489,6 @@ def do_analysis_on_existing_fields_from_Lennartz_2017():
                                               var2extract='cwocs',)
     var2use = 'Lennartz2017'
     df[var2use] = vals
-
-    # - Get the updated predictions from "Lennartz2020"
-
 
     # - Plot up the performance
 
@@ -341,18 +520,18 @@ def calculate_idx2extract_2D(ds=None, df=None, LonVar='lon', LatVar='lat',
 #                             AltVar='hPa', dsAltVar='lev',
                              MonthVar='month', HourVar='hour',
                              dsLonVar='lon', dsLatVar='lat', dsTimeVar='time',
-                             debug=False, testing_mode=False):
+                             debug=False):
     """
-    Calculated the indexes to extract of a dataset from a dataframe.
+    Calculate the indexes to extract of a dataset using a dataframe
     """
     # add a datetime column to the
-    df['Date'] = pd.to_datetime( df['Date'] )
+    df[TimeVar] = pd.to_datetime( df[TimeVar].values )
     # Get arrays of the coordinate variables in the dataset
     ds_lat = ds[dsLatVar].values
     ds_lon = ds[dsLonVar].values
     ds_time = ds[dsTimeVar]
 #    ds_month = ds[dsTimeVar+'.month'].values
-#    ds_hour = ds[dsTimeVar+'.hour'].values
+    ds_hour = ds[dsTimeVar+'.hour'].values
     # Calculate the index individually by coordinate for lat and lon
     lat_idx = [AC.find_nearest(ds_lat, i) for i in df[LatVar].values]
     lon_idx = [AC.find_nearest(ds_lon, i) for i in df[LonVar].values]
@@ -377,7 +556,7 @@ def calculate_idx2extract_2D(ds=None, df=None, LonVar='lon', LatVar='lat',
         nearest_hour = dfHours[nearest_hour_idx]
         ds_tmp = ds_tmp.sel(time=(ds_tmp['time.hour'] == nearest_hour) )
         return int(AC.find_nearest(ds_time, ds_tmp.values))
-    #
+    # Now apply the function to return indexes
     df['time_idx'] = df[[HourVar, MonthVar]].apply(lambda x:
                                                    closest_hr_and_month(
                                                    month=x[MonthVar],
@@ -385,10 +564,10 @@ def calculate_idx2extract_2D(ds=None, df=None, LonVar='lon', LatVar='lat',
                                                    axis=1
                                                    )
     time_idx = df['time_idx'].values
-
+    del df['time_idx']
     # Return a dictionary of the values
+    print([len(i) for i in (lat_idx, lon_idx, time_idx) ])
     return {LatVar:lat_idx, LonVar:lon_idx, TimeVar:time_idx}
-
 
 
 def extract4nearest_points_in_ds_inc_hr(ds=None, lons=None, lats=None,
@@ -516,7 +695,7 @@ def regrid_Lennartz2017_OCS_field():
     # Set name and location for re-gridded file
     data_root = utils.get_file_locations('data_root')
     folder2save = '{}/{}/inputs/'.format(data_root, target)
-    filename2save = 'OCS_concentration_0.125x0.125'
+    filename2save = 'ocs_diel_conc.nc_0.125x0.125'
     # Regrid the dataset
 #    ds_NEW = regrid_ds_field2G5NR_res(ds, folder2save=folder2save,
 #                                   filename2save=filename2save)
@@ -529,14 +708,14 @@ def regrid_Lennartz2017_OCS_field():
     # - Also  regrid the updated fields.
     ds = get_monthly_OCS_fields_post_Lennartz_2017_as_ds()
     # monthly field
-    filename2save = 'OCS_concentration_0.125x0.125_v2_monthly'
+    filename2save = 'ocs_diel_conc_0.125x0.125_v2_monthly'
     regrid_ds_field2G5NR_res(ds, folder2save=folder2save, save2netCDF=True,
                              filename2save=filename2save)
 
 
     # diel
     ds = get_diel_OCS_fields_post_Lennartz_2017_as_ds()
-    filename2save = 'OCS_concentration_0.125x0.125_v2_diel'
+    filename2save = 'ocs_diel_conc_0.125x0.125_v2_diel'
     regrid_ds_field2G5NR_res(ds, folder2save=folder2save, save2netCDF=True,
                              filename2save=filename2save)
 
