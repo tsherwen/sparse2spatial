@@ -38,6 +38,7 @@ import sparse2spatial.archiving as archiving
 import sparse2spatial.analysis as analysis
 import sparse2spatial.RFRanalysis as RFRanalysis
 import sparse2spatial.plotting as plotting
+import sparse2spatial.plotting as s2splotting
 #from sparse2spatial.RFRanalysis import get_stats_on_models
 from sparse2spatial.analysis import add_ensemble_avg_std_to_dataset
 from sparse2spatial.RFRbuild import get_top_models
@@ -327,8 +328,136 @@ def main():
     pass
 
 
+def plot_ODR_comparison_of_iodide_fields():
+    """
+    Make a comparison between the
+
+    Notes
+    -------
+     - Wadley et al present day iodide fields are from this paper
+    https://www.essoar.org/doi/10.1002/essoar.10502078.2
+     - record on BODC
+    """
+    # - Get Wadley et al 2020's process-based iodide field
+    folder = '/users/ts551/scratch/data/Oi/UEA/'
+    filename = 'iodide_from_model_PRESENT_DAY_interp_0.125x0.125.nc'
+    dsM = xr.open_dataset(folder+filename)
+    #
+
+    sns.reset_orig()
+
+    # Monthly
+    vmin, vmax = 0, 240
+    version = 'Wadley_2020_ltd_cbar_regrid_0.125x0.125'
+    var2plot = 'Present_Day_Iodide'
+    target = 'Iodide'
+    units = 'nM'
+    var2plot_longname = 'Wadley2020'
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target,
+#                                                        ds=ds,
+                                                        ds=dsM,
+                                                        version=version,
+                                                        var2plot=var2plot,
+                                         var2plot_longname=var2plot_longname,
+                                                        vmin=vmin, vmax=vmax,
+                                                        units=units)
+
+    # Annual average too
+    title = 'Annual average Iodide field from Wadley et al 2020'
+    s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=ds,
+                                                      title=title,
+                                                      var2plot=var2plot,
+                                                      vmin=vmin, vmax=vmax,
+                                                      units=units
+                                                      )
+
+
+    # -
+    # retrive models with the observations
+    RFR_dict = build_or_get_models_iodide(rebuild=False)
+    df = RFR_dict['df']
+    # Add the ML values to this
+    df = add_ensemble_prediction2df(df=df, target=target, var2extract='Ensemble Monthly mean')
+    # Add the Lennetz values to this.
+    LatVar = 'Latitude'
+    LonVar = 'Longitude'
+    MonthVar = 'Month'
+
+    # Now add Martyn's values
+    var2extract = 'Present_Day_Iodide'
+    var2use = 'Wadley2020'
+    vals = utils.extract4nearest_points_in_ds(ds=dsM, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df[MonthVar].values,
+                                              var2extract=var2extract)
+    df[var2use] = vals
+
+    # Now plot an ODR
+    ylim = (0, 400)
+    xlim = (0, 400)
+    params =  [
+    'RFR(Ensemble)', 'MacDonald2014_iodide', 'Wadley2020'
+    ]
+    # only points where there is data for both - THIS IS NOT NEEDED
+#    df = df.loc[df[params].dropna().index, :]
+    # ODR
+    testset = 'Test set (strat. 20%)'
+    df2plot = df[params+[target, testset]].copy()
+    s2splotting.plot_ODR_window_plot(df=df2plot, params=params, units='nM',
+                                     target=target,
+                                     ylim=ylim, xlim=xlim)
+
+    # Plot up a PDF of concs and bias
+    ylim = (0, 400)
+#    ylim = (0, 400)
+    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df2plot,
+                                                         params=params,
+                                                          units='nM',
+                                                          target=target,
+                                                          xlim=xlim)
+
+    # Summurise states
+    stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
+                                                         target=target,
+                                                         param_names=params,
+                                                         verbose=True,
+                                                         debug=True)
+
+
+
+
+def add_ensemble_prediction2df(df=None, LatVar='Latitude', LonVar='Longitude',
+                               target='Iodide', version='_v0_0_0',
+                               var='RFR(Ensemble)', MonthVar='Month',
+                               var2extract='Ensemble_Monthly_mean'):
+    """
+    Wrapper function to add the ensemble prediction to a dataframe from NetCDF
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    LatVar (str): variable name in DataFrame for latitude
+    LonVar (str): variable name in DataFrame for longitude
+    MonthVar (str): variable name in DataFrame for month
+    version (str): Version number or string (present in NetCDF names etc)
+    var2extract (str): variable to extract from the
+    Returns
+    -------
+    (pd.DataFrame)
+    """
+    # Get the 3D prediction as a dataset
+    ds = utils.get_predicted_values_as_ds(target=target, version=version)
+    # extract the nearest values
+    vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df[MonthVar].values,
+                                              var2extract=var2extract)
+    df[var] = vals
+    return df
+
+
 def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
-                                       features_used=None, target='Iodide', df=None):
+                                       features_used=None, target='Iodide',
+                                       df=None):
     """
     Run tests on the sensitivity of model to test/training choices
 
@@ -537,10 +666,10 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
             # get the training and test set
             returned_vars = mk_iodide_test_train_sets(df=df_tmp,
                                                       rand_20_80=rand_20_80,
-                                                      random_state=random_state,
-                                                      nsplits=TSETS_nsplits[Tname],
+                                                     random_state=random_state,
+                                                  nsplits=TSETS_nsplits[Tname],
                                                       rand_strat=rand_strat,
-                                                      features_used=features_used,
+                                                   features_used=features_used,
                                                       )
             train_set, test_set, test_set_targets = returned_vars
             # set the training and test sets
@@ -551,7 +680,8 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
             # build the model - NOTE THIS MUST BE RE-DONE!
             # ( otherwise the model is being re-trained )
             model = RandomForestRegressor(random_state=random_state,
-                                          n_estimators=n_estimators, criterion='mse')
+                                          n_estimators=n_estimators,
+                                          criterion='mse')
             # Fit the model
             model.fit(train_features, train_labels)
             # Predict the values
@@ -856,7 +986,8 @@ def mk_table_of_point_for_point_performance(RFR_dict=None, df=None,
     if isinstance(df, type(None)):
         df = RFR_dict['df']
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
+                                analysis4coastal=True,
                                 var2use=var2use,
                                 inc_ensemble=inc_ensemble, verbose=False)
     # Select param values of interest (and give updated title names )
@@ -915,7 +1046,8 @@ def mk_table_of_point_for_point_performance_TESTSET(RFR_dict=None, df=None,
     # Just select the testing dataset
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
+                                analysis4coastal=True,
                                 inc_ensemble=inc_ensemble, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
@@ -971,7 +1103,8 @@ def mk_table_of_point_for_point_performance_ALL(RFR_dict=None, df=None,
     if isinstance(df, type(None)):
         df = RFR_dict['df']
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
+                                analysis4coastal=True,
                                 verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
@@ -1065,6 +1198,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
         'strat. 20%': (False, True),
     }
     # Loop training/test split methods
+    features_used = df.columns.tolist()
     for key_ in ways2split_data.keys():
         # Get settings
         rand_20_80, rand_strat = ways2split_data[key_]
@@ -1074,7 +1208,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
         returned_vars = build.mk_test_train_sets(df=df.copy(), target=target,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
-                                                 features_used=df.columns.tolist(),
+                                                 features_used=features_used,
                                                  )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
@@ -1468,7 +1602,7 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
     Wrapper call to build_or_get_models for sea-surface iodide
     """
     # Get the dictionary  of model names and features (specific to iodide)
-    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
+    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(
@@ -1524,7 +1658,8 @@ def mk_iodide_test_train_sets(df=None, target='Iodide',
     (list)
     """
     # Call the s2s function with some presets
-    returned_vars = build.mk_test_train_sets(df=df, target=target, nsplits=nsplits,
+    returned_vars = build.mk_test_train_sets(df=df, target=target,
+                                             nsplits=nsplits,
                                              rand_strat=rand_strat,
                                              features_used=features_used,
                                              random_state=random_state,
@@ -1573,7 +1708,8 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
                                    attrs_dict=attrs_dict,
                                    global_attrs_dict=global_attrs_dict,
                                    varname=varname,
-                                   add_global_attrs=True, add_varname_attrs=True,
+                                   add_global_attrs=True,
+                                   add_varname_attrs=True,
                                    rm_spaces_from_vars=False,
                                    convert2HEMCO_time=False)
     return ds

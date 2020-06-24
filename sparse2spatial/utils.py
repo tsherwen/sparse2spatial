@@ -508,7 +508,8 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
     LWI = xr.open_dataset(folderLWI+filenameLWI)
     # Updates dates (to be Jan=>Dec)
     new_dates = [datetime.datetime(1970, i, 1) for i in LWI['time.month']]
-    LWI.time.values = new_dates
+#    LWI.time.values = new_dates
+    LWI['time'] = new_dates
     # Sort by new dates
     LWI = LWI.loc[{'time': sorted(LWI.coords['time'].values)}]
     if inc_booleans_and_area:

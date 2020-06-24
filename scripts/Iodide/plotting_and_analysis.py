@@ -27,9 +27,11 @@ from sparse2spatial.RFRbuild import build_or_get_models
 from sparse2spatial.RFRbuild import get_top_models
 from sparse2spatial.RFRanalysis import get_stats_on_models
 from sparse2spatial.RFRanalysis import get_stats_on_multiple_global_predictions
+from sparse2spatial.RFRanalysis import get_spatial_predictions_0125x0125_by_lat
 # Local modules specific to iodide work
 from sea_surface_iodide import *
 import project_misc as misc
+
 
 
 def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
@@ -651,10 +653,11 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
     models2compare = [
         'RFR(Ensemble)'
     ]
-    params = ['Chance2014_STTxx2_I', u'MacDonald2014_iodide']
+    params = ['Chance2014_STTxx2_I', u'MacDonald2014_iodide',  'Wadley2020']
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
+                     'Wadley2020': 'Wadley et al. (2020)',
                      'Iodide': 'Obs.',
                      }
     if just_plot_existing_params:

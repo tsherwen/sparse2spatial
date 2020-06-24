@@ -51,7 +51,8 @@ def build_or_get_models(df=None, testset='Test set (strat. 20%)',
     (dict)
     """
     from sklearn.ensemble import RandomForestRegressor
-    from sklearn.externals import joblib
+#    from sklearn.externals import joblib # Depreciated, import directly
+    import joblib
     import gc
     # - Get processed data
     if isinstance(df, type(None)):
@@ -247,7 +248,8 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide', cv=7,
     -------
     (None)
     """
-    from sklearn.externals import joblib
+#    from sklearn.externals import joblib # Depreciated, import directly
+    import joblib
     # Get the data for the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
@@ -270,7 +272,8 @@ def Hyperparameter_Tune4choosen_models(RFR_dict=None, target='Iodide', cv=7,
         features_used = features_used_dict[model_name].split('+')
         # Tune parameters
         BE = Hyperparameter_Tune_model(model=model, use_choosen_model=False,
-                                       save_best_estimator=True, model_name=model_name,
+                                       save_best_estimator=True,
+                                       model_name=model_name,
                                        RFR_dict=RFR_dict,
                                        features_used=features_used, cv=cv)
 
@@ -365,7 +368,8 @@ def Hyperparameter_Tune_model(use_choosen_model=True, model=None,
     -------
     (RandomForestRegressor)
     """
-    from sklearn.externals import joblib
+#    from sklearn.externals import joblib # Depreciated, import directly
+    import joblib
     from sklearn.ensemble import RandomForestRegressor
     # Get data to test
     if isinstance(df, type(None)):
@@ -733,7 +737,8 @@ def mk_predictions_NetCDF_4_many_builds(model2use, res='4x5',
     -------
     (None)
     """
-    from sklearn.externals import joblib
+#    from sklearn.externals import joblib # Depreciated, import directly
+    import joblib
     import gc
     import glob
     # - local variables

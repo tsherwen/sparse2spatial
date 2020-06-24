@@ -354,15 +354,23 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
             extr_file_str = ''
         filename = 's2s_predicted_{}_{}{}.nc'.format(
             target, res, extr_file_str)
+    data_root = utils.get_file_locations('data_root')
     if isinstance(folder, type(None)):
-        data_root = utils.get_file_locations('data_root')
-        folder = '{}/outputs/{}/'.format(data_root, target)
+        folder = '{}/{}/outputs/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
+    # Add the Wadley2020 prediction(s)
+    var2template='Chance2014_STTxx2_I'
+    folder = '{}/../Oi/UEA/'.format(data_root)
+    filename = 'iodide_from_model_PRESENT_DAY_interp_0.125x0.125.nc'
+    dsW = xr.open_dataset(folder + filename)
+    NewVarName = 'Wadley2020'
+    ds[NewVarName] = ds[var2template].copy()
+    ds[NewVarName].values = dsW['Present_Day_Iodide']
     # Variables to consider
     vars2analyse = list(ds.data_vars)
     # Add LWI and surface area to array
     ds = utils.add_LWI2array(
-        ds=ds, res=res, var2template='Chance2014_STTxx2_I')
+        ds=ds, res=res, var2template=var2template)
     # Set a name for output to saved as
     file_save_str = 's2s_annual_stats_global_ocean_{}{}'.format(res, ex_str)
     # ---- build an array with general statistics
@@ -404,7 +412,8 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
     # remove variables
     topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
     params = [
-        'Chance2014_STTxx2_I', 'MacDonald2014_iodide', 'Ensemble_Monthly_mean'
+        'Chance2014_STTxx2_I', 'MacDonald2014_iodide', 'Ensemble_Monthly_mean',
+         'Wadley2020'
     ]
     # select just the models of interest
     df = df[topmodels + params]
@@ -412,6 +421,7 @@ def get_stats_on_spatial_predictions_0125x0125(use_annual_mean=True,
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'Ensemble_Monthly_mean': 'RFR(Ensemble)',
+                     'Wadley2020' :  'Wadley et al. (2020)',
                      'Iodide': 'Obs.',
                      #                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
                      }
