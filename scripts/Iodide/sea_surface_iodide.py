@@ -684,13 +684,15 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 # ---------- Functions to generate/predict modelled field -------------------
 # ---------------------------------------------------------------------------
 def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
-                                           models_dict=None, features_used_dict=None,
+                                           models_dict=None,
+                                           features_used_dict=None,
                                            RFR_dict=None, dsA=None,
                                            stats=None, folder=None,
                                            use_updated_predictor_NetCDF=False,
                                            save2NetCDF=False, plot2check=False,
                                            models2compare=[], topmodels=None,
-                                           rm_Skagerrak_data=False, xsave_str='',
+                                           rm_Skagerrak_data=False,
+                                           xsave_str='',
                                            add_ensemble2ds=False,
                                            verbose=True, debug=False):
     """
@@ -742,7 +744,8 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     if isinstance(topmodels, type(None)):
         # Get stats on models in RFR_dict
         if isinstance(stats, type(None)):
-            stats = get_stats_on_models(RFR_dict=RFR_dict, analysis4coastal=True,
+            stats = get_stats_on_models(RFR_dict=RFR_dict,
+                                        analysis4coastal=True,
                                         verbose=False)
         topmodels = get_top_models(RFR_dict=RFR_dict, stats=stats,
                                    vars2exclude=['DOC', 'Prod'])
@@ -777,9 +780,11 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
         # get testinng features
         features_used = utils.get_model_features_used_dict(modelname)
         # Make a DataSet of predicted values
-        ds_tmp = utils.mk_da_of_predicted_values(model=model, modelname=modelname,
-                                           res=res, features_used=features_used,
-                                           dsA=dsA)
+        ds_tmp = utils.mk_da_of_predicted_values(model=model,
+                                                 modelname=modelname,
+                                                 res=res,
+                                                 features_used=features_used,
+                                                 dsA=dsA)
         #  Add attributes to the prediction
         ds_tmp = add_attrs2iodide_ds(ds_tmp, add_global_attrs=False,
                                      varname=modelname)
@@ -802,7 +807,8 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     if add_ensemble2ds:
         print('WARNING: Using topmodels for ensemble as calculated here')
         ds = add_ensemble_avg_std_to_dataset(ds=ds,
-                                             RFR_dict=RFR_dict, topmodels=topmodels,
+                                             RFR_dict=RFR_dict,
+                                             topmodels=topmodels,
                                              res=res,
                                              save2NetCDF=False)
     # - Do a quick diagnostic plot
@@ -1309,10 +1315,12 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
             'MacDonald et al. (2014)',
         ]
         # Plot performance of models
-        plt_stats_by_model_DERIV(stats=stats, df=df, target=target, params=params,
+        plt_stats_by_model_DERIV(stats=stats, df=df, target=target,
+                                 params=params,
                                  rename_titles=rename_titles )
         # Plot up also without derivative variables
-        plt_stats_by_model_DERIV(stats=stats, df=df, target=target, params=params,
+        plt_stats_by_model_DERIV(stats=stats, df=df, target=target,
+                                 params=params,
                                  rename_titles=rename_titles )
 
 

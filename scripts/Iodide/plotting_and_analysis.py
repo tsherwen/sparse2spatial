@@ -126,7 +126,8 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
         else:
             centre = False
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, units=units,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
                                extend=extend, res=res, left_cb_pos=left_cb_pos,
                                #        cmap=cmap,
                                show=False)
@@ -276,7 +277,8 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
             fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
             # Now plot up
             AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                                   ax=ax, fig=fig, centre=centre, fillcontinents=True,
+                                   ax=ax, fig=fig, centre=centre,
+                                   fillcontinents=True,
                                    extend=extend, res=res, resolution='h',
                                    left_cb_pos=left_cb_pos,
                                    #        cmap=cmap,
@@ -411,8 +413,10 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         title = 'Bias in entire dataset ({}-obs)'.format(param)
         # add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
@@ -438,8 +442,10 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         title = 'Bias in testset ({}-obs)'.format(param)
         # add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
@@ -470,8 +476,10 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         title = 'Abs. bias in entire dataset ({}-obs)'.format(param)
         # add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
@@ -497,8 +505,10 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         title = 'Abs. bias in testset ({}-obs)'.format(param)
         # add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
@@ -529,8 +539,10 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         title = '% Abs. bias in entire dataset ({}-obs)'.format(param)
         # add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
@@ -556,8 +568,10 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         title = '% Abs. bias in testset ({}-obs)'.format(param)
         # add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
@@ -583,7 +597,8 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
 def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
                                         show_plot=False, shade_std=True,
                                         just_plot_existing_params=False,
-                                        plot_up_param_iodide=True, context="paper",
+                                        plot_up_param_iodide=True,
+                                        context="paper",
                                         ds=None, target='iodide',
                                         rm_Skagerrak_data=False):
     """
@@ -722,7 +737,7 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
                                                   plot_avg_as_median=False,
                                                   show_plot=False,
                                                   shade_std=True,
-                                                  just_plot_existing_params=False,
+                                               just_plot_existing_params=False,
                                                   plot_up_param_iodide=True,
                                                   context="paper", ds=None,
                                                   rm_Skagerrak_data=False):
@@ -913,11 +928,16 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
 
 
 def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
-                                                 plot_avg_as_median=False, RFR_dict=None,
-                                                 res='0.125x0.125', target='iodide',
-                                                 show_plot=False, close_plot=True,
-                                                 save2png=False, shade_std=True,
-                                                 folder=None, ds=None, topmodels=None):
+                                                 plot_avg_as_median=False,
+                                                 RFR_dict=None,
+                                                 res='0.125x0.125',
+                                                 target='iodide',
+                                                 show_plot=False,
+                                                 close_plot=True,
+                                                 save2png=False,
+                                                 shade_std=True,
+                                                 folder=None, ds=None,
+                                                 topmodels=None):
     """
     Plot a figure of iodide vs laitude - showing all ensemble members
 
@@ -1014,7 +1034,7 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
     Y = tmp_df['Iodide'].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='none', s=3,
                 label='Coastal obs.')
-    # non-coastal obs
+    # Non-coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == False, :]
     X = tmp_df['Latitude'].values
     Y = tmp_df['Iodide'].values
@@ -1095,7 +1115,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     plt.setp(plt.gca(), frame_on=False, xticks=(), yticks=())
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
-    # now loop and plot up vs. new parameterisation
+    # Now loop and plot up vs. new parameterisation
     for ds in ds_seas:
         # get location/data on obs.
         md_df_tmp = md_df.loc[md_df[u'Data_Key'] == ds]
@@ -1106,8 +1126,8 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         ds_tmp.sort_values(by=MonthVar)
         # plot up against months
-        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values, label='Obs',
-                    color='k')
+        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values,
+                    label='Obs', color='k')
         # Add values for en
         var2plot = ['RFR(Ensemble)']
         for var in var2plot:
@@ -1139,7 +1159,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     plt.setp(plt.gca(), frame_on=False, xticks=(), yticks=())
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
-    # now loop and plot up vs. all parameterisations parameterisation
+    # Now loop and plot up vs. all parameterisations parameterisation
     for ds in ds_seas:
         # get location/data on obs.
         md_df_tmp = md_df.loc[md_df[u'Data_Key'] == ds]
@@ -1150,7 +1170,8 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         ds_tmp.sort_values(by=MonthVar)
         # plot up against months
-        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values, label='Obs',
+        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values,
+                    label='Obs',
                     color='k')
         # Add values for en
         var2plot = [
@@ -1186,7 +1207,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
 
-    # now loop and plot up vs. all parameterisations parameterisation
+    # Now loop and plot up vs. all parameterisations parameterisation
     for ds in ds_seas:
         # get location/data on obs.
         md_df_tmp = md_df.loc[md_df[u'Data_Key'] == ds]
@@ -1197,8 +1218,8 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         ds_tmp.sort_values(by=MonthVar)
         # plot up against months
-        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values, label='Obs',
-                    color='k')
+        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values,
+                    label='Obs', color='k')
         # Add values for en
         var2plot = [
             u'Chance2014_STTxx2_I', u'MacDonald2014_iodide'
@@ -1233,7 +1254,7 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
 
-    # now loop and plot up vs. all parameterisations parameterisation
+    # Now loop and plot up vs. all parameterisations parameterisation
     for ds in ds_seas:
         # get location/data on obs.
         md_df_tmp = md_df.loc[md_df[u'Data_Key'] == ds]
@@ -1244,8 +1265,8 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         ds_tmp.sort_values(by=MonthVar)
         # plot up against months
-        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values, label='Obs',
-                    color='k')
+        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values,
+                    label='Obs', color='k')
         # Add values for en
         var2plot = [
             u'Chance2014_Multivariate'
@@ -1304,7 +1325,7 @@ def test_model_sensitiivty2training_test_split(models2compare=None,
         # Run the analysis
         df = run_tests_on_testing_dataset_split(model_name=model_name,
                                                 model=model, df=df,
-                                                training_features=training_features)
+                                           training_features=training_features)
 
 
 def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
@@ -1417,9 +1438,11 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
 
 
 def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
-                                              rebuild_models=False, remake_NetCDFs=False,
+                                              rebuild_models=False,
+                                              remake_NetCDFs=False,
                                               res='0.125x0.125',
-                                              rm_Skagerrak_data=False, topmodels=None):
+                                              rm_Skagerrak_data=False,
+                                              topmodels=None):
     """
     Analyse the variation in spatial prediction on a per model basis
 
@@ -1463,8 +1486,9 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
             features_used = features_used.split('+')
             # Now build 20 separate initiations of the model
             build_the_same_model_mulitple_times(model_name=model_name,
-                                                features_used=features_used, df=df,
-                                                rm_Skagerrak_data=rm_Skagerrak_data
+                                                features_used=features_used,
+                                                df=df,
+                                            rm_Skagerrak_data=rm_Skagerrak_data
                                                 )
 
     # - Predict the surface concentrations for each of members' repeat builds
@@ -1625,7 +1649,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         ranges4models[model_] = range_
         ptr_str = "Avg. value of mean: {:.5g} ({:.5g} - {:.5g}, range={:.5g})"
         print(ptr_str.format(mean_, min_mean_, max_mean_, range_), file=a)
-        # now print the RMSE and range of
+        # Now print the RMSE and range of
         RMSE_ = df_tmp['RMSE'].mean()
         min_RMSE_ = df_tmp['RMSE'].min()
         max_RMSE_ = df_tmp['RMSE'].max()
@@ -2752,8 +2776,10 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
     plt.savefig(savetitle)
 
 
-def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodide',
-                                       stats=None, show_plot=False, save2png=True,
+def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640,
+                                       target='iodide',
+                                       stats=None, show_plot=False,
+                                       save2png=True,
                                        skipna=True, fillcontinents=True,
                                        rm_non_water_boxes=True):
     """
@@ -2833,7 +2859,8 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodid
         ax = fig.add_subplot(4, 3, n_month+1)
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                fig=fig, ax=ax, xlabel=xlabel, ylabel=ylabel,
                                title_x=title_x, window=True, f_size=f_size)
     # Adjust figure
@@ -2923,7 +2950,8 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
         ax = fig.add_subplot(4, 3, n_month+1)
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                fig=fig, ax=ax, xlabel=xlabel, ylabel=ylabel,
                                title_x=title_x, window=True, f_size=f_size)
     # Adjust plot aesthetics
@@ -2943,7 +2971,8 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
 def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
                                                  target='iodide',
                                                  stats=None, show_plot=False,
-                                                 save2png=True, fillcontinents=True):
+                                                 save2png=True,
+                                                 fillcontinents=True):
     """
     Plot up predictions from existing parameters spatially
 
@@ -2998,10 +3027,13 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
             xlabel = True
         # Now plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               extend=extend, res=res, show=False, title=title, fig=fig,
+                               extend=extend, res=res, show=False, title=title,
+                               fig=fig,
                                ax=ax,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
-                               title_x=.2, title_y=1.02, window=True, xlabel=xlabel,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
+                               title_x=.2, title_y=1.02, window=True,
+                               xlabel=xlabel,
                                f_size=f_size)
         # add A/B label
         ax.annotate(['(A)', '(B)'][n_var], xy=(0.025, 1.02),
@@ -3020,10 +3052,13 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
 
 
 def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
-                                           stats=None, show_plot=False, save2png=True,
-                                           fillcontinents=True, target='iodide',
+                                           stats=None, show_plot=False,
+                                           save2png=True,
+                                           fillcontinents=True,
+                                           target='iodide',
                                            rm_Skagerrak_data=False,
-                                           rm_non_water_boxes=True, skipna=True,
+                                           rm_non_water_boxes=True,
+                                           skipna=True,
                                            verbose=True, debug=False):
     """
     Plot up the ensemble average and uncertainty (std. dev.) spatially
@@ -3086,7 +3121,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3113,7 +3149,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3140,7 +3177,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3167,7 +3205,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3197,7 +3236,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3227,7 +3267,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3256,7 +3297,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3277,7 +3319,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
 def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
                                         show_plot=False, save2png=True,
                                         fillcontinents=True,
-                                        window=False, f_size=20, RFR_dict=None):
+                                        window=False, f_size=20,
+                                        RFR_dict=None):
     """
     Plot up the spatial changes between models
 
@@ -3413,7 +3456,8 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodide',
+def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320,
+                                                target='iodide',
                                                 show_plot=False, save2png=True,
                                                 fillcontinents=True,
                                                 window=False, f_size=20):
@@ -3553,8 +3597,10 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
 
 def get_ensemble_predicted_iodide(df=None,
                                   RFR_dict=None, topmodels=None, stats=None,
-                                  rm_Skagerrak_data=False, use_vals_from_NetCDF=False,
-                                  var2use='RFR(Ensemble)', verbose=True, debug=False):
+                                  rm_Skagerrak_data=False,
+                                  use_vals_from_NetCDF=False,
+                                  var2use='RFR(Ensemble)', verbose=True,
+                                  debug=False):
     """
     Get predicted iodide from literature parametersations
 
@@ -3660,10 +3706,12 @@ def plot_difference2_input_PDF_on_update_of_var(res='4x5'):
     pass
 
 
-def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=None,
+def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None,
+                                                         stats=None,
                                                          res='4x5', dpi=320,
-                                                         perturb_by_mutiple=False,
-                                                         save_str='', show_plot=False):
+                                                      perturb_by_mutiple=False,
+                                                         save_str='',
+                                                         show_plot=False):
     """
     Graphically plot the sensitivity of iodide in input variables
 
@@ -3733,13 +3781,15 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=No
     for key_ in keys2add:
         # predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
-                                                        dsA=dss[key_], RFR_dict=RFR_dict,
+                                                        dsA=dss[key_],
+                                                        RFR_dict=RFR_dict,
                                                        use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels)
         # add ensemble to ds
         ds_tmp = add_ensemble_avg_std_to_dataset(ds=ds_tmp,
-                                                 RFR_dict=RFR_dict, topmodels=topmodels,
+                                                 RFR_dict=RFR_dict,
+                                                 topmodels=topmodels,
                                                  res=res,
                                                  save2NetCDF=False)
         # add LWI and surface area to array
@@ -3808,7 +3858,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=No
             # select iodide to plot and only above 65N
             arr[:, (ds['lat'] <= 65), :] = np.NaN
             df = pd.DataFrame(arr.flatten()).dropna()
-            # now plot non-NaNs
+            # Now plot non-NaNs
             sns.distplot(df, ax=ax, label=var_, color=color, hist=False)
         # Make sure the values are correctly scaled
         ax.autoscale()
@@ -3842,7 +3892,8 @@ def plot_spatial_area4core_decisions(res='4x5'):
 
 
 def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
-                                           target='Iodide', verbose=True, debug=False):
+                                           target='Iodide', verbose=True,
+                                           debug=False):
     """
     Explore the sensitivity of the prediction to data denial
 
@@ -5208,7 +5259,7 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
     Y = tmp_df['Iodide'].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='none', s=3,
                 label='Coastal obs.')
-    # non-coastal obs
+    # Non-coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == False, :]
     X = tmp_df['Latitude'].values
     Y = tmp_df['Iodide'].values
@@ -5230,7 +5281,8 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
 
 
 def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
-                                           use_avg_at_lat=True, res='0.125x0.125',
+                                           use_avg_at_lat=True,
+                                           res='0.125x0.125',
                                            var2set=None,
                                            only_consider_water_boxes=True,
                                            fixed_value2use=None,
@@ -5307,14 +5359,14 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
             # Updated array of values
             arr = np.zeros(values[month, bool_, :].shape)
             arr[:] = avg[month]
-            # now replace values
+            # Now replace values
             values[month, bool_, :] = arr
             del arr
     else:
         # Updated array of values
         arr = np.zeros(values[bool_, :].shape)
         arr[:] = np.nanmean(avg)
-        # now replace values
+        # Now replace values
         values[bool_, :] = arr
     ds[var2set].values = values
     # Update the history attribute to record the update.
@@ -5372,7 +5424,7 @@ def do_analysis_processing_linked_to_depth_variable():
 #     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
 #                                        var2use=var2use)
 #     RFR_dict['df'] =  df
-#     # now get the stats
+#     # Now get the stats
 #     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, inc_ensemble=True)
 #
 #     # - Now do the same thing, but calculate the prediction with depth
@@ -5386,7 +5438,7 @@ def do_analysis_processing_linked_to_depth_variable():
 #     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
 #                                        var2use=var2use)
 #     RFR_dict['df'] =  df
-#     # now get the stats
+#     # Now get the stats
 #     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, df=df, inc_ensemble=True,
 #                                             var2use=var2use)
 
@@ -5588,10 +5640,12 @@ def plot_spatial_figures_for_ML_paper_with_cartopy():
     plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
 
 
-def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodide',
+def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None,
+                                              target='iodide',
                                               months=None,
-                                              var2extract='Ensemble_Monthly_mean',
-                                              rm_Skagerrak_data=False, verbose=True,
+                                           var2extract='Ensemble_Monthly_mean',
+                                              rm_Skagerrak_data=False,
+                                              verbose=True,
                                               debug=False):
     """
     Wrapper for extract4nearest_points_in_ds for iodide
@@ -5619,8 +5673,10 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
         filename = filename.format('')
     ds = xr.open_dataset(folder + filename)
     # Now extract the dataset
-    extracted_vars = utils.extract4nearest_points_in_ds(ds=ds, lons=lons, lats=lats,
+    extracted_vars = utils.extract4nearest_points_in_ds(ds=ds, lons=lons,
+                                                        lats=lats,
                                                         months=months,
-                                                        var2extract=var2extract,
-                                                        verbose=verbose, debug=debug)
+                                                       var2extract=var2extract,
+                                                        verbose=verbose,
+                                                        debug=debug)
     return extracted_vars
