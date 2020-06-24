@@ -47,6 +47,12 @@ def main():
     Driver for module's man if run directly from command line. unhash
     functionalitliy to call.
     """
+    interpolate_NaNs_in_Lennartz_fields()
+
+
+def old_main():
+    """
+    """
     # - Set core local variables
     target = 'OCS'
 
@@ -226,58 +232,88 @@ def check_Kettle1999_fluxes():
 
 
 
-def interpolate_NaNs_in_Lennartz_fields():
+def interpolate_NaNs_in_Lennartz_fields(target='OCS'):
     """
     Interpolate NaNs in Lennartz datasets
     """
+    import gc
+    from multiprocessing import Pool
+    from time import gmtime, strftime
+    import time
+    import glob
+    from functools import partial
+
+
     # - Load data and
     data_root = utils.get_file_locations('data_root')
     folder = '{}/{}/inputs/'.format(data_root, target)
-    # Open the monthly dataset as a database
-    filenameM = 'ocs_diel_conc_0.125x0.125_v2_monthly.nc'
-    dsM = xr.open_dataset( folder+ filenameM )
+
+    # - Interpolate the monthly data
+    process_monthly = False
+    if process_monthly:
+        # Open the monthly dataset as a database
+        filenameM = 'ocs_diel_conc_0.125x0.125_v2_monthly.nc'
+        dsM = xr.open_dataset( folder+ filenameM )
+        # monthly data
+        ds = dsM
+        # Get DataArray and coordinates for variable
+        var2use = 'cwocs'
+        da = ds[var2use]
+        coords = [i for i in da.coords]
+        # Loop by month and update the array
+        da_l = []
+        times2use = ds.time.values
+        #
+        p = Pool(12)
+        #
+        ars = [ds[var2use].sel(time=i).values for i in times2use]
+        ars = p.map(partial(interpolate_array_with_GRIDDATA, da=da), ars)
+        p.close()
+        da.values = np.ma.array(ars)
+        # Update and save
+        ds[var2use] = da.copy()
+        # Clean memory
+        gc.collect()
+        # save the monthly data
+        ds.to_netcdf(folder+filenameM.split('.nc')[0]+'_interp.nc' )
+
+    # - Interpolate the diel data
     # Open the diel dataset as a database
     filenameD = 'ocs_diel_conc_0.125x0.125_v2_diel.nc'
     dsD = xr.open_dataset( folder+ filenameD )
-    # - Interpolate the data
-    # monthly data
-    ds = dsM
-    # Get DataArray and coordinates for variable
-    var2use = 'cwocs'
+    # Now process
+    ds = dsD
+    var2use = 'cwocs_diel'
     da = ds[var2use]
+    print(ds[var2use].shape)
     coords = [i for i in da.coords]
     # Loop by month and update the array
     da_l = []
     times2use = ds.time.values
-    #
-    p = Pool(12)
-    #
-    ars = [ds[var2use].sel(time=time2use) for i in time2use]
-    ars = p.map(partial(interpolate_array_with_GRIDDATA, da=da), ars)
-    p.close()
-#    if 'time' in coords:
-    da.values = np.ma.array(ars)
+    # split up into chunks
+    n_chunks = 12
+    time_chunks = AC.chunks(times2use, n_chunks)
+    ars_full = [ds[var2use].sel(time=i).values for i in times2use]
+    ars_chunks = AC.chunks(ars_full, n_chunks)
+    ars_new = []
+    for n, ars in enumerate( ars_chunks ):
+        pstr = 'Processing {} of {} ({:.1f} %)'
+        times2use = time_chunks[n]
+        pcent = (float(n)+1)/ float(len(ars_chunks)) *100
+        print(pstr.format(n, len(ars_chunks), pcent))
+        p = Pool(n_chunks)
+        #
+        ars = p.map(partial(interpolate_array_with_GRIDDATA, da=da), ars)
+        ars_new += [ars.copy()]
+        p.close()
     # Update and save
-    ds[var2use] = da.copy()
+    ars_new = [item for sublist in ars_new for item in sublist]
+    da.values = np.ma.array(ars_new)
+    ds[var2use].values = da.copy()
     # Clean memory
     gc.collect()
-    # save
-    ds.to_netcdf(folder+filenameM.split('nc') +'_interp' )
-
-
-#    else:
-#        da.values = ars[0]
-    #    for time2use in times2use:
-#        print(time2use)
-#        da = .squeeze()
-#        da_l += [interpolate_array_with_GRIDDATA(da.values, da=da)]
-    #
-
-
-    #
-
-
-
+    # save the monthly data
+    ds.to_netcdf(folder+filenameD.split('.nc')[0]+'_interp.nc' )
 
 
 def quick_check_of_OCS_emissions(target='OCS'):
