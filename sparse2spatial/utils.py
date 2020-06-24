@@ -144,7 +144,7 @@ def add_units2ds(ds):
     return ds
 
 
-def interpolate_array_with_GRIDDATA(arr_, da=None):
+def interpolate_array_with_GRIDDATA(array, da=None):
     """
     Interpolate an array with scipy's griddata function
     """
@@ -159,7 +159,7 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
     subX = da['lon'].values
     subY = da['lat'].values
     # Construct into 2D DataFrame
-    df = pd.DataFrame(arr_)
+    df = pd.DataFrame(array)
     df.index = subY
     df.columns = subX
     # Get just points that are known
@@ -168,27 +168,29 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
     # Set the locations and data for non-nan points
     x = df['level_0'].values
     y = df['level_1'].values
-    z = df[0].values
+    points = np.array( list(zip(x, y)) )
+    values = df[0].values
     # Define the grid to use
-    xi = subX
-    yi = subY
+#    xi = subX
+#    yi = subY
     # Mesh grid to axes
-    Xi, Yi = np.meshgrid(subX, subY)
+    grid_x, grid_y = np.meshgrid(subX, subY)
     # Grid the data. (using matplotlib.mlab's  griddata)
     # detail here: https://matplotlib.org/api/mlab_api.html#matplotlib.mlab.griddata
 #    zi = griddata(x, y, z, xi, yi, interp='linear')
     # Grid the data and interpolate (using scipys's  griddata method)
-    zi = griddata(zip(x, y), z, (Xi, Yi), method='nearest')
+    zi = griddata(points, values, (grid_x, grid_y), method='nearest')
+    # Use updated near
     # Overwrite values that are NaNs with interpolated values
-    nans = np.isnan(arr_)
-    arr_[nans] = zi[nans]
+    nans = np.isnan(array)
+    array[nans] = zi[nans]
     # Clean memory
     gc.collect()
     # Print timings
     time_now = strftime("%c", gmtime())
     print('finished intpolating @ {}'.format(time_now))
     # Return the array
-    return arr_
+    return array
 
 
 def interpolate_array_with_RBF(arr_, subX=None, subY=None):
