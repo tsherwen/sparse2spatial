@@ -328,7 +328,7 @@ def main():
     pass
 
 
-def plot_ODR_comparison_of_iodide_fields():
+def plt_comparisons_of_Wadley2020_iodide_fields():
     """
     Make a comparison between the
 
@@ -353,6 +353,8 @@ def plot_ODR_comparison_of_iodide_fields():
     target = 'Iodide'
     units = 'nM'
     var2plot_longname = 'Wadley2020'
+    cmap = AC.get_colormap(np.arange(30))
+    cbar_kwargs = {'extend': 'max'}
     s2splotting.plot_up_seasonal_averages_of_prediction(target=target,
 #                                                        ds=ds,
                                                         ds=dsM,
@@ -360,16 +362,54 @@ def plot_ODR_comparison_of_iodide_fields():
                                                         var2plot=var2plot,
                                          var2plot_longname=var2plot_longname,
                                                         vmin=vmin, vmax=vmax,
+                                                        cmap=cmap,
+                                                       cbar_kwargs=cbar_kwargs,
                                                         units=units)
 
     # Annual average too
     title = 'Annual average Iodide field from Wadley et al 2020'
-    s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=ds,
+    s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=dsM,
                                                       title=title,
                                                       var2plot=var2plot,
                                                       vmin=vmin, vmax=vmax,
-                                                      units=units
+                                                      units=units,
+                                                      cmap=cmap,
+                                                      cbar_kwargs=cbar_kwargs,
                                                       )
+
+    # Plot monthly values too...
+    # TODO - this requires python 2 compatibility
+#    plot_monthly_predicted_iodide
+#    plt_analysis.plot_monthly_predicted_iodide_diff(ds=dsM, var2plot=var2plot)
+    # TEMP - plot seasonal plot for ML output.
+#     data_root = utils.get_file_locations('data_root')
+#     folder = '{}/{}/outputs/'.format(data_root, target)
+#     MLfilename = 's2s_predicted_Iodide_0.125x0.125.nc'
+#     dsML = xr.open_dataset(folder+MLfilename)
+#     var2plot = 'Ensemble Monthly mean'
+#     var2plot_longname = 'Sherwen2019'
+#     version = 'v8_5_1'
+#     s2splotting.plot_up_seasonal_averages_of_prediction(target=target,
+# #                                                        ds=ds,
+#                                                         ds=dsML,
+#                                                         version=version,
+#                                                         var2plot=var2plot,
+#                                          var2plot_longname=var2plot_longname,
+#                                                         vmin=vmin, vmax=vmax,
+#                                                         cmap=cmap,
+#                                                        cbar_kwargs=cbar_kwargs,
+#                                                         units=units)
+#
+#     # Annual average too
+#     title = 'Annual average Iodide field from Sherwen et al 2019'
+#     s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=dsML,
+#                                                       title=title,
+#                                                       var2plot=var2plot,
+#                                                       vmin=vmin, vmax=vmax,
+#                                                       units=units,
+#                                                       cmap=cmap,
+#                                                       cbar_kwargs=cbar_kwargs,
+#                                                       )
 
 
     # -

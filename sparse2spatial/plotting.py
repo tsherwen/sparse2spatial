@@ -30,6 +30,7 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None,
                                           LatVar='lat', LonVar='lon',
                                           vmin=None, vmax=None, title=None,
                                           var2plot='Ensemble_Monthly_mean',
+                                          cbar_kwargs=None, cmap=None,
                                           units=None):
     """
     Wrapper to plot up the annual averages of the predictions
@@ -55,7 +56,7 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None,
             target, units)
     # Now plot
     plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version,
-                      target=target,
+                      target=target, cbar_kwargs=cbar_kwargs, cmap=cmap,
                       LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax,
                       title=title)
 
@@ -68,6 +69,7 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None,
                                             show_plot=False, save_plot=True,
                                             title=None,
                                             var2plot_longname='ensemble prediction',
+                                            cbar_kwargs=None, cmap=None,
                                             extension='png', verbose=False):
     """
     Wrapper to plot up the annual averages of the predictions
@@ -114,7 +116,8 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None,
             title = title.format(season, target, var2plot_longname, units)
             # Now plot
             plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                              target=target, title=title, vmin=vmin, vmax=vmax)
+                              target=target, title=title, vmin=vmin, vmax=vmax,
+                              cbar_kwargs=cbar_kwargs, cmap=cmap)
     # Or plot up as a window plot
     else:
         fig = plt.figure(figsize=(9, 5), dpi=dpi)
@@ -131,15 +134,16 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None,
                               ax=ax, fig=fig,
                               target=target, title=season2text[season],
                               vmin=vmin, vmax=vmax,
-                              rm_colourbar=True,
-                              save_plot=False)
+                              rm_colourbar=True, cbar_kwargs=cbar_kwargs,
+                              cmap=cmap, save_plot=False)
             # Capture the image from the axes
             im = ax.images[0]
 
         # Add a colorbar using the captured image
         pad = 0.075
         cax = fig.add_axes([0.85, pad*2, 0.035, 1-(pad*4)])
-        fig.colorbar(im, cax=cax, orientation='vertical', label=units)
+        fig.colorbar(im, cax=cax, orientation='vertical', label=units,
+                     **cbar_kwargs)
         # Set a title
         if isinstance(title, type(None)):
             title = "Seasonally averaged '{}' ({})"
