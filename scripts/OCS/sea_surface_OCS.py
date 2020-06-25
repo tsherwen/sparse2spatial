@@ -351,8 +351,7 @@ def quick_check_of_OCS_emissions(target='OCS'):
     print(df)
 
 
-
-def do_analysis_on_existing_fields_from_Lennartz_2017():
+def do_analysis_on_existing_fields_from_Lennartz_2020(target='OCS'):
     """
     Plot up the updated Lennartz2017 fields spatially and get general stats
     """
@@ -361,10 +360,12 @@ def do_analysis_on_existing_fields_from_Lennartz_2017():
     data_root = utils.get_file_locations('data_root')
     folder = '{}/{}/inputs/'.format(data_root, target)
     # Open the monthly dataset as a database
-    filename = 'ocs_diel_conc_0.125x0.125_v2_monthly.nc'
+#    filename = 'ocs_diel_conc_0.125x0.125_v2_monthly.nc'
+    filename = 'ocs_diel_conc_0.125x0.125_v2_monthly_interp.nc'
     dsM = xr.open_dataset( folder+ filename )
     # Open the diel dataset as a database
-    filename = 'ocs_diel_conc_0.125x0.125_v2_diel.nc'
+#    filename = 'ocs_diel_conc_0.125x0.125_v2_diel.nc'
+    filename = 'ocs_diel_conc_0.125x0.125_v2_diel_interp.nc'
     dsD = xr.open_dataset( folder+ filename )
 
     # - plot up spatial to sanity check the outputted values
@@ -407,7 +408,7 @@ def do_analysis_on_existing_fields_from_Lennartz_2017():
     # - Set core local variables
     target = 'OCS'
     # retrive models with the observations
-    RFR_dict = build_or_get_models_OCS(rebuild=False, target=target)
+    RFR_dict = build_or_get_models_OCS(rebuild=True, target=target)
     df = RFR_dict['df']
     # Add the ML values to this
     df = add_ensemble_prediction2df(df=df, target=target)
