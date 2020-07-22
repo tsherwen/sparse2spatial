@@ -18,7 +18,7 @@ Citations
 -------
 
  - Data descriptor paper on sea-surface observations
-“Global sea-surface iodide observations, 1967-2018”, R. J. Chance, L. Tinel, T. Sherwen , et al., in review, 2019
+Chance, R.J., Tinel, L., Sherwen, T., Baker, A.R., Bell, T., Brindle, J., Campos, M.L.A., Croot, P., Ducklow, H., Peng, H. and Hopkins, F., 2019. Global sea-surface iodide observations, 1967–2018. Scientific data, 6(1), pp.1-8.
 
  - observational data archived at British Oceanographic Data Centre (BODC)
 Chance R.; Tinel L.; Sherwen T.; Baker A.; Bell T.; Brindle J.; Campos M.L.A.M.; Croot P.; Ducklow H.; He P.; Hoogakker B.; Hopkins F.E.; Hughes C.; Jickells T.; Loades D.; Reyes Macaya D.A.; Mahajan A.S.; Malin G.; Phillips D.P.; Sinha A.K.; Sarkar A.; Roberts I.J.; Roy R.; Song X.; Winklebauer H.A.; Wuttig K.; Yang M.; Zhou P.; Carpenter L.J.(2019). Global sea-surface iodide observations, 1967-2018. British Oceanographic Data Centre - Natural Environment Research Council, UK. doi:10/czhx.
@@ -114,8 +114,10 @@ def extract_new_observational_excel_files(file_and_path='./sparse2spatial.rc',
     return df
 
 
-def extract_observational_excel_file(folder=None,filename=None, file_extension='.xlsx',
-                                     limit_depth_to=20, use_inclusive_limit=False,
+def extract_observational_excel_file(folder=None,filename=None,
+                                     file_extension='.xlsx',
+                                     limit_depth_to=20,
+                                     use_inclusive_limit=False,
                                      debug=False):
     """
     Extract observational data from a template excel file as a dataframe
@@ -215,7 +217,7 @@ def process_files_to_BODC_format(df, use_test_data=False ):
 
 
 def get_iodide_data_from_BODC(file_and_path='./sparse2spatial.rc',
-                              filename = 'Global_Iodide_obs_surface.csv'):
+                              filename='Global_Iodide_obs_surface.csv'):
     """
     Get the latest iodide data from .csv file archived with BODC
 

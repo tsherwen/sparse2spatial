@@ -10,6 +10,7 @@ import sparse2spatial.utils as utils
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 
+
 def compare_emissions(wd_dict=None, inorg_emiss=None, specs=None):
     """
     Compare emissions between runs with different parameterisations
@@ -109,7 +110,8 @@ def get_inorg_emissions_for_params(wd_dict=None, res='4x5'):
     return inorg_emiss, specs+['Inorg']
 
 
-def add_Inorg_and_Org_totals2array(ds, InOrgVar='Inorg_Total', OrgVar='Org_Total'):
+def add_Inorg_and_Org_totals2array(ds, InOrgVar='Inorg_Total',
+                                   OrgVar='Org_Total'):
     """
     Add inorganic and organic sub totals to dataset
     """
