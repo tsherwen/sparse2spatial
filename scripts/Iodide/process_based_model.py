@@ -114,7 +114,7 @@ def convert_iodide2kg_m3():
         attrs['Creator'] = 'Tomas Sherwen (tomas.sherwen@york.ac.uk)'
         attrs['Citation'] = "Wadley, M.R., Stevens, D.P., Jickells, T., Hughes, C., Chance, R., Hepach, H. and Carpenter, L.J., 2020. Modelling iodine in the ocean. https://www.essoar.org/doi/10.1002/essoar.10502078.1"
         ds[var].attrs = attrs
-    NewFilename = 'iodide_from_model_PRESENT_DAY_interp_0.125x0.125_kg_m3.nc'
+    NewFilename = 'iodide_from_model_ALL_interp_0.125x0.125_kg_m3.nc'
     ds.to_netcdf(folder+NewFilename)
 
 
