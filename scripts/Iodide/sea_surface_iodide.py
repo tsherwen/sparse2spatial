@@ -53,6 +53,7 @@ from sparse2spatial.RFRbuild import build_or_get_models
 import observations as obs
 import project_misc as misc
 import plotting_and_analysis as plt_analysis
+import process_based_model
 
 
 def main():
@@ -79,22 +80,22 @@ def main():
 #    utils.check_or_mk_directory_structure(target=target)
 
     # General settings
-    rm_Skagerrak_data = True
-    rebuild = False
+#    rm_Skagerrak_data = True
+#    rebuild = False
 #    rm_Skagerrak_data = False
     # Use top models from full dataset  ( now: nOutliers + nSkagerak
-    RFR_dict = build_or_get_models_iodide(
-        rebuild=rebuild,
-        rm_Skagerrak_data=rm_Skagerrak_data)
+#    RFR_dict = build_or_get_models_iodide(
+#        rebuild=rebuild,
+#        rm_Skagerrak_data=rm_Skagerrak_data)
 #    RFR_dict = build_or_get_models_iodide( rm_Skagerrak_data=False )
 #    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
-    print(RFR_dict.keys())
+#    print(RFR_dict.keys())
 #    print(topmodels)
     # Check statistics on prediction
 #    print(stats)
     # Get the dictionary of models and their features
-    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
-    print(model_feature_dict)
+#    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
+#    print(model_feature_dict)
 #    print(model_feature_dict['NO3+DOC+Phos'])
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
@@ -323,10 +324,14 @@ def main():
 #    RFRanalysis.analyse_nodes_in_models()
 
     # --- Do futher analysis on the impact of the depth variable
-    plt_analysis.do_analysis_processing_linked_to_depth_variable()
+#    plt_analysis.do_analysis_processing_linked_to_depth_variable()
 
     # plot this up and other figures for the ML paper
-    plt_analysis.plot_spatial_figures_for_ML_paper_with_cartopy()
+#    plt_analysis.plot_spatial_figures_for_ML_paper_with_cartopy()
+
+    # --- Processing linked to emissions calculations
+    process_based_model.regrid_process_based_field_to_12x12km()
+
 
     # - pass if no functions are uncommented
     pass

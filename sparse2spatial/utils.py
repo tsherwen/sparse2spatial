@@ -1212,8 +1212,8 @@ def get_model_features_used_dict(model_name=None, rtn_dict=False):
     }
     # Merge the dictionaries into a single dictionary
     if add_additional_dict:
-        d = {**d, **d2}
-
+#        d = {**d, **d2}
+        d = merge_two_dicts(d, d2)
     # Add RFR in front of all model names for clarity
     modelnames = list(d.keys())
     for modelname in modelnames:
@@ -1242,3 +1242,20 @@ def add_converted_field_pM_2_kg_m3(ds, var2use='Ensemble_Monthly_mean',
     attrs_dict['units_longname'] = "kg({})/m3".format(target)
     ds[new_var].attrs = attrs_dict
     return ds
+
+
+def merge_two_dicts(x, y):
+    """
+    Given two dictionaries, merge them into a new dict as a shallow copy.
+
+    Returns
+    -------
+    (dict)
+
+    Notes
+    -------
+     - Credit for function Aaron Hall (link below) https://stackoverflow.com/questions/38987/how-do-i-merge-two-dictionaries-in-a-single-expression-in-python-taking-union-o
+    """
+    z = x.copy()
+    z.update(y)
+    return z

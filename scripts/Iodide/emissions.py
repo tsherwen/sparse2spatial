@@ -13,24 +13,27 @@ import AC_tools as AC
 
 def get_stats_on_scalar_emission_runs(dpi=320):
     """
+    Do analysis on scalar emissions from iodide fields
     """
     # Get dictionary of model runs
     d = Get_GEOSChem_run_dict(version='v12.9.1', RunSet='scalar_runs')
     #
     sdate = datetime.datetime(2016, 1, 1, 0, 0)
-    edate = datetime.datetime(2016, 1, 7, 0, 0)
+#    edate = datetime.datetime(2016, 1, 7, 0, 0)
+    edate = datetime.datetime(2016, 1, 4, 0, 0)
+    num_days = (edate-sdate).days
     dates2use = pd.date_range(sdate, edate, freq='24H')
-    #
+#    dates2use, num_days = [dates2use[0]], 1 # Just use first day
+    # Update directories to include the NetCDF output folder
     keys2use = d.keys()
     dNetCDF = {}
     for key in keys2use:
         dNetCDF[key] = d[key]+'/OutputDir/'
     # Now retrieve HEMCO files
     dsD = get_HEMCO_diags_as_ds_LOCAL(wds=dNetCDF, dates2use=dates2use)
-    #
+    # Include totals for organic and inorganic iodine emission
     for key in keys2use:
         dsD[key] = add_Inorg_and_Org_totals2array(dsD[key])
-
     # -  Now plot up global totals
     df = pd.DataFrame()
     for key in keys2use:
@@ -58,17 +61,22 @@ def get_stats_on_scalar_emission_runs(dpi=320):
     EmisVars = [i for i in df.columns if ('Emis' in i)]
     NewNames = [i.split('_')[0].split('Emis')[-1]  for i in EmisVars ]
     df = df.rename(columns=dict( zip(EmisVars, NewNames)))
+    # Save the data too
+    xVar =  '$\Delta$ in global iodide field (%)'
+    df.index.name = xVar
+    filename = 's2s_stats_on_iodine_flux_vs_iodide_field_delta_{}day.csv'
+    df.to_csv( filename.format(num_days) )
     # Now plot...
     fig, ax = plt.subplots(dpi=dpi)
     df[vars2plot].plot()
     units = 'Gg yr$^{-1}$'
     title_str = "$\Delta$ emissions ({}) with scaling of '{}' iodide field"
     plt.title(title_str.format(units, IodideField))
-    plt.xlabel('% change in global iodide field')
+    plt.xlabel('$\Delta$ in global iodide field (%)')
     plt.ylabel('$\Delta$ iodide flux ({})'.format(units))
     plt.legend()
     plt.tight_layout()
-    filename = 's2s_iodide_scalar_emissions'
+    filename = 's2s_iodide_scalar_emissions_{}day'.format(num_days)
     plt.savefig(filename, dpi=dpi)
     AC.close_plot()
 
@@ -76,34 +84,25 @@ def get_stats_on_scalar_emission_runs(dpi=320):
     units = '%'
     REF = 0
     vars2plot = [InOrgVar, OrgVar, TotalVar, 'HOI', 'I2']
-    for var in vars2plot:
-        vals = (df.loc[:,var] - df.loc[REF,var])/df.loc[REF,var]*100
-        df.loc[:,var] = vals
+#    for var in vars2plot:
+    for col in list(df.columns):
+        vals = (df.loc[:,col] - df.loc[REF,col])/df.loc[REF,col]*100
+        df.loc[:,col] = vals
+    # Save the data
+    filename = 's2s_stats_on_iodine_flux_vs_iodide_field_delta_{}day_pcent.csv'
+    df.to_csv( filename.format(num_days) )
     # Now plot...
     fig, ax = plt.subplots(dpi=dpi)
     df[vars2plot].plot()
     title_str = "$\Delta$ emissions ({}) with scaling of '{}' iodide field"
     plt.title(title_str.format(units, IodideField))
-    plt.xlabel('% change in global iodide field')
+    plt.xlabel('$\Delta$ in global iodide field (%)')
     plt.ylabel('$\Delta$ iodide flux ({})'.format(units))
     fig.legend(loc=7)
     plt.tight_layout()
-    filename = 's2s_iodide_scalar_emissions_pcent'
+    filename = 's2s_iodide_scalar_emissions_{}day_pcent'.format(num_days)
     plt.savefig(filename, dpi=dpi)
     AC.close_plot()
-
-
-def get_HEMCO_files4run(folder):
-    """
-    """
-    ds = AC.get_HEMCO_diags_as_ds(wd=folder)
-
-    # Dates to use?
-    # First 3 days
-
-    #
-
-    return ds
 
 
 def Get_GEOSChem_run_dict( version='v12.9.1', RunSet='scalar_runs'):
