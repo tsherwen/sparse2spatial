@@ -35,17 +35,13 @@ def interp_process_based_iodide_fields():
     # Where is the data located and what is its name
     ds = get_process_model_iodide_fields()
     # Update the ordering to be COORDS compliant
-    ds = ds.transpose('lon', 'lat', 'time', 'lev', )
+    ds = ds.transpose('lon', 'lat', 'time', )
     # - First process the 1st
     var2use = 'Present_Day_Iodide'
     # Select the surface (first level)
-    ds = ds.sel(lev=0)
     dsW2020 = interp_iodide_field(ds, var2use=var2use)
     # - Now process those from Hughes et al 2020
-    fileVars = [
-    'iodide_m10percent', 'iodide_m22percent', 'iodide_m44percent',
-    'iodide_p10percent'
-    ]
+    fileVars = [i for i in ds.data_vars if 'iodide_' in i ]
     ds_l = []
     for var2use in fileVars:
         ds_l += [interp_iodide_field(ds, var2use=var2use)]
@@ -56,7 +52,7 @@ def interp_process_based_iodide_fields():
 
 
 def interp_iodide_field(ds, var2use='Present_Day_Iodide',
-                               save2netcdf=False):
+                        save2netcdf=False):
     """
     Interpolate the process-based model iodide fields
     """
@@ -94,7 +90,6 @@ def regrid_process_based_field_to_12x12km():
     folder = '/{}/../Oi/UEA/'.format(data_root)
     filename = 'iodide_from_model_ALL_interp.nc'
     ds = xr.open_dataset(folder+filename)
-    del ds['lev']
     filename2save = 'iodide_from_model_ALL_interp_0.125x0.125'
     regrid_ds_field2G5NR_res(ds, folder2save=folder, save2netCDF=True,
                              filename2save=filename2save)
@@ -186,7 +181,8 @@ def convert_process_based_iodide_fields_2NetCDF():
     mat_obj = loadmat(folder+filename)
     var2use = 'iodide_from_model'
     data = mat_obj[var2use]
-    ds = matlab_obj2ds(data, NewVar='Present_Day_Iodide')
+    NewVar = 'Present_Day_Iodide'
+    ds = matlab_obj2ds(data, NewVar=NewVar)
     del mat_obj
     # Now extract all sensitivity runes
     fileVars = [
@@ -200,12 +196,28 @@ def convert_process_based_iodide_fields_2NetCDF():
         array = mat_obj[var2use]
         ds_l += [matlab_obj2ds(array, NewVar=var2use, inc_lev=False)]
     ds = xr.merge([ds]+ds_l)
+    # drop all layers apart from the surface
+    ds = ds.sel(lev=0)
+    del ds['lev']
+    # Convert the percent change fields into actual concentrations
+    fileVars = [
+    'iodide_m10percent', 'iodide_m22percent', 'iodide_m44percent',
+    'iodide_p10percent'
+    ]
+    BASE = 'Present_Day_Iodide'
+    for var2use in fileVars:
+        NewVar = var2use.replace('percent','')
+        ds[NewVar] = ds[BASE].copy()
+        attrs = ds[BASE].attrs
+        # Add/subtract the difference
+        actual_diff = (ds[NewVar].values *(ds[var2use].values /100))
+        ds[NewVar] = ds[NewVar] + actual_diff
+        ds[NewVar].attrs = attrs
     # Save to NetCDF
     NewFilename = 'iodide_from_model_ALL.nc'
     ds.to_netcdf(folder+NewFilename)
     # Save annual average
     dsA = ds.mean(dim='time')
-#    ds = ds.sel(lev=0)
     NewFilename = 'iodide_from_model_ALL_annual_avg.nc'
     dsA.to_netcdf(folder+NewFilename)
 
