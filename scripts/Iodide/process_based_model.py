@@ -100,20 +100,20 @@ def convert_iodide2kg_m3():
     Convert process-based iodide field into units of kg/m3 and save
     """
     # Convert units from nM to kg/m3 (=> M => mass => /m3 => /kg)
-    FileName = 'iodide_from_model_PRESENT_DAY_interp_0.125x0.125.nc'
+    FileName = 'iodide_from_model_ALL_interp_0.125x0.125.nc'
     data_root = utils.get_file_locations('data_root')
     folder = '/{}/../Oi/UEA/'.format(data_root)
     ds = xr.open_dataset(folder+FileName)
-    NewVar = 'Present_Day_Iodide'
     species = 'I'
-    ds[NewVar] = ds[NewVar]/1E9 * AC.species_mass(species) * 1E3 / 1E3
-    # for variable
-    attrs = ds[NewVar].attrs
-    attrs['units'] = "kg/m3"
-    attrs['units_longname'] = "kg({})/m3".format(species)
-    attrs['Creator'] = 'Tomas Sherwen (tomas.sherwen@york.ac.uk)'
-    attrs['Citation'] = "Wadley, M.R., Stevens, D.P., Jickells, T., Hughes, C., Chance, R., Hepach, H. and Carpenter, L.J., 2020. Modelling iodine in the ocean. https://www.essoar.org/doi/10.1002/essoar.10502078.1"
-    ds[NewVar].attrs = attrs
+    for var in ds.data_vars:
+        ds[var] = ds[var]/1E9 * AC.species_mass(species) * 1E3 / 1E3
+        # for variable
+        attrs = ds[var].attrs
+        attrs['units'] = "kg/m3"
+        attrs['units_longname'] = "kg({})/m3".format(species)
+        attrs['Creator'] = 'Tomas Sherwen (tomas.sherwen@york.ac.uk)'
+        attrs['Citation'] = "Wadley, M.R., Stevens, D.P., Jickells, T., Hughes, C., Chance, R., Hepach, H. and Carpenter, L.J., 2020. Modelling iodine in the ocean. https://www.essoar.org/doi/10.1002/essoar.10502078.1"
+        ds[var].attrs = attrs
     NewFilename = 'iodide_from_model_PRESENT_DAY_interp_0.125x0.125_kg_m3.nc'
     ds.to_netcdf(folder+NewFilename)
 
