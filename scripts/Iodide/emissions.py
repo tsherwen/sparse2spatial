@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import sparse2spatial.utils as utils
+import seaborn as sns
 
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
@@ -15,15 +16,16 @@ def get_stats_on_scalar_emission_runs(dpi=320):
     """
     Do analysis on scalar emissions from iodide fields
     """
+    sns.set_palette( 'colorblind' )
     # Get dictionary of model runs
     d = Get_GEOSChem_run_dict(version='v12.9.1', RunSet='scalar_runs')
     #
     sdate = datetime.datetime(2016, 1, 1, 0, 0)
 #    edate = datetime.datetime(2016, 1, 7, 0, 0)
-    edate = datetime.datetime(2016, 1, 4, 0, 0)
+#    edate = datetime.datetime(2016, 1, 4, 0, 0)
     num_days = (edate-sdate).days
     dates2use = pd.date_range(sdate, edate, freq='24H')
-#    dates2use, num_days = [dates2use[0]], 1 # Just use first day
+    dates2use, num_days = [dates2use[0]], 1 # Just use first day
     # Update directories to include the NetCDF output folder
     keys2use = d.keys()
     dNetCDF = {}

@@ -67,7 +67,7 @@ def interp_iodide_field(ds, var2use='Present_Day_Iodide',
     # Split data by time dimension
     ars = [ds[var2use].sel(time=i).values.T for i in times2use]
     # Call interpolation in parrellel
-    # NOTE: must use python 2 virtual environment!
+    print('NOTE: must use Python 2 virtual environment for GRIDDATA func.!')
     ars = p.map(partial(interpolate_array_with_GRIDDATA, da=da), ars)
     # Update the interpolated variables
     ds = ds.transpose( 'time', 'lat', 'lon', )
@@ -209,9 +209,12 @@ def convert_process_based_iodide_fields_2NetCDF():
         NewVar = var2use.replace('percent','')
         ds[NewVar] = ds[BASE].copy()
         attrs = ds[BASE].attrs
-        # Add/subtract the difference
-        actual_diff = (ds[NewVar].values *(ds[var2use].values /100))
-        ds[NewVar] = ds[NewVar] + actual_diff
+        # No units given in file, so test if % of nM
+        # Add/subtract the difference - assuming units are % - Wrong
+#        actual_diff = (ds[NewVar].values *(ds[var2use].values /100))
+#        ds[NewVar] = ds[BASE] + actual_diff
+        # Add/subtract the difference - assuming units nM - Correct
+        ds[NewVar] = ds[BASE] +  ds[var2use].values
         ds[NewVar].attrs = attrs
     # Save to NetCDF
     NewFilename = 'iodide_from_model_ALL.nc'

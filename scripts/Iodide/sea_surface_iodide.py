@@ -224,7 +224,7 @@ def main():
 #    analysis.get_stats_on_spatial_predictions_4x5_2x25_by_lat()
 
     # Get stats from the 0.125x0.125 prediction
-#    analysis.get_stats_on_spatial_predictions_0125x0125()
+#    get_stats_on_spatial_predictions_0125x0125_iodide()
 
     # Calculate the average predicted surface conc (only 4x5. 2x2.5 too? )
 #    plt_analysis.calculate_average_predicted_surface_conc() # AGU calcs at 4x5
@@ -1758,6 +1758,177 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
                                    rm_spaces_from_vars=False,
                                    convert2HEMCO_time=False)
     return ds
+
+
+def get_stats_on_spatial_predictions_0125x0125_iodide():
+    """
+    Wrapper to get stats on spatial predictions at 0.125x0.125 for iodide
+    """
+    # Get spatial prediction data from NetCDF files saved already
+    target = 'Iodide'
+    filename = None
+    rm_Skagerrak_data = True
+    folder = None
+    res = '0.125x0.125'
+    if isinstance(filename, type(None)):
+        if rm_Skagerrak_data:
+            extr_file_str = '_No_Skagerrak'
+        else:
+            extr_file_str = ''
+        filename = 's2s_predicted_{}_{}{}.nc'.format(
+            target, res, extr_file_str)
+    data_root = utils.get_file_locations('data_root')
+    if isinstance(folder, type(None)):
+        folder = '{}/{}/outputs/'.format(data_root, target)
+    ds = xr.open_dataset(folder + filename)
+    # Add the Wadley2020 prediction(s)
+    var2template='Chance2014_STTxx2_I'
+    folder = '{}/../Oi/UEA/'.format(data_root)
+    filename = 'iodide_from_model_ALL_interp_0.125x0.125.nc'
+    dsW = xr.open_dataset(folder + filename)
+    NewVarName = 'Wadley2020'
+    CurrentVar = 'Present_Day_Iodide'
+    data_vars = [i for i in dsW.data_vars if 'percent' not in i]
+    data_vars.pop(data_vars.index(CurrentVar))
+    NewVarNames = [i.replace('iodide', NewVarName) for i in data_vars]
+    vars2use = dict( zip(data_vars, NewVarNames) )
+    NewVarName = 'Wadley2020'
+    vars2use['Present_Day_Iodide'] = NewVarName
+    for var in vars2use.keys():
+        ds[var] = ds[var2template].copy()
+        ds[var].values = dsW[var]
+    # Update names
+    ds = ds.rename( name_dict=vars2use )
+    # New names to use
+    params = [
+        'Chance2014_STTxx2_I', 'MacDonald2014_iodide', 'Ensemble Monthly mean',
+         'Wadley2020', 'Wadley2020_m10', 'Wadley2020_m22', 'Wadley2020_m44',
+         'Wadley2020_p10'
+    ]
+    # Get stats on the global predictions
+    ex_str =  '_inc_process_based'
+    FileStr = 's2s_annual_stats_global_ocean_{}{}'
+    filename2save = FileStr.format(res, ex_str)
+    df = analysis.get_stats_on_spatial_predictions_0125x0125(ds,
+                                                             vars2use=params)
+    # - Print out a more formatted version as a table for the paper
+    # remove variables
+#    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
+
+    # select just the models of interest
+    df = df[params]
+    # rename the models
+    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
+                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
+                     'Ensemble_Monthly_mean': 'RFR(Ensemble)',
+                     'Ensemble Monthly mean': 'RFR(Ensemble)',
+                     'Wadley2020' :  'Wadley et al. (2020)',
+                     'Wadley2020_p10' :  'Wadley et al. (2020) +10%',
+                     'Wadley2020_m10' :  'Wadley et al. (2020) -10%',
+                     'Wadley2020_m22' :  'Wadley et al. (2020) -22%',
+                     'Wadley2020_m44' :  'Wadley et al. (2020) -44%',
+                     'Iodide': 'Obs.',
+                     #                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+                     }
+    df = df.rename(columns=rename_titles)
+    # Sort the dataframe by the mean weighted vales
+    df = df.T
+    df.sort_values(by=['mean (weighted)'], ascending=False, inplace=True)
+    # rename columns (50% to median and ... )
+    cols2rename = {'50%': 'median', 'std': 'std. dev.', }
+    df.rename(columns=cols2rename,  inplace=True)
+    # rename
+    df.rename(index=rename_titles, inplace=True)
+    # set column order
+    # Set the stats to use
+    first_columns = [
+        'mean (weighted)', 'std. dev.', '25%', 'median', '75%', 'max',
+    ]
+    if debug:
+        print(df.head())
+    df = df[first_columns]
+    # save as CSV
+    df.round(1).to_csv(filename2save+'_FOR_TABLE_'+'.csv')
+
+    # Print values - relative to difference models
+    df = df.T
+    REF = 'MacDonald et al. (2014)'
+    REF_vals = df.loc[:, REF].copy()
+    dfT = df.copy()
+    for col in dfT.columns:
+        dfT.loc[:, col] = (dfT.loc[:, col]-REF_vals)/REF_vals*100
+    savename = filename2save+'_FOR_TABLE_REF_'+REF
+    savename = AC.rm_spaces_and_chars_from_str(savename)
+    dfT.T.round(1).to_csv(savename+'.csv')
+
+    REF = 'RFR(Ensemble)'
+    REF_vals = df.loc[:, REF].copy()
+    dfT = df.copy()
+    for col in dfT.columns:
+        dfT.loc[:, col] = (dfT.loc[:, col]-REF_vals)/REF_vals*100
+    savename = filename2save+'_FOR_TABLE_REF_'+REF
+    savename = AC.rm_spaces_and_chars_from_str(savename)
+    dfT.T.round(1).to_csv(savename+'.csv')
+
+    REF = 'Wadley et al. (2020)'
+    REF_vals = df.loc[:, REF].copy()
+    dfT = df.copy()
+    for col in dfT.columns:
+        dfT.loc[:, col] = (dfT.loc[:, col]-REF_vals)/REF_vals*100
+    savename = filename2save+'_FOR_TABLE_REF_'+REF
+    savename = AC.rm_spaces_and_chars_from_str(savename)
+    dfT.T.round(1).to_csv(savename+'.csv')
+
+    # restore dataframe arrange ment
+    df = df.T
+
+    # ---- Do some further analysis and save this to a text file
+    a = open(file_save_str+'_analysis.txt', 'w')
+    # Set a header
+    print('This file contains global analysis of {} data'.format(str), file=a)
+    print('\n', file=a)
+    # which files are being analysed?
+    print('---- Detail on the predicted fields', file=a)
+    models2compare = {
+        1: u'RFR(Ensemble)',
+        2: u'Chance et al. (2014)',
+        3: u'MacDonald et al. (2014)',
+        #    1: u'Ensemble_Monthly_mean',
+        #    2: u'Chance2014_STTxx2_I',
+        #    3:'MacDonald2014_iodide'
+        #    1: u'RFR(TEMP+DEPTH+SAL+NO3+DOC)',
+        #    2: u'RFR(TEMP+SAL+Prod)',
+        #    3: u'RFR(TEMP+DEPTH+SAL)',
+    }
+    debug = True
+    if debug:
+        print(df.head())
+    df_tmp = df.T[models2compare.values()]
+    # What are the core models
+    print('Core models being compared are:', file=a)
+    for key in models2compare.keys():
+        ptr_str = 'model {} - {}'
+        print(ptr_str.format(key, models2compare[key]), file=a)
+    print('\n', file=a)
+    # Now print analysis on predicted fields
+    # range in predicted model values
+    mean_ = df_tmp.T['mean (weighted)'].values.mean()
+    min_ = df_tmp.T['mean (weighted)'].values.min()
+    max_ = df_tmp.T['mean (weighted)'].values.max()
+    prt_str = 'avg predicted values = {:.5g} ({:.5g}-{:.5g})'
+    print(prt_str.format(mean_, min_, max_), file=a)
+    # range in predicted model values
+    range_ = max_-min_
+    prt_str = 'range of predicted avg values = {:.3g}'
+    print(prt_str.format(range_, min_, max_), file=a)
+    # % of range in predicted model values ( as an error of model choice... )
+    pcents_ = range_ / df_tmp.T['mean (weighted)'] * 100
+    min_ = pcents_.min()
+    max_ = pcents_.max()
+    prt_str = 'As a % this is = {:.3g} ({:.5g}-{:.5g})'
+    print(prt_str.format(pcents_.mean(), min_, max_), file=a)
+    a.close()
+
 
 
 if __name__ == "__main__":

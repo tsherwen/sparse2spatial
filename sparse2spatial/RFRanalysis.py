@@ -152,15 +152,18 @@ def get_stats_on_multiple_global_predictions(model_name=None, target='Iodide',
     filename = file2use.split('/')[-1]
     folder = '/'.join(file2use.split('/')[:-1]) + '/'
     # Use different drivers depending on resolution
+    ds = xr.open_dataset(folder+filename)
     if res == '0.125x0.125':
-        df = get_stats_on_spatial_predictions_0125x0125(filename=filename,
-                                                        folder=folder,
-                                                        just_return_df=True,
+        df = get_stats_on_spatial_predictions_0125x0125(ds=ds,
+#                                                        filename=filename,
+#                                                        folder=folder,
+#                                                        just_return_df=True,
                                                         ex_str=model_name)
     else:
-        df = get_stats_on_spatial_predictions_4x5_2x25(filename=filename,
-                                                       folder=folder,
-                                                       just_return_df=True,
+        df = get_stats_on_spatial_predictions_4x5_2x25(ds=ds,
+#                                                       filename=filename,
+#                                                       folder=folder,
+#                                                       just_return_df=True,
                                                        ex_str=model_name)
     # Remove the values that aren't for a specific model
     df = df[[i for i in df.columns if model_name in i]]
