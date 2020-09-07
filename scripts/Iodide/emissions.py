@@ -12,20 +12,21 @@ import seaborn as sns
 import AC_tools as AC
 
 
-def get_stats_on_scalar_emission_runs(dpi=320):
+def get_stats_on_scalar_emission_runs(dpi=320, context="paper"):
     """
     Do analysis on scalar emissions from iodide fields
     """
+    sns.set_context(context)
     sns.set_palette( 'colorblind' )
     # Get dictionary of model runs
     d = Get_GEOSChem_run_dict(version='v12.9.1', RunSet='scalar_runs')
     #
     sdate = datetime.datetime(2016, 1, 1, 0, 0)
 #    edate = datetime.datetime(2016, 1, 7, 0, 0)
-#    edate = datetime.datetime(2016, 1, 4, 0, 0)
+    edate = datetime.datetime(2016, 1, 4, 0, 0)
     num_days = (edate-sdate).days
     dates2use = pd.date_range(sdate, edate, freq='24H')
-    dates2use, num_days = [dates2use[0]], 1 # Just use first day
+#    dates2use, num_days = [dates2use[0]], 1 # Just use first day
     # Update directories to include the NetCDF output folder
     keys2use = d.keys()
     dNetCDF = {}
@@ -66,6 +67,7 @@ def get_stats_on_scalar_emission_runs(dpi=320):
     # Save the data too
     xVar =  '$\Delta$ in global iodide field (%)'
     df.index.name = xVar
+    df_ACTUAL = df.copy()
     filename = 's2s_stats_on_iodine_flux_vs_iodide_field_delta_{}day.csv'
     df.to_csv( filename.format(num_days) )
     # Now plot...
@@ -82,7 +84,7 @@ def get_stats_on_scalar_emission_runs(dpi=320):
     plt.savefig(filename, dpi=dpi)
     AC.close_plot()
 
-    # plot the same values as a percent
+    # Plot the same values as a percent
     units = '%'
     REF = 0
     vars2plot = [InOrgVar, OrgVar, TotalVar, 'HOI', 'I2']
@@ -104,6 +106,31 @@ def get_stats_on_scalar_emission_runs(dpi=320):
     plt.tight_layout()
     filename = 's2s_iodide_scalar_emissions_{}day_pcent'.format(num_days)
     plt.savefig(filename, dpi=dpi)
+    AC.close_plot()
+
+    # Also plot this specifically for Lucy's perspectives paper
+    # Now plot...
+    sns.set_style("dark")
+    fig, ax = plt.subplots(dpi=dpi)
+    plt.plot( df[InOrgVar].values, df.index.values, lw=7.5 )
+    title_str = "Change in emissions ({}) with scaling of sea-surface \niodide field from {}"
+    plt.title(title_str.format(units, 'Sherwen et al (2019)'))
+    plt.xlabel('Change in global sea-surface iodide field (%)')
+    plt.ylabel('Change in inorganic iodine ({}) emission ({})'.format('HOI+I$_{2}$', units))
+#    fig.legend(loc=7)
+    # Add dashed lines for
+    bottom, top = plt.gca().get_ylim()
+    left, right = plt.gca().get_xlim()
+    yrange = np.arange(bottom, top, 0.01)
+    xrange = np.arange(left, right, 0.01)
+    plt.plot(xrange, [0.]*len(xrange), ls='--', color='grey', zorder=0,
+             alpha=0.5)
+    plt.plot([0.]*len(yrange), yrange, ls='--', color='grey', zorder=0,
+            alpha=0.5 )
+
+    plt.tight_layout()
+    filename = 's2s_iodide_scalar_emissions_{}day_pcent_formated'
+    plt.savefig(filename.format(num_days), dpi=dpi)
     AC.close_plot()
 
 
@@ -209,7 +236,6 @@ def get_HEMCO_diags_as_ds_LOCAL(wds=None, dates2use=None):
                                            var_species_dict=var_species_dict)
         dsDH[run] = ds
     return dsDH
-
 
 
 def convert_HEMCO_ds2Gg_per_yr_LOCAL(ds, vars2convert=None,
