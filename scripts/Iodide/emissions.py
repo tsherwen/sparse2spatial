@@ -108,17 +108,46 @@ def get_stats_on_scalar_emission_runs(dpi=320, context="paper"):
     plt.savefig(filename, dpi=dpi)
     AC.close_plot()
 
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from sklearn import datasets, linear_model
+    from sklearn.metrics import mean_squared_error, r2_score
+    # Create linear regression object
+    regr = linear_model.LinearRegression()
+    # Train the model using the entire datapoints
+    X_train = df.index.values.flatten()[:,np.newaxis]
+    y_train = df[InOrgVar].values.flatten()
+    regr.fit(X_train, y_train)
+#    y_test = np.arange(y_train.min(), y_train.max(), 0.1)[:, np.newaxis]
+    y_pred = regr.predict( X[:,np.newaxis] )
+    # Calculate the % change in emissions for specific iodide field change
+    vals2test = [5.6, 5.7, 5.8]
+    regr.predict( np.array(vals2test)[:, np.newaxis] )
+    # The coefficients
+    print('Coefficients: \n', regr.coef_)
+    # The mean squared error
+    print('Mean squared error: %.2f'
+          % mean_squared_error(y_train, y_pred))
+    # The coefficient of determination: 1 is perfect prediction
+    print('Coefficient of determination: %.2f'
+          % r2_score(y_train, y_pred))
+
     # Also plot this specifically for Lucy's perspectives paper
     # Now plot...
     sns.set_style("dark")
     fig, ax = plt.subplots(dpi=dpi)
-    plt.plot( df[InOrgVar].values, df.index.values, lw=7.5 )
+    X = df.index.values
+    Y = df[InOrgVar].values
+#    plt.scatter( X, Y, lw=7.5 ) # plot the actual values too?
+    # plot a line of best fit
+    plt.plot( X, y_pred, lw=7.5 ) # just plot the least squares fit
+#    plt.plot( df.index.values, y_pred, lw=7.5 )
     title_str = "Change in emissions ({}) with scaling of sea-surface \niodide field from {}"
     plt.title(title_str.format(units, 'Sherwen et al (2019)'))
     plt.xlabel('Change in global sea-surface iodide field (%)')
     plt.ylabel('Change in inorganic iodine ({}) emission ({})'.format('HOI+I$_{2}$', units))
 #    fig.legend(loc=7)
-    # Add dashed lines for
+    # Add dashed lines through zero
     bottom, top = plt.gca().get_ylim()
     left, right = plt.gca().get_xlim()
     yrange = np.arange(bottom, top, 0.01)
@@ -126,12 +155,17 @@ def get_stats_on_scalar_emission_runs(dpi=320, context="paper"):
     plt.plot(xrange, [0.]*len(xrange), ls='--', color='grey', zorder=0,
              alpha=0.5)
     plt.plot([0.]*len(yrange), yrange, ls='--', color='grey', zorder=0,
-            alpha=0.5 )
-
+             alpha=0.5)
+    # Add dashed lines showing 1:1? - NO
     plt.tight_layout()
     filename = 's2s_iodide_scalar_emissions_{}day_pcent_formated'
     plt.savefig(filename.format(num_days), dpi=dpi)
     AC.close_plot()
+
+
+
+    #
+
 
 
 def Get_GEOSChem_run_dict( version='v12.9.1', RunSet='scalar_runs'):

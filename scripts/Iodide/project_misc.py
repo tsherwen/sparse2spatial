@@ -2112,6 +2112,128 @@ def plot_current_parameterisations():
 # ---------------------------------------------------------------------------
 # ---------------- Misc. Support for iodide project ------------------------
 # ---------------------------------------------------------------------------
+def get_updated_budget4perspective_paper():
+    """
+    Get updated budget for iodine perspective paper
+    """
+    #
+    sdate = datetime.datetime(2017, 1, 1)
+    edate = datetime.datetime(2017, 2, 28)
+#    edate = datetime.datetime(2017, 1, 31)
+    dates2use = pd.date_range(sdate, edate, freq='1D')
+#    dates2use = None
+    RunRoot = '/users/ts551/scratch/GC/rundirs/'
+    RunName = 'merra2_4x5_standard.v12.9.1.BASE.Oi.MacDonald2014.extra_tags'
+    folder = '{}/{}/OutputDir/'.format(RunRoot, RunName)
+    # Get the met state object
+    # for FracOfTimeInTrop
+    dsS = AC.get_StateMet_ds(wd=folder, dates2use=dates2use)
+
+    # - Calculate ozone deposition
+    # Over oceans
+    vars2use = ['AREA', 'Met_LWI', 'FracOfTimeInTrop', 'Met_AD']
+    dsS = dsS[vars2use].squeeze()
+    # Save the subset to disk, then return reload just that
+    savename = 'TEMP_budget_{}.nc'.format('StateMet')
+    dsS = AC.save_ds2disk_then_reload(ds=dsS, savename=savename,
+                                      folder='~/tmp/')
+    ocean_bool = (dsS['Met_LWI'] == 0).values
+
+    # - Calculate iodine deposition
+    # Manually set Iy dry dep species
+    prefix = 'DryDep_'
+    Iy_DryDep = [
+    'ISALC', 'ISALA', 'IONO2', 'IONO', 'ICl', 'IBr', 'I2O4', 'I2O3',
+    'I2O2', 'I2', 'HOI', 'HI', 'AERI'
+    ]
+    vars2use = ['{}{}'.format(prefix, i) for i in Iy_DryDep+['O3']]
+    # Get deposition data
+    dsD = AC.get_DryDep_ds(wd=folder, dates2use=dates2use)
+    dsD = dsD[vars2use].squeeze()
+    # Save the subset to disk, then return reload just that
+    savename = 'TEMP_budget_{}.nc'.format('DryDep')
+    dsD = AC.save_ds2disk_then_reload(ds=dsD, savename=savename,
+                                      folder='~/tmp/')
+    # Convert units from molec cm-2 s-1 to kg/s-1 (same as wet dep diags)
+    # remove area (*cm2)
+    dsD = dsD * dsS['AREA'] * 1E4
+    # convert from molecules to kg
+    AVG = AC.constants('AVG')
+    for var in dsD.data_vars:
+#    for var in list(dsD.data_vars)[:-1]:
+        print(var)
+        values = dsD[var].values
+        spec = var.split(prefix)[-1]
+        RMM = AC.species_mass(spec)
+        # Convert molecules to moles
+        values = values / AVG
+        # convert to kg mass
+        values = (values * RMM)/ 1E3
+        dsD[var].values = values
+    # Calculate ozone deposition
+    spec = 'O3'
+    var2use = '{}{}'.format(prefix, spec)
+    # Convert seconds to per month
+    months = list(dsD['time.month'].values.flatten())
+    years = list(dsD['time.year'].values.flatten())
+    month2sec = AC.secs_in_month(years=years, months=months)
+    n_months_in_ds =  len(dsD['time'].values.flatten())
+#    n_months_in_ds =  len(dsD['time'].values.flatten())
+#    n_months_in_ds =  len(dsD['time'].values.flatten())
+    dsD[var2use] = dsD[var2use].values * month2sec[:, None, None]
+    total = dsD[var2use] *(12/n_months_in_ds) /1E12 *1E3
+    total = float(total.sum().values.flatten())
+    ocean_dep = total
+    units = 'Tg/yr'
+    Pstr = "Dry deposition for '{}': {} {}"
+    print(Pstr.format(spec, total, units))
+
+    # - Calculate tropospheric burdens
+    #
+    dsSC = AC.GetSpeciesConcDataset(wd=folder, dates2use=dates2use)
+
+    # Now extract species
+    core_burden_specs = ['O3', 'CO', 'NO', 'NO2']
+    iodine_specs = [
+    'I2', 'HOI', 'IO', 'I', 'HI', 'OIO', 'INO', 'IONO', 'IONO2', 'I2O2',
+    'I2O4', 'I2O3', 'CH3I', 'CH2I2', 'CH2ICl', 'CH2IBr', 'ICl', 'IBr', 'AERI',
+    'ISALA', 'ISALC'
+    ]
+    specs2use = core_burden_specs+iodine_specs
+#    specs2use = core_burden_specs
+    prefix = 'SpeciesConc_'
+    vars2use = [prefix+i for i in specs2use]
+    use_time_in_trop = True
+    rm_trop =  True
+    # Average burden over time
+#    ds = dsD[run]#.mean(dim='time', keep_attrs=True)
+    S = AC.get_Gg_trop_burden(dsSC, vars2use=vars2use, StateMet=dsS,
+                              use_time_in_trop=use_time_in_trop,
+                              rm_trop=rm_trop,
+                              avg_over_time=True,
+                              sum_spatially=True,
+                              )
+    # Update iodine species to be in unit Gg(I)
+    ref_spec = 'I'
+    for spec in iodine_specs:
+        var2use = '{}{}'.format(prefix, spec )
+#        ref_spec = get_ref_spec(spec)
+        factor = get_conversion_factor_kgX2kgREF(spec=spec,
+                                                    ref_spec=ref_spec)
+        print(spec, factor)
+#        S[var2use] = val/species_mass(spec)*species_mass(ref_spec)
+        S[var2use]  = S[var2use]*factor
+    # Upate varnames
+    varnames = ['{} burden ({})'.format(i, mass_unit) for i in specs2use]
+    S = S.rename(index=dict(zip(list(S.index.values), varnames)))
+
+    # - Calculate fluxes from gas-phase to aerosol
+    #
+
+
+
+
+
 def explore_diferences_for_Skagerak():
     """
     Explore how the Skagerak data differs from the dataset as a whole
@@ -2844,7 +2966,7 @@ def mk_data_files4Indian_seasurface_paper(res='0.125x0.125'):
 
 def Check_sensitivity_of_HOI_I2_param2WS():
     """
-    Check the sensitivity of the Carpenter et al 2013 parameterisation to wind speed
+    Check the sensitivity of the Carpenter2013 parameterisation to wind speed
     """
     import seaborn as sns
     sns.set(color_codes=True)
