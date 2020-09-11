@@ -2085,7 +2085,7 @@ def plot_current_parameterisations():
     restrict_data_max, restrict_min_salinity = True, True
     if restrict_data_max:
         #        pro_df = pro_df[ pro_df['Iodide'] < 450. ] # Used for July Oi! mtg.
-        # restrict below 400 (per. com. RJC)
+        # Restrict below 400 (per. com. RJC)
         pro_df = pro_df[pro_df['Iodide'] < 400.]
     if restrict_min_salinity:
         pro_df = pro_df[pro_df['WOA_Salinity'] > 30.]
@@ -2112,34 +2112,42 @@ def plot_current_parameterisations():
 # ---------------------------------------------------------------------------
 # ---------------- Misc. Support for iodide project ------------------------
 # ---------------------------------------------------------------------------
-def get_updated_budget4perspective_paper():
+def get_updated_budget4perspective_paper(debug=False):
     """
     Get updated budget for iodine perspective paper
     """
-    #
+    # - Local variables
     sdate = datetime.datetime(2017, 1, 1)
-    edate = datetime.datetime(2017, 2, 28)
+#    edate = datetime.datetime(2017, 6, 30)
+#    edate = datetime.datetime(2017, 4, 30)
+    edate = datetime.datetime(2017, 9, 30)
 #    edate = datetime.datetime(2017, 1, 31)
-    dates2use = pd.date_range(sdate, edate, freq='1D')
-#    dates2use = None
+#    dates2use = pd.date_range(sdate, edate, freq='1D')
+    dates2use = None
     RunRoot = '/users/ts551/scratch/GC/rundirs/'
-    RunName = 'merra2_4x5_standard.v12.9.1.BASE.Oi.MacDonald2014.extra_tags'
+    RunName = 'merra2_4x5_standard.v12.9.1.BASE.Oi.MacDonald2014.tagged'
+#    folder_LIMITED = '{}/{}/OutputDir/'.format(RunRoot, RunName)
+#    RunName = 'merra2_4x5_standard.v12.9.1.BASE.Oi.MacDonald2014.extra_tags'
     folder = '{}/{}/OutputDir/'.format(RunRoot, RunName)
+    folder_LIMITED = folder
+    mechanism  = 'Standard'
+    version = 'v12.9.1'
     # Get the met state object
-    # for FracOfTimeInTrop
     dsS = AC.get_StateMet_ds(wd=folder, dates2use=dates2use)
-
-    # - Calculate ozone deposition
     # Over oceans
-    vars2use = ['AREA', 'Met_LWI', 'FracOfTimeInTrop', 'Met_AD']
+    vars2use = ['AREA', 'Met_LWI', 'FracOfTimeInTrop', 'Met_AD', 'Met_AIRVOL']
+    vars2use += ['Met_TropP', 'Met_PMID', 'Met_TropLev']
     dsS = dsS[vars2use].squeeze()
     # Save the subset to disk, then return reload just that
-    savename = 'TEMP_budget_{}.nc'.format('StateMet')
+    savename = 'TEMP3_budget_{}.nc'.format('StateMet')
     dsS = AC.save_ds2disk_then_reload(ds=dsS, savename=savename,
                                       folder='~/tmp/')
     ocean_bool = (dsS['Met_LWI'] == 0).values
 
-    # - Calculate iodine deposition
+    # Setup a DataFrame to hold details on the budget (Gg I yr)
+    dfB = pd.DataFrame()
+
+    # - Calculate iodine dry deposition
     # Manually set Iy dry dep species
     prefix = 'DryDep_'
     Iy_DryDep = [
@@ -2155,19 +2163,19 @@ def get_updated_budget4perspective_paper():
     dsD = AC.save_ds2disk_then_reload(ds=dsD, savename=savename,
                                       folder='~/tmp/')
     # Convert units from molec cm-2 s-1 to kg/s-1 (same as wet dep diags)
-    # remove area (*cm2)
+    # Remove area (*cm2)
     dsD = dsD * dsS['AREA'] * 1E4
-    # convert from molecules to kg
+    # Convert from molecules to kg
     AVG = AC.constants('AVG')
     for var in dsD.data_vars:
-#    for var in list(dsD.data_vars)[:-1]:
-        print(var)
+        if debug:
+            print(var)
         values = dsD[var].values
         spec = var.split(prefix)[-1]
         RMM = AC.species_mass(spec)
         # Convert molecules to moles
         values = values / AVG
-        # convert to kg mass
+        # Convert to kg mass
         values = (values * RMM)/ 1E3
         dsD[var].values = values
     # Calculate ozone deposition
@@ -2178,36 +2186,143 @@ def get_updated_budget4perspective_paper():
     years = list(dsD['time.year'].values.flatten())
     month2sec = AC.secs_in_month(years=years, months=months)
     n_months_in_ds =  len(dsD['time'].values.flatten())
-#    n_months_in_ds =  len(dsD['time'].values.flatten())
-#    n_months_in_ds =  len(dsD['time'].values.flatten())
-    dsD[var2use] = dsD[var2use].values * month2sec[:, None, None]
+    dsD[var2use].values = dsD[var2use].values * month2sec[:, None, None]
     total = dsD[var2use] *(12/n_months_in_ds) /1E12 *1E3
+    ocean_dep = total.copy() * ocean_bool
+    ocean_dep = float(ocean_dep.sum().values.flatten())
     total = float(total.sum().values.flatten())
-    ocean_dep = total
     units = 'Tg/yr'
     Pstr = "Dry deposition for '{}': {} {}"
     print(Pstr.format(spec, total, units))
+    Pstr = "Dry deposition for '{}' over ocean: {} {}"
+    print(Pstr.format(spec, ocean_dep, units))
+
+    # Now calculate totals for iodine
+    # For update to be in units of I (exc. ozone)
+    for spec in Iy_DryDep:
+        var = '{}{}'.format(prefix, spec )
+        values = dsD[var]
+        factor = AC.get_conversion_factor_kgX2kgREF(spec=spec, ref_spec='I')
+        if debug:
+            print(var, spec, factor)
+        # Update ( inc. time) and save
+        values = values * factor * month2sec[:, None, None]
+        dsD[var].values = values
+        month2sec[:, None, None]
+
+    # Just consider iodine dry deposition
+    del dsD['DryDep_O3']
+    dsI = dsD *(12/n_months_in_ds) /1E9 *1E3
+    # Update names of the variables and save to the main budget DataFrame
+    index_new = [i.split(prefix)[-1] for i in dsI.data_vars ]
+    rename_dict = dict(zip(dsI.data_vars, index_new))
+    dsI = dsI.rename(rename_dict)
+    dfI = dsI.sum().to_array().to_pandas()
+    dfI.index.name = None
+    dfB['DryDep'] = dfI
+
+    # - Calculate iodine wet deposition
+    # All dry dep species
+    file_str = 'GEOSChem.WetLossLS.*'
+    prefix = 'WetLossLS_'
+    vars2use = ['{}{}'.format(prefix,i) for i in Iy_DryDep]
+    dsWLS = AC.get_GEOSChem_files_as_ds(file_str=file_str, wd=folder,
+                                    dates2use=dates2use)
+    dsWLS = dsWLS[vars2use].sum(dim='lev').squeeze()
+    # For update to be in units of I
+    for spec in Iy_DryDep:
+        var = '{}{}'.format(prefix, spec )
+        values = dsWLS[var]
+        factor = AC.get_conversion_factor_kgX2kgREF(spec=spec, ref_spec='I')
+        if debug:
+            print(var, spec, factor)
+        # Update ( inc. time) and save
+        values = values * factor * month2sec[:, None, None]
+        dsWLS[var].values = values
+    # Sum for the year and add to the main reference dictionary
+    dsWLS = dsWLS *(12/n_months_in_ds) /1E9 *1E3
+    index_new = [i.split(prefix)[-1] for i in dsWLS.data_vars ]
+    rename_dict = dict(zip(dsWLS.data_vars, index_new))
+    dsWLS = dsWLS.rename(rename_dict)
+    df_ = dsWLS.sum().to_array().to_pandas()
+    df_.index.name = None
+    dfB['WetDep-LS'] = df_
+
+    # Get convective loss too.
+    file_str = 'GEOSChem.WetLossConv.*'
+    prefix = 'WetLossConv_'
+    vars2use = ['{}{}'.format(prefix,i) for i in Iy_DryDep]
+    dsWLC = AC.get_GEOSChem_files_as_ds(file_str=file_str, wd=folder,
+                                    dates2use=dates2use)
+    dsWLC = dsWLC[vars2use].sum(dim='lev').squeeze()
+    # For update to be in units of I
+    for spec in Iy_DryDep:
+        var = '{}{}'.format(prefix, spec )
+        values = dsWLC[var]
+        factor = AC.get_conversion_factor_kgX2kgREF(spec=spec, ref_spec='I')
+        if debug:
+            print(var, spec, factor)
+        # Update ( inc. time) and save
+        values = values * factor * month2sec[:, None, None]
+        dsWLC[var].values = values
+    # Sum for the year and add to the main reference dictionary
+    dsWLC = dsWLC *(12/n_months_in_ds) /1E9 *1E3
+    index_new = [i.split(prefix)[-1] for i in dsWLC.data_vars ]
+    rename_dict = dict(zip(dsWLC.data_vars, index_new))
+    dsWLC = dsWLC.rename(rename_dict)
+    df_ = dsWLC.sum().to_array().to_pandas()
+    df_.index.name = None
+    dfB['WetDep-C'] = df_
+
+    # - Calculate the Emissions
+    dsH = AC.get_HEMCO_diags_as_ds(wd=folder, dates2use=dates2use)
+    vars2use = [
+        'EmisCH2IBr_Ocean', 'EmisCH2ICl_Ocean', 'EmisCH2I2_Ocean',
+        'EmisCH3I_Ocean', 'EmisI2_Ocean', 'EmisHOI_Ocean',
+    ]
+    # Get actual species
+    specs = [i.split('Emis')[-1].split('_')[0] for i in vars2use]
+    rename_dict = dict(zip(vars2use, specs))
+    dsH = dsH[vars2use+['AREA']].mean(dim='time', keep_attrs=True)
+    dsH_ = AC.convert_HEMCO_ds2Gg_per_yr(dsH, vars2convert=vars2use,
+                                         var_species_dict=rename_dict)
+    del dsH_['AREA']
+    dsH_ = dsH_.rename(rename_dict)
+    df_ = dsH_.sum().to_array().to_pandas()
+    dfB.index.name  =  None
+    dfB = pd.concat([dfB, pd.DataFrame({'Emiss':df_})], axis=1  )
+
+    # - Compile the budget
+    dfB['WetDep'] = dfB['WetDep-LS'] + dfB['WetDep-C']
+    dfB['AllDep'] = dfB['WetDep'] + dfB['DryDep']
+    totals = dfB.sum(axis=0)
+    dfB = dfB.T
+    dfB['Totals'] = dfB.T.sum(axis=0)
+    dfB['I2Ox'] = dfB['I2O2'] + dfB['I2O3'] + dfB['I2O4']
+    dfB['All-IAERI'] = dfB['AERI']+dfB['ISALA']+dfB['ISALC']
+    dfB['IX'] = dfB['ICl']+dfB['IBr']+dfB['I2']
+    dfB['Totals-IAERI'] = dfB['Totals'] - dfB['All-IAERI']
+    dfB.T
+    # Save the budget summary to csv
+    savename = 'GC_Iodine_budget_{}_{}'.format(mechanism, version)
+    dfB.round(3).to_csv(savename)
 
     # - Calculate tropospheric burdens
-    #
     dsSC = AC.GetSpeciesConcDataset(wd=folder, dates2use=dates2use)
-
     # Now extract species
     core_burden_specs = ['O3', 'CO', 'NO', 'NO2']
     iodine_specs = [
     'I2', 'HOI', 'IO', 'I', 'HI', 'OIO', 'INO', 'IONO', 'IONO2', 'I2O2',
     'I2O4', 'I2O3', 'CH3I', 'CH2I2', 'CH2ICl', 'CH2IBr', 'ICl', 'IBr', 'AERI',
-    'ISALA', 'ISALC'
+    'ISALA', 'ISALC',
     ]
     specs2use = core_burden_specs+iodine_specs
-#    specs2use = core_burden_specs
     prefix = 'SpeciesConc_'
-    vars2use = [prefix+i for i in specs2use]
+    vars2use = ['{}{}'.format(prefix,i) for i in specs2use]
     use_time_in_trop = True
     rm_trop =  True
     # Average burden over time
-#    ds = dsD[run]#.mean(dim='time', keep_attrs=True)
-    S = AC.get_Gg_trop_burden(dsSC, vars2use=vars2use, StateMet=dsS,
+    S = AC.get_Gg_trop_burden(ds=dsSC.copy(), vars2use=vars2use, StateMet=dsS,
                               use_time_in_trop=use_time_in_trop,
                               rm_trop=rm_trop,
                               avg_over_time=True,
@@ -2217,20 +2332,57 @@ def get_updated_budget4perspective_paper():
     ref_spec = 'I'
     for spec in iodine_specs:
         var2use = '{}{}'.format(prefix, spec )
-#        ref_spec = get_ref_spec(spec)
-        factor = get_conversion_factor_kgX2kgREF(spec=spec,
+        factor = AC.get_conversion_factor_kgX2kgREF(spec=spec,
                                                     ref_spec=ref_spec)
-        print(spec, factor)
-#        S[var2use] = val/species_mass(spec)*species_mass(ref_spec)
+        if debug:
+            print(spec, factor)
         S[var2use]  = S[var2use]*factor
     # Upate varnames
-    varnames = ['{} burden ({})'.format(i, mass_unit) for i in specs2use]
-    S = S.rename(index=dict(zip(list(S.index.values), varnames)))
+    index_new = [i.split(prefix)[-1] for i in S.index.values ]
+    rename_dict = dict(zip(S.index.values, index_new))
+    S = S.rename(rename_dict)
+    df = pd.DataFrame(S)
+    df.index.name = None
+    # I2Oy?
+    df = df.T
+    df['I2Ox'] = df['I2O2']+df['I2O3']+df['I2O4']
+    df['IX'] = df['ICl']+df['IBr']+df['I2']
+    df['All-AERI'] = df['AERI']+df['ISALA']+df['ISALC']
+    df = df.T
 
     # - Calculate fluxes from gas-phase to aerosol
-    #
-
-
+    folder = folder_LIMITED # Kludge
+    dsPL = AC.get_ProdLoss_ds(wd=folder, dates2use=dates2use)
+    # Tags for the I+ =(aerosol)> IX
+#    tags = ['T131', 'T132', 'T133'] # WAH implementation v12.6
+    tags = [
+    # IONO, IONO2
+    'T132', 'T133', 'T136', 'T137', 'T134', 'T135', 'T138', 'T139',
+    # HOI
+    'T140', 'T141', 'T142', 'T143'
+    ]
+    prefix = 'Prod_'
+    vars2use = ['{}{}'.format(prefix, i) for i in tags]
+    # Remove area (*cm2) - INCORECT. The units are meant to be molec/cm3/s
+#    dsPL = dsPL * dsS['AREA'] * 1E4
+    dsPL = dsPL * dsS['Met_AIRVOL'] * 1E6
+    # Loop to update units and adjust to per month
+    for var2use in vars2use:
+        if debug:
+            print(var2use)
+        values = dsPL[var2use]
+        # Convert molecules to moles
+        values = values / AVG
+        # Convert to kg mass
+        values = (values * AC.species_mass('I'))/ 1E3
+        # Convert to /month from /s
+        values = values * month2sec[:, None, None, None]
+        dsPL[var2use].values = values
+    total = dsPL[vars2use] *(12/n_months_in_ds) /1E12 *1E3
+    total = float(total.to_array().sum() )
+    units = 'Tg/yr'
+    Pstr = "Flux to IX via I+: {:.2F} {}"
+    print(Pstr.format(total, units))
 
 
 
@@ -2288,7 +2440,7 @@ def check_numbers4old_chance_and_new_chance():
     folder = '/work/home/ts551/data/iodide/'
     filename = 'Iodide_data_above_20m_v8_5_1.csv'
     df = pd.read_csv(folder+filename)
-    df = df[np.isfinite(df['Iodide'])]  # remove NaNs
+    df = df[np.isfinite(df['Iodide'])]  # Remove NaNs
     verOrig = 'v8.5.1'
     NOrig = df.shape[0]
     # Add the is chance flag to the dataset
@@ -2306,7 +2458,7 @@ def check_numbers4old_chance_and_new_chance():
     filename = 'Iodide_data_above_20m_v8_2.csv'
     df2 = pd.read_csv(folder + filename)
     df2 = convert_old_Data_Key_names2new(df2)  # Use data descriptor names
-    df2 = df2[np.isfinite(df2['Iodide'])]  # remove NaNs
+    df2 = df2[np.isfinite(df2['Iodide'])]  # Remove NaNs
     ver = '8.2'
     prt_str = 'Version {} of the data  - N={} (vs {} N={})'
     print(prt_str.format(ver, df2.shape[0], verOrig, NOrig))

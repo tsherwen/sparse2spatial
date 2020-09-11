@@ -14,7 +14,7 @@ import AC_tools as AC
 
 def get_stats_on_scalar_emission_runs(dpi=320, context="paper"):
     """
-    Do analysis on scalar emissions from iodide fields
+    Do analysis on emissions from iodide fields with different scalings
     """
     sns.set_context(context)
     sns.set_palette( 'colorblind' )
@@ -33,7 +33,7 @@ def get_stats_on_scalar_emission_runs(dpi=320, context="paper"):
     for key in keys2use:
         dNetCDF[key] = d[key]+'/OutputDir/'
     # Now retrieve HEMCO files
-    dsD = get_HEMCO_diags_as_ds_LOCAL(wds=dNetCDF, dates2use=dates2use)
+    dsD = get_HEMCO_diags_as_ds_dict4runs(wds=dNetCDF, dates2use=dates2use)
     # Include totals for organic and inorganic iodine emission
     for key in keys2use:
         dsD[key] = add_Inorg_and_Org_totals2array(dsD[key])
@@ -163,16 +163,10 @@ def get_stats_on_scalar_emission_runs(dpi=320, context="paper"):
     AC.close_plot()
 
 
-
-    #
-
-
-
 def Get_GEOSChem_run_dict( version='v12.9.1', RunSet='scalar_runs'):
     """
     retrieve a dictionary of runs directories for GEOS-chem model output
     """
-    #
     run_root = utils.get_file_locations('run_root')
     # Select the runs for a given version (and optional set of runs)
     if version=='v12.9.1':
@@ -205,9 +199,9 @@ def add_Inorg_and_Org_totals2array(ds, InOrgVar='Inorg_Total',
     ]
     InOrgVars = ['EmisI2_Ocean', 'EmisHOI_Ocean', ]
     # - Inorganic
-    # template off the first species
+    # Template off the first species
     ds[InOrgVar] = ds[InOrgVars[0]].copy()
-    # sum values to this
+    # Sum values to this
     arr = ds[InOrgVar].values
     for var_ in InOrgVars[1:]:
         print(var_)
@@ -217,9 +211,9 @@ def add_Inorg_and_Org_totals2array(ds, InOrgVar='Inorg_Total',
     attrs['long_name'] = InOrgVar
     ds[InOrgVar].attrs = attrs
     # - Organic
-    # template off the first species
+    # Template off the first species
     ds[OrgVar] = ds[OrgVars[0]].copy()
-    # sum values to this
+    # Sum values to this
     arr = ds[OrgVar].values
     for var_ in OrgVars[1:]:
         print(var_)
@@ -231,7 +225,7 @@ def add_Inorg_and_Org_totals2array(ds, InOrgVar='Inorg_Total',
     return ds
 
 
-def get_HEMCO_diags_as_ds_LOCAL(wds=None, dates2use=None):
+def get_HEMCO_diags_as_ds_dict4runs(wds=None, dates2use=None):
     """
     Get the emissions from the HEMCO NetCDF files as a dictionary of datasets.
     """
@@ -263,112 +257,113 @@ def get_HEMCO_diags_as_ds_LOCAL(wds=None, dates2use=None):
     # Convert to Gg
     for run in runs:
         ds = dsDH[run]
-#        ds = AC.Convert_HEMCO_ds2Gg_per_yr(ds, vars2convert=vars2use,
-#                                           var_species_dict=var_species_dict)
-        # Import failing - use local function for now
-        ds = convert_HEMCO_ds2Gg_per_yr_LOCAL(ds, vars2convert=vars2use,
+        ds = AC.Convert_HEMCO_ds2Gg_per_yr(ds, vars2convert=vars2use,
                                            var_species_dict=var_species_dict)
+        # Import failing - use local function for now
+#        ds = AC.convert_HEMCO_ds2Gg_per_yr(ds, vars2convert=vars2use,
+#                                           var_species_dict=var_species_dict)
         dsDH[run] = ds
     return dsDH
 
 
-def convert_HEMCO_ds2Gg_per_yr_LOCAL(ds, vars2convert=None,
-                                     var_species_dict=None,
-                                     output_freq='End', verbose=False,
-                                     debug=False):
-    """
-    Convert emissions in HEMCO dataset to mass/unit time
-
-    vars2convert (list), NetCDF vairable names to convert
-    var_species_dict (dict), dictionary to map variables names to chemical species
-    output_freq (str), output frequency dataset made from HEMCO NetCDF file output
-
-    """
-    # Get chemical species for each variable name
-    var_species = {}
-    for var in vars2convert:
-        try:
-            var_species[var] = var_species_dict[var]
-        except:
-            #            if verbose:
-            PrtStr = "WARNING - using variable name '{}' as chemical species!"
-            print(PrtStr.format(var))
-            var_species[var] = var
-    # Print assumption about end units.
-    if output_freq == 'End':
-        print("WARNING - Assuming Output frequnecy ('End') is monthly")
-
-    # Get equivalent unit for chemical species (e.g. I, Br, Cl, N, et c)
-    ref_specs = {}
-    for var in vars2convert:
-        try:
-            ref_specs[var] = AC.get_ref_spec(var_species[var])
-        except KeyError:
-            print("WARNING: Using '{}' as reference species for '{}'".format(var, var))
-    # Loop dataset by variable
-    for var_n, var_ in enumerate(vars2convert):
-        if debug:
-            print('{:<2} {} '.format(var_n, var_))
-        # Extract the variable array
-        try:
-            arr = ds[var_].values
-        except KeyError:
-            print("WARNING: skipping variable '({})' as not in dataset".format(var_))
-            continue
-
-        # --- Adjust units to be in kg/gridbox
-        # remove area units
-        if ds[var_].units == 'kg/m2/':
-            arr = arr * ds['AREA']
-        elif ds[var_].units == 'kg/m2/s':
-            # remove area units
-            arr = arr * ds['AREA']
-            # now remove seconds
-            convert_unaveraged_time = False
-            if convert_unaveraged_time:
-                if output_freq == 'Hourly':
-                    arr = arr*60.*60.
-                elif output_freq == 'Daily':
-                    arr = arr*60.*60.*24.*(365.)
-                elif output_freq == 'Weekly':
-                    arr = arr*60.*60.*24.*(365./52.)
-                elif (output_freq == 'Monthly') or (output_freq == 'End'):
-                    arr = arr*60.*60.*24.*(365./12.)
-                else:
-                    print('WARNING: ({}) output convert. unknown'.format(
-                        output_freq))
-                    sys.exit()
-            else:
-                arr = arr*60.*60.*24.*365.
-        elif ds[var_].units == 'kg':
-            pass  # units are already in kg .
-        else:
-            print('WARNING: unit convert. ({}) unknown'.format(ds[var_].units))
-            sys.exit()
-        # --- convert to Gg species
-        # get spec name for output variable
-        spec = var_species[var_]
-        # Get equivalent unit for species (e.g. I, Br, Cl, N, et c)
-        ref_spec = ref_specs[var_]
-        # get stoichiometry of ref_spec in species
-        stioch = AC.spec_stoich(spec, ref_spec=ref_spec)
-        RMM_spec = AC.species_mass(spec)
-        RMM_ref_spec = AC.species_mass(ref_spec)
-        # update values in array
-        arr = arr / RMM_spec * RMM_ref_spec * stioch
-        # (from kg=>g (*1E3) to g=>Gg (/1E9))
-        arr = arr*1E3 / 1E9
-        if set(ref_specs) == 1:
-            units = '(Gg {})'.format(ref_spec)
-        else:
-            units = '(Gg X)'
-        if debug:
-            print(arr.shape)
-        # reassign arrary
-        ds[var_].values = arr
-        # Update units too
-        attrs = ds[var_].attrs
-        attrs['units'] = units
-        ds[var_].attrs = attrs
-    return ds
+# def convert_HEMCO_ds2Gg_per_yr_LOCAL(ds, vars2convert=None,
+#                                      var_species_dict=None,
+#                                      output_freq='End',
+#                                      convert_unaveraged_time=False,
+#                                      verbose=False,
+#                                      debug=False):
+#     """
+#     Convert emissions in HEMCO dataset to mass/unit time
+#
+#     vars2convert (list), NetCDF vairable names to convert
+#     var_species_dict (dict), dictionary to map variables names to chemical species
+#     output_freq (str), output frequency dataset made from HEMCO NetCDF file output
+#
+#     """
+#     # Get chemical species for each variable name
+#     var_species = {}
+#     for var in vars2convert:
+#         try:
+#             var_species[var] = var_species_dict[var]
+#         except:
+#             #            if verbose:
+#             PrtStr = "WARNING - using variable name '{}' as chemical species!"
+#             print(PrtStr.format(var))
+#             var_species[var] = var
+#     # Print assumption about end units.
+#     if output_freq == 'End':
+#         print("WARNING - Assuming Output frequnecy ('End') is monthly")
+#
+#     # Get equivalent unit for chemical species (e.g. I, Br, Cl, N, et c)
+#     ref_specs = {}
+#     for var in vars2convert:
+#         try:
+#             ref_specs[var] = AC.get_ref_spec(var_species[var])
+#         except KeyError:
+#             print("WARNING: Using '{}' as reference species for '{}'".format(var, var))
+#     # Loop dataset by variable
+#     for var_n, var_ in enumerate(vars2convert):
+#         if debug:
+#             print('{:<2} {} '.format(var_n, var_))
+#         # Extract the variable array
+#         try:
+#             arr = ds[var_].values
+#         except KeyError:
+#             print("WARNING: skipping variable '({})' as not in dataset".format(var_))
+#             continue
+#
+#         # --- Adjust units to be in kg/gridbox
+#         # remove area units
+#         if ds[var_].units == 'kg/m2/':
+#             arr = arr * ds['AREA']
+#         elif ds[var_].units == 'kg/m2/s':
+#             # remove area units
+#             arr = arr * ds['AREA']
+#             # now remove seconds
+#             if convert_unaveraged_time:
+#                 if output_freq == 'Hourly':
+#                     arr = arr*60.*60.
+#                 elif output_freq == 'Daily':
+#                     arr = arr*60.*60.*24.*(365.)
+#                 elif output_freq == 'Weekly':
+#                     arr = arr*60.*60.*24.*(365./52.)
+#                 elif (output_freq == 'Monthly') or (output_freq == 'End'):
+#                     arr = arr*60.*60.*24.*(365./12.)
+#                 else:
+#                     print('WARNING: ({}) output convert. unknown'.format(
+#                         output_freq))
+#                     sys.exit()
+#             else:
+#                 arr = arr*60.*60.*24.*365.
+#         elif ds[var_].units == 'kg':
+#             pass  # units are already in kg .
+#         else:
+#             print('WARNING: unit convert. ({}) unknown'.format(ds[var_].units))
+#             sys.exit()
+#         # --- convert to Gg species
+#         # get spec name for output variable
+#         spec = var_species[var_]
+#         # Get equivalent unit for species (e.g. I, Br, Cl, N, et c)
+#         ref_spec = ref_specs[var_]
+#         # get stoichiometry of ref_spec in species
+#         stioch = AC.spec_stoich(spec, ref_spec=ref_spec)
+#         RMM_spec = AC.species_mass(spec)
+#         RMM_ref_spec = AC.species_mass(ref_spec)
+#         # update values in array
+#         arr = arr / RMM_spec * RMM_ref_spec * stioch
+#         # (from kg=>g (*1E3) to g=>Gg (/1E9))
+#         arr = arr*1E3 / 1E9
+#         if set(ref_specs) == 1:
+#             units = '(Gg {})'.format(ref_spec)
+#         else:
+#             units = '(Gg X)'
+#         if debug:
+#             print(arr.shape)
+#         # reassign arrary
+#         ds[var_].values = arr
+#         # Update units too
+#         attrs = ds[var_].attrs
+#         attrs['units'] = units
+#         ds[var_].attrs = attrs
+#     return ds
 
