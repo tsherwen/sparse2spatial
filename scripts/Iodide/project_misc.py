@@ -21,6 +21,7 @@ import AC_tools as AC
 # Get iodide specific functions
 import observations as obs
 
+
 def main():
     """
     Run various misc. scripts linked to the "iodide in the ocean" project
@@ -2385,7 +2386,6 @@ def get_updated_budget4perspective_paper(debug=False):
     print(Pstr.format(total, units))
 
 
-
 def explore_diferences_for_Skagerak():
     """
     Explore how the Skagerak data differs from the dataset as a whole
@@ -3115,6 +3115,30 @@ def mk_data_files4Indian_seasurface_paper(res='0.125x0.125'):
 # ---------------------------------------------------------------------------
 # --------------- Functions for Atmospheric impacts work  -------------------
 # ---------------------------------------------------------------------------
+def __calc_HOI_flux_eqn_21(I=None, O3=None, WS=None, ):
+    """
+    Eqn 21 from Carpenter et al 2013
+
+    Notes
+    -------
+     - Slightly simpler calculation for HOI emission
+    """
+    return O3 * np.sqrt(I) * ((3.56E5/WS) - 2.16E4)
+
+
+def __calc_HOI_flux_eqn_20(I=None, O3=None, WS=None, ):
+    """
+    Eqn 20 from Carpenter et al 2013
+
+    Notes
+    -------
+     - Core calculation for HOI emission
+
+    """
+    return O3 * ((4.15E5 * (np.sqrt(I) / WS)) -
+                 (20.6 / WS) - (2.36E4 * np.sqrt(I)))
+
+
 
 def Check_sensitivity_of_HOI_I2_param2WS():
     """
@@ -3124,23 +3148,14 @@ def Check_sensitivity_of_HOI_I2_param2WS():
     sns.set(color_codes=True)
     sns.set_context("paper", font_scale=1.75)
     import matplotlib.pyplot as plt
-    # Core calculation for HOI emission
-    def calc_HOI_flux_eqn_20(I=None, O3=None, WS=None, ):
-        """ Eqn 20 from Carpenter et al 2013 """
-        return O3 * ((4.15E5 * (np.sqrt(I) / WS)) -
-                     (20.6 / WS) - (2.36E4 * np.sqrt(I)))
-    # Slightly simpler calculation for HOI emission
-    def calc_HOI_flux_eqn_21(I=None, O3=None, WS=None, ):
-        """ Eqn 21 from Carpenter et al 2013 """
-        return O3 * np.sqrt(I) * ((3.56E5/WS) - 2.16E4)
     # Plot up values for windspeed
     WS_l = np.arange(5, 40, 0.1)
     # - plot up
     # Eqn 20
-    Y = [calc_HOI_flux_eqn_20(I=100E-9, O3=20, WS=i) for i in WS_l]
+    Y = [__calc_HOI_flux_eqn_20(I=100E-9, O3=20, WS=i) for i in WS_l]
     plt.plot(WS_l, Y, label='Eqn 20')
     # Eqn 21
-    Y = [calc_HOI_flux_eqn_21(I=100E-9, O3=20, WS=i) for i in WS_l]
+    Y = [__calc_HOI_flux_eqn_21(I=100E-9, O3=20, WS=i) for i in WS_l]
     plt.plot(WS_l, Y, label='Eqn 21')
     # Update aesthetics of plot and save
     plt.title('Flu HOI vs. wind speed')
@@ -3148,6 +3163,95 @@ def Check_sensitivity_of_HOI_I2_param2WS():
     plt.xlabel('Wind speed (ms)')
     plt.legend()
     plt.show()
+
+
+def __calc_HOI_flux_eqn_21(I=None, O3=None, WS=None, ):
+    """
+    Eqn 21 from Carpenter et al 2013
+
+    Notes
+    -------
+     - Slightly simpler calculation for HOI emission
+    """
+    return O3 * np.sqrt(I) * ((3.56E5/WS) - 2.16E4)
+
+
+def __calc_I2_flux_eqn_19(I=None, O3=None, WS=None, ):
+    """
+    Eqn 19 from Carpenter et al 2013
+
+    Notes
+    -------
+     - Core calculation for I2 emission
+    """
+    return O3 * (I**1.3) * (1.74E9 - (6.54E8 *np.log(WS)))
+
+
+def __calc_HOI_flux_eqn_20(I=None, O3=None, WS=None, ):
+    """
+    Eqn 20 from Carpenter et al 2013
+
+    Notes
+    -------
+     - Core calculation for HOI emission
+    """
+    return O3 * ((4.15E5 * (np.sqrt(I) / WS)) -
+                 (20.6 / WS) - (2.36E4 * np.sqrt(I)))
+
+
+def plt_response_to_changing_iodide():
+    """
+    plot the sensitivity to changing iodide (basic representation)
+    """
+    # Set values for iodide, wind speed and ozone
+    I = 106E-9 # M
+    WS = 10 # m/s
+    O3 = 20 # ppbv
+    # Calculate flux for a differen values of global average I-
+    increased_range = False
+    if increased_range:
+        X = [0.5, 0.9, 0.95, 1.0, 1.05, 1.1, 1.25, 1.5]
+    else:
+        X = [0.9, 0.95, 1.0, 1.05, 1.1, 1.25,]
+    pcent = [round((i-1)/1*100) for i in X]
+    HOI = [__calc_HOI_flux_eqn_21(I=I*i, O3=O3, WS=WS) for i in X]
+    I2 = [__calc_I2_flux_eqn_19(I=I*i, O3=O3, WS=WS) for i in X]
+    # Setup data as a DataFrame
+    df = pd.DataFrame({'HOI':HOI, 'I2':I2}, index=pcent)
+    units = 'molec. cm$^{-2}$ s$^{-1}$'
+    ylabel = 'iodide flux ({})'.format(units)
+    df[ylabel] = df['HOI'] + df['I2']
+    xlabel = '$\Delta$ in global iodide value (%)'
+    df[xlabel] = df.index.values
+    # - Plot up actual values
+    df.plot(x=xlabel, y=ylabel, kind='scatter')
+    # Add an ODR line
+    xvalues, Y_ODR = AC.get_linear_ODR(x=df[xlabel].values,
+                                    y=df[ylabel].values,
+                                    return_model=False, maxit=10000)
+    plt.plot(xvalues, Y_ODR, color='red', ls='--')
+    filename = 'IP_iodide_sensitivity'
+    plt.savefig(filename, dpi=dpi)
+    plt.close('all')
+
+    # - And plot changes in emissions in percent terms
+    df = df[[ylabel]]
+    units = '%'
+    ylabel ='$\Delta$ iodide flux ({})'.format(units)
+    REF =  df.loc[0,:].values
+    df.loc[:,ylabel] = (df-REF)/REF *100
+    df.loc[:,xlabel] = df.index.values
+    df.plot(x=xlabel, y=ylabel, kind='scatter')
+    # Add an ODR line
+    xvalues, Y_ODR = AC.get_linear_ODR(x=df[xlabel].values,
+                                    y=df[ylabel].values,
+                                    return_model=False, maxit=10000)
+    plt.plot(xvalues, Y_ODR, color='red', ls='--')
+
+    filename = 'IP_iodide_sensitivity_pcent'
+    plt.savefig(filename, dpi=dpi)
+    plt.close('all')
+
 
 
 if __name__ == "__main__":
