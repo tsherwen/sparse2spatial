@@ -14,6 +14,7 @@ import AC_tools as AC
 
 def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
     """
+    Perform analysis on HOI+I2 emissions with different I- fields
     """
     sns.set_context(context)
     sns.set_palette( 'colorblind' )
@@ -57,6 +58,7 @@ def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
     df.round(0).to_csv(savename.format(REF))
 
     # - Plot up spatial change in emissions
+    matplotlib.rc_file_defaults()
 #    dsD = get_HEMCO_diags_as_ds_dict4runs(wds=dNetCDF, dates2use=dates2use,
 #                                          convert2Gg_yr=False)
     keys2use = [i for i in list(dsD.keys()) if i != REF]
@@ -396,7 +398,7 @@ def Get_GEOSChem_run_dict( version='v12.9.1', RunSet='scalar_runs'):
             # These are the runs used for Sherwen et al 2020
             RunStr = 'merra2_4x5_standard.v12.9.1.BASE.Oi.{}'
             options = ['Chance2014', 'Sherwen2019', ]
-#            options += ['Wadley2020','Hughes2020']
+            options += ['Wadley2020','Hughes2020']
             d = {}
             for option in options:
                 d[option] = '/{}/{}/'.format(run_root, RunStr.format(option))

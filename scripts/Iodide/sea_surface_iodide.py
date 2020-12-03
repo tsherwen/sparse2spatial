@@ -330,7 +330,7 @@ def main():
 #    plt_analysis.plot_spatial_figures_for_ML_paper_with_cartopy()
 
     # --- Processing linked to emissions calculations
-    process_based_model.regrid_process_based_field_to_12x12km()
+#    process_based_model.regrid_process_based_field_to_12x12km()
 
 
     # - pass if no functions are uncommented

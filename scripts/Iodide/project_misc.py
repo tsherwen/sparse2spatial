@@ -3253,6 +3253,339 @@ def plt_response_to_changing_iodide():
     plt.close('all')
 
 
+def get_generic_stats4emission_runs():
+    """
+    Get summary stats on differen iodine emissions runs
+    """
+    # Add NetCCDF subfolder to  directories
+    for key in wds.keys():
+        wds[key] = wds[key] + '/OutputDir/'
+    # Get stats using AC_tools
+    extra_specs = ['HOI', 'I2', 'IO']
+    df = AC.get_general_stats4run_dict_as_df(run_dict=wds,
+                                             extra_surface_specs=extra_specs,
+                                             extra_burden_specs=extra_specs)
+    df.to_csv('PDI_generic_stats_on_different_emission_runs.csv')
+
+    # save as percent too
+#     REF = 'MacDonald2014'
+#     for col in df.columns:
+#         df.loc[:,col] = (df.loc[:,col]-df.loc[:,REF])/df.loc[:,REF]*100
+
+    # - ozone loss by family
+
+
+
+    # - Plot up key stats?
+
+    # IO surface concentration and surface ozone
+
+    # IO surface concentration and ozone burden
+
+    #
+
+
+    # - Load in emissions data
+
+    # - iodine emissions and IO
+
+    # - iodine emissions and surface ozone
+
+    # - iodide surface value and
+
+def get_Ox_loss_by_family4run():
+    """
+    """
+    for key in list(wds.keys()):
+        # Select folder with output data in it
+        folder = wds[key]
+        folder_nc = folder + '/OutputDir/'
+        try:
+            get_Ox_loss_by_family4run(wd=folder_nc, suffix=key )
+        except AssertionError:
+            print('WARNING: Not ProdLoss files found for {}'.format(key))
+
+
+
+def get_Ox_loss_by_family4run(fam='LOx', ref_spec='O3', suffix='v12.9.1',
+                              Mechanism = 'Standard',
+                              rtn_by_fam=True, CODE_wd=None, wd=None):
+    """
+    """
+
+
+    # - Local variables
+    fam = 'LOx'
+    ref_spec = 'O3'
+    # Manually set locations of model output with the Ox loss diagnostic
+    if isinstance(CODE_wd, type(None)):
+        root = '/users/ts551/scratch/GC/'
+        CODE_wd = root + '/Code/Code.BleedingEdge/'
+        CODE_wd = '/{}/KPP/{}/'.format(CODE_wd, Mechanism)
+
+#    wd = root + '/rundirs/'
+#    wd += 'merra2_4x5_standard.v12.9.1.BASE.Oi.MacDonald2014.tagged/'
+#    wd += '/OutputDir/'
+#    Mechanism = 'Tropchem'
+    Mechanism = 'Standard'
+
+    # Get the dictionary of the KPP mechanism.
+    Ox_fam_dict = AC.get_Ox_fam_dicts(fam=fam, ref_spec=ref_spec,
+                                      Mechanism=Mechanism,
+#                                      tag_prefix=tag_prefix,
+                                      wd=wd, CODE_wd=CODE_wd,
+                                      StateMet=StateMet,
+                                      rm_strat=True,
+                                      weight_by_molecs=False,
+                                      )
+
+    # Analyse odd oxygen (Ox) loss budget via route (chemical family)
+    df = AC.calc_fam_loss_by_route(Ox_fam_dict=Ox_fam_dict,
+                                   Mechanism=Mechanism,
+                                   suffix=suffix,
+                                   rtn_by_fam=rtn_by_fam)
+    print(suffix)
+    print(df)
+
+
+def analyse_IO_bias_for_different_emissions():
+    """
+    Analyse IO stats for different HOI+I2 emissions
+    """
+    sns.set_context(context)
+    sns.set_palette( 'colorblind' )
+    # Get dictionary of model runs
+    wds = Get_GEOSChem_run_dict(version='v12.9.1', RunSet='emission_options')
+
+    # setup folder to save data too
+    folder4csvs = './'
+
+    # Get functions for IO comparisons from elsewhere
+    from Prj_Halogen_v8_analysis import mk_TORERO_aircraft_XO_comparison_figure, mk_Cape_Verde_XO_comparisons, mk_TORERO_surface_XO_comparisons, mk_TransBrom_XO_comparisons, mk_malasapina_XO_comparisons_daily_avg, mk_HaloCASTP_XO_comparisons_daily_avg, mk_Cape_Verde_XO_comparisons_daily_avg, calc_stats_on_model_obs_bias_XO
+
+    # - Extract stats on IO comparisons to csv?
+    extract_IO_comp2csv = False
+    if extract_IO_comp2csv:
+        for key in list(wds.keys()):
+            # Select folder with output data in it
+            folder = wds[key]
+            folder_nc = folder + '/OutputDir/'
+            # Get dictionaries of IO comparisons
+            d1 = mk_TORERO_aircraft_XO_comparison_figure(spec='IO',
+                                                         folder=folder,
+                                                         mk_plt=False)
+            # Cape Verde (reported obs. data > daily)
+            d3 = mk_Cape_Verde_XO_comparisons(spec='IO', folder=folder_nc,
+                                              mk_plt=False)
+            # TORERO surface (reported obs. data > daily)
+            d5 = mk_TORERO_surface_XO_comparisons(folder=folder_nc,
+                                                  mk_plt=False)
+            # TransBrom (reported obs. data > daily)
+            d6 = mk_TransBrom_XO_comparisons(folder=folder_nc, mk_plt=False)
+            # Daily resolution datasets - Malasapina, HaloCAST-P
+            d7 = mk_malasapina_XO_comparisons_daily_avg(folder=folder_nc,
+                                                        mk_plt=False)
+            d8 = mk_HaloCASTP_XO_comparisons_daily_avg(folder=folder_nc,
+                                                       mk_plt=False)
+            # Look at Cape Verde on daily avg.
+            d9 = mk_Cape_Verde_XO_comparisons_daily_avg(folder=folder_nc,
+                                                        mk_plt=False)
+            # And TORERO-surface on daily avg?
+
+            # And Transbrom on daily avg?
+
+            # Calculate stats on model-observational bias & save to disk
+    #        dicts = [d1, d2, d3, d4, d5, d6, d7, d8, d9] # IO and BrO
+            dicts = [d1, d3, d5, d6, d7, d8, d9] # Just IO
+            dicts = AC.merge_dicts_list(dicts)
+            calc_stats_on_model_obs_bias_XO(dicts, folder=folder4csvs,
+                                            suffix=key)
+
+    # - Consider differences between iodine emission runs
+    # Re-load stats as dictionary of dataframes
+    dfs = {}
+    for key in list(wds.keys()):
+        filename = 'HALv8_XO_obs_vs_model_stats_{}.csv'.format(key)
+        df = pd.read_csv(folder4csvs+filename)
+        df.index = df[df.columns[0]]
+        del df[df.columns[0]]
+        df = df.T
+        dfs[key] = df
+        del df
+
+    # - Stats for TORERO vertical profile with different emissions
+    row_order = [
+    'MacDonald2014', 'Sherwen2019', 'Wadley2020', 'Hughes2020', 'Chance2014'
+    ]
+    stats2plot = ['Mean Bias', 'RMSE']
+#    REF = 'Macdonald2014'
+    vars2use = [
+    'IO-surface-All-avg-of-avg-ed-bins', 'IO-surface-All',
+    'TORERO-aircraft-IO-alt-binned-avg',
+    'IO-aircraft-All-avg-of-bins',
+    'IO-All',
+    ]
+    units = 'pptv'
+    colors = AC.get_CB_color_cycle()
+    #
+    for var2use in vars2use:
+        # - get stats
+        df2plot = pd.DataFrame()
+        for key in list(wds.keys()):
+            df = dfs[key]
+            df2plot[key] = df[var2use]
+
+        # - Setup axis for plottng
+        # Get figure, axis and additional axes
+        sns.reset_orig()
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+#        ax3 = ax1.twinx()
+#        ax4 = ax1.twinx()
+        axes = [ax1, ax2]
+        # Make space on the right for the additional axes
+#        fig.subplots_adjust(right=0.6)
+        # Move additional axes to free space on the right
+#        ax3.spines["right"].set_position(("axes", 1.2))
+#        ax4.spines["right"].set_position(("axes", 1.4))
+        # Plot by stats
+        for n_stat, stat in enumerate( stats2plot ):
+            ax = axes[n_stat]
+            data = df2plot[row_order].T[stat].values
+            ax.scatter(row_order, data, color=colors[n_stat], alpha=0.75)
+            ax.set_ylabel('{} ({})'.format(stat, units), color=colors[n_stat])
+            ax.tick_params(axis='y', colors=colors[n_stat])
+
+        # Add title / beautify and save
+        plt.title( '{} ({})'.format(var2use, units) )
+        plt.tight_layout()
+        AC.save_plot('PDI_IO_stats_plotted_for_emissions_{}'.format(var2use))
+        plt.close()
+
+
+def mk_TORERO_aircraft_XO_comp_multi_model(context='paper',
+                                           font_scale=0.75,
+                                           plt_tropics=False,
+                                           plt_subtropics=False,
+                                           spec='IO' ):
+    """
+    Plot up comparison with observational data (IO/BrO) from TORERO
+    """
+    import seaborn as sns
+    sns.set(color_codes=True)
+    sns.set_context(context, font_scale=font_scale)
+    # - Setup local variables
+    RunRoot = '/users/ts551/scratch/GC/rundirs/'
+    RunStr = 'merra2_4x5_standard.v12.9.1.BASE.Oi.'
+    wds = {
+    # TORERO Output not present for Chance2014 - re-run.
+    'Chance2014': '{}{}{}/'.format( RunRoot, RunStr, 'Chance2014.extra_diags'),
+    'Sherwen2019': '{}{}{}/'.format( RunRoot, RunStr,
+                                    'Sherwen2019.extra_diags'),
+    'Wadley2020': '{}{}{}/'.format( RunRoot, RunStr, 'Wadley2020'),
+    'Hughes2020': '{}{}{}/'.format( RunRoot, RunStr, 'Hughes2020'),
+    'MacDonald2014': '{}{}{}/'.format( RunRoot, RunStr,
+#                                     'MacDonald2014.extra_tags.TORERO.2017'),
+                                   'MacDonald2014.extra_tags.COMBINED_OUTPUT'),
+    }
+
+#    wds = Get_GEOSChem_run_dict(version='v12.9.1', RunSet='emission_options')
+    # Get observations
+    df_obs = retrieve_TORERO_GV_obs_as_df(spec=spec)
+    # Force year to be same as model (2017)
+    df_obs.index = df_obs.index.map(__update_yr)
+    # Get modelling data - and update tracer names
+    for key in wds.keys():
+        folder = wds[key]
+        print(key, folder)
+        species_list = AC.get_specieslist_from_input_geos(folder=folder)
+        df_mod = AC.get_pf_from_folder(folder=folder)
+        TRA_XXs = [i for i in df_mod.columns if ('TRA_' in i)]
+        TRA_dict = dict(zip(TRA_XXs,species_list))
+        df_mod.rename(columns=TRA_dict, inplace=True)
+        # Consider nearest points where there are observations
+        ModelVarname = '{}-Model-{}'.format(spec, key)
+        scale = 1E12
+        for n_idx, idx in enumerate( df_obs.index ):
+            time_idx = AC.find_nearest(df_mod.index, idx)
+            df_obs.loc[idx, ModelVarname] = df_mod.iloc[time_idx][spec] * scale
+    # Re-name obs. variables for consistency too...
+    ObsVarname_df = '{}_pptv'.format(spec)
+    ObsAltVarname = 'altitude'
+    ObsVarname = '{}-Obs.'.format(spec)
+    df_obs = df_obs.rename(columns={ObsVarname_df:ObsVarname})
+    # Only plot certain locations?
+    tropics = (23.4366, -23.4366)
+    if plt_tropics:
+        print('Plotting just Tropical data')
+        bool = (df_mod['LAT']<=tropics[0]) & (df_mod['LAT']>=tropics[1])
+        df_mod = df_mod.loc[bool,:]
+        bool = (df_obs['lat']<=tropics[0]) & (df_obs['lat']>=tropics[1])
+        df_obs = df_obs.loc[bool,:]
+    elif plt_subtropics:
+        print('Plotting just subtropical data')
+        bool = (df_mod['LAT']<=tropics[1])
+        df_mod = df_mod.loc[bool,:]
+        bool = (df_obs['lat']<=tropics[1])
+        df_obs = df_obs.loc[bool,:]
+    else:
+        print('Plotting all data')
+    # - plot up
+    fig = plt.figure()
+    ax = plt.gca()
+    Y_unit = 'Alt. (km)'
+    ALT_var = 'ALT'
+    max_ALT = 16 # km
+    num_of_datasets = len(wds.keys())+1
+    units = 'pptv'
+    xlabel = '{} {}'.format(spec, units)
+    # Obs
+    df = pd.DataFrame({spec: df_obs[ObsVarname],
+                       ALT_var: df_obs[ObsAltVarname]
+                       })
+    # What bins should be used?
+    bins = np.arange(0, np.ceil(max_ALT))
+    # Now plot up obs
+    AC.binned_boxplots_by_altitude(df=df, fig=fig, ax=ax,
+                                   label='Obs.', xlabel=xlabel,
+                                   binned_var=spec,
+                                   num_of_datasets=num_of_datasets,
+                                   bins=bins,
+                                   dataset_num=0,
+                                   color='K')
+    ax.set_xscale('linear')
+
+    # Now plot up model
+    colour_list = AC.get_CB_color_cycle()[::-1]
+    for n_key, key in enumerate(wds.keys()):
+        ModelVarname = '{}-Model-{}'.format(spec, key)
+        df = pd.DataFrame({spec: df_obs[ModelVarname],
+                           ALT_var: df_obs[ObsAltVarname]
+                           })
+        print(n_key, key, df )
+        # Call plotter
+        AC.binned_boxplots_by_altitude(df=df, fig=fig, ax=ax,
+                                       label=key, xlabel=xlabel,
+                                       binned_var=spec,
+                                       num_of_datasets=num_of_datasets,
+                                       bins=bins,
+                                       dataset_num=1+n_key,
+                                       color=colour_list[n_key] )
+
+    plt.legend()
+    filename2save = 'PDI_TORERO_{}_vertical_binned'.format(spec)
+    if plt_tropics:
+        filename2save += '_tropics'
+    if plt_subtropics:
+        filename2save += '_subtropics'
+    plt.title('Model vs. Obs. {} during TORERO campaign'.format(spec))
+    plt.savefig(filename2save, dpi=320)
+    plt.close('all')
+    # Return a dictionary of observations and model values
+    return {'TORERO-aircraft-{}'.format(spec) : df_obs}
+
+
+
 
 if __name__ == "__main__":
     main()
