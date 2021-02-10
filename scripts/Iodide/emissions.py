@@ -52,7 +52,9 @@ def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
 
     # - Convert to % difference and save values
     REF = 'MacDonald2014'
-    for col in df.columns:
+    cols2use =  [i for i in df.columns if i != REF]
+    for col in cols2use:
+        print(col)
         df.loc[:,col] = (df.loc[:,col]-df.loc[:,REF])/df.loc[:,REF]*100
     savename = 'PDI_iodine_emissions_options_annual_totals_percent_vs_{}.csv'
     df.round(0).to_csv(savename.format(REF))
@@ -404,6 +406,8 @@ def Get_GEOSChem_run_dict( version='v12.9.1', RunSet='scalar_runs'):
                 d[option] = '/{}/{}/'.format(run_root, RunStr.format(option))
             suffix = 'MacDonald2014.tagged/'
             d['MacDonald2014'] = run_root+RunStr.format(suffix)
+            suffix ='Sherwen2019.scaledx50'
+            d['Sherwen2019x0.5'] = run_root+RunStr.format(suffix)
         else:
             pass
     return d
