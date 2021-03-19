@@ -3257,6 +3257,8 @@ def get_generic_stats4emission_runs():
     """
     Get summary stats on differen iodine emissions runs
     """
+    # Get working directories for data
+    wds = Get_GEOSChem_run_dict(version='v12.9.1', RunSet='emission_options')
     # Add NetCCDF subfolder to  directories
     for key in wds.keys():
         wds[key] = wds[key] + '/OutputDir/'
@@ -3273,16 +3275,107 @@ def get_generic_stats4emission_runs():
 #         df.loc[:,col] = (df.loc[:,col]-df.loc[:,REF])/df.loc[:,REF]*100
 
     # - ozone loss by family
+    # This is currently done in a different
 
 
-
-    # - Plot up key stats?
+    # - Plot up key stats? (use double Y axises)
 
     # IO surface concentration and surface ozone
 
-    # IO surface concentration and ozone burden
+    var1 = 'IO surface (pptv)'
+    var2 = 'O3 burden (Tg)'
+    filename = 'PDI_iodide_surface_IO_O3_burden'
 
-    #
+    # > >
+    # repeated plotting code below
+    vars2plot = [var1, var2]
+    df2plot = df.T[vars2plot].T
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    axes = [ax1, ax2]
+#    row_order = list(df2plot.columns)
+    row_order = ['Sherwen2019x0.5',
+    'MacDonald2014', 'Sherwen2019', 'Wadley2020', 'Hughes2020', 'Chance2014'
+    ]
+    colors = AC.get_CB_color_cycle()
+    # Plot by vars
+    for _n, _var in enumerate( vars2plot ):
+        ax = axes[_n]
+        data = df2plot[row_order].T[_var].values
+        ax.scatter(row_order, data, color=colors[_n], alpha=0.75)
+#        ax.set_ylabel('{} ({})'.format(_var, unit_list[_n]), color=colors[_n])
+        ax.set_ylabel(_var, color=colors[_n])
+        ax.tick_params(axis='y', colors=colors[_n])
+        ax.set_xticklabels(row_order, rotation=45)
+
+    plt.tight_layout()
+    plt.savefig(filename, dpi=dpi)
+    plt.close('all')
+    # < <
+
+    # IO surface concentration and ozone burden
+    var1 = 'IO surface (pptv)'
+    var2 = 'O3 surface (ppbv)'
+    filename = 'PDI_iodide_surface_IO_surface_O3'
+
+    # > >
+    # repeated plotting code below
+    vars2plot = [var1, var2]
+    df2plot = df.T[vars2plot].T
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    axes = [ax1, ax2]
+#    row_order = list(df2plot.columns)
+    row_order = ['Sherwen2019x0.5',
+    'MacDonald2014', 'Sherwen2019', 'Wadley2020', 'Hughes2020', 'Chance2014'
+    ]
+    colors = AC.get_CB_color_cycle()
+    # Plot by vars
+    for _n, _var in enumerate( vars2plot ):
+        ax = axes[_n]
+        data = df2plot[row_order].T[_var].values
+        ax.scatter(row_order, data, color=colors[_n], alpha=0.75)
+#        ax.set_ylabel('{} ({})'.format(_var, unit_list[_n]), color=colors[_n])
+        ax.set_ylabel(_var, color=colors[_n])
+        ax.tick_params(axis='y', colors=colors[_n])
+        ax.set_xticklabels(row_order, rotation=45)
+
+    plt.tight_layout()
+    plt.savefig(filename, dpi=dpi)
+    plt.close('all')
+    # < <
+
+    # O3 surface concentration and ozone burden
+    var1 = 'O3 burden (Tg)'
+    var2 = 'O3 surface (ppbv)'
+    filename = 'PDI_iodide_surface_O3_and_O3_burden'
+
+    # > >
+    # repeated plotting code below
+    vars2plot = [var1, var2]
+    df2plot = df.T[vars2plot].T
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    axes = [ax1, ax2]
+#    row_order = list(df2plot.columns)
+    row_order = ['Sherwen2019x0.5',
+    'MacDonald2014', 'Sherwen2019', 'Wadley2020', 'Hughes2020', 'Chance2014'
+    ]
+    colors = AC.get_CB_color_cycle()
+    # Plot by vars
+    for _n, _var in enumerate( vars2plot ):
+        ax = axes[_n]
+        data = df2plot[row_order].T[_var].values
+        ax.scatter(row_order, data, color=colors[_n], alpha=0.75)
+#        ax.set_ylabel('{} ({})'.format(_var, unit_list[_n]), color=colors[_n])
+        ax.set_ylabel(_var, color=colors[_n])
+        ax.tick_params(axis='y', colors=colors[_n])
+        ax.set_xticklabels(row_order, rotation=45)
+
+    plt.tight_layout()
+    plt.savefig(filename, dpi=dpi)
+    plt.close('all')
+    # < <
 
 
     # - Load in emissions data
@@ -3293,27 +3386,61 @@ def get_generic_stats4emission_runs():
 
     # - iodide surface value and
 
+
+
 def get_Ox_loss_by_family4run():
     """
+    Get Ox loss by family for each of the model runs
     """
+    # Get working directories for data
+    wds = Get_GEOSChem_run_dict(version='v12.9.1', RunSet='emission_options')
+    # Not all runs have Ox output yet...
+    del wds['Chance2014']
+    del wds['Wadley2020']
+    del wds['Hughes2020']
+    #
+    dfs = {}
     for key in list(wds.keys()):
         # Select folder with output data in it
         folder = wds[key]
         folder_nc = folder + '/OutputDir/'
         try:
-            get_Ox_loss_by_family4run(wd=folder_nc, suffix=key )
+            df = get_Ox_loss_by_family4run(wd=folder_nc, suffix=key )
         except AssertionError:
             print('WARNING: Not ProdLoss files found for {}'.format(key))
+        # save to the dictionary
+        dfs[key] = df.copy()
+        del df
 
+    # Make into a single % dataframe
+    key2use = list(dfs.keys())[0]
+    df2 = (dfs[key2use]/dfs[key2use].T['Total'] *100 )[dfs[key2use].columns[0]]
+    dfP = pd.DataFrame({key2use:df2})
+    for key in list(wds.keys())[1:]:
+        dfP[key] = (dfs[key]/dfs[key].T['Total'] *100 )[dfs[key].columns[0]]
+
+    # Make a stacked plot for the ox loss
+    df2plot = dfP.copy().T
+    vars2del = [
+    'HO$_{\\rm x}$', 'NO$_{\\rm x}$', 'Photolysis', 'Total', 'Halogens'
+    ]
+    for _var in vars2del:
+        del df2plot[_var]
+
+    title = 'Ox loss by family (%) with different sea-surface iodide fields'
+    df2plot.plot(kind='bar', stacked=True, title=title)
+    plt.tight_layout()
+    AC.save_plot('PDE_pcent_Ox_loss_vs_iodide_field')
+    plt.close('all')
+    # Plot just for halogen families as % of total loss
 
 
 def get_Ox_loss_by_family4run(fam='LOx', ref_spec='O3', suffix='v12.9.1',
                               Mechanism = 'Standard',
                               rtn_by_fam=True, CODE_wd=None, wd=None):
     """
+    Wrapper function to calculate Ox loss by family for each run.
     """
-
-
     # - Local variables
     fam = 'LOx'
     ref_spec = 'O3'
@@ -3329,6 +3456,15 @@ def get_Ox_loss_by_family4run(fam='LOx', ref_spec='O3', suffix='v12.9.1',
 #    Mechanism = 'Tropchem'
     Mechanism = 'Standard'
 
+    # Get StateMet
+    # Get the met state object
+    dates2use = None
+    StateMet = AC.get_StateMet_ds(wd=wd, dates2use=dates2use)
+    # Over oceans
+    vars2use = ['AREA', 'Met_LWI', 'FracOfTimeInTrop', 'Met_AD', 'Met_AIRVOL']
+    vars2use += ['Met_TropP', 'Met_PMID', 'Met_TropLev']
+    StateMet = StateMet[vars2use].squeeze()
+
     # Get the dictionary of the KPP mechanism.
     Ox_fam_dict = AC.get_Ox_fam_dicts(fam=fam, ref_spec=ref_spec,
                                       Mechanism=Mechanism,
@@ -3343,9 +3479,11 @@ def get_Ox_loss_by_family4run(fam='LOx', ref_spec='O3', suffix='v12.9.1',
     df = AC.calc_fam_loss_by_route(Ox_fam_dict=Ox_fam_dict,
                                    Mechanism=Mechanism,
                                    suffix=suffix,
-                                   rtn_by_fam=rtn_by_fam)
+                                   rtn_by_fam=rtn_by_fam,
+                                   rtn_by_rxn=False)
     print(suffix)
     print(df)
+    return df
 
 
 def analyse_IO_bias_for_different_emissions():

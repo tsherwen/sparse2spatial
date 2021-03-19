@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import sparse2spatial.utils as utils
+import sparse2spatial.plotting as plotting
 import seaborn as sns
 
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
@@ -58,6 +59,48 @@ def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
         df.loc[:,col] = (df.loc[:,col]-df.loc[:,REF])/df.loc[:,REF]*100
     savename = 'PDI_iodine_emissions_options_annual_totals_percent_vs_{}.csv'
     df.round(0).to_csv(savename.format(REF))
+
+    # - Plot up a summary emission plot for HOI, I2, CH3I, CH2IX
+    run2plot = 'Sherwen2019x0.5'
+    ds2plot = dsD[run2plot].copy()
+    #
+    data_vars = [i for i in list(ds2plot.data_vars) if 'Emis' in i]
+    vars2plot = [i.split('Emis')[-1].split('_O')[0] for i in data_vars ]
+    ds2plot = ds2plot.rename(name_dict=dict(zip(data_vars,vars2plot)) )
+    # Combine CH2IX
+    ds2plot['CH2IX'] = ds2plot['CH2IBr'].copy()
+    ds2plot['CH2IX'] += ds2plot['CH2ICl'].copy()
+    ds2plot['CH2IX'] += ds2plot['CH2I2'].copy()
+    # Now plot up the core emissions
+    vars2plot = [ 'I2', 'HOI', 'CH3I', 'CH2IX' ]
+    fig = plt.figure(figsize=(9, 5), dpi=dpi)
+    projection = ccrs.Robinson()
+    units = 'Gg yr$^{-1}$'
+    # Loop by season
+    for _n, _var in enumerate(vars2plot):
+        # Select data for month
+        _ds2plot = ds2plot[[_var]]
+        # update long name
+        attrs = _ds2plot[_var].attrs
+#        attrs['long_name'] = '{} ({})'.format(_var, units)
+        attrs['long_name'] = _var
+        _ds2plot[_var].attrs = attrs
+        # Setup the axis
+        axn = (2, 2, _n+1)
+        ax = fig.add_subplot(*axn, projection=projection, aspect='auto')
+        # Now plot
+        plotting.plot_spatial_data(ds=ds2plot, var2plot=_var,
+                                   ax=ax, fig=fig,
+                                   target=_var, title=_var,
+                                   rm_colourbar=False,
+                                   save_plot=False)
+        # Capture the image from the axes
+        im = ax.images[0]
+
+    # Save or show plot
+    filename = 'PDI_emissions_{}.png'.format(run2plot)
+    plt.savefig(filename, dpi=dpi)
+    plt.close('all')
 
     # - Plot up spatial change in emissions
     matplotlib.rc_file_defaults()
@@ -400,13 +443,14 @@ def Get_GEOSChem_run_dict( version='v12.9.1', RunSet='scalar_runs'):
             # These are the runs used for Sherwen et al 2020
             RunStr = 'merra2_4x5_standard.v12.9.1.BASE.Oi.{}'
             options = ['Chance2014', 'Sherwen2019', ]
-            options += ['Wadley2020','Hughes2020']
+            options += ['Wadley2020','Hughes2020', 'MacDonald2014']
             d = {}
+            PathStr = '/{}/{}.AllOutput/'
             for option in options:
-                d[option] = '/{}/{}/'.format(run_root, RunStr.format(option))
-            suffix = 'MacDonald2014.tagged/'
-            d['MacDonald2014'] = run_root+RunStr.format(suffix)
-            suffix ='Sherwen2019.scaledx50'
+                d[option] = PathStr.format(run_root, RunStr.format(option))
+#            suffix = 'MacDonald2014.tagged/'
+#            d['MacDonald2014'] = run_root+RunStr.format(suffix)
+            suffix ='Sherwen2019.scaledx50/'
             d['Sherwen2019x0.5'] = run_root+RunStr.format(suffix)
         else:
             pass
