@@ -3267,7 +3267,7 @@ def get_generic_stats4emission_runs():
     df = AC.get_general_stats4run_dict_as_df(run_dict=wds,
                                              extra_surface_specs=extra_specs,
                                              extra_burden_specs=extra_specs)
-    df.to_csv('PDI_generic_stats_on_different_emission_runs.csv')
+    df.to_csv('PDE_generic_stats_on_different_emission_runs.csv')
 
     # save as percent too
 #     REF = 'MacDonald2014'
@@ -3284,7 +3284,7 @@ def get_generic_stats4emission_runs():
 
     var1 = 'IO surface (pptv)'
     var2 = 'O3 burden (Tg)'
-    filename = 'PDI_iodide_surface_IO_O3_burden'
+    filename = 'PDE_iodide_surface_IO_O3_burden'
 
     # > >
     # repeated plotting code below
@@ -3316,7 +3316,7 @@ def get_generic_stats4emission_runs():
     # IO surface concentration and ozone burden
     var1 = 'IO surface (pptv)'
     var2 = 'O3 surface (ppbv)'
-    filename = 'PDI_iodide_surface_IO_surface_O3'
+    filename = 'PDE_iodide_surface_IO_surface_O3'
 
     # > >
     # repeated plotting code below
@@ -3348,7 +3348,7 @@ def get_generic_stats4emission_runs():
     # O3 surface concentration and ozone burden
     var1 = 'O3 burden (Tg)'
     var2 = 'O3 surface (ppbv)'
-    filename = 'PDI_iodide_surface_O3_and_O3_burden'
+    filename = 'PDE_iodide_surface_O3_and_O3_burden'
 
     # > >
     # repeated plotting code below
@@ -3388,17 +3388,23 @@ def get_generic_stats4emission_runs():
 
 
 
-def get_Ox_loss_by_family4run():
+def get_Ox_loss_by_family4runs():
     """
     Get Ox loss by family for each of the model runs
     """
     # Get working directories for data
     wds = Get_GEOSChem_run_dict(version='v12.9.1', RunSet='emission_options')
     # Not all runs have Ox output yet...
-    del wds['Chance2014']
-    del wds['Wadley2020']
-    del wds['Hughes2020']
-    #
+#    del wds['Chance2014']
+#    del wds['Wadley2020']
+#    del wds['Hughes2020']
+    row_order = [
+    'Sherwen2019x0.5','MacDonald2014', 'Sherwen2019',
+#    'Chance2014',
+    'Wadley2020', 'Hughes2020',
+    ]
+
+    # Loop by run name and extract
     dfs = {}
     for key in list(wds.keys()):
         # Select folder with output data in it
@@ -3419,8 +3425,21 @@ def get_Ox_loss_by_family4run():
     for key in list(wds.keys())[1:]:
         dfP[key] = (dfs[key]/dfs[key].T['Total'] *100 )[dfs[key].columns[0]]
 
+    # Also make into a single dataframe of full values and save as a csv
+    df3 = dfs[list(dfs.keys())[0] ]
+    df3.columns = [list(dfs.keys())[0]]
+    df3.index.name = None
+    for key in list(wds.keys())[1:]:
+        df2add = dfs[key]
+        df2add.columns = [key]
+        df2add.index.name = None
+        df3 = pd.concat([df3, df2add],  axis=1, join="inner")
+    filename = 'PDE_Ox_loss_by_route.csv'
+    df3[row_order].round(1).to_csv(filename)
+
+    # Plot just for halogen families as % of total loss
     # Make a stacked plot for the ox loss
-    df2plot = dfP.copy().T
+    df2plot = dfP.copy()[row_order].T
     vars2del = [
     'HO$_{\\rm x}$', 'NO$_{\\rm x}$', 'Photolysis', 'Total', 'Halogens'
     ]
@@ -3432,7 +3451,10 @@ def get_Ox_loss_by_family4run():
     plt.tight_layout()
     AC.save_plot('PDE_pcent_Ox_loss_vs_iodide_field')
     plt.close('all')
-    # Plot just for halogen families as % of total loss
+
+    # Save a table of the Ox loss via routes (percent), stacked by iodine
+    filename = 'PDE_Ox_loss_by_route_percentage.csv'
+    df2plot.sort_values('Iodine').to_csv(filename)
 
 
 def get_Ox_loss_by_family4run(fam='LOx', ref_spec='O3', suffix='v12.9.1',
@@ -3597,7 +3619,7 @@ def analyse_IO_bias_for_different_emissions():
         # Add title / beautify and save
         plt.title( '{} ({})'.format(var2use, units) )
         plt.tight_layout()
-        AC.save_plot('PDI_IO_stats_plotted_for_emissions_{}'.format(var2use))
+        AC.save_plot('PDE_IO_stats_plotted_for_emissions_{}'.format(var2use))
         plt.close()
 
 
@@ -3711,7 +3733,7 @@ def mk_TORERO_aircraft_XO_comp_multi_model(context='paper',
                                        color=colour_list[n_key] )
 
     plt.legend()
-    filename2save = 'PDI_TORERO_{}_vertical_binned'.format(spec)
+    filename2save = 'PDE_TORERO_{}_vertical_binned'.format(spec)
     if plt_tropics:
         filename2save += '_tropics'
     if plt_subtropics:

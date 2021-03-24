@@ -49,7 +49,7 @@ def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
     df['Total'] = df[['Inorg_Total', 'Org_Total']].sum(axis=1)
     df = df.T
     # Save total
-    df.round(0).to_csv('PDI_iodine_emissions_options_annual_totals.csv')
+    df.round(0).to_csv('PDE_iodine_emissions_options_annual_totals.csv')
 
     # - Convert to % difference and save values
     REF = 'MacDonald2014'
@@ -57,7 +57,7 @@ def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
     for col in cols2use:
         print(col)
         df.loc[:,col] = (df.loc[:,col]-df.loc[:,REF])/df.loc[:,REF]*100
-    savename = 'PDI_iodine_emissions_options_annual_totals_percent_vs_{}.csv'
+    savename = 'PDE_iodine_emissions_options_annual_totals_percent_vs_{}.csv'
     df.round(0).to_csv(savename.format(REF))
 
     # - Plot up a summary emission plot for HOI, I2, CH3I, CH2IX
@@ -98,7 +98,7 @@ def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
         im = ax.images[0]
 
     # Save or show plot
-    filename = 'PDI_emissions_{}.png'.format(run2plot)
+    filename = 'PDE_emissions_{}.png'.format(run2plot)
     plt.savefig(filename, dpi=dpi)
     plt.close('all')
 
@@ -107,7 +107,7 @@ def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
 #    dsD = get_HEMCO_diags_as_ds_dict4runs(wds=dNetCDF, dates2use=dates2use,
 #                                          convert2Gg_yr=False)
     keys2use = [i for i in list(dsD.keys()) if i != REF]
-    savetitle = 'PDI_iodine_emissions_options_diff'
+    savetitle = 'PDE_iodine_emissions_options_diff'
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
     # limit colour-bar
     vmin = -100
