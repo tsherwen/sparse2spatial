@@ -47,6 +47,7 @@ def do_analysis_on_iodine_emission_options(dpi=320, context="paper"):
     # Add total
     df = df.T
     df['Total'] = df[['Inorg_Total', 'Org_Total']].sum(axis=1)
+    df = df.sort_values('Total')
     df = df.T
     # Save total
     df.round(0).to_csv('PDE_iodine_emissions_options_annual_totals.csv')
