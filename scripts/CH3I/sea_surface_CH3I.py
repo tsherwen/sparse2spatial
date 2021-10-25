@@ -49,7 +49,8 @@ def main():
 
     # Get stats ont these models
     stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-                                                         target=target, verbose=True,
+                                                         target=target,
+                                                         verbose=True,
                                                          debug=True)
 
     # Get the top ten models
@@ -65,10 +66,12 @@ def main():
     res = '0.125x0.125'
 #    res = '4x5'
     build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
-                                         save2NetCDF=save2NetCDF, target=target,
+                                         save2NetCDF=save2NetCDF,
+                                         target=target,
                                          models2compare=topmodels,
                                          topmodels=topmodels,
-                                         xsave_str=xsave_str, add_ensemble2ds=True)
+                                         xsave_str=xsave_str,
+                                         add_ensemble2ds=True)
 
     # --- Plot up the performance of the models
     df = RFR_dict['df']
@@ -92,6 +95,10 @@ def main():
     compare_performance_of_parameters_against_observations()
 
     # Evalute deposition totals via HEMCO
+
+
+
+    # ---
 
 
 def evaluate_deposition_of_ocean_emissions(ds=None):
@@ -118,7 +125,8 @@ def evaluate_deposition_of_ocean_emissions(ds=None):
         return ds
 
     # create a function to convert molec/cm2/s to Gg/yr
-    def convert_molec_cm2_s_2_Gg_per_yr(ds, spec=None, var2use=None, AREA=None):
+    def convert_molec_cm2_s_2_Gg_per_yr(ds, spec=None,
+                                        var2use=None, AREA=None):
         """
         Calculate annual total from kg/m2/s
         """
@@ -193,7 +201,8 @@ def evaluate_deposition_of_ocean_emissions(ds=None):
             Evarname = 'Emis{}_Ocean'.format( spec.name )
             emiss4spec = ds[[Evarname]].copy()
         # convert to Gg/year
-        emiss4spec = convert_kg_m2_s_2_Gg_per_yr(emiss4spec, var2use=Evarname, AREA=AREA)
+        emiss4spec = convert_kg_m2_s_2_Gg_per_yr(emiss4spec,
+                                                 var2use=Evarname, AREA=AREA)
         # save total
         S['Emiss.'] = emiss4spec[Evarname].values.sum()
 
@@ -228,9 +237,11 @@ def check_budgets_from_Bell_emiss():
     extr_str = 'Wetland_emissions_CH3I'
     units = dsW[var2plot].units
     title = "Wetland emissions of {} ({})".format(target, units)
-    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                               fillcontinents=False,
-                               target=target, title=title, units=units)
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                  extr_str=extr_str,
+                                  fillcontinents=False,
+                                  target=target, title=title,
+                                  units=units)
 
     # - Get the rice emissions
     filename = 'ch4_rice.geos.4x5.nc'
@@ -242,9 +253,11 @@ def check_budgets_from_Bell_emiss():
     extr_str = 'Rice_emissions_CH3I'
     units = dsR[var2plot].units
     title = "Rice emissions of {} ({})".format(target, units)
-    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                               fillcontinents=False,
-                               target=target, title=title, units=units)
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                  extr_str=extr_str,
+                                  fillcontinents=False,
+                                  target=target, title=title,
+                                  units=units)
 
 
     # - Get the ocean concentrations
@@ -257,8 +270,10 @@ def check_budgets_from_Bell_emiss():
     extr_str = 'Ocean_concs_CH3I'
     units = dsO[var2plot].units
     title = "Ocean concentrations of {} ({})".format(target, units)
-    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                                target=target, title=title, units=units)
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                  extr_str=extr_str,
+                                  target=target, title=title,
+                                  units=units)
 
 
     # - Get the ocean concentrations (assuming no HEMCO conversion error)
@@ -275,9 +290,10 @@ def check_budgets_from_Bell_emiss():
     units = 'pM'
     title = "Ocean concentrations of {} ".format(target)
     title += "({})".format( 'pM')
-    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                               vmin=vmin, vmax=vmax,
-                               target=target, title=title, units=units)
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                  extr_str=extr_str,
+                                  vmin=vmin, vmax=vmax,
+                                  target=target, title=title, units=units)
 
    # - Get the ocean concentrations (assuming HEMCO conversion error)
     filename = 'ocean_ch3i.geos.4x5.nc'
@@ -293,22 +309,23 @@ def check_budgets_from_Bell_emiss():
     units = 'ng L$^{-1}$'
     title = "Ocean concentrations of {} ".format(target)
     title += "({} - x10 assumeing HEMCO conversion error)".format( units)
-    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                  extr_str=extr_str,
 #                               vmin=vmin, vmax=vmax,
-                               target=target, title=title, units=units)
+                                  target=target, title=title, units=units)
     # Also plot seasonally
     vmin, vmax = 0, 2
 #    vmin, vmax = 0, 1
 #    extr_str = 'Ocean_concs_CH3I_ng_L_capped_at_1'
     ds2plot = dsO[[var2plot]]
     ds2plot[var2plot] = ds2plot[var2plot] * 1E9 /10
-    s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds2plot, target=target,
-                                                     var2plot=var2plot,
-                                                     var2plot_longname='Bell et al 2002',
-                                                     version='_assume_x10_error',
-                                                     vmin=vmin, vmax=vmax,
-                                                     seperate_plots=False,
-                                                     units=units)
+    s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds2plot,
+                                                        target=target,
+                                                        var2plot=var2plot,
+                                                        var2plot_longname='Bell et al 2002', version='_assume_x10_error',
+                                                        vmin=vmin, vmax=vmax,
+                                                        seperate_plots=False,
+                                                        units=units)
 
 
 
@@ -329,9 +346,10 @@ def check_budgets_from_Bell_emiss():
     units = 'ng L$^{-1}$'
     title = "Ziska et al (2013) ocean concentrations of {} ".format(target)
     title += "({})".format( units)
-    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                  extr_str=extr_str,
 #                               vmin=vmin, vmax=vmax,
-                               target=target, title=title, units=units)
+                                  target=target, title=title, units=units)
 
 
     # - Get the ocean concentrations
@@ -380,9 +398,10 @@ def check_budgets_from_Bell_emiss():
 #    vmin, vmax = 0, 15
     units = dsML[var2plot].units
     title = "ML ocean concentrations of {} ({})".format(target, 'ng L$^{-1}$')
-    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                  extr_str=extr_str,
 #                               vmin=vmin, vmax=vmax,
-                               target=target, title=title, units=units)
+                                  target=target, title=title, units=units)
 
     # Also plot seasonally
     vmin, vmax = 0, 2
@@ -391,13 +410,14 @@ def check_budgets_from_Bell_emiss():
     ds2plot = dsML[[var2plot]]
     ds2plot[var2plot] = ds2plot[var2plot] /1E12 *141.9 * 1E9
     units= 'ng L$^{-1}$'
-    s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds2plot, target=target,
-                                                     var2plot=var2plot,
-                                                     var2plot_longname='ML field',
-                                                     version=extr_str,
-                                                     vmin=vmin, vmax=vmax,
-                                                     seperate_plots=False,
-                                                     units=units)
+    s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds2plot,
+                                                        target=target,
+                                                        var2plot=var2plot,
+                                                        var2plot_longname='ML field',
+                                                        version=extr_str,
+                                                        vmin=vmin, vmax=vmax,
+                                                        seperate_plots=False,
+                                                        units=units)
 
 
     # - plot up the new kg/m3 concs.
@@ -412,8 +432,9 @@ def check_budgets_from_Bell_emiss():
     extr_str = 'Ocean_concs_CH3I_ML'
     units = dsML[var2plot].units
     title = "ML ocean concentrations of {} ({})".format(target, 'pM')
-    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                               target=target, title=title, units=units)
+    s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                  extr_str=extr_str,
+                                  target=target, title=title, units=units)
 
 
 
@@ -431,7 +452,8 @@ def setup_ML_and_other_feilds():
     dsZ = dsZ.rename(name_dict={'RF - ocean' : 'CH3I'})
     var2use = 'CH3I'
     new_var  = 'RF_CH3I_kg_m3'
-    dsZ = utils.add_converted_field_pM_2_kg_m3( dsZ, new_var=new_var, var2use=var2use )
+    dsZ = utils.add_converted_field_pM_2_kg_m3( dsZ, new_var=new_var,
+                                               var2use=var2use )
     # for lat...
     attrs_dict = dsZ['lat'].attrs
     attrs_dict['long_name'] = "latitude"
@@ -464,7 +486,7 @@ def compare_performance_of_parameters_against_observations():
     vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
                                               lats=df[LatVar].values,
                                               months=df['Month'].values,
-                                              var2extract='Ensemble_Monthly_mean',)
+                                          var2extract='Ensemble_Monthly_mean',)
     var = 'RFR(Ensemble)'
     params = [var]
 
@@ -552,7 +574,8 @@ def compare_performance_of_parameters_against_observations():
     # ODr plot
     ylim = (0, 15)
     xlim = (0, 15)
-    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM',
+                                     target=target,
                                      ylim=ylim, xlim=xlim)
 
     # Plot up a PDF of concs and bias
@@ -732,11 +755,12 @@ def plot_seasaonl_model_vs_obs(dpi=320, target='CH3I', use_hourly_files=True ):
             dates = df.index.values
             data = df[site].values
             # Plot up observations
-            AC.BASIC_seasonal_plot(data=data, dates=dates, color=colour_dicts[run],
-                                label=run,
-                                plot_Q1_Q3=True,
-                                xlabel=xlabel, ylabel=ylabel,
-                                rm_yticks=rm_yticks )
+            AC.BASIC_seasonal_plot(data=data, dates=dates,
+                                   color=colour_dicts[run],
+                                   label=run,
+                                   plot_Q1_Q3=True,
+                                   xlabel=xlabel, ylabel=ylabel,
+                                   rm_yticks=rm_yticks )
     # Add a legend
     axn = (3, 5, 5 )
     ax = fig.add_subplot(*axn)
@@ -840,7 +864,8 @@ def quick_check_of_CH3I_emissions(target='CH3I'):
                 sys.exit()
                 print('WARNING: unit conversion not setup')
             # plot the seasonally resoved flux
-            s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds, target=target,
+            s2splotting.plot_up_seasonal_averages_of_prediction(ds=ds,
+                                                    target=target,
                                                      var2plot=var2plot,
                                                      var2plot_longname=var,
                                                      version='{}_{}'.format(var, units),
@@ -853,12 +878,10 @@ def quick_check_of_CH3I_emissions(target='CH3I'):
             title = "Annual average '{}' ({})".format(var2plot, units)
             # Now plot
             s2splotting.plot_spatial_data(ds=ds[[var2plot]].mean(dim='time'),
-                            var2plot=var2plot,
-                              extr_str=extr_str, target=target,
-                              title=title)
+                                          var2plot=var2plot,
+                                          extr_str=extr_str, target=target,
+                                          title=title)
             plt.close()
-
-
 
 
 def check_units_of_Bell2002_files():
@@ -867,8 +890,6 @@ def check_units_of_Bell2002_files():
     """
     #
     pass
-
-
 
 
 def GetEmissionsFromHEMCONetCDFsAsDatasets(wds=None, average_over_time=False):
@@ -953,13 +974,15 @@ def plot_up_obs_data_by_year( target='CH3I',):
     # Get the observational data
     df = get_CH3I_obs()
     # Add the ocean that the data is in
-    df = analysis.add_loc_ocean2df(df=df,  LatVar='Latitude', LonVar='Longitude')
+    df = analysis.add_loc_ocean2df(df=df,  LatVar='Latitude',
+                                   LonVar='Longitude')
     # Plot up the observational data by year
     plot_up_df_data_by_yr( df=df, target=target )
 
 
 def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
-                          start_from_last_obs=False, drop_bins_without_data=True,
+                          start_from_last_obs=False,
+                          drop_bins_without_data=True,
                           target='Iodide', dpi=320):
     """
     Plot up # of obs. data binned by region against year
@@ -987,7 +1010,8 @@ def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
             bin_start = AC.add_days( max_date, -int(days2rm+(365*TimeWindow)))
             bin_end = AC.add_days( max_date, -days2rm )
         else:
-            bin_start = AC.add_days( sdate_block,-int(days2rm+(365*TimeWindow)))
+            bin_start = AC.add_days(sdate_block,
+                                    -int(days2rm+(365*TimeWindow)))
             bin_end = AC.add_days( sdate_block, -days2rm )
         # Select the data within the observational dates
         bool1 = df[Datetime_var] > bin_start
@@ -1016,7 +1040,8 @@ def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
     dfA = dfA.T
     dfA.columns
     rename_cols = {
-    np.NaN : 'Other',  'INDIAN OCEAN': 'Indian Ocean', 'SOUTHERN OCEAN' : 'Southern Ocean'
+    np.NaN : 'Other',  'INDIAN OCEAN':
+    'Indian Ocean', 'SOUTHERN OCEAN' : 'Southern Ocean'
     }
     dfA = dfA.rename(columns=rename_cols)
     dfA = dfA.T
@@ -1188,6 +1213,47 @@ def check_flux_variables():
         plt.savefig( savename, dpi=320 )
 
         plt.close()
+
+
+def extract_ancillary_timeseries_for_CVAO():
+    """
+    Extract ancillary timeseries for location around CVAO
+    """
+    #
+    res = '0.125x0.125'  # Use Nature res. run for analysis
+    folder = utils.get_file_locations('data_root') + '/data/'
+    filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+    dsA = xr.open_dataset(folder + filename)
+    # sub select
+    bool1 = (dsA.lat.values >= 14.90) & (dsA.lat.values <= 23.40)
+    dsA = dsA.isel(lat=bool1)
+    bool2 = (dsA.lon.values <= -16.00) & (dsA.lon.values >= -26.90 )
+    dsA = dsA.isel(lon=bool2)
+    # Save
+    filename =  'Oi_prj_feature_variables_0.125x0.125_CVAO_box.nc'
+    dsA.to_netCDF(filename)
+
+
+    # - Extract all CVAO locations to CSV files
+    from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
+    d = AC.get_loc(rtn_dict=True)
+    keys2use = [i for i in d.keys() if ('cvo' in i.lower())]
+    # Print out locations
+    PrtStr = '{:<20} - {:.3f} degN, {:.3f} degE '
+    for key in list(sorted(keys2use)):
+        lon, lat, NIU = AC.get_loc(key)
+        print(PrtStr.format(key, lat, lon))
+
+    # Make into CSV files.
+
+
+
+    # Save the intermediate file
+    folder = utils.get_file_locations('data_root', file_and_path=file_and_path)
+    folder += '/{}/inputs/'.format(target)
+    filename = 's2s_{}_obs_ancillaries_v0_0_0.csv'.format(target)
+    df.to_csv(folder+filename, encoding='utf-8')
+
 
 
 
