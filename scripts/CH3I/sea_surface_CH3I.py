@@ -1230,8 +1230,14 @@ def extract_ancillary_timeseries_for_CVAO():
     bool2 = (dsA.lon.values <= -16.00) & (dsA.lon.values >= -26.90 )
     dsA = dsA.isel(lon=bool2)
     # Save
-    filename =  'Oi_prj_feature_variables_0.125x0.125_CVAO_box.nc'
+    filename = 'Oi_prj_feature_variables_0.125x0.125_CVAO_box.nc'
     dsA.to_netCDF(filename)
+    # Add the iodide prediction to the file
+    Nf = 'Oi_prj_predicted_iodide_0.125x0.125_No_Skagerrak_Just_Ensemble.nc'
+    folder = '/mnt/lustre/groups/chem-acm-2018/earth0_data/GEOS//ExtData/'
+    folder += '/HEMCO/OCEAN_O3_DRYDEP/v2020-02/'
+    ds2 = xr.open_dataset(folder+Nf)
+
 
 
     # - Extract all CVAO locations to CSV files
