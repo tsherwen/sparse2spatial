@@ -1,0 +1,12 @@
+##################################################
+#                                                #
+#         Setup file for Sparse2Spatial          #
+#                                                #
+##################################################
+#
+# - Locations of input data
+#
+data_root            : /work/home/ts551/data/s2s/data/
+s2s_root             : /work/home/ts551/data/s2s/
+AC_tools             : /work/home/ts551//labbook/Python_progs/AC_tools/
+# End of file
