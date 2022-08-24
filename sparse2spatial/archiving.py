@@ -37,12 +37,13 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
         ext_str = '_No_Skagerrak'
     else:
         ext_str = ''
-    file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(
+    file2regrid = 's2s__predicted_{}_0.125x0.125{}.nc'.format(
         target, ext_str)
     folder = utils.get_file_locations('data_root')
     dsA = xr.open_dataset(folder + file2regrid)
     # Make sure there are not spaces in variable names
-    dsA = add_attrs2target_ds(dsA, add_varname_attrs=False, add_global_attrs=False,
+    dsA = add_attrs2target_ds(dsA, add_varname_attrs=False,
+                              add_global_attrs=False,
                               rm_spaces_from_vars=True)
     # Remove existing parameters if they are there
     try:
@@ -82,7 +83,7 @@ def mk_NetCDF_files_for_data_archiving(target='Iodide'):
     # - Also save out the file that is inc. excluded data.
     name2save = 'predicted_{}_0.125x0.125_All_Ensemble_members'.format(target)
     ext_str = ''
-    file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(
+    file2regrid = 's2s__predicted_{}_0.125x0.125{}.nc'.format(
         target, ext_str)
     folder = utils.get_file_locations('data_root')
     dsA2 = xr.open_dataset(folder+file2regrid)
@@ -129,7 +130,7 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
     else:
         ext_str = ''
     if isinstance(dsA, type(None)):
-        file2regrid = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'.format(
+        file2regrid = 's2s__predicted_{}_0.125x0.125{}.nc'.format(
             target, ext_str)
         folder = utils.get_file_locations('data_root')
         dsA = xr.open_dataset(folder + file2regrid)
@@ -207,7 +208,7 @@ def regrid_output_to_common_res_as_NetCDFs(topmodels=None, target='Iodide',
         # Time values
         ds = update_time_in_NetCDF2save(ds)
         # Save the file
-        filename = 'Oi_prj_output_{}_field_{}'.format(target, grid)
+        filename = 's2s__output_{}_field_{}'.format(target, grid)
         filename = AC.rm_spaces_and_chars_from_str(filename)
         ds.to_netcdf(filename+'.nc')
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Module to hold core processing/analysis functions for Ocean iodide (Oi!) project
+Module of core processing/analysis functions for Ocean iodide (Oi!) project
 
 Notes
 ----
@@ -14,7 +14,11 @@ predictor = vector assigned to a target value
 
 Please see Paper(s) for more details:
 
-Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data Discuss., https://doi.org/10.5194/essd-2019-40, in review, 2019.
+Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine-learning-based global sea-surface iodide distribution, Earth Syst. Sci. Data, 11, 1239–1262, https://doi.org/10.5194/essd-11-1239-2019, 2019.
+
+Chance, R.J., Tinel, L., Sherwen, T., Baker, A.R., Bell, T., Brindle, J., Campos, M.L.A., Croot, P., Ducklow, H., Peng, H. and Hopkins, F., 2019. Global sea-surface iodide observations, 1967–2018. Scientific data, 6(1), pp.1-8.
+
+TODO: obsolete code from this module needs to be removed
 
 
 """
@@ -38,6 +42,7 @@ import sparse2spatial.archiving as archiving
 import sparse2spatial.analysis as analysis
 import sparse2spatial.RFRanalysis as RFRanalysis
 import sparse2spatial.plotting as plotting
+import sparse2spatial.plotting as s2splotting
 #from sparse2spatial.RFRanalysis import get_stats_on_models
 from sparse2spatial.analysis import add_ensemble_avg_std_to_dataset
 from sparse2spatial.RFRbuild import get_top_models
@@ -48,6 +53,7 @@ from sparse2spatial.RFRbuild import build_or_get_models
 import observations as obs
 import project_misc as misc
 import plotting_and_analysis as plt_analysis
+import process_based_model
 
 
 def main():
@@ -74,22 +80,22 @@ def main():
 #    utils.check_or_mk_directory_structure(target=target)
 
     # General settings
-    rm_Skagerrak_data = True
-    rebuild = False
+#    rm_Skagerrak_data = True
+#    rebuild = False
 #    rm_Skagerrak_data = False
     # Use top models from full dataset  ( now: nOutliers + nSkagerak
-    RFR_dict = build_or_get_models_iodide(
-        rebuild=rebuild,
-        rm_Skagerrak_data=rm_Skagerrak_data)
+#    RFR_dict = build_or_get_models_iodide(
+#        rebuild=rebuild,
+#        rm_Skagerrak_data=rm_Skagerrak_data)
 #    RFR_dict = build_or_get_models_iodide( rm_Skagerrak_data=False )
 #    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
-    print(RFR_dict.keys())
+#    print(RFR_dict.keys())
 #    print(topmodels)
     # Check statistics on prediction
 #    print(stats)
     # Get the dictionary of models and their features
-    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
-    print(model_feature_dict)
+#    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
+#    print(model_feature_dict)
 #    print(model_feature_dict['NO3+DOC+Phos'])
 
     # ---- ----- ----- ----- ----- ----- ----- ----- -----
@@ -139,9 +145,9 @@ def main():
 
     # --- Predict values globally (only use 0.125)
     # extra string for NetCDF save name
-    xsave_str = 'TEST_'
+#    xsave_str = 'TEST_'
     # make NetCDF predictions from the main array
-    save2NetCDF = True
+#    save2NetCDF = True
     # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
 #    res = '0.125x0.125'
 #     res = '4x5'
@@ -165,7 +171,7 @@ def main():
 #     # #    for res in ['4x5', '2x2.5']:
 #     for res in ['4x5']:
 #     # #    for res in ['0.125x0.125',]:
-#         # setup a pool to bulk process
+#         # Setup a pool to bulk process
 #         p  = Pool( len(vars2use) )
 #     #        for var2use in vars2use:
 #             # now predict the arrays from this.
@@ -196,9 +202,9 @@ def main():
 
     # --- 2D analysis
     # Plot up spatial comparison of obs. and params
-#    plt_analysis.plot_up_obs_spatially_against_predictions( RFR_dict=RFR_dict )
+#    plt_analysis.plt_obs_spatially_vs_predictions( RFR_dict=RFR_dict )
     # Test which plotting options to use (to display markers)
-#    plt_analysis.plot_up_obs_spatially_against_predictions_options(
+#    plt_analysis.plt_obs_spatially_vs_predictions_options(
 #          RFR_dict=RFR_dict )
 
     # plot up the input variables spatially
@@ -218,7 +224,7 @@ def main():
 #    analysis.get_stats_on_spatial_predictions_4x5_2x25_by_lat()
 
     # Get stats from the 0.125x0.125 prediction
-#    analysis.get_stats_on_spatial_predictions_0125x0125()
+#    get_stats_on_spatial_predictions_0125x0125_iodide()
 
     # Calculate the average predicted surface conc (only 4x5. 2x2.5 too? )
 #    plt_analysis.calculate_average_predicted_surface_conc() # AGU calcs at 4x5
@@ -232,7 +238,7 @@ def main():
 #    plt_analysis.plot_monthly_predicted_iodide_diff( res='0.125x0.125' )
 
     # explore the extracted data in the arctic and AnatArctic
-#    plt_analysis.explore_extracted_data_in_Oi_prj_explore_Arctic_Antarctic_obs()
+#    plt_analysis.explore_extracted_Arctic_Antarctic_obs()
 
     # Check the sensitivity to input variables >= 65 N
 #    plt_analysis.mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(
@@ -267,7 +273,7 @@ def main():
 
     # --- Spatial analysis for specific locations
     # explore the observational data in the Arctic
-#    misc.explore_observational_data_in_Arctic_parameter_space( RFR_dict=RFR_dict )
+#    misc.explore_obse_data_in_Arctic_param_space( RFR_dict=RFR_dict )
 
     # plot up where decision points are
 #    plt_analysis.plot_spatial_area4core_decisions( res='4x5' )
@@ -284,7 +290,7 @@ def main():
 #    RFRanalysis.run_tests_on_testing_dataset_split_quantiles()
 #    RFRanalysis.run_tests_on_testing_dataset_split()
 
-    # selection of variables to build models
+    # Selection of variables to build models
 
     # hyperparameter tuning of selected models
 
@@ -312,23 +318,191 @@ def main():
     # Now in TreeSurgeon - see separate repository on github
     # https://github.com/wolfiex/TreeSurgeon
 
-    # analysis of node spliting
+    # Analysis of node spliting
 #    RFRanalysis.analyse_nodes_in_models( RFR_dict=RFR_dict )
-    # analysis of outputted trees
+    # Analysis of outputted trees
 #    RFRanalysis.analyse_nodes_in_models()
 
     # --- Do futher analysis on the impact of the depth variable
-    plt_analysis.do_analysis_processing_linked_to_depth_variable()
+#    plt_analysis.do_analysis_processing_linked_to_depth_variable()
 
     # plot this up and other figures for the ML paper
-    plt_analysis.plot_spatial_figures_for_ML_paper_with_cartopy()
+#    plt_analysis.plot_spatial_figures_for_ML_paper_with_cartopy()
+
+    # --- Processing linked to emissions calculations
+#    process_based_model.regrid_process_based_field_to_12x12km()
+
 
     # - pass if no functions are uncommented
     pass
 
 
+def plt_comparisons_of_Wadley2020_iodide_fields():
+    """
+    Make a comparison between the
+
+    Notes
+    -------
+     - Wadley et al present day iodide fields are from this paper
+    https://www.essoar.org/doi/10.1002/essoar.10502078.2
+     - record on BODC
+    """
+    sns.reset_orig()
+    # - Get Wadley et al 2020's process-based iodide field
+    folder = '/users/ts551/scratch/data/Oi/UEA/'
+    filename = 'iodide_from_model_PRESENT_DAY_interp_0.125x0.125.nc'
+    dsM = xr.open_dataset(folder+filename)
+    # Monthly
+    vmin, vmax = 0, 240
+    version = 'Wadley_2020_ltd_cbar_regrid_0.125x0.125'
+    var2plot = 'Present_Day_Iodide'
+    target = 'Iodide'
+    units = 'nM'
+    var2plot_longname = 'Wadley2020'
+    cmap = AC.get_colormap(np.arange(30))
+    cbar_kwargs = {'extend': 'max'}
+    s2splotting.plot_up_seasonal_averages_of_prediction(target=target,
+#                                                        ds=ds,
+                                                        ds=dsM,
+                                                        version=version,
+                                                        var2plot=var2plot,
+                                         var2plot_longname=var2plot_longname,
+                                                        vmin=vmin, vmax=vmax,
+                                                        cmap=cmap,
+                                                       cbar_kwargs=cbar_kwargs,
+                                                        units=units)
+
+    # Annual average too
+    title = 'Annual average Iodide field from Wadley et al 2020'
+    s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=dsM,
+                                                      title=title,
+                                                      var2plot=var2plot,
+                                                      vmin=vmin, vmax=vmax,
+                                                      units=units,
+                                                      cmap=cmap,
+                                                      cbar_kwargs=cbar_kwargs,
+                                                      )
+
+    # Plot monthly values too...
+    # TODO - this requires python 2 compatibility
+#    plot_monthly_predicted_iodide
+#    plt_analysis.plot_monthly_predicted_iodide_diff(ds=dsM, var2plot=var2plot)
+    # TEMP - plot seasonal plot for ML output.
+#     data_root = utils.get_file_locations('data_root')
+#     folder = '{}/{}/outputs/'.format(data_root, target)
+#     MLfilename = 's2s_predicted_Iodide_0.125x0.125.nc'
+#     dsML = xr.open_dataset(folder+MLfilename)
+#     var2plot = 'Ensemble Monthly mean'
+#     var2plot_longname = 'Sherwen2019'
+#     version = 'v8_5_1'
+#     s2splotting.plot_up_seasonal_averages_of_prediction(target=target,
+# #                                                        ds=ds,
+#                                                         ds=dsML,
+#                                                         version=version,
+#                                                         var2plot=var2plot,
+#                                          var2plot_longname=var2plot_longname,
+#                                                         vmin=vmin, vmax=vmax,
+#                                                         cmap=cmap,
+#                                                        cbar_kwargs=cbar_kwargs,
+#                                                         units=units)
+#
+#     # Annual average too
+#     title = 'Annual average Iodide field from Sherwen et al 2019'
+#     s2splotting.plot_up_annual_averages_of_prediction(target=target, ds=dsML,
+#                                                       title=title,
+#                                                       var2plot=var2plot,
+#                                                       vmin=vmin, vmax=vmax,
+#                                                       units=units,
+#                                                       cmap=cmap,
+#                                                       cbar_kwargs=cbar_kwargs,
+#                                                       )
+
+
+    # -
+    # retrive models with the observations
+    RFR_dict = build_or_get_models_iodide(rebuild=False)
+    df = RFR_dict['df']
+    # Add the ML values to this
+    df = add_ensemble_prediction2df(df=df, target=target, var2extract='Ensemble Monthly mean')
+    # Add the Lennetz values to this.
+    LatVar = 'Latitude'
+    LonVar = 'Longitude'
+    MonthVar = 'Month'
+    # Now add Martyn's values
+    var2extract = 'Present_Day_Iodide'
+    var2use = 'Wadley2020'
+    vals = utils.extract4nearest_points_in_ds(ds=dsM, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df[MonthVar].values,
+                                              var2extract=var2extract)
+    df[var2use] = vals
+
+    # Now plot an ODR
+    ylim = (0, 400)
+    xlim = (0, 400)
+    params =  [
+    'RFR(Ensemble)', 'MacDonald2014_iodide', 'Wadley2020'
+    ]
+    # only points where there is data for both - THIS IS NOT NEEDED
+#    df = df.loc[df[params].dropna().index, :]
+    # ODR
+    testset = 'Test set (strat. 20%)'
+    df2plot = df[params+[target, testset]].copy()
+    s2splotting.plot_ODR_window_plot(df=df2plot, params=params, units='nM',
+                                     target=target,
+                                     ylim=ylim, xlim=xlim)
+
+    # Plot up a PDF of concs and bias
+    ylim = (0, 400)
+#    ylim = (0, 400)
+    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df2plot,
+                                                         params=params,
+                                                          units='nM',
+                                                          target=target,
+                                                          xlim=xlim)
+
+    # Summarise states
+    stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
+                                                         target=target,
+                                                         param_names=params,
+                                                         verbose=True,
+                                                         debug=True)
+
+
+
+
+def add_ensemble_prediction2df(df=None, LatVar='Latitude', LonVar='Longitude',
+                               target='Iodide', version='_v0_0_0',
+                               var='RFR(Ensemble)', MonthVar='Month',
+                               var2extract='Ensemble_Monthly_mean'):
+    """
+    Wrapper function to add the ensemble prediction to a dataframe from NetCDF
+    Parameters
+    -------
+    target (str): Name of the target variable (e.g. iodide)
+    LatVar (str): variable name in DataFrame for latitude
+    LonVar (str): variable name in DataFrame for longitude
+    MonthVar (str): variable name in DataFrame for month
+    version (str): Version number or string (present in NetCDF names etc)
+    var2extract (str): variable to extract from the
+    Returns
+    -------
+    (pd.DataFrame)
+    """
+    # Get the 3D prediction as a dataset
+    ds = utils.get_predicted_values_as_ds(target=target, version=version)
+    # extract the nearest values
+    vals = utils.extract4nearest_points_in_ds(ds=ds, lons=df[LonVar].values,
+                                              lats=df[LatVar].values,
+                                              months=df[MonthVar].values,
+                                              var2extract=var2extract)
+    df[var] = vals
+    return df
+
+
 def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
-                                       features_used=None, target='Iodide', df=None):
+                                       features_used=None, target='Iodide',
+                                       df=None):
     """
     Run tests on the sensitivity of model to test/training choices
 
@@ -362,7 +536,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # dictionary of test set variables
     random_split_var = 'rn. 20%'
     strat_split_var = 'strat. 20%'
-    # set a basis for filenames to saved as
+    # Set a basis for filenames to saved as
     save_filename_str = 'Oi_prj_test_training_selection'
 #    random_states = [38, 39, 40, 41, 42, 43, 44 ]
 #    random_states = [36, 37, 38, 39, 40, 41, 42, ]
@@ -401,7 +575,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - remove estuarine (no values < 30 salinity?) values
     Tname = 'SAL>=30 \n & no outliers'
     bool1 = df['WOA_Salinity'] >= 30
-    # also remove outliers
+    # Also remove outliers
     bool2 = df['Iodide'] < utils.get_outlier_value(df=df, var2use='Iodide')
     tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
@@ -411,7 +585,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     Tname = 'SAL>=30 \n & {}'.format( Iaq ) + '<98$^{th}$'
 #     bool1 =  df['WOA_Salinity']>=30
 #     bool2 = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
-#     # also remove values where iodide <400
+#     # Also remove values where iodide <400
 #     tmp_ts = df.loc[ bool1 & bool2  ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
@@ -420,7 +594,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     Tname = 'SAL>=30 \n & {}'.format( Iaq ) + '<98$^{th}$'
 #     bool1 =  df['WOA_Salinity']>=30
 #     bool2 = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
-#     # also remove values where iodide <400
+#     # Also remove values where iodide <400
 #     tmp_ts = df.loc[ bool1 & bool2  ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
@@ -428,7 +602,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - Just coastal
     Tname = 'Just coastal\n& no outliers'
     bool1 = df['Coastal'] == 1
-    # also remove outliers
+    # Also remove outliers
     bool2 = df['Iodide'] < utils.get_outlier_value(df=df, var2use='Iodide')
     tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
@@ -437,7 +611,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - Just coastal
 #     Tname = 'Coastal \n & {}'.format( Iaq )+ '<98$^{th}$'
 #     bool1 =  df['Coastal'] ==1
-#     # also remove values where iodide <98
+#     # Also remove values where iodide <98
 #     bool2 = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
 #     tmp_ts = df.loc[ bool1 & bool2  ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
@@ -446,7 +620,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - non-coastal
     Tname = 'Just non-coastal\n& no outliers'
     bool1 = df['Coastal'] == 0
-    # also remove outliers
+    # Also remove outliers
     bool2 = df['Iodide'] < utils.get_outlier_value(df=df, var2use='Iodide')
     tmp_ts = df.loc[bool1 & bool2][features_used+[target]].copy()
     TSETS_N[Tname] = tmp_ts.shape[0]
@@ -455,7 +629,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # - non-coastal
 #     Tname = 'Non Coastal \n & {}'.format( Iaq )+ '<98$^{th}$'
 #     bool1 =  df['Coastal'] == 0
-#     # also remove values where iodide <98
+#     # Also remove values where iodide <98
 #     bool2 = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
 #     tmp_ts = df.loc[ bool1 & bool2  ][ features_used+[target] ].copy()
 #     TSETS_N[Tname] = tmp_ts.shape[0]
@@ -465,7 +639,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     Tname = '{} '.format( Iaq ) +'<98$^{th}$'
 #     bool_ = df['Iodide'] < np.percentile( df['Iodide'].values, 98 )
 #     tmp_ts = df.loc[ bool_ ][ features_used+[target] ].copy()
-#     # also remove values where iodide <400
+#     # Also remove values where iodide <400
 #     tmp_ts = tmp_ts.loc[ df['Iodide']<400  ]
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
@@ -474,7 +648,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     Tname = '{} '.format( Iaq ) + '<99$^{th}$'
 #     bool_ = df['Iodide'] >= np.percentile( df['Iodide'].values, 99 )
 #     tmp_ts = df.loc[ bool_ ][ features_used+[target] ].copy()
-#     # also remove values where iodide <400
+#     # Also remove values where iodide <400
 #     tmp_ts = tmp_ts.loc[ df['Iodide']<400  ]
 #     TSETS_N[Tname] = tmp_ts.shape[0]
 #     TSETS[Tname] = tmp_ts
@@ -493,7 +667,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 #     bool2 = df['Iodide'] > np.percentile( df['Iodide'].values, 98 )
 #     index2drop = df.loc[ bool1 | bool2, : ].index
 #     tmp_ts = df.drop( index2drop )[ features_used+[target] ].copy()
-    # also remove values where iodide <400
+    # Also remove values where iodide <400
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 4
@@ -501,7 +675,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     Tname = 'No outliers'
     bool_ = df['Iodide'] < utils.get_outlier_value(df=df, var2use='Iodide')
     tmp_ts = df.loc[bool_][features_used+[target]].copy()
-    # also remove values where iodide <400
+    # Also remove values where iodide <400
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 4
@@ -511,13 +685,12 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     bool2 = df['Iodide'] > utils.get_outlier_value(df=df, var2use='Iodide')
     index2drop = df.loc[bool1 | bool2, :].index
     tmp_ts = df.drop(index2drop)[features_used+[target]].copy()
-    # also remove values where iodide <400
+    # Also remove values where iodide <400
     TSETS_N[Tname] = tmp_ts.shape[0]
     TSETS[Tname] = tmp_ts
     TSETS_nsplits[Tname] = 4
 
     # ---  build models using testsets
-    # Get
     RMSE_df = pd.DataFrame()
     # Now loop TSETS
     for Tname in TSETS.keys():
@@ -537,13 +710,13 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
             # get the training and test set
             returned_vars = mk_iodide_test_train_sets(df=df_tmp,
                                                       rand_20_80=rand_20_80,
-                                                      random_state=random_state,
-                                                      nsplits=TSETS_nsplits[Tname],
+                                                     random_state=random_state,
+                                                  nsplits=TSETS_nsplits[Tname],
                                                       rand_strat=rand_strat,
-                                                      features_used=features_used,
+                                                   features_used=features_used,
                                                       )
             train_set, test_set, test_set_targets = returned_vars
-            # set the training and test sets
+            # Set the training and test sets
             train_features = df_tmp[features_used].loc[train_set.index]
             train_labels = df_tmp[[target]].loc[train_set.index]
             test_features = df_tmp[features_used].loc[test_set.index]
@@ -551,7 +724,8 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
             # build the model - NOTE THIS MUST BE RE-DONE!
             # ( otherwise the model is being re-trained )
             model = RandomForestRegressor(random_state=random_state,
-                                          n_estimators=n_estimators, criterion='mse')
+                                          n_estimators=n_estimators,
+                                          criterion='mse')
             # Fit the model
             model.fit(train_features, train_labels)
             # Predict the values
@@ -565,19 +739,19 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
             # Return stats on bias and variance
             # (just use RMSE and std dev. for now)
             RMSE_l += [np.sqrt(MSE)]
-            del df_tmp, train_features, train_labels, test_features, test_labels
-            del model
+            del df_tmp, train_features, train_labels, test_features
+            del model, test_labels
         # Save the results to a dictionary
         RMSE_df[Tname] = RMSE_l
 
     # --- Get stats on the ensemble values
     # Get general stats on ensemble
     RMSE_stats = pd.DataFrame(RMSE_df.describe().copy()).T
-    # ad number of samples
+    # Ad number of samples
     RMSE_stats['N'] = pd.Series(TSETS_N)
-    # sort to order by mean
+    # Sort to order by mean
     RMSE_stats.sort_values(by='mean', inplace=True)
-    # sort the main Dataframe by the magnitude of the mean
+    # Sort the main Dataframe by the magnitude of the mean
     RMSE_df = RMSE_df[list(RMSE_stats.index)]
     # work out the deviation from mean of the ensemble
     pcent_var = '% from mean'
@@ -597,7 +771,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
         # remove the '\n' symbols etc from the column names
     RMSE_stats2save = RMSE_stats.copy()
     RMSE_stats2save.index = [i.replace('\n', '') for i in RMSE_stats.index]
-    # save to csv
+    # Save to csv
     RMSE_stats2save.to_csv(save_filename_str+'.csv')
 
     # ---- Do some further analysis and save this to a text file
@@ -649,10 +823,10 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     # force yaxis extent
     ymax = AC.myround(RMSE_df[ylabel_str].max(), base=25, round_up=True)
     ax.set_ylim(-15, ymax+25+10)
-    # add N value to plot
+    # Add N value to plot
     f_size = 10
     xlabels = [i.get_text() for i in ax.get_xticklabels()]
-    # set locations for N lael
+    # Set locations for N lael
     if len(xlabels) == 7:
         x_l = np.linspace(0.041, 0.9025, len(xlabels))
     if len(xlabels) == 6:
@@ -675,7 +849,7 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
     left = 0.075
     right = 0.975
     fig.subplots_adjust(bottom=bottom, top=top, left=left, right=right,)
-    # save the plot
+    # Save the plot
     plt.savefig(save_filename_str+'_sensitivity_violin.png', dpi=dpi)
     plt.close()
 
@@ -684,13 +858,15 @@ def run_tests_on_testing_dataset_split(model_name=None, n_estimators=500,
 # ---------- Functions to generate/predict modelled field -------------------
 # ---------------------------------------------------------------------------
 def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
-                                           models_dict=None, features_used_dict=None,
+                                           models_dict=None,
+                                           features_used_dict=None,
                                            RFR_dict=None, dsA=None,
                                            stats=None, folder=None,
                                            use_updated_predictor_NetCDF=False,
                                            save2NetCDF=False, plot2check=False,
                                            models2compare=[], topmodels=None,
-                                           rm_Skagerrak_data=False, xsave_str='',
+                                           rm_Skagerrak_data=False,
+                                           xsave_str='',
                                            add_ensemble2ds=False,
                                            verbose=True, debug=False):
     """
@@ -719,7 +895,7 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
         RFR_dict = build_or_get_models(
             rm_Skagerrak_data=rm_Skagerrak_data
         )
-    # set models to always predict values for
+    # Set models to always predict values for
     if (len(models2compare) == 0):
         models2compare = [
             # Ones using all variable options
@@ -733,7 +909,8 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
             # ones in v8.1 topmodels
             'RFR(TEMP+DEPTH+SAL+SWrad)', 'RFR(TEMP+DEPTH+NO3+SWrad)',
             'RFR(TEMP+NO3+MLD+SAL)', 'RFR(TEMP+DEPTH+SAL+NO3)',
-            'RFR(TEMP+DEPTH+SAL+ChlrA)', 'RFR(TEMP+DEPTH+NO3)', 'RFR(TEMP+NO3)',
+            'RFR(TEMP+DEPTH+SAL+ChlrA)', 'RFR(TEMP+DEPTH+NO3)',
+            'RFR(TEMP+NO3)',
             # ones in topmodels_nSkagerrak
             'RFR(TEMP+DEPTH+SAL)', 'RFR(SWrad+SAL+DEPTH)', 'RFR(TEMP+SAL)'
         ]
@@ -742,7 +919,8 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     if isinstance(topmodels, type(None)):
         # Get stats on models in RFR_dict
         if isinstance(stats, type(None)):
-            stats = get_stats_on_models(RFR_dict=RFR_dict, analysis4coastal=True,
+            stats = get_stats_on_models(RFR_dict=RFR_dict,
+                                        analysis4coastal=True,
                                         verbose=False)
         topmodels = get_top_models(RFR_dict=RFR_dict, stats=stats,
                                    vars2exclude=['DOC', 'Prod'])
@@ -777,9 +955,11 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
         # get testinng features
         features_used = utils.get_model_features_used_dict(modelname)
         # Make a DataSet of predicted values
-        ds_tmp = utils.mk_da_of_predicted_values(model=model, modelname=modelname,
-                                           res=res, features_used=features_used,
-                                           dsA=dsA)
+        ds_tmp = utils.mk_da_of_predicted_values(model=model,
+                                                 modelname=modelname,
+                                                 res=res,
+                                                 features_used=features_used,
+                                                 dsA=dsA)
         #  Add attributes to the prediction
         ds_tmp = add_attrs2iodide_ds(ds_tmp, add_global_attrs=False,
                                      varname=modelname)
@@ -802,7 +982,8 @@ def mk_iodide_predictions_from_ancillaries(var2use, res='4x5', target='Iodide',
     if add_ensemble2ds:
         print('WARNING: Using topmodels for ensemble as calculated here')
         ds = add_ensemble_avg_std_to_dataset(ds=ds,
-                                             RFR_dict=RFR_dict, topmodels=topmodels,
+                                             RFR_dict=RFR_dict,
+                                             topmodels=topmodels,
                                              res=res,
                                              save2NetCDF=False)
     # - Do a quick diagnostic plot
@@ -850,7 +1031,8 @@ def mk_table_of_point_for_point_performance(RFR_dict=None, df=None,
     if isinstance(df, type(None)):
         df = RFR_dict['df']
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
+                                analysis4coastal=True,
                                 var2use=var2use,
                                 inc_ensemble=inc_ensemble, verbose=False)
     # Select param values of interest (and give updated title names )
@@ -909,7 +1091,8 @@ def mk_table_of_point_for_point_performance_TESTSET(RFR_dict=None, df=None,
     # Just select the testing dataset
     df = df.loc[df[testset] == True, :]
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
+                                analysis4coastal=True,
                                 inc_ensemble=inc_ensemble, verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
@@ -965,7 +1148,8 @@ def mk_table_of_point_for_point_performance_ALL(RFR_dict=None, df=None,
     if isinstance(df, type(None)):
         df = RFR_dict['df']
     # Get stats on model tuns runs
-    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df, analysis4coastal=True,
+    stats = get_stats_on_models(RFR_dict=RFR_dict, df=df,
+                                analysis4coastal=True,
                                 verbose=False)
     # Select param values of interest (and give updated title names )
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
@@ -1022,7 +1206,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
     features_used = None
     target = 'Iodide'
     # - The following settings are set to False as default
-    # settings for incoming feature data
+    # Settings for incoming feature data
     restrict_min_salinity = False
     use_median4chlr_a_NaNs = False
     add_modulus_of_lat = False
@@ -1043,7 +1227,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
                                      rm_Skagerrak_data=rm_Skagerrak_data,
                                      rm_outliers=rm_outliers,
                                      rm_LOD_filled_data=rm_LOD_filled_data,
-                                     )    # add
+                                     )    # Add
 
     # - Add test and training set assignment to columns
 #    print( 'WARNING - What testing had been done on training set selection?!' )
@@ -1053,12 +1237,13 @@ def get_dataset_processed4ML(restrict_data_max=False,
 #     # Use a standard 20% test set.
 #     train_set, test_set =  train_test_split( targets, test_size=0.2, \
 #         random_state=42 )
-    # standard split vars?  (values=  rand_20_80, rand_strat )
+    # Standard split vars?  (values=  rand_20_80, rand_strat )
     ways2split_data = {
         'rn. 20%': (True, False),
         'strat. 20%': (False, True),
     }
     # Loop training/test split methods
+    features_used = df.columns.tolist()
     for key_ in ways2split_data.keys():
         # Get settings
         rand_20_80, rand_strat = ways2split_data[key_]
@@ -1068,7 +1253,7 @@ def get_dataset_processed4ML(restrict_data_max=False,
         returned_vars = build.mk_test_train_sets(df=df.copy(), target=target,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
-                                                 features_used=df.columns.tolist(),
+                                                 features_used=features_used,
                                                  )
         train_set, test_set, test_set_targets = returned_vars
         # Now assign the values
@@ -1155,7 +1340,7 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
     # --- Get data
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
-    # select dataframe with observations and predictions in it
+    # Select dataframe with observations and predictions in it
     if isinstance(df, type(None)):
         df = RFR_dict['df']
     # model names
@@ -1226,10 +1411,10 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
     feats = pd.DataFrame(index=model_names)
     N_feat_Var = '# features'
     feats[N_feat_Var] = [N_features_used[i] for i in model_names]
-    # and the feature names
+    # And the feature names
     feat_Var = 'features_used'
     feats[feat_Var] = [features_used_dict[i] for i in model_names]
-    # and the oob score
+    # And the oob score
     feats['OOB score'] = [oob_scores[i] for i in model_names]
     # combine with the rest of the stats
     stats = pd.concat([stats, feats], axis=1)
@@ -1245,7 +1430,7 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
     vars2inc += feats.columns.tolist()
     # Sort df by RMSE
     stats.sort_values(by=var2sortby, axis=0, inplace=True)
-    # sort columns
+    # Sort columns
     first_columns = [
         'mean', 'std', '25%', '50%', '75%',
         'RMSE ({})'.format(testset),  'RMSE (all)',
@@ -1276,14 +1461,14 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
     params2inc = stats.T.columns
     params2inc = [i for i in params2inc if 'DOC' not in i]
     params2inc = [i for i in params2inc if 'Prod' not in i]
-    # select these variables from the list
+    # Select these variables from the list
     tmp_stats = stats.T[params2inc].T
-    # save a reduced csv
+    # Save a reduced csv
     vars2inc_REDUCED = [
         'mean', 'std', '25%', '50%', '75%',
         'RMSE ({})'.format(testset),  'RMSE (all)',
     ]
-    # add the coastal testsets to the data?
+    # Add the coastal testsets to the data?
     if analysis4coastal:
         vars2inc_REDUCED += [
             u'RMSE (Coastal)', u'RMSE (Non coastal)',
@@ -1303,16 +1488,18 @@ def get_stats_on_models(df=None, testset='Test set (strat. 20%)',
                          'Ensemble_Monthly_mean': 'RFR(Ensemble)',
                          'Iodide': 'Obs.',
                          }
-        # also compare existing parameters
+        # Also compare existing parameters
         params = [
             'Chance et al. (2014)',
             'MacDonald et al. (2014)',
         ]
         # Plot performance of models
-        plt_stats_by_model_DERIV(stats=stats, df=df, target=target, params=params,
+        plt_stats_by_model_DERIV(stats=stats, df=df, target=target,
+                                 params=params,
                                  rename_titles=rename_titles )
         # Plot up also without derivative variables
-        plt_stats_by_model_DERIV(stats=stats, df=df, target=target, params=params,
+        plt_stats_by_model_DERIV(stats=stats, df=df, target=target,
+                                 params=params,
                                  rename_titles=rename_titles )
 
 
@@ -1331,12 +1518,12 @@ def test_performance_of_params(target='Iodide', features_used=None):
     """
     # - Get the data
     # get processed data
-    # settings for incoming feature data
+    # Settings for incoming feature data
     restrict_data_max = False
     restrict_min_salinity = False
     use_median4chlr_a_NaNs = True
     add_modulus_of_lat = False
-    # apply transforms to  data?
+    # Apply transforms to  data?
     do_not_transform_feature_data = True
     # just use the forest out comes
     use_forest_without_optimising = True
@@ -1371,8 +1558,8 @@ def test_performance_of_params(target='Iodide', features_used=None):
                                      restrict_min_salinity=restrict_min_salinity,
                                      add_modulus_of_lat=add_modulus_of_lat,
                                      use_median4chlr_a_NaNs=use_median4chlr_a_NaNs,
-                                     )    # add
-    # add boolean for test and training dataset
+                                     )    # Add
+    # Add boolean for test and training dataset
     splits_dict = {
         random_split_var: (True, False), strat_split_var: (False, True),
     }
@@ -1381,7 +1568,7 @@ def test_performance_of_params(target='Iodide', features_used=None):
         rand_20_80, rand_strat = splits_dict[test_split]
         # Select just the features used and the target variable
         df_tmp = df[features_used+[target]].copy()
-        # split into the training and test sets
+        # Split into the training and test sets
         returned_vars = build.mk_test_train_sets(df=df_tmp,
                                                  rand_20_80=rand_20_80,
                                                  rand_strat=rand_strat,
@@ -1460,7 +1647,7 @@ def build_or_get_models_iodide(rm_Skagerrak_data=True,
     Wrapper call to build_or_get_models for sea-surface iodide
     """
     # Get the dictionary  of model names and features (specific to iodide)
-    model_feature_dict = get_model_features_used_dict(rtn_dict=True)
+    model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
 
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(
@@ -1516,7 +1703,8 @@ def mk_iodide_test_train_sets(df=None, target='Iodide',
     (list)
     """
     # Call the s2s function with some presets
-    returned_vars = build.mk_test_train_sets(df=df, target=target, nsplits=nsplits,
+    returned_vars = build.mk_test_train_sets(df=df, target=target,
+                                             nsplits=nsplits,
                                              rand_strat=rand_strat,
                                              features_used=features_used,
                                              random_state=random_state,
@@ -1565,10 +1753,182 @@ def add_attrs2iodide_ds(ds, convert_to_kg_m3=False,
                                    attrs_dict=attrs_dict,
                                    global_attrs_dict=global_attrs_dict,
                                    varname=varname,
-                                   add_global_attrs=True, add_varname_attrs=True,
+                                   add_global_attrs=True,
+                                   add_varname_attrs=True,
                                    rm_spaces_from_vars=False,
                                    convert2HEMCO_time=False)
     return ds
+
+
+def get_stats_on_spatial_predictions_0125x0125_iodide():
+    """
+    Wrapper to get stats on spatial predictions at 0.125x0.125 for iodide
+    """
+    # Get spatial prediction data from NetCDF files saved already
+    target = 'Iodide'
+    filename = None
+    rm_Skagerrak_data = True
+    folder = None
+    res = '0.125x0.125'
+    if isinstance(filename, type(None)):
+        if rm_Skagerrak_data:
+            extr_file_str = '_No_Skagerrak'
+        else:
+            extr_file_str = ''
+        filename = 's2s_predicted_{}_{}{}.nc'.format(
+            target, res, extr_file_str)
+    data_root = utils.get_file_locations('data_root')
+    if isinstance(folder, type(None)):
+        folder = '{}/{}/outputs/'.format(data_root, target)
+    ds = xr.open_dataset(folder + filename)
+    # Add the Wadley2020 prediction(s)
+    var2template='Chance2014_STTxx2_I'
+    folder = '{}/../Oi/UEA/'.format(data_root)
+    filename = 'iodide_from_model_ALL_interp_0.125x0.125.nc'
+    dsW = xr.open_dataset(folder + filename)
+    NewVarName = 'Wadley2020'
+    CurrentVar = 'Present_Day_Iodide'
+    data_vars = [i for i in dsW.data_vars if 'percent' not in i]
+    data_vars.pop(data_vars.index(CurrentVar))
+    NewVarNames = [i.replace('iodide', NewVarName) for i in data_vars]
+    vars2use = dict( zip(data_vars, NewVarNames) )
+    NewVarName = 'Wadley2020'
+    vars2use['Present_Day_Iodide'] = NewVarName
+    for var in vars2use.keys():
+        ds[var] = ds[var2template].copy()
+        ds[var].values = dsW[var]
+    # Update names
+    ds = ds.rename( name_dict=vars2use )
+    # New names to use
+    params = [
+        'Chance2014_STTxx2_I', 'MacDonald2014_iodide', 'Ensemble Monthly mean',
+         'Wadley2020', 'Wadley2020_m10', 'Wadley2020_m22', 'Wadley2020_m44',
+         'Wadley2020_p10'
+    ]
+    # Get stats on the global predictions
+    ex_str =  '_inc_process_based'
+    FileStr = 's2s_annual_stats_global_ocean_{}{}'
+    filename2save = FileStr.format(res, ex_str)
+    df = analysis.get_stats_on_spatial_predictions_0125x0125(ds,
+                                                             vars2use=params)
+    # - Print out a more formatted version as a table for the paper
+    # remove variables
+#    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
+
+    # select just the models of interest
+    df = df[params]
+    # rename the models
+    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
+                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
+                     'Ensemble_Monthly_mean': 'RFR(Ensemble)',
+                     'Ensemble Monthly mean': 'RFR(Ensemble)',
+                     'Wadley2020' :  'Wadley et al. (2020)',
+                     'Wadley2020_p10' :  'Wadley et al. (2020) +10%',
+                     'Wadley2020_m10' :  'Wadley et al. (2020) -10%',
+                     'Wadley2020_m22' :  'Wadley et al. (2020) -22%',
+                     'Wadley2020_m44' :  'Wadley et al. (2020) -44%',
+                     'Iodide': 'Obs.',
+                     #                    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+                     }
+    df = df.rename(columns=rename_titles)
+    # Sort the dataframe by the mean weighted vales
+    df = df.T
+    df.sort_values(by=['mean (weighted)'], ascending=False, inplace=True)
+    # rename columns (50% to median and ... )
+    cols2rename = {'50%': 'median', 'std': 'std. dev.', }
+    df.rename(columns=cols2rename,  inplace=True)
+    # rename
+    df.rename(index=rename_titles, inplace=True)
+    # set column order
+    # Set the stats to use
+    first_columns = [
+        'mean (weighted)', 'std. dev.', '25%', 'median', '75%', 'max',
+    ]
+    if debug:
+        print(df.head())
+    df = df[first_columns]
+    # save as CSV
+    df.round(1).to_csv(filename2save+'_FOR_TABLE_'+'.csv')
+
+    # Print values - relative to difference models
+    df = df.T
+    REF = 'MacDonald et al. (2014)'
+    REF_vals = df.loc[:, REF].copy()
+    dfT = df.copy()
+    for col in dfT.columns:
+        dfT.loc[:, col] = (dfT.loc[:, col]-REF_vals)/REF_vals*100
+    savename = filename2save+'_FOR_TABLE_REF_'+REF
+    savename = AC.rm_spaces_and_chars_from_str(savename)
+    dfT.T.round(1).to_csv(savename+'.csv')
+
+    REF = 'RFR(Ensemble)'
+    REF_vals = df.loc[:, REF].copy()
+    dfT = df.copy()
+    for col in dfT.columns:
+        dfT.loc[:, col] = (dfT.loc[:, col]-REF_vals)/REF_vals*100
+    savename = filename2save+'_FOR_TABLE_REF_'+REF
+    savename = AC.rm_spaces_and_chars_from_str(savename)
+    dfT.T.round(1).to_csv(savename+'.csv')
+
+    REF = 'Wadley et al. (2020)'
+    REF_vals = df.loc[:, REF].copy()
+    dfT = df.copy()
+    for col in dfT.columns:
+        dfT.loc[:, col] = (dfT.loc[:, col]-REF_vals)/REF_vals*100
+    savename = filename2save+'_FOR_TABLE_REF_'+REF
+    savename = AC.rm_spaces_and_chars_from_str(savename)
+    dfT.T.round(1).to_csv(savename+'.csv')
+
+    # restore dataframe arrange ment
+    df = df.T
+
+    # ---- Do some further analysis and save this to a text file
+    a = open(file_save_str+'_analysis.txt', 'w')
+    # Set a header
+    print('This file contains global analysis of {} data'.format(str), file=a)
+    print('\n', file=a)
+    # which files are being analysed?
+    print('---- Detail on the predicted fields', file=a)
+    models2compare = {
+        1: u'RFR(Ensemble)',
+        2: u'Chance et al. (2014)',
+        3: u'MacDonald et al. (2014)',
+        #    1: u'Ensemble_Monthly_mean',
+        #    2: u'Chance2014_STTxx2_I',
+        #    3:'MacDonald2014_iodide'
+        #    1: u'RFR(TEMP+DEPTH+SAL+NO3+DOC)',
+        #    2: u'RFR(TEMP+SAL+Prod)',
+        #    3: u'RFR(TEMP+DEPTH+SAL)',
+    }
+    debug = True
+    if debug:
+        print(df.head())
+    df_tmp = df.T[models2compare.values()]
+    # What are the core models
+    print('Core models being compared are:', file=a)
+    for key in models2compare.keys():
+        ptr_str = 'model {} - {}'
+        print(ptr_str.format(key, models2compare[key]), file=a)
+    print('\n', file=a)
+    # Now print analysis on predicted fields
+    # range in predicted model values
+    mean_ = df_tmp.T['mean (weighted)'].values.mean()
+    min_ = df_tmp.T['mean (weighted)'].values.min()
+    max_ = df_tmp.T['mean (weighted)'].values.max()
+    prt_str = 'avg predicted values = {:.5g} ({:.5g}-{:.5g})'
+    print(prt_str.format(mean_, min_, max_), file=a)
+    # range in predicted model values
+    range_ = max_-min_
+    prt_str = 'range of predicted avg values = {:.3g}'
+    print(prt_str.format(range_, min_, max_), file=a)
+    # % of range in predicted model values ( as an error of model choice... )
+    pcents_ = range_ / df_tmp.T['mean (weighted)'] * 100
+    min_ = pcents_.min()
+    max_ = pcents_.max()
+    prt_str = 'As a % this is = {:.3g} ({:.5g}-{:.5g})'
+    print(prt_str.format(pcents_.mean(), min_, max_), file=a)
+    a.close()
+
 
 
 if __name__ == "__main__":

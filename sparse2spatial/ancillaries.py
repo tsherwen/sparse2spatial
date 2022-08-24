@@ -3,7 +3,6 @@
 Processing scripts for ancillary data to used as dependent variable for predition
 
 """
-import xarray as xr
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -17,6 +16,7 @@ from functools import partial
 import AC_tools as AC
 # import from s2s
 import sparse2spatial.utils as utils
+import sparse2spatial.plotting as s2splotting
 
 
 def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
@@ -38,7 +38,7 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
     # Local variables
     months = np.arange(1, 13)
     # Get Dataset?
-    filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+    filename = 's2s_feature_variables_{}.nc'.format(res)
     if isinstance(ds, type(None)):
         ds = xr.open_dataset(filename)
     for var in ds.data_vars:
@@ -71,8 +71,8 @@ def interpolate_NaNs_in_feature_variables(ds=None, res='4x5',
             else:
                 ars = [arr]
             # Select grid of interest
-            subX = da['lon'].values
-            subY = da['lat'].values
+#            subX = da['lon'].values
+#            subY = da['lat'].values
             # Define a function to interpolate arrays
             # MOVED TO OUTSIDE FUNCTION
             # Initialise pool to parrellise over
@@ -127,7 +127,7 @@ def Convert_DOC_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    older = utils.get_file_locations('data_root') +'/DOC/'
+    older = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as a string
     file_str = 'DOCmodelSR.nc'
     # Open dataset
@@ -167,7 +167,7 @@ def Convert_DOC_prod_file_into_Standard_NetCDF():
     """
     # - convert the surface DOC file into a monthly average file
     # Directory?
-    older = utils.get_file_locations('data_root') +'/DOC/'
+    older = utils.get_file_locations('data_root') + '/DOC/'
     # Filename as a string
     file_str = 'DOC_Accum_rate_SR.nc'
     # Open dataset
@@ -203,7 +203,7 @@ def mk_RAD_NetCDF_monthly():
     Resample shortwave radiation NetCDF from daily to monthly
     """
     # Directory?
-    folder = utils.get_file_locations('data_root') +'/GFDL/'
+    folder = utils.get_file_locations('data_root') + '/GFDL/'
     # Filename as a string
     file_str = 'ncar_rad.15JUNE2009.nc'
     ds = xr.open_dataset(folder + filename)
@@ -368,9 +368,46 @@ def process_MLD_csv2NetCDF(debug=False, _fill_value=-9999.9999E+10):
                                       lats=lats)
 
 
+def mk_PDF_of_annual_avg_spatial_ancillary_plots():
+    """
+    Make a PDF of annual avg. spatial values in ancillary NetCDF
+    """
+    # Get input folder
+    folder = utils.get_file_locations('data_root') + '/data/'
+    filename = 's2s_feature_variables_0.125x0.125.nc'
+    ds = xr.open_dataset(folder+filename)
+    # version
+    extr_str = 'INPUT_VAR'
+    # remove seaborn settings
+    # - Not plot all
+    # make sure seaborn settings are off
+    import seaborn as sns
+    sns.reset_orig()
+    #
+    vars2plot = [i for i in ds.data_vars]
+    for var2plot in vars2plot:
+        # Get annual average of the variable in the dataset
+        try:
+            ds2plot = ds[[var2plot]].mean(dim='time')
+        except ValueError:
+            ds2plot = ds[[var2plot]]
+            print('WARNING: not averaging over time for {}'.format(var2plot))
+        # Set a title for the plot
+        title = "Annual average of '{}'".format(var2plot)
+        # Now plot
+        s2splotting.plot_spatial_data(ds=ds2plot, var2plot=var2plot,
+                                      extr_str=extr_str,
+                                      target=var2plot,
+                                      #            LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax,
+                                      title=title)
+
+        plt.close('all')
+        del ds2plot
+
+
 def download_data4spec(lev2use=72, spec='LWI', res='0.125',
-                       file_prefix='nature_run', doys_list=None, verbose=True,
-                       debug=False):
+                       file_prefix='nature_run', doys_list=None,
+                       verbose=True, debug=False):
     """
     Download all data for a given species at a given resolution
 
@@ -418,6 +455,7 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125',
     time = ds.time
     # - loop days of year (doy)
     # Custom mask
+
     def is_dayofyear(doy):
         return (doy == doy_)
     # Loop doys
@@ -431,7 +469,8 @@ def download_data4spec(lev2use=72, spec='LWI', res='0.125',
             year_ = list(set(ds_tmp['time.year'].values))[0]
             # What is the filename?
             fstr = '{}_lev_{}_res_{}_spec_{}_{}_{:0>3}_ctm.nc'
-            file2save = fstr.format(file_prefix, lev2use, res, spec, year_, str(doy_))
+            file2save = fstr.format(
+                file_prefix, lev2use, res, spec, year_, str(doy_))
             # Now save downloaded data as a NetCDF locally...
             if verbose:
                 print(save_dir+file2save)

@@ -1,15 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Module to hold processing/analysis functions for CH2Br2 work
-
-Notes
-----
-ML = Machine Learning
-target = the value aiming to be estimated or provided in training
-feature = a induivual conpoinet of a predictor vector assigned to a target
-( could be called an attribute )
-predictor = vector assigned to a target value
+processing/analysis functions for DMS observations
 """
 
 import numpy as np
@@ -17,14 +9,17 @@ import pandas as pd
 import xarray as xr
 import sparse2spatial as s2s
 import sparse2spatial.utils as utils
+#import sparse2spatial.ancillaries2grid_oversample as ancillaries2grid
+#import sparse2spatial.archiving as archiving
 from sparse2spatial.RFRbuild import mk_test_train_sets
 import sparse2spatial.RFRbuild as build
-import sparse2spatial.RFRanalysis as analysis
+import sparse2spatial.RFRanalysis as RFRanalysis
+import sparse2spatial.analysis as analysis
+import sparse2spatial.plotting as plotting
 from sparse2spatial.RFRbuild import build_or_get_models
-import sparse2spatial.plotting as s2splotting
 
-# Get CH2Br2 specific functions
-from observations import get_CH2Br2_obs
+# Get DMS specific functions
+from observations import get_DMS_obs
 
 
 def main():
@@ -33,36 +28,37 @@ def main():
     functionalitliy to call.
     """
     # - Set core local variables
-    target = 'CH2Br2'
+    target = 'DMS'
     # Setup the data directory structure (only needs to be done once))
     # NOTE: the locations of s2s and data are set in script/<target>'s *.rc file
 #    utils.check_or_mk_directory_structure(target=target)
 
     # - Get the observations? (Not needed for core workflow as also held in RFR_dict)
-    # (This processes of the observations and only needs to be done once)
+    # (This processese the observations and only needs to be done once)
+    rm_outliers = True
 #    df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
 
     # - build models with the observations
-    RFR_dict = build_or_get_models_CH2Br2(rebuild=False, target=target)
+    RFR_dict = build_or_get_models_DMS(rebuild=False, target=target)
+    # build the models (just run once!)
+#    RFR_dict = build_or_get_models_DMS(rebuild=True, target=target)
     # Get stats ont these models
     stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
-                                                      target=target, verbose=True,
-                                                      debug=True)
+                                                         target=target, verbose=True,
+                                                         debug=True)
     # Get the top ten models
     topmodels = build.get_top_models(RFR_dict=RFR_dict, stats=stats,
                                      vars2exclude=['DOC', 'Prod'], n=10)
 
     # --- Predict values globally (only use 0.125)
-    # extra strig for NetCDF save name
-    xsave_str = '_TEST'
-    # make NetCDF predictions from the main array
+    # Extra string for NetCDF save name
+    xsave_str = '_v0_0_0'
+    # Save predictions to NetCDF
     save2NetCDF = True
-    # resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
+    # Resolution to use? (full='0.125x0.125', test at lower e.g. '4x5')
     res = '0.125x0.125'
 #    res = '4x5'
-#    res='2x2.5'
     build.mk_predictions_for_3D_features(None, res=res, RFR_dict=RFR_dict,
-                                         use_updated_predictor_NetCDF=False,
                                          save2NetCDF=save2NetCDF, target=target,
                                          models2compare=topmodels,
                                          topmodels=topmodels,
@@ -70,61 +66,32 @@ def main():
 
 
     # --- Plot up the performance of the models
-    # Get the main DataFrame for analysis of output
     df = RFR_dict['df']
-    # Add the ensemble prediction
-    df = add_ensemble_prediction2df(df=df, target=target)
     # Plot performance of models
-    RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
     # Plot up also without derivative variables
-    RFRanalysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
 
-    # - Plot comparisons against observations
-    # Plot up an orthogonal distance regression (ODR) plot
-    ylim = (0, 9)
-    xlim = (0, 9)
-#    xlim, ylim =  None, None
-    params = ['RFR(Ensemble)']
-    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
-                                     ylim=ylim, xlim=xlim)
-
-    # Plot up a PDF of concs and bias
-    ylim = (0, 9)
-    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params,
-                                                          units='pM',
-                                                          target=target,
-                                                          xlim=xlim)
-
-    # --- Save out the field in kg/m3 for use in models
-    version = 'v0_0_0'
-    folder = '/users/ts551/scratch/data/s2s/{}/outputs/'.format(target)
-    filename = 'Oi_prj_predicted_{}_0.125x0.125_{}'.format(target, version)
-    ds = xr.open_dataset( folder + filename+'.nc' )
-    # Convert to kg/m3
-    RMM = 173.83
-    new_var = 'Ensemble_Monthly_mean_kg_m3'
-    ds = add_converted_field_pM_2_kg_m3(ds=ds, var2use='Ensemble_Monthly_mean',
-                                        target=target, RMM=RMM,
-                                        new_var=new_var)
-    # Save with just the kg/m3 field to a NetCDF file
-    ds = ds[[new_var]]
-    ds = ds.rename(name_dict={new_var:'Ensemble_Monthly_mean'})
-    ds.to_netcdf( folder + filename+'{}.nc'.format('_kg_m3') )
+    # ---- Explore the predicted concentrations
+    # Get the data
+    ds = utils.get_predicted_3D_values(target=target)
+    # plot up an annual mean
+    plotting.plot_up_annual_averages_of_prediction(ds=ds, target=target)
+    # Plot up the values by season
+    plotting.plot_up_seasonal_averages_of_prediction(ds=ds, target=target)
 
 
 
-
-
-def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
-                               rm_LOD_filled_data=False,
-                               rm_outliers=True,
-                               rebuild=False):
+def build_or_get_models_DMS(target='DMS',
+                            rm_LOD_filled_data=False,
+                            rm_outliers=True,
+                            rebuild=False):
     """
-    Wrapper call to build_or_get_models for sea-surface CH2Br2
+    Wrapper call to build_or_get_models for sea-surface DMS
 
     Parameters
     -------
-    target (str): Name of the target variable (e.g. iodide)
+    target (str): Name of the target variable (e.g. DMS)
     rm_outliers (bool): remove the outliers from the observational dataset
     rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
     rebuild (bool): rebuild the models or just read them from disc?
@@ -133,7 +100,7 @@ def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
     -------
     (pd.DataFrame)
     """
-    # Get the dictionary  of model names and features (specific to CH2Br2)
+    # Get the dictionary  of model names and features (specific to DMS)
     model_feature_dict = utils.get_model_features_used_dict(rtn_dict=True)
     # Get the observational dataset prepared for ML pipeline
     df = get_dataset_processed4ML(target=target, rm_outliers=rm_outliers)
@@ -153,8 +120,9 @@ def build_or_get_models_CH2Br2(rm_Skagerrak_data=True, target='CH2Br2',
     return RFR_dict
 
 
-def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
-                             rm_Skagerrak_data=False, rm_outliers=True,
+
+def get_dataset_processed4ML(restrict_data_max=False, target='DMS',
+                             rm_outliers=True,
                              rm_LOD_filled_data=False):
     """
     Get dataset as a DataFrame with standard munging settings
@@ -162,7 +130,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
     Parameters
     -------
     restrict_data_max (bool): restrict the obs. data to a maximum value?
-    target (str): Name of the target variable (e.g. iodide)
+    target (str): Name of the target variable (e.g. DMS)
     rm_outliers (bool): remove the outliers from the observational dataset
     rm_LOD_filled_data (bool): remove the limit of detection (LOD) filled values?
 
@@ -174,7 +142,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
     from observations import get_processed_df_obs_mod
     # - Local variables
     features_used = None
-    target = 'CH2Br2'
+    target = 'DMS'
     target_name = [target]
     # - The following settings are set to False as default
     # settings for incoming feature data
@@ -208,7 +176,7 @@ def get_dataset_processed4ML(restrict_data_max=False, target='CH2Br2',
         # Get settings
         rand_20_80, rand_strat = ways2split_data[key_]
         # Copy a df for splitting
-#        df_tmp = df['CH2Br2'].copy()
+#        df_tmp = df['DMS'].copy()
         # Now split using existing function
         returned_vars = mk_test_train_sets(df=df.copy(),
                                                  target=target,

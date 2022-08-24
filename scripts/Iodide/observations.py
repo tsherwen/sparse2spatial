@@ -16,11 +16,10 @@ Citations
 -------
 
  - Data descriptor paper on sea-surface observations
-“Global sea-surface iodide observations, 1967-2018”, R. J. Chance, L. Tinel, T. Sherwen , et al., in review, 2019
+Chance, R.J., Tinel, L., Sherwen, T., Baker, A.R., Bell, T., Brindle, J., Campos, M.L.A., Croot, P., Ducklow, H., Peng, H. and Hopkins, F., 2019. Global sea-surface iodide observations, 1967–2018. Scientific data, 6(1), pp.1-8.
 
- - observational data archived at British Oceanographic Data Centre (BODC)
+ - Observational data archived at British Oceanographic Data Centre (BODC)
 Chance R.; Tinel L.; Sherwen T.; Baker A.; Bell T.; Brindle J.; Campos M.L.A.M.; Croot P.; Ducklow H.; He P.; Hoogakker B.; Hopkins F.E.; Hughes C.; Jickells T.; Loades D.; Reyes Macaya D.A.; Mahajan A.S.; Malin G.; Phillips D.P.; Sinha A.K.; Sarkar A.; Roberts I.J.; Roy R.; Song X.; Winklebauer H.A.; Wuttig K.; Yang M.; Zhou P.; Carpenter L.J.(2019). Global sea-surface iodide observations, 1967-2018. British Oceanographic Data Centre - Natural Environment Research Council, UK. doi:10/czhx.
-
 
 Notes
 -------
@@ -37,37 +36,6 @@ import sparse2spatial.utils as utils
 from sparse2spatial.utils import set_backup_month_if_unknown
 #from sea_surface_iodide import mk_iodide_test_train_sets
 from sparse2spatial.ancillaries2grid_oversample import extract_ancillaries_from_compiled_file
-
-# iodide specific functions (move these to this directory?)
-
-
-
-def main(add_ancillaries=True):
-    """
-    Driver to process sea-surface iodide observations into a single .csv file
-
-    Parameters
-    -------
-    add_ancillaries (bool): Inc. ancillaries in .csv file for obs. locations?
-
-    Returns
-    -------
-    (None)
-    """
-    #  - First: run script in this directory to re-process the observations.
-    # e.g. python process_new_observations.py
-    # Full instructions are given in the README.rst within the scripts/Iodide directory
-
-    # - Below lines are only to be used for processing initial file
-    # Get iodide observations? (if already processed)
-#    get_iodide_obs()
-    # Re-process observations file?
-#    get_iodide_obs(process_new_iodide_obs_file=True)
-    # Add ancillaries variables to core file for observation locations?
-#    if add_ancillaries:
-        # Re-process ancillaries file?
-#        process_iodide_obs_ancillaries_2_csv()
-    pass
 
 
 def get_processed_df_obs_mod(reprocess_params=False,
@@ -118,7 +86,8 @@ def get_processed_df_obs_mod(reprocess_params=False,
                                                            # var2use=var2use,
                                                            #
                                                            # Data_key_ID_=Data_key_ID_,
-                                                           debug=False), axis=1)
+                                                           debug=False),
+                                                           axis=1)
         # Add back into DataFrame
         df.loc[NaN_months_bool, month_var] = NaN_months_df[month_var].values
     # Re-process the parameterisations (Chance et al etc + ensemble)?
@@ -153,7 +122,6 @@ def fill_years4cruises():
     return df
 
 
-
 def add_datetime2Iodide_df(df=None, DateVar='Datetime'):
     """
     Add datetime to iodide obs. dataframe
@@ -166,12 +134,14 @@ def add_datetime2Iodide_df(df=None, DateVar='Datetime'):
             Day = 15
         return datetime.datetime(int(Year), int(Month), int(Day))
     # Now apply the function on the whole dataframe
-    df[DateVar] = df.apply(lambda x: add_dt2_df(Year=x['Year'], Month=x['Month'],
+    df[DateVar] = df.apply(lambda x: add_dt2_df(Year=x['Year'],
+                                                Month=x['Month'],
                                                 Day=x['Day']), axis=1)
     return df
 
 
-def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=False,
+def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False,
+                                         add_ensemble=False,
                                          file_and_path='./sparse2spatial.rc',
                                          target='Iodide', verbose=True):
     """
@@ -214,7 +184,7 @@ def process_iodide_obs_ancillaries_2_csv(rm_Skagerrak_data=False, add_ensemble=F
         obs_data_df = get_ensemble_predicted_iodide(df=obs_data_df,
                                                     use_vals_from_NetCDF=False,
                                                     RFR_dict=RFR_dict,
-                                                    rm_Skagerrak_data=rm_Skagerrak_data
+                                            rm_Skagerrak_data=rm_Skagerrak_data
                                                     )
     # - Join dataframes and save as csv.
 #    filename = 'Iodine_obs_WOA.csv'
@@ -258,9 +228,11 @@ def get_core_Chance2014_obs(debug=False, file_and_path='./sparse2spatial.rc'):
     # - Process the input observational data
     # list of core variables
     core_vars = [
-        'Ammonium', 'Chl-a', 'Cruise', 'Data_Key', 'Data_Key_ID', 'Date', 'Day',
+        'Ammonium', 'Chl-a', 'Cruise', 'Data_Key', 'Data_Key_ID', 'Date',
+        'Day',
         'Depth', 'Iodate', 'Iodide', 'Latitude', 'Longitude', 'MLD',  'Month',
-        'MLD(vd)', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity', 'Station',
+        'MLD(vd)', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity',
+        'Station',
         'Temperature', 'Time', 'Total-I', 'Unique id', 'Year',
         u'Method', u'ErrorFlag',
     ]
@@ -282,9 +254,10 @@ def get_core_Chance2014_obs(debug=False, file_and_path='./sparse2spatial.rc'):
         return x
     # TODO: Make this more pythonic
     make_data_floats = [
-        'Ammonium', 'Chl-a', 'Iodate', 'Iodide', 'Latitude', 'Longitude', 'MLD',
-        'MLD(vd)', 'Month', 'Nitrate', 'Nitrite', 'O2', 'Organic-I', 'Salinity',
-        'Temperature', 'Total-I'
+        'Ammonium', 'Chl-a', 'Iodate', 'Iodide', 'Latitude', 'Longitude',
+        'MLD',
+        'MLD(vd)', 'Month', 'Nitrate', 'Nitrite', 'O2', 'Organic-I',
+        'Salinity', 'Temperature', 'Total-I'
     ]
     # 2nd iteration excludes 'MLD(vd)', so remove this.
     make_data_floats.pop(make_data_floats.index('MLD(vd)'))
@@ -319,7 +292,8 @@ def get_iodide_obs_metadata(file_and_path='./sparse2spatial.rc'):
 
 
 def get_iodide_obs(just_use_submitted_data=False,
-                   use_Chance2014_core_data=True, analyse_iodide_values2drop=False,
+                   use_Chance2014_core_data=True,
+                   analyse_iodide_values2drop=False,
                    process_new_iodide_obs_file=False,
                    file_and_path='./sparse2spatial.rc',
                    limit_depth_to=20, verbose=True, debug=False):
@@ -400,9 +374,11 @@ def get_iodide_obs(just_use_submitted_data=False,
         core_numeric_vars = [
             u'Ammonium', u'Chl-a', u'Depth', u'Iodate', u'Iodide', u'Latitude',
             u'Longitude',
-            u'Nitrate', u'Nitrite', u'O2', u'Organic-I', u'Salinity', u'Total-I',
+            u'Nitrate', u'Nitrite', u'O2', u'Organic-I', u'Salinity',
+            u'Total-I',
             u'Temperature', u'\u03b4Ammonium', u'\u03b4Chl-a', u'\u03b4Iodate',
-            u'\u03b4Iodide', u'\u03b4Nitrate', u'\u03b4Nitrite', u'\u03b4Org-I',
+            u'\u03b4Iodide', u'\u03b4Nitrate', u'\u03b4Nitrite',
+            u'\u03b4Org-I',
             u'\u03b4Total-I'
         ]
         for var in core_numeric_vars:
@@ -582,8 +558,8 @@ def read_csv_settings_4_data_key_file(Data_Key=None):
     return d[Data_Key]
 
 
-def build_comparisons_between_MASTER_obs_file_and_extracted_data(dpi=320,
-                                                                 show_plot=False,):
+def build_comparisons_MASTER_obs_vs_extracted_data(dpi=320,
+                                                   show_plot=False,):
     """
     Check the extract data against the values used previously
 
@@ -665,7 +641,8 @@ def build_comparisons_between_MASTER_obs_file_and_extracted_data(dpi=320,
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def get_MASTER_Chance2014_iodide_obs_file(sheetname='S>30 data set', skiprows=1,
+def get_MASTER_Chance2014_iodide_obs_file(sheetname='S>30 data set',
+                                          skiprows=1,
                                file_and_path='./sparse2spatial.rc',):
     """
     To check on the correlations between the newly extract climatological
@@ -692,7 +669,8 @@ def get_MASTER_Chance2014_iodide_obs_file(sheetname='S>30 data set', skiprows=1,
 
 
 def add_extra_vars_rm_some_data(df=None, target='Iodide',
-                                restrict_data_max=False, restrict_min_salinity=False,
+                                restrict_data_max=False,
+                                restrict_min_salinity=False,
                                 use_median4chlr_a_NaNs=False,
                                 median_4MLD_when_NaN_or_less_than_0=False,
                                 median_4depth_when_greater_than_0=False,
@@ -1021,6 +999,3 @@ def get_literature_predicted_iodide(df=None, verbose=True, debug=False):
                                                                 axis=1)
     return df
 
-
-if __name__ == "__main__":
-    main()

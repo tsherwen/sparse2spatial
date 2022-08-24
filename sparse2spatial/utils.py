@@ -15,9 +15,10 @@ import datetime as datetime
 # import AC_tools (https://github.com/tsherwen/AC_tools.git)
 import AC_tools as AC
 
+
 def mk_LWI_avg_array():
     """
-    Make an array of average Land Water Ice (LWI) indices from NASA "nature run" output
+    Create average Land Water Ice (LWI) indices file from NASA's "nature run"
     """
     import glob
     import xarray as xr
@@ -39,7 +40,8 @@ def mk_LWI_avg_array():
     ds.to_netcdf('nature_run_lev_72_res_0.125_spec_LWI_monthly_ctm.nc')
 
 
-def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iodide',
+def mk_da_of_predicted_values(model=None, modelname=None, res='4x5',
+                              target='Iodide',
                               dsA=None, features_used=None):
     """
     Make a dataset of 3D predicted values from model
@@ -60,7 +62,7 @@ def mk_da_of_predicted_values(model=None, modelname=None, res='4x5', target='Iod
     # Get feature values for resolution
     if isinstance(dsA, type(None)):
         data_root = get_file_locations('data_root')
-        filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+        filename = 's2s_feature_variables_{}.nc'.format(res)
         dsA = xr.open_dataset(data_root + filename)
     # Take coordinate variables from dsA
     lat = dsA['lat'].values
@@ -142,7 +144,7 @@ def add_units2ds(ds):
     return ds
 
 
-def interpolate_array_with_GRIDDATA(arr_, da=None):
+def interpolate_array_with_GRIDDATA(array, da=None):
     """
     Interpolate an array with scipy's griddata function
     """
@@ -157,36 +159,38 @@ def interpolate_array_with_GRIDDATA(arr_, da=None):
     subX = da['lon'].values
     subY = da['lat'].values
     # Construct into 2D DataFrame
-    df = pd.DataFrame(arr_)
+    df = pd.DataFrame(array)
     df.index = subY
     df.columns = subX
     # Get just points that are known
     df = df.unstack().dropna()
     df = df.reset_index(level=[0, 1])
-    # Set the locations and data fro non-nan points
+    # Set the locations and data for non-nan points
     x = df['level_0'].values
     y = df['level_1'].values
-    z = df[0].values
+    points = np.array( list(zip(x, y)) )
+    values = df[0].values
     # Define the grid to use
-    xi = subX
-    yi = subY
+#    xi = subX
+#    yi = subY
     # Mesh grid to axes
-    Xi, Yi = np.meshgrid(subX, subY)
+    grid_x, grid_y = np.meshgrid(subX, subY)
     # Grid the data. (using matplotlib.mlab's  griddata)
     # detail here: https://matplotlib.org/api/mlab_api.html#matplotlib.mlab.griddata
 #    zi = griddata(x, y, z, xi, yi, interp='linear')
     # Grid the data and interpolate (using scipys's  griddata method)
-    zi = griddata(zip(x, y), z, (Xi, Yi), method='nearest')
+    zi = griddata(points, values, (grid_x, grid_y), method='nearest')
+    # Use updated near
     # Overwrite values that are NaNs with interpolated values
-    nans = np.isnan(arr_)
-    arr_[nans] = zi[nans]
+    nans = np.isnan(array)
+    array[nans] = zi[nans]
     # Clean memory
     gc.collect()
     # Print timings
     time_now = strftime("%c", gmtime())
     print('finished intpolating @ {}'.format(time_now))
     # Return the array
-    return arr_
+    return array
 
 
 def interpolate_array_with_RBF(arr_, subX=None, subY=None):
@@ -352,16 +356,17 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
     if add_varname_attrs:
         # Convert the units?
         if convert_to_kg_m3:
-            # get surface array
+            # Get surface array
             #            print('Update of units not implimented')
             #            sys.exit()
             # Convert units from nM to kg/m3 (=> M => mass => /m3 => /kg)
-            ds[varname] = ds[varname]/1E9 * AC.species_mass(species) * 1E3 / 1E3
-            # for variable
+            ds[varname] = ds[varname]/1E9 * \
+                AC.species_mass(species) * 1E3 / 1E3
+            # For variable
             attrs_dict['units'] = "kg/m3"
             attrs_dict['units_longname'] = "kg({})/m3".format(target)
         else:
-            # for variable
+            # For variable
             attrs_dict['units'] = "nM"
             attrs_dict['units_longname'] = "Nanomolar"
         # Add COARDS variables
@@ -376,7 +381,7 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
             if ' ' in var_:
                 print('removing spaces from {}'.format(var_))
                 new_varname = var_.replace(' ', '_')
-                # make new var as a copy of the old one
+                # Make new var as a copy of the old one
                 ds[new_varname] = ds[var_].copy()
                 # now remove the old var
                 del ds[var_]
@@ -384,25 +389,9 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
                 pass
     # Coordinate and global values
     if add_global_attrs:
-        # for lat...
-        attrs_dict = ds['lat'].attrs
-        attrs_dict['long_name'] = "latitude"
-        attrs_dict['units'] = "degrees_north"
-        attrs_dict["standard_name"] = "latitude"
-        attrs_dict["axis"] = "Y"
-        ds['lat'].attrs = attrs_dict
-        # And lon...
-        attrs_dict = ds['lon'].attrs
-        attrs_dict['long_name'] = "longitude"
-        attrs_dict['units'] = "degrees_east"
-        attrs_dict["standard_name"] = "longitude"
-        attrs_dict["axis"] = "X"
-        ds['lon'].attrs = attrs_dict
-        # And time
-        attrs_dict = ds['time'].attrs
-        attrs_dict["standard_name"] = "time"
-        attrs_dict['long_name'] = attrs_dict["standard_name"]
-        attrs_dict["axis"] = "T"
+        # Add core attributes to coordinates and global attrs dictionary
+        ds = add_get_core_attributes2ds(ds)
+        # Also update HEMCO time?
         if convert2HEMCO_time:
             attrs_dict['units'] = 'hours since 2000-01-01 00:00:00'
             attrs_dict['calendar'] = 'standard'
@@ -412,15 +401,47 @@ def add_attrs2target_ds(ds, convert_to_kg_m3=False, attrs_dict={},
             hours = [(i-REFdatetime).days*24. for i in dts]
 #            times = [ AC.add_months(REFdatetime, int(i) ) for i in range(13) ]
             ds['time'].values = hours
-        ds['time'].attrs = attrs_dict
-        # Add details to the global attribute dictionary
-        History_str = 'Last Modified on: {}'
-        global_attrs_dict['History'] = History_str.format(
-            strftime("%B %d %Y", gmtime()))
-        global_attrs_dict['Conventions'] = "COARDS"
+            ds['time'].attrs = attrs_dict
+        # Add a variable for the main parameterisation variable
+        global_attrs_dict = ds.attrs
         global_attrs_dict['Main parameterisation variable'] = varname
-        global_attrs_dict['format'] = 'NetCDF-4'
         ds.attrs = global_attrs_dict
+    return ds
+
+
+def add_get_core_attributes2ds(ds):
+    """
+    Ensure the core coordinates & global variable attributes are in dataset
+    """
+    # - Coordinates
+    # For lat...
+    attrs_dict = ds['lat'].attrs
+    attrs_dict['long_name'] = "latitude"
+    attrs_dict['units'] = "degrees_north"
+    attrs_dict["standard_name"] = "latitude"
+    attrs_dict["axis"] = "Y"
+    ds['lat'].attrs = attrs_dict
+    # And lon...
+    attrs_dict = ds['lon'].attrs
+    attrs_dict['long_name'] = "longitude"
+    attrs_dict['units'] = "degrees_east"
+    attrs_dict["standard_name"] = "longitude"
+    attrs_dict["axis"] = "X"
+    ds['lon'].attrs = attrs_dict
+    # And time
+    attrs_dict = ds['time'].attrs
+    attrs_dict["standard_name"] = "time"
+    attrs_dict['long_name'] = attrs_dict["standard_name"]
+    attrs_dict["axis"] = "T"
+    ds['time'].attrs = attrs_dict
+    # - Global variables
+    global_attrs_dict = ds.attrs
+    History_str = 'Last Modified on: {}'
+    global_attrs_dict['History'] = History_str.format(
+        strftime("%B %d %Y", gmtime()))
+    global_attrs_dict['Conventions'] = "COARDS"
+    global_attrs_dict['format'] = 'NetCDF-4'
+    ds.attrs = global_attrs_dict
     return ds
 
 
@@ -485,20 +506,22 @@ def add_LWI2ds_0125x0125(ds, var2template='Chance2014_STTxx2_I',
     folderLWI += '/data/LM/LANDMAP_LWI_ctm_0125x0125/'
     filenameLWI = 'ctm.nc'
     LWI = xr.open_dataset(folderLWI+filenameLWI)
-    # updates dates (to be Jan=>Dec)
+    # Updates dates (to be Jan=>Dec)
     new_dates = [datetime.datetime(1970, i, 1) for i in LWI['time.month']]
-    LWI.time.values = new_dates
+#    LWI.time.values = new_dates
+    LWI['time'] = new_dates
     # Sort by new dates
     LWI = LWI.loc[{'time': sorted(LWI.coords['time'].values)}]
     if inc_booleans_and_area:
         ds['IS_WATER'] = ds[var2template].copy()
         ds['IS_WATER'].values = (LWI['LWI'] == 0)
-        # add is land
+        # Add is land
         ds['IS_LAND'] = ds['IS_WATER'].copy()
         ds['IS_LAND'].values = (LWI['LWI'] == 1)
-        # get surface area
-#        s_area = AC.calc_surface_area_in_grid(res=res).T  # m2 land map (Calculate)
-        s_area = AC.get_surface_area(res)[..., 0]  # m2 land map (Use CDO value)
+        # Get surface area
+#        s_area = AC.calc_surface_area_in_grid(res=res).T  # M2 land map (Calculate)
+        # M2 land map (Use CDO value)
+        s_area = AC.get_surface_area(res)[..., 0]
         ds['AREA'] = ds[var2template].mean(dim='time')
         ds['AREA'].values = s_area
     else:
@@ -539,11 +562,11 @@ def add_LWI2ds_2x25_4x5(ds, var2template='Chance2014_STTxx2_I',
     if inc_booleans_and_area:
         ds['IS_WATER'] = ds[var2template].copy()
         ds['IS_WATER'].values = (LWI == 0)
-        # add is land
+        # Add is land
         ds['IS_LAND'] = ds['IS_WATER']
         ds['IS_LAND'].values = (LWI == 1)
-        # get surface area
-        s_area = AC.get_surface_area(res)[..., 0]  # m2 land map
+        # Get surface area
+        s_area = AC.get_surface_area(res)[..., 0]  # M2 land map
         ds['AREA'] = ds[var2template].mean(dim='time')
         ds['AREA'].values = s_area.T
     else:
@@ -558,7 +581,7 @@ def add_LWI2ds_2x25_4x5(ds, var2template='Chance2014_STTxx2_I',
 
 def v10_ClBrI_TRA_XX_2_name(TRA_XX):
     """
-    Convert version 3.0 GEOS-Chem output to actual name
+    Convert GEOS-Chem (version 3.0) output tracer # to tracer name
     """
     d = {
         1: 'NO', 2: 'O3', 3: 'PAN', 4: 'CO', 5: 'ALK4', 6: 'ISOP', 7: 'HNO3', 8: 'H2O2', 9: 'ACET', 10: 'MEK', 11: 'ALD2', 12: 'RCHO', 13: 'MVK', 14: 'MACR', 15: 'PMN', 16: 'PPN', 17: 'R4N2', 18: 'PRPE', 19: 'C3H8', 20: 'CH2O', 21: 'C2H6', 22: 'N2O5', 23: 'HNO4', 24: 'MP', 25: 'DMS', 26: 'SO2', 27: 'SO4', 28: 'SO4s', 29: 'MSA', 30: 'NH3', 31: 'NH4', 32: 'NIT', 33: 'NITs', 34: 'BCPI', 35: 'OCPI', 36: 'BCPO', 37: 'OCPO', 38: 'DST1', 39: 'DST2', 40: 'DST3', 41: 'DST4', 42: 'SALA', 43: 'SALC', 44: 'Br2', 45: 'Br', 46: 'BrO', 47: 'HOBr', 48: 'HBr', 49: 'BrNO2', 50: 'BrNO3', 51: 'CHBr3', 52: 'CH2Br2', 53: 'CH3Br', 54: 'MPN', 55: 'ISOPN', 56: 'MOBA', 57: 'PROPNN', 58: 'HAC', 59: 'GLYC', 60: 'MMN', 61: 'RIP', 62: 'IEPOX', 63: 'MAP', 64: 'NO2', 65: 'NO3', 66: 'HNO2', 67: 'BrCl', 68: 'Cl2', 69: 'Cl', 70: 'ClO', 71: 'HOCl', 72: 'HCl', 73: 'ClNO2', 74: 'ClNO3', 75: 'ClOO', 76: 'OClO', 77: 'Cl2O2', 78: 'CH3Cl', 79: 'CH2Cl2', 80: 'CHCl3', 81: 'BrSALA', 82: 'BrSALC', 83: 'CH3IT', 84: 'CH2I2', 85: 'CH2ICl', 86: 'CH2IBr', 87: 'HOI', 88: 'I2', 89: 'IBr', 90: 'ICl', 91: 'I', 92: 'IO', 93: 'HI', 94: 'OIO', 95: 'INO', 96: 'IONO', 97: 'IONO2', 98: 'I2O2', 99: 'I2O3', 100: 'I2O4', 101: 'ISALA', 102: 'ISALC', 103: 'AERI'
@@ -586,7 +609,7 @@ def calc_I_Chance2014_STTxx2_I(TEMP):
 
 
 def calc_I_Chance2014_multivar(TEMP=None, MOD_LAT=None, NO3=None,
-                                        sumMLDpt=None, salinity=None):
+                               sumMLDpt=None, salinity=None):
     """
     Take variable and returns multivariate parameterised iodide from Chance2014
     """
@@ -597,7 +620,7 @@ def calc_I_Chance2014_multivar(TEMP=None, MOD_LAT=None, NO3=None,
 
 def calc_I2_flux_Carpenter2013_eqn19(I=None, O3=None, WS=None, ):
     """
-    Calculate ocean-atmosphere I2 flux using Eqn 19 from Carpenter et al 2013 (main)
+    Calculate ocean-atmosphere I2 flux using Eqn 19 from Carpenter2013 (main)
 
     Parameters
     -------
@@ -609,12 +632,12 @@ def calc_I2_flux_Carpenter2013_eqn19(I=None, O3=None, WS=None, ):
     -------
     (float)
     """
-    return O3 * (I**1.3) * ( 1.74E9 - (6.54E8 * np.log(WS)) )
+    return O3 * (I**1.3) * (1.74E9 - (6.54E8 * np.log(WS)))
 
 
 def calc_HOI_flux_Carpenter2013_eqn20(I=None, O3=None, WS=None, ):
     """
-    Calculate ocean-atmosphere HOI flux using Eqn 20 from Carpenter et al 2013 (main)
+    Calculate ocean-atmosphere HOI flux using Eqn 20 from Carpenter2013 (main)
 
     Parameters
     -------
@@ -632,7 +655,7 @@ def calc_HOI_flux_Carpenter2013_eqn20(I=None, O3=None, WS=None, ):
 
 def calc_HOI_flux_Carpenter2013_eqn21(I=None, O3=None, WS=None, ):
     """
-    Calculate ocean-atmosphere HOI flux using Eqn 21 from Carpenter et al 2013 (simpler)
+    Calculate ocean-atmos. HOI flux using Eqn 21 from Carpenter2013 (simpler)
 
     Parameters
     -------
@@ -664,7 +687,7 @@ def get_file_locations(input_var, file_and_path='./sparse2spatial.rc'):
 
     Parameters
     -------
-    file_and_path (str): folder and filename with location settings as single str
+    file_and_path (str): folder and filename with location settings as str
     input_var (str): key to extract from locations dictionary
     """
     # Get a dictionary of paths
@@ -721,7 +744,7 @@ def convert_fullname_to_shortname(input=None, rtn_dict=False, invert=False):
     # Invert the dictionary
     if invert:
         return {v: k for k, v in list(name_dict.items())}
-        # return the
+    # return the dictionary
     if rtn_dict:
         return name_dict
     else:
@@ -820,7 +843,8 @@ def check_or_mk_directory_structure(target='Iodide', verbose=False):
     folders2check['models'] = folder + '/models/'
     live_dir = folder + '/models/LIVE/'
     folders2check['LIVE'] = live_dir
-    folders2check['ENSEMBLE_REPEAT_BUILD'] = live_dir + '/ENSEMBLE_REPEAT_BUILD/'
+    folders2check['ENSEMBLE_REPEAT_BUILD'] = live_dir + \
+        '/ENSEMBLE_REPEAT_BUILD/'
     folders2check['OPTIMISED_MODELS'] = live_dir + '/OPTIMISED_MODELS/'
     folders2check['TEMP_MODELS'] = live_dir + '/TEMP_MODELS/'
     # Loop and create folders if not present
@@ -828,12 +852,13 @@ def check_or_mk_directory_structure(target='Iodide', verbose=False):
         # Get folder to make if not present
         folder = folders2check[key]
         if verbose:
-            print( 'Checking if folder exists for {} - {}'.format(target, folder))
+            prt_str = 'Checking if folder exists for {} - {}'
+            print(prt_str.format(target, folder))
         # Create the folder?
         if not os.path.exists(folder):
             os.makedirs(folder)
             if verbose:
-                print( 'Creating folder for {} - {}'.format(target, folder))
+                print('Creating folder for {} - {}'.format(target, folder))
 
 
 def set_backup_month_if_unknown(lat=None, var2use='', main_var='',
@@ -881,7 +906,8 @@ def set_backup_month_if_unknown(lat=None, var2use='', main_var='',
 
 
 def get_df_stats_MSE_RMSE(df=None, target='Iodide',
-                          params=[], dataset_str='all', add_sklean_metrics=False):
+                          params=[], dataset_str='all',
+                          add_sklean_metrics=False):
     """
     Get stats (RSE/RMSE) on params. in DataFrame
 
@@ -976,11 +1002,11 @@ def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
         # Get lats and month too
         lat_ = lats[n_lon]
         month_ = months[n_lon]
-        # Select for monnth
+        # Select for month
         ds_tmp = ds[var2extract]
         if select_within_time_dim:
             ds_tmp = ds_tmp.sel(time=(ds['time.month'] == month_))
-        # Select nearest data
+        # Select nearest data in space
         vals = ds_tmp.sel(lat=lat_, lon=lon_, method='nearest')
         if debug:
             pstr = '#={} ({:.2f}%) - vals:'
@@ -990,12 +1016,12 @@ def extract4nearest_points_in_ds(ds=None, lons=None, lats=None, months=None,
 
 
 def get_predicted_values_as_ds(rm_Skagerrak_data=False, target='Iodide',
-                               version=None):
+                               version=None, res='0.125x0.125'):
     """
     Get predicted values from saved NetCDF file
     """
     folder = get_file_locations('data_root')+'/{}/outputs/'.format(target)
-    filename = 'Oi_prj_predicted_{}_0.125x0.125'.format(target)
+    filename = 's2s_predicted_{}_{}'.format(target, res)
     if rm_Skagerrak_data:
         filename += '_No_Skagerrak'
     if not isinstance(version, type(None)):
@@ -1008,23 +1034,24 @@ def get_feature_variables_as_ds(res='4x5'):
     """
     Get feature variables from saved NetCDF file
     """
-    filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
+    filename = 's2s_feature_variables_{}.nc'.format(res)
     folder = get_file_locations('data_root')
     ds = xr.open_dataset(folder + filename)
     return ds
 
 
 def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
-                            res='0.125x0.125', file_and_path='./sparse2spatial.rc'):
+                            res='0.125x0.125',
+                            file_and_path='./sparse2spatial.rc'):
     """
     Get the predicted target values from saved NetCDF
 
     Parameters
     -------
-    ds (xr.Dataset): 3D dataset containing variable of interest on monthly basis
+    ds (xr.Dataset): 3D dataset of variables of interest on monthly basis
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
-    file_and_path (str): folder and filename with location settings as single str
+    file_and_path (str): folder and filename with location settings as string
     res (str): horizontal resolution of dataset (e.g. 4x5)
 
     Returns
@@ -1035,7 +1062,7 @@ def get_predicted_3D_values(target=None, filename=None, version='v0_0_0',
     folder = get_file_locations('data_root', file_and_path=file_and_path)
     folder += '/{}/outputs/'.format(target)
     # Set filename string, then open the NetCDF
-    filename = 'Oi_prj_predicted_{}_{}_{}.nc'.format(target, res, version)
+    filename = 's2s_predicted_{}_{}_{}.nc'.format(target, res, version)
     ds = xr.open_dataset(folder+filename)
     return ds
 
@@ -1107,7 +1134,9 @@ def get_model_features_used_dict(model_name=None, rtn_dict=False):
         'TEMP+DEPTH+SAL+Phos': [
             'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'WOA_Phosphate',
         ],
-        'TEMP+DEPTH+SAL+DOC': ['WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'DOC', ],
+        'TEMP+DEPTH+SAL+DOC': [
+            'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'DOC',
+        ],
         'TEMP+DEPTH+SAL+Prod': [
             'WOA_TEMP_K', 'WOA_Salinity', 'Depth_GEBCO', u'Prod',
         ],
@@ -1181,10 +1210,10 @@ def get_model_features_used_dict(model_name=None, rtn_dict=False):
             'WOA_TEMP_K', 'WOA_MLDpt', 'WOA_Salinity', 'WOA_Nitrate', 'DOC',
         ],
     }
-    # merge the dictionaries into a single dictionary
+    # Merge the dictionaries into a single dictionary
     if add_additional_dict:
-        d = {**d, **d2}
-
+#        d = {**d, **d2}
+        d = merge_two_dicts(d, d2)
     # Add RFR in front of all model names for clarity
     modelnames = list(d.keys())
     for modelname in modelnames:
@@ -1196,3 +1225,37 @@ def get_model_features_used_dict(model_name=None, rtn_dict=False):
         return d
     else:
         return d[model_name]
+
+
+def add_converted_field_pM_2_kg_m3(ds, var2use='Ensemble_Monthly_mean',
+                                   RMM=141.9,
+                                   target='CH3I',
+                                   new_var='Ensemble_Monthly_mean_kg_m3'):
+    """
+    Convert the target prediction from pM to kg/m3
+    """
+    # Convert pM to kg/m3
+    ds[new_var] = ds[var2use].copy() / 1E12 * RMM / 1E3 * 1E3
+    # Add attributes (needed for HEMCO checks)
+    attrs_dict = ds[new_var].attrs
+    attrs_dict['units'] = "kg/m3"
+    attrs_dict['units_longname'] = "kg({})/m3".format(target)
+    ds[new_var].attrs = attrs_dict
+    return ds
+
+
+def merge_two_dicts(x, y):
+    """
+    Given two dictionaries, merge them into a new dict as a shallow copy.
+
+    Returns
+    -------
+    (dict)
+
+    Notes
+    -------
+     - Credit for function Aaron Hall (link below) https://stackoverflow.com/questions/38987/how-do-i-merge-two-dictionaries-in-a-single-expression-in-python-taking-union-o
+    """
+    z = x.copy()
+    z.update(y)
+    return z

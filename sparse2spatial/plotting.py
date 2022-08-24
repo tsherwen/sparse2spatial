@@ -25,8 +25,13 @@ import cartopy.crs as ccrs
 #from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 
-def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0',
-                                          var2plot='Ensemble_Monthly_mean', units=None):
+def plot_up_annual_averages_of_prediction(ds=None, target=None,
+                                          version='v0_0_0',
+                                          LatVar='lat', LonVar='lon',
+                                          vmin=None, vmax=None, title=None,
+                                          var2plot='Ensemble_Monthly_mean',
+                                          cbar_kwargs=None, cmap=None,
+                                          units=None):
     """
     Wrapper to plot up the annual averages of the predictions
 
@@ -36,25 +41,36 @@ def plot_up_annual_averages_of_prediction(ds=None, target=None, version='v0_0_0'
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
     var2plot (str): variable in dataset to be plotted
+    LatVar, LonVar (str): variables to use for latitude and longitude
+    vmin, vmax (float): minimum and maximum values to limit colorbar to
 
     Returns
     -------
     (None)
     """
     # Get annual average of the variable in the dataset
-
     ds = ds[[var2plot]].mean(dim='time')
     # Set a title for the plot
-    title = "Annual average ensemble prediction for '{}' ({}})".format(target, units)
+    if isinstance(title, type(None)):
+        title = "Annual average ensemble prediction for '{}' ({})".format(
+            target, units)
     # Now plot
-    plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version, target=target,
-        title=title)
+    plot_spatial_data(ds=ds, var2plot=var2plot, extr_str=version,
+                      target=target, cbar_kwargs=cbar_kwargs, cmap=cmap,
+                      LatVar=LatVar, LonVar=LonVar, vmin=vmin, vmax=vmax,
+                      title=title)
 
 
-def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_0',
-        seperate_plots=False, units='pM', var2plot='Ensemble_Monthly_mean',
-        vmin=None, vmax=None, dpi=320, show_plot=False, save_plot=True,
-        var2plot_longname='ensemble prediction', extension='png', verbose=False ):
+def plot_up_seasonal_averages_of_prediction(ds=None, target=None,
+                                            version='v0_0_0',
+                                            seperate_plots=False, units='pM',
+                                            var2plot='Ensemble_Monthly_mean',
+                                            vmin=None, vmax=None, dpi=320,
+                                            show_plot=False, save_plot=True,
+                                            title=None,
+                                            var2plot_longname='ensemble prediction',
+                                            cbar_kwargs=None, cmap=None,
+                                            extension='png', verbose=False):
     """
     Wrapper to plot up the annual averages of the predictions
 
@@ -64,6 +80,9 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
     var2plot (str): which variable should be plotted?
     target (str): Name of the target variable (e.g. iodide)
     version (str): Version number or string (present in NetCDF names etc)
+    LatVar, LonVar (str): variables to use for latitude and longitude
+    vmin, vmax (float): minimum and maximum values to limit colorbar to
+    title (str): title to use for single seasonal plot (default=None)
     seperate_plots (bool): plot up output as separate plots
     verbose (bool): print out verbose output?
 
@@ -79,7 +98,7 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
         vmax = float(ds[var2plot].max().values)
     # Dictionary to convert season acronyms to readable text
     season2text = {
-    'DJF':'Dec-Jan-Feb', 'MAM': 'Mar-Apr-May', 'JJA': 'Jun-Jul-Aug', 'SON':'Sep-Oct-Nov'
+        'DJF': 'Dec-Jan-Feb', 'MAM': 'Mar-Apr-May', 'JJA': 'Jun-Jul-Aug', 'SON': 'Sep-Oct-Nov'
     }
     # Set season ordering to be maintained for all plots
     seasons = ['DJF', 'MAM', 'JJA', 'SON']
@@ -89,7 +108,7 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
             # check and name variables
             extr_str = '{}_{}'.format(version, season2text[season])
             if verbose:
-                print( season, extr_str )
+                print(season, extr_str)
             # Select data for month
             ds2plot = ds[[var2plot]].sel(season=season)
             # Set a title
@@ -97,7 +116,8 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
             title = title.format(season, target, var2plot_longname, units)
             # Now plot
             plot_spatial_data(ds=ds2plot, var2plot=var2plot, extr_str=extr_str,
-                target=target, title=title, vmin=vmin, vmax=vmax)
+                              target=target, title=title, vmin=vmin, vmax=vmax,
+                              cbar_kwargs=cbar_kwargs, cmap=cmap)
     # Or plot up as a window plot
     else:
         fig = plt.figure(figsize=(9, 5), dpi=dpi)
@@ -114,19 +134,21 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
                               ax=ax, fig=fig,
                               target=target, title=season2text[season],
                               vmin=vmin, vmax=vmax,
-                              rm_colourbar=True,
-                              save_plot=False )
+                              rm_colourbar=True, cbar_kwargs=cbar_kwargs,
+                              cmap=cmap, save_plot=False)
             # Capture the image from the axes
             im = ax.images[0]
 
         # Add a colorbar using the captured image
-        pad =  0.075
+        pad = 0.075
         cax = fig.add_axes([0.85, pad*2, 0.035, 1-(pad*4)])
-        fig.colorbar(im, cax=cax, orientation='vertical', label=units)
+        fig.colorbar(im, cax=cax, orientation='vertical', label=units,
+                     **cbar_kwargs)
         # Set a title
-        title = "Seasonally averaged '{}' ({})"
-        title = title.format(var2plot_longname, units)
-        fig.suptitle( title )
+        if isinstance(title, type(None)):
+            title = "Seasonally averaged '{}' ({})"
+            title = title.format(var2plot_longname, units)
+            fig.suptitle(title)
         # Adjust plot aesthetics
         bottom = pad/4
         top = 1-(pad)
@@ -141,12 +163,13 @@ def plot_up_seasonal_averages_of_prediction(ds=None, target=None, version='v0_0_
             plt.show()
         if save_plot:
             filename = 's2s_spatial_by_season_{}_{}'.format(target, version)
-            filename = AC.rm_spaces_and_chars_from_str( filename )
+            filename = AC.rm_spaces_and_chars_from_str(filename)
             plt.savefig('{}.{}'.format(filename, extension), dpi=dpi)
 
 
 def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
-                          start_from_last_obs=False, drop_bins_without_data=True,
+                          start_from_last_obs=False,
+                          drop_bins_without_data=True,
                           target='Iodide', dpi=320):
     """
     Plot up # of obs. data (Y) binned by region against year (X)
@@ -165,30 +188,31 @@ def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
     (None)
     """
     # Sort the dataframe by date
-    df.sort_values( by=Datetime_var, inplace=True )
+    df.sort_values(by=Datetime_var, inplace=True)
     # Get the minimum and maximum dates
     min_date = df[Datetime_var].min()
     max_date = df[Datetime_var].max()
     # How many years of data are there?
     yrs_of_data = (max_date-min_date).total_seconds()/60/60/24/365
-    nbins = AC.myround(yrs_of_data/TimeWindow, base=1 )
+    nbins = AC.myround(yrs_of_data/TimeWindow, base=1)
     # Start from last observation or from last block of time
     sdate_block = AC.myround(max_date.year, 5)
-    sdate_block =  datetime.datetime(sdate_block, 1, 1)
+    sdate_block = datetime.datetime(sdate_block, 1, 1)
     # Make sure the dates used are datetimes
-    min_date, max_date = pd.to_datetime( [min_date, max_date] ).values
-    min_date, max_date = AC.dt64_2_dt( [min_date, max_date])
+    min_date, max_date = pd.to_datetime([min_date, max_date]).values
+    min_date, max_date = AC.dt64_2_dt([min_date, max_date])
     # Calculate the number of points for each bin by region
     dfs = {}
     for nbin in range(nbins+2):
         # Start from last observation or from last block of time?
         days2rm = int(nbin*365*TimeWindow)
         if start_from_last_obs:
-            bin_start = AC.add_days( max_date, -int(days2rm+(365*TimeWindow)))
-            bin_end = AC.add_days( max_date, -days2rm )
+            bin_start = AC.add_days(max_date, -int(days2rm+(365*TimeWindow)))
+            bin_end = AC.add_days(max_date, -days2rm)
         else:
-            bin_start = AC.add_days( sdate_block,-int(days2rm+(365*TimeWindow)))
-            bin_end = AC.add_days( sdate_block, -days2rm )
+            bin_start = AC.add_days(
+                sdate_block, -int(days2rm+(365*TimeWindow)))
+            bin_end = AC.add_days(sdate_block, -days2rm)
         # Select the data within the observational dates
         bool1 = df[Datetime_var] > bin_start
         bool2 = df[Datetime_var] <= bin_end
@@ -198,17 +222,17 @@ def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
             print(bin_start, bin_end, df_tmp.shape)
         # String to save data with
         if start_from_last_obs:
-            bin_start_str = bin_start.strftime( '%Y/%m/%d')
-            bin_end_str = bin_end.strftime( '%Y/%m/%d')
+            bin_start_str = bin_start.strftime('%Y/%m/%d')
+            bin_end_str = bin_end.strftime('%Y/%m/%d')
         else:
-            bin_start_str = bin_start.strftime( '%Y')
-            bin_end_str = bin_end.strftime( '%Y')
+            bin_start_str = bin_start.strftime('%Y')
+            bin_end_str = bin_end.strftime('%Y')
         str2use = '{}-{}'.format(bin_start_str, bin_end_str)
         # Sum up the number of values by region
-        dfs[ str2use] = df_tmp['ocean'].value_counts(dropna=False)
+        dfs[str2use] = df_tmp['ocean'].value_counts(dropna=False)
     # Combine to single dataframe and sort by date
-    dfA = pd.DataFrame( dfs )
-    dfA = dfA[list(sorted(dfA.columns)) ]
+    dfA = pd.DataFrame(dfs)
+    dfA = dfA[list(sorted(dfA.columns))]
     # Drop the years without any data
     if drop_bins_without_data:
         dfA = dfA.T.dropna(how='all').T
@@ -216,7 +240,7 @@ def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
     dfA = dfA.T
     dfA.columns
     rename_cols = {
-    np.NaN : 'Other',  'INDIAN OCEAN': 'Indian Ocean', 'SOUTHERN OCEAN' : 'Southern Ocean'
+        np.NaN: 'Other',  'INDIAN OCEAN': 'Indian Ocean', 'SOUTHERN OCEAN': 'Southern Ocean'
     }
     dfA = dfA.rename(columns=rename_cols)
     dfA = dfA.T
@@ -225,8 +249,8 @@ def plot_up_df_data_by_yr(df=None, Datetime_var='datetime', TimeWindow=5,
     sns.set()
     dfA.T.plot(kind='bar', stacked=True)
     # Add title etc
-    plt.ylabel( '# of observations')
-    plt.title( '{} obs. data by region'.format(target))
+    plt.ylabel('# of observations')
+    plt.title('{} obs. data by region'.format(target))
     # Save plotted figure
     savename = 's2s_{}_data_by_year_region'.format(target)
     plt.savefig(savename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
@@ -241,8 +265,8 @@ def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
     df = add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
     # Split by regions
     regions = set(df['ocean'].dropna())
-    dfs = [df.loc[df['ocean']==i,:] for i in regions]
-    dfs = dict(zip(regions,dfs))
+    dfs = [df.loc[df['ocean'] == i, :] for i in regions]
+    dfs = dict(zip(regions, dfs))
     # Also get an open ocean dataset
     # TODO ...
     # Use an all data for now
@@ -252,7 +276,8 @@ def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
         print(region)
         df = dfs[region]
         # Now plot
-        plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot, obs_var=obs_var,
+        plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                    obs_var=obs_var,
                                     extr_str=region)
 
 
@@ -271,15 +296,16 @@ def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
     fig = plt.figure(dpi=dpi, facecolor='w', edgecolor='k')
     ax = fig.add_subplot(111)
     # Loop by parameter
-    for n_param, param in enumerate( params2plot ):
+    for n_param, param in enumerate(params2plot):
         # Plot a single 1:1 line
         plot_121 = False
         if n_param == 0:
-            plot_121 =True
+            plot_121 = True
         # Now plot a generic X vs. Y plot
         AC.plt_df_X_vs_Y(df=df, fig=fig, ax=ax, y_var=param, x_var=obs_var,
-                         x_label=obs_var, y_label=param, color=color_dict[param],
-                         save_plot=False, plot_121=plot_121 )
+                         x_label=obs_var, y_label=param,
+                         color=color_dict[param],
+                         save_plot=False, plot_121=plot_121)
     # Add a title
     title_str = "Obs. vs. predictions in '{}'".format(extr_str)
     plt.title(title_str)
@@ -292,12 +318,15 @@ def plt_X_vs_Y_for_obs_v_params(df=None, params2plot=[], obs_var='Obs.',
 
 
 def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
-                      extr_str='', fillcontinents=True, target=None, units=None,
+                      extr_str='', fillcontinents=True, target=None,
+                      units=None,
                       show_plot=False, save_plot=True, title=None,
                       projection=ccrs.Robinson(), fig=None, ax=None, cmap=None,
                       vmin=None, vmax=None, add_meridians_parallels=False,
-                      add_borders_coast=True, set_aspect=True, cbar_kwargs=None,
-                      xticks=True, yticks=True, rm_colourbar=False, extension='png',
+                      add_borders_coast=True, set_aspect=True,
+                      cbar_kwargs=None,
+                      xticks=True, yticks=True, rm_colourbar=False,
+                      extension='png',
                       dpi=320):
     """
     Plot up 2D spatial plot of latitude vs. longitude
@@ -313,6 +342,7 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
     xticks, yticks (bool): include ticks on y and/or x axis?
     title (str): title to add use for plot
     LatVar, LonVar (str): variables to use for latitude and longitude
+    vmin, vmax (float): minimum and maximum values to limit colorbar to
     add_meridians_parallels (bool): add the meridians and parallels?
     save_plot (bool): save the plot as png
     show_plot (bool): show the plot on screen
@@ -333,9 +363,11 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
         fig = plt.figure(figsize=(10, 6))
     if isinstance(ax, type(None)):
         ax = fig.add_subplot(111, projection=projection, aspect='auto')
-    plt_object = ds[var2plot].plot.imshow(x='lon', y='lat', ax=ax, vmax=vmax, vmin=vmin,
-                             transform=ccrs.PlateCarree(), cmap=cmap,
-                             cbar_kwargs=cbar_kwargs)
+    plt_object = ds[var2plot].plot.imshow(x='lon', y='lat', ax=ax, vmax=vmax,
+                                          vmin=vmin,
+                                          transform=ccrs.PlateCarree(),
+                                          cmap=cmap,
+                                          cbar_kwargs=cbar_kwargs)
     # Fill the continents
     if fillcontinents:
         ax.add_feature(cartopy.feature.LAND, zorder=50, facecolor='lightgrey',
@@ -356,7 +388,7 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
     if add_meridians_parallels:
         # setup grdlines object
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                         linewidth=0, color='gray', alpha=0.0, linestyle=None)
+                          linewidth=0, color='gray', alpha=0.0, linestyle=None)
         # Setup meridians and parallels
         interval = 1
         parallels = np.arange(-90, 91, 30*interval)
@@ -392,14 +424,16 @@ def plot_spatial_data(ds=None, var2plot=None, LatVar='lat', LonVar='lon',
         plt.show()
     if save_plot:
         filename = 's2s_spatial_{}_{}'.format(target, extr_str)
-        filename = '{}.{}'.format(AC.rm_spaces_and_chars_from_str(filename), extension)
+        filename = '{}.{}'.format(
+            AC.rm_spaces_and_chars_from_str(filename), extension)
         plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
     return plt_object
 
 
 def plot_ODR_window_plot(params=[], show_plot=False, df=None,
                          testset='Test set (strat. 20%)', units='pM',
-                         target='Iodide', context="paper", xlim=None, ylim=None,
+                         target='Iodide', context="paper", xlim=None,
+                         ylim=None,
                          dpi=720, verbose=False):
     """
     Show the correlations between obs. and params. as window plot
@@ -422,7 +456,8 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     (None)
     """
     # Make sure a dataFrame has been provided
-    assert type(df) == pd.DataFrame, "Please provide DataFrame ('df') with data"
+    ass_str = "Please provide 'df' of data as a DataFrame type"
+    assert type(df) == pd.DataFrame, ass_str
     # Setup seabonr plotting environment
     import seaborn as sns
     sns.set(color_codes=True)
@@ -431,10 +466,11 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     else:
         sns.set_context("talk", font_scale=1.0)
     # Name of PDF to save plots to
-    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_ODR_WINDOW'
+    savetitle = 's2s_point_for_point_comparison_obs_vs_model_ODR_WINDOW_{}'
+    savetitle = savetitle.format(target)
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
     # label to use for taget on plots
-    target_label = '[{}$_{}$]'.format(target, 'aq')
+    target_label = '[{}'.format(target) + '$_{aq}$]'
     # Set location for alt_text
     f_size = 10
     N = int(df.shape[0])
@@ -449,7 +485,8 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(dsplits, CB_color_cycle))
     # Intialise figure and axis
-    fig, axs = plt.subplots(1, 3, sharex=True, sharey=True, dpi=dpi, figsize=(11, 4))
+    fig, axs = plt.subplots(
+        1, 3, sharex=True, sharey=True, dpi=dpi, figsize=(11, 4))
     # Loop by param and compare against whole dataset
     for n_param, param in enumerate(params):
         # set axis to use
@@ -460,7 +497,7 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
         ax.text(0.5, 1.05, param, horizontalalignment='center',
                 verticalalignment='center', transform=ax.transAxes)
         # Add a 1:1 line
-        x_121 = np.arange(ylim[0]-(ylim[1]*0.05),ylim[1]*1.05 )
+        x_121 = np.arange(ylim[0]-(ylim[1]*0.05), ylim[1]*1.05)
         ax.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data by dataset split
         for nsplit, split in enumerate(dsplits):
@@ -529,6 +566,49 @@ def plot_ODR_window_plot(params=[], show_plot=False, df=None,
     plt.close()
 
 
+def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat',
+                           LonVar='lon', target='CH3I',
+                           obs_var='Obs.', testset='Test set (strat. 20%)',
+                           just_plt_testset=False):
+    """
+    Wrapper to plot up the X vs. Y performance by region
+    """
+    # Only consider the variables to be plotted
+    params2plot = [target, ]
+    df = df[params2plot+[LonVar, LatVar, target, testset]]
+    # Add ocean columns to dataframe
+    df = AC.add_loc_ocean2df(df=df, LatVar=LatVar, LonVar=LonVar)
+    # Split by regions
+    regions = list(set(df['ocean'].dropna()))
+    dfs = [df.loc[df['ocean'] == i, :] for i in regions]
+    dfs = dict(zip(regions, dfs))
+    # Only consider withheld data
+    if just_plt_testset:
+        df = df.loc[df[testset] == True, :]
+    # Also get an open ocean dataset
+    # Use an all data for now
+    dfs['all'] = df.copy()
+    regions += ['all']
+    # loop and plot by region
+    for region in regions:
+        print(region)
+        df = dfs[region]
+        # What variable to use in titles?
+        if just_plt_testset:
+            extr_str = region+' (withheld)'
+        else:
+            extr_str = region
+        # Now plot
+        try:
+            plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                        obs_var=target, extr_str=extr_str)
+        except ValueError:
+            print("WARNING: Not plotting for region ('{}') due to ValueError")
+
+        #
+        # TODO ... Update to plot withheld and full dataset on a single plot
+
+
 def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
                                               testset='Test set (strat. 20%)',
                                               target='Iodide', df=None,
@@ -568,7 +648,8 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(params, CB_color_cycle))
     # set a name of file to save data to
-    savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model_PDF_WINDOW'
+    savetitle = 's2s_point_for_point_comparison_obs_vs_model_PDF_WINDOW_{}'
+    savetitle = savetitle.format(target)
     # - Plot up CDF and PDF plots for the dataset and residuals
     fig = plt.figure(dpi=dpi)
     nrows = len(datasets)
@@ -587,7 +668,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
         # Only add an axis label on to the bottommost plots
         axlabel = None
         if n_dataset in np.arange(1, (nrows*ncols)+1)[::ncols]:
-            axlabel = '[{}$_{}$] ({})'.format( target, '{aq}', units )
+            axlabel = '[{}'.format(target) + '$_{aq}$]'+' ({})'.format(units)
         # - Plot up PDF plots for the dataset
         # Plot observations
         var_ = 'Obs.'
@@ -632,4 +713,3 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False, params=[],
             ax2.set_title('Bias')
     # Save whole figure
     plt.savefig(savetitle)
-

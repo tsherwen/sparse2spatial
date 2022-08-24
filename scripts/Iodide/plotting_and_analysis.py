@@ -1,13 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-
 Plotting and analysis code for sea-surface iodide prediction work.
 
 Please see Paper(s) for more details:
 
 Sherwen, T., Chance, R. J., Tinel, L., Ellis, D., Evans, M. J., and Carpenter, L. J.: A machine learning based global sea-surface iodide distribution, Earth Syst. Sci. Data Discuss., https://doi.org/10.5194/essd-2019-40, in review, 2019.
 
+Chance, R.J., Tinel, L., Sherwen, T., Baker, A.R., Bell, T., Brindle, J., Campos, M.L.A., Croot, P., Ducklow, H., Peng, H. and Hopkins, F., 2019. Global sea-surface iodide observations, 1967–2018. Scientific data, 6(1), pp.1-8.
 
 """
 import numpy as np
@@ -25,18 +25,19 @@ import sparse2spatial.RFRbuild as build
 import sparse2spatial.utils as utils
 from sparse2spatial.RFRbuild import build_or_get_models
 from sparse2spatial.RFRbuild import get_top_models
-from sparse2spatial.RFRanalysis import get_stats_on_models
+#from sparse2spatial.RFRanalysis import get_stats_on_models
 from sparse2spatial.RFRanalysis import get_stats_on_multiple_global_predictions
+from sparse2spatial.RFRanalysis import get_spatial_predictions_0125x0125_by_lat
 # Local modules specific to iodide work
 from sea_surface_iodide import *
 import project_misc as misc
 
 
-def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
-                                                      RFR_dict=None,
-                                                      testset='Test set (strat. 20%)',
-                                                      rm_Skagerrak_data=True,
-                                                      rm_non_water_boxes=True):
+def plt_obs_spatially_vs_predictions_options(dpi=320, target='Iodide',
+                                             RFR_dict=None,
+                                             testset='Test set (strat. 20%)',
+                                             rm_Skagerrak_data=True,
+                                             rm_non_water_boxes=True):
     """
     Plot up predicted values overlaid with observations
 
@@ -68,12 +69,12 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
         extr_str = ''
     filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(
         target, res4param, extr_str)
-#    folder =  './'
-    folder = utils.get_file_locations('data_root')+ '/{}/outputs/'.format(target)
+    data_root = utils.get_file_locations('data_root')
+    folder = '/{}/{}/outputs/'.format(data_root, target)
     ds = xr.open_dataset(folder + filename)
     # Set the variable to plot underneath observations
     var2plot = 'Ensemble_Monthly_mean'
-    # only select boxes where that are fully water (seasonal)
+    # Only select boxes where that are fully water (seasonal)
     if rm_non_water_boxes:
         ds = utils.add_LWI2array(ds=ds, res=res4param, var2template=var2plot)
         #
@@ -85,11 +86,11 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models_iodide()
     df = RFR_dict['df']
-    # get stats on models in RFR_dict
+    # Get stats on models in RFR_dict
     stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
-    # only consider that are not outliers.
-    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
-#    df.loc[ df['Iodide']<= 400., :]
+    # Only consider that are not outliers.
+    df = df.loc[df[target] <= utils.get_outlier_value(df=df, var2use=target),:]
+#    df.loc[ df[target]<= 400., :]
     # ---- Plot up and save to PDF
     # - setup plotting
     plt.close('all')
@@ -113,7 +114,7 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
     units = 'nM'
 #    figsize = (11, 5)
     figsize = (15, 10)
-    #  - plot globally
+    #  - Plot globally
     plot_options = ((8, 'k'), (8, 'none'), (10, 'k'), (10, 'none'))
     # Initialise plot
     for plot_option_n, plot_option in enumerate(plot_options):
@@ -126,14 +127,15 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
         else:
             centre = False
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks, units=units,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
                                extend=extend, res=res, left_cb_pos=left_cb_pos,
                                #        cmap=cmap,
                                show=False)
         # Now add point for observations
         x = df[u'Longitude'].values
         y = df[u'Latitude'].values
-        z = df['Iodide'].values
+        z = df[target].values
         ax.scatter(x, y, c=z, s=s, cmap=cmap, norm=norm, edgecolor=edgecolor)
         # Adjust subplot positions
         fig.subplots_adjust(top=top, right=right, left=left, bottom=bottom)
@@ -147,11 +149,11 @@ def plot_up_obs_spatially_against_predictions_options(dpi=320, target='iodide',
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
-                                              RFR_dict=None,
-                                              testset='Test set (strat. 20%)',
-                                              rm_Skagerrak_data=False,
-                                              rm_non_water_boxes=True):
+def plt_obs_spatially_vs_predictions(dpi=320, target='Iodide',
+                                     RFR_dict=None,
+                                     testset='Test set (strat. 20%)',
+                                     rm_Skagerrak_data=False,
+                                     rm_non_water_boxes=True):
     """
     Plot up predicted values overlaid with observations
 
@@ -186,7 +188,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     ds = xr.open_dataset(folder + filename)
     # Set the variable to plot underneath observations
     var2plot = 'Ensemble_Monthly_mean'
-    # only select boxes where the
+    # Only select boxes where the
     if rm_non_water_boxes:
         ds = utils.add_LWI2array(ds=ds, res=res4param, var2template=var2plot)
         #
@@ -198,12 +200,12 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models_iodide()
     df = RFR_dict['df']
-    # get stats on models in RFR_dict
+    # Get stats on models in RFR_dict
     stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
-    # only consider values below 400
-#   df = df.loc[ df['Iodide']<= 400., :]
-    # only consider values that are not outliers
-    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
+    # Only consider values below 400
+#   df = df.loc[ df[target]<= 400., :]
+    # Only consider values that are not outliers
+    df = df.loc[df[target] <= utils.get_outlier_value(df=df, var2use=target), :]
     # ---- Plot up and save to PDF
     # - setup plotting
     plt.close('all')
@@ -230,7 +232,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     units = 'nM'
 #    figsize = (11, 5)
     figsize = (15, 10)
-    #  - plot globally
+    #  - Plot globally
     # Initialise plot
     fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
     # Plot up background parameterised average.
@@ -246,7 +248,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     # Now add point for observations
     x = df[u'Longitude'].values
     y = df[u'Latitude'].values
-    z = df['Iodide'].values
+    z = df[target].values
     ax.scatter(x, y, c=z, s=s, cmap=cmap, norm=norm, edgecolor=edgecolor)
     # Adjust subplot positions
     fig.subplots_adjust(top=top, right=right, left=left, bottom=bottom)
@@ -258,7 +260,7 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     plt.close()
 
     # - split world into quarters and plot up
-    # get lats and lons for res
+    # Get lats and lons for res
     lon, lat, NIU = AC.get_latlonalt4res(res=res)
     #
     latrange = [-90, 0, 90]
@@ -266,26 +268,27 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
 #    latrange = lat[::len( lat ) /2 ]
 #    lonrange = lon[::len( lon ) /2 ]
     s = 15
-    # loop and plot arrays
+    # Loop and plot arrays
     for nlat, latmin in enumerate(latrange[:-1]):
         latmax = latrange[nlat+1]
         for nlon, lonmin in enumerate(lonrange[:-1]):
             lonmax = lonrange[nlon+1]
-            # - plot up obs
+            # - Plot up obs
             # Initialise plot
             fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
             # Now plot up
             AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                                   ax=ax, fig=fig, centre=centre, fillcontinents=True,
+                                   ax=ax, fig=fig, centre=centre,
+                                   fillcontinents=True,
                                    extend=extend, res=res, resolution='h',
                                    left_cb_pos=left_cb_pos,
                                    #        cmap=cmap,
                                    units=units, show=False)
-            # - plot up param
+            # - Plot up param
             # Now add point for observations
             x = df[u'Longitude'].values
             y = df[u'Latitude'].values
-            z = df['Iodide'].values
+            z = df[target].values
             ax.scatter(x, y, c=z, s=s, cmap=cmap, norm=norm,
                        edgecolor=edgecolor)
             # set axis limits
@@ -302,7 +305,8 @@ def plot_up_obs_spatially_against_predictions(dpi=320, target='iodide',
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
+def plt_obs_spatially_vs_predictions_at_points(dpi=320,
+                                                        target='Iodide',
                                                         RFR_dict=None,
                                                         testset='Test set (strat. 20%)'
                                                         ):
@@ -346,9 +350,9 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
     extend = 'max'
 #    figsize = (11, 5)
     figsize = (15, 10)
-    # plot up a white background
+    # Plot up a white background
     arr = np.zeros(AC.get_dims4res('4x5'))[..., 0]
-    # - plot observations
+    # - Plot observations
     # Initialise plot
     fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
     # Add a title
@@ -363,7 +367,7 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
     # Now add point for observations
     x = df[u'Longitude'].values
     y = df[u'Latitude'].values
-    z = df['Iodide'].values
+    z = df[target].values
     ax.scatter(x, y, c=z, s=5, cmap=cmap, norm=norm)
     # Save to PDF
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
@@ -388,7 +392,7 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
     # Now add point for observations
     x = df_tmp[u'Longitude'].values
     y = df_tmp[u'Latitude'].values
-    z = df_tmp['Iodide'].values
+    z = df_tmp[target].values
     ax.scatter(x, y, c=z, s=5, cmap=cmap, norm=norm)
     # Save to PDF
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
@@ -396,9 +400,9 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         plt.show()
     plt.close()
 
-    # - plot up bias by param
+    # - Plot up bias by param
     units = 'nM'
-    # - plot for entire dataset
+    # - Plot for entire dataset
     fixcb = np.array([-100, 100])
     cmap = AC.get_colormap(fixcb)
     norm = colors.Normalize(vmin=fixcb[0], vmax=fixcb[-1])
@@ -409,14 +413,16 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
         # Add a title
         title = 'Bias in entire dataset ({}-obs)'.format(param)
-        # add a blank plot
+        # Add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
-        # get the residuals
+        # Get the residuals
         x = df[u'Longitude'].values
         y = df[u'Latitude'].values
         z = df[param+'-residual'].values
@@ -436,14 +442,16 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
         # Add a title
         title = 'Bias in testset ({}-obs)'.format(param)
-        # add a blank plot
+        # Add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
-        # get the residuals
+        # Get the residuals
         x = df_tmp[u'Longitude'].values
         y = df_tmp[u'Latitude'].values
         z = df_tmp[param+'-residual'].values
@@ -455,9 +463,9 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
             plt.show()
         plt.close()
 
-    # --- plot up Abs. bias by param
+    # --- Plot up Abs. bias by param
     units = 'nM'
-    # - plot for entire dataset
+    # - Plot for entire dataset
     fixcb = np.array([0, 100])
     cmap = AC.get_colormap(fixcb, cb='Reds')
     norm = colors.Normalize(vmin=fixcb[0], vmax=fixcb[-1])
@@ -468,14 +476,16 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
         # Add a title
         title = 'Abs. bias in entire dataset ({}-obs)'.format(param)
-        # add a blank plot
+        # Add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
-        # get the residuals
+        # Get the residuals
         x = df[u'Longitude'].values
         y = df[u'Latitude'].values
         z = np.abs(df[param+'-residual'].values)
@@ -495,14 +505,16 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
         # Add a title
         title = 'Abs. bias in testset ({}-obs)'.format(param)
-        # add a blank plot
+        # Add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
-        # get the residuals
+        # Get the residuals
         x = df_tmp[u'Longitude'].values
         y = df_tmp[u'Latitude'].values
         z = np.abs(df_tmp[param+'-residual'].values)
@@ -514,9 +526,9 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
             plt.show()
         plt.close()
 
-    # --- plot up % Abs. bias by param
+    # --- Plot up % Abs. bias by param
     units = '%'
-    # - plot for entire dataset
+    # - Plot for entire dataset
     fixcb = np.array([-100, 100])
     cmap = AC.get_colormap(fixcb)
     norm = colors.Normalize(vmin=fixcb[0], vmax=fixcb[-1])
@@ -527,17 +539,19 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
         # Add a title
         title = '% Abs. bias in entire dataset ({}-obs)'.format(param)
-        # add a blank plot
+        # Add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
-        # get the residuals
+        # Get the residuals
         x = df[u'Longitude'].values
         y = df[u'Latitude'].values
-        z = np.abs(df[param+'-residual'].values) / df['Iodide'].values * 100
+        z = np.abs(df[param+'-residual'].values) / df[target].values * 100
         ax.scatter(x, y, c=z, s=5, cmap=cmap, norm=norm)
 #        print z.max(), z.min()
         # Save to PDF
@@ -554,28 +568,26 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
         fig, ax = plt.subplots(dpi=dpi, figsize=figsize)
         # Add a title
         title = '% Abs. bias in testset ({}-obs)'.format(param)
-        # add a blank plot
+        # Add a blank plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               ax=ax, fig=fig, centre=centre, fillcontinents=True,
-                               extend=extend, res=res, title=title, title_x=0.15,
+                               ax=ax, fig=fig, centre=centre,
+                               fillcontinents=True,
+                               extend=extend, res=res, title=title,
+                               title_x=0.15,
                                units=units,
                                #        cmap=cmap,
                                show=False)
-        # get the residuals
+        # Get the residuals
         x = df_tmp[u'Longitude'].values
         y = df_tmp[u'Latitude'].values
-        z = np.abs(df_tmp[param+'-residual'].values) / df_tmp['Iodide'].values
+        z = np.abs(df_tmp[param+'-residual'].values) / df_tmp[target].values
         z *= 100
         ax.scatter(x, y, c=z, s=5, cmap=cmap, norm=norm)
-#        print z.max(), z.min()
         # Save to PDF
         AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
         if show_plot:
             plt.show()
         plt.close()
-
-    # - plot up bias by param ( if abs(bias greater than X)
-
     # Save entire pdf
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
@@ -583,8 +595,9 @@ def plot_up_obs_spatially_against_predictions_at_points(dpi=320,
 def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
                                         show_plot=False, shade_std=True,
                                         just_plot_existing_params=False,
-                                        plot_up_param_iodide=True, context="paper",
-                                        ds=None, target='iodide',
+                                        plot_up_param_iodide=True,
+                                        context="paper",
+                                        ds=None, target='Iodide',
                                         rm_Skagerrak_data=False):
     """
     Plot a figure of iodide vs laitude
@@ -628,28 +641,29 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
         ds.rename(name_dict={'Ensemble_Monthly_mean': 'RFR(Ensemble)'},
                   inplace=True)
     except ValueError:
-        # pass if 'Ensemble_Monthly_mean' already is in dataset
+        # Pass if 'Ensemble_Monthly_mean' already is in dataset
         pass
     # Get predicted values binned by latitude
     df = get_spatial_predictions_0125x0125_by_lat(ds=ds)
-    # params to pot
+    # Params to pot
     models2compare = [
         'RFR(Ensemble)'
     ]
-    params = ['Chance2014_STTxx2_I', u'MacDonald2014_iodide']
+    params = ['Chance2014_STTxx2_I', u'MacDonald2014_iodide',  'Wadley2020']
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)',
+                     'Wadley2020': 'Wadley et al. (2020)',
                      'Iodide': 'Obs.',
                      }
     if just_plot_existing_params:
         params2plot = params
     else:
         params2plot = models2compare + params
-    # assign colors
+    # Assign colors
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(params2plot, CB_color_cycle))
-    # --- plot up vs. lat
+    # --- Plot up vs. lat
     fig, ax = plt.subplots()
     # if including parameters, loop by param and plot
     if plot_up_param_iodide:
@@ -661,12 +675,12 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
                 var2plot = '{} - median'.format(param)
             else:
                 var2plot = '{} - mean'.format(param)
-            # get X
+            # Get X
             X = df[var2plot].index.values
-            # plot as line
+            # Plot as line
             plt.plot(X, df[var2plot].values, color=color,
                      label=rename_titles[param])
-            # plot up quartiles/std
+            # Plot up quartiles/std
             if shade_std:
                 # Use the std from the ensemble members for the ensemble
                 if (param == 'RFR(Ensemble)'):
@@ -678,8 +692,8 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
                     # Now plot plot this as +/- the average
                     low = df[var2plot].values - df[std_var].values
                     high = df[var2plot].values + df[std_var].values
-                    # use the 75th percentile of the monthly average std
-                    # of the ensemble members
+                    # Use the 75th percentile of the monthly average std
+                    # Of the ensemble members
     #                 std_var = 'Ensemble_Monthly_std - 75%'
     #                 low = df[var2plot].values - df[std_var].values
     #                 high = df[var2plot].values + df[std_var].values
@@ -696,16 +710,16 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
     # Highlight coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == True, :]
     X = tmp_df['Latitude'].values
-    Y = tmp_df['Iodide'].values
+    Y = tmp_df[target].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='none', s=3,
                 label='Coastal obs.')
     # Non-coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == False, :]
     X = tmp_df['Latitude'].values
-    Y = tmp_df['Iodide'].values
+    Y = tmp_df[target].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='k', s=3,
                 label='Non-coastal obs.')
-    # limit plot y axis
+    # Limit plot y axis
     plt.ylim(-20, 420)
     plt.ylabel('[I$^{-}_{aq}$] (nM)')
     plt.xlabel('Latitude ($^{\\rm o}$N)')
@@ -718,11 +732,11 @@ def plot_predicted_iodide_vs_lat_figure(dpi=320, plot_avg_as_median=False,
     plt.close()
 
 
-def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
+def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='Iodide',
                                                   plot_avg_as_median=False,
                                                   show_plot=False,
                                                   shade_std=True,
-                                                  just_plot_existing_params=False,
+                                               just_plot_existing_params=False,
                                                   plot_up_param_iodide=True,
                                                   context="paper", ds=None,
                                                   rm_Skagerrak_data=False):
@@ -754,7 +768,6 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
     # Get observations
     df_obs = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Get predicted values
-#    folder = '/shared/scratch/hpc2/users/ts551/labbook/Python_progs/'
     folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     filename = 'Oi_prj_predicted_{}_0.125x0.125{}.nc'
     ds = xr.open_dataset(folder + filename.format(target, '_No_Skagerrak'))
@@ -766,7 +779,7 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
         ds.rename(name_dict={'Ensemble_Monthly_mean': 'RFR(Ensemble)'},
                   inplace=True)
     except ValueError:
-        # pass if 'Ensemble_Monthly_mean' already is in dataset
+        # Pass if 'Ensemble_Monthly_mean' already is in dataset
         pass
     # Rename to a more concise name
     SkagerrakVarName = 'RFR(Ensemble) - Inc. Skagerrak data'
@@ -774,12 +787,12 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
         ds2.rename(name_dict={'Ensemble_Monthly_mean': SkagerrakVarName},
                    inplace=True)
     except ValueError:
-        # pass if 'Ensemble_Monthly_mean' already is in dataset
+        # Pass if 'Ensemble_Monthly_mean' already is in dataset
         pass
     # Get predicted values binned by latitude
     df = get_spatial_predictions_0125x0125_by_lat(ds=ds)
     df2 = get_spatial_predictions_0125x0125_by_lat(ds=ds2)
-    # params to pot
+    # Params to pot
     models2compare = [
         'RFR(Ensemble)'
     ]
@@ -793,7 +806,7 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
         params2plot = params
     else:
         params2plot = models2compare + params
-    # assign colors
+    # Assign colors
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(params2plot, CB_color_cycle))
     # - Add a lines for parameterisations
@@ -808,12 +821,12 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
                 var2plot = '{} - median'.format(param)
             else:
                 var2plot = '{} - mean'.format(param)
-            # get X
+            # Get X
             X = df[var2plot].index.values
-            # plot as line
+            # Plot as line
             plt.plot(X, df[var2plot].values, color=color,
                      label=rename_titles[param])
-            # plot up quartiles/std
+            # Plot up quartiles/std
             if shade_std:
                 # Use the std from the ensemble members for the ensemble
                 if (param == 'RFR(Ensemble)') or (param == SkagerrakVarName):
@@ -825,8 +838,8 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
                     # Now plot plot this as +/- the average
                     low = df[var2plot].values - df[std_var].values
                     high = df[var2plot].values + df[std_var].values
-                    # use the 75th percentile of the monthly average std
-                    # of the ensemble members
+                    # Use the 75th percentile of the monthly average std
+                    # Of the ensemble members
     #                 std_var = 'Ensemble_Monthly_std - 75%'
     #                 low = df[var2plot].values - df[std_var].values
     #                 high = df[var2plot].values + df[std_var].values
@@ -851,13 +864,13 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
             var2plot = '{} - median'.format(SkagerrakVarName)
         else:
             var2plot = '{} - mean'.format(SkagerrakVarName)
-        # get X
+        # Get X
         print(df2.columns)
         X = df2[var2plot].index.values
-        # plot as line
+        # Plot as line
         plt.plot(X, df2[var2plot].values, color=color,
                  label=SkagerrakVarName, ls='--')
-        # plot up quartiles/std
+        # Plot up quartiles/std
         if shade_std:
             # Use the std from the ensemble members for the ensemble
             if (param == 'RFR(Ensemble)') or (param == SkagerrakVarName):
@@ -869,8 +882,8 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
                 # Now plot plot this as +/- the average
                 low = df2[var2plot].values - df2[std_var].values
                 high = df2[var2plot].values + df2[std_var].values
-                # use the 75th percentile of the monthly average std
-                # of the ensemble members
+                # Use the 75th percentile of the monthly average std
+                # Of the ensemble members
 #                 std_var = 'Ensemble_Monthly_std - 75%'
 #                 low = df[var2plot].values - df[std_var].values
 #                 high = df[var2plot].values + df[std_var].values
@@ -890,16 +903,16 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
     # Highlight coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == True, :]
     X = tmp_df['Latitude'].values
-    Y = tmp_df['Iodide'].values
+    Y = tmp_df[target].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='none', s=3,
                 label='Coastal obs.')
     # Non-coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == False, :]
     X = tmp_df['Latitude'].values
-    Y = tmp_df['Iodide'].values
+    Y = tmp_df[target].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='k', s=3,
                 label='Non-coastal obs.')
-    # limit plot y axis
+    # Limit plot y axis
     plt.ylim(-20, 420)
     plt.ylabel('[I$^{-}_{aq}$] (nM)')
     plt.xlabel('Latitude ($^{\\rm o}$N)')
@@ -913,11 +926,16 @@ def plt_predicted_I_vs_lat_fig_with_Skagerrak_too(dpi=320, target='iodide',
 
 
 def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
-                                                 plot_avg_as_median=False, RFR_dict=None,
-                                                 res='0.125x0.125', target='iodide',
-                                                 show_plot=False, close_plot=True,
-                                                 save2png=False, shade_std=True,
-                                                 folder=None, ds=None, topmodels=None):
+                                                 plot_avg_as_median=False,
+                                                 RFR_dict=None,
+                                                 res='0.125x0.125',
+                                                 target='Iodide',
+                                                 show_plot=False,
+                                                 close_plot=True,
+                                                 save2png=False,
+                                                 shade_std=True,
+                                                 folder=None, ds=None,
+                                                 topmodels=None):
     """
     Plot a figure of iodide vs laitude - showing all ensemble members
 
@@ -955,20 +973,20 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
         df = get_spatial_predictions_0125x0125_by_lat(ds=ds)
     else:
         df = get_stats_on_spatial_predictions_4x5_2x25_by_lat(res=res, ds=ds)
-    # params to pot
+    # Params to pot
     if isinstance(topmodels, type(None)):
         # Get RFR_dict if not provide
         if isinstance(RFR_dict, type(None)):
             RFR_dict = build_or_get_models_iodide()
         topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
     params2plot = topmodels
-    # assign colors
+    # Assign colors
     CB_color_cycle = AC.get_CB_color_cycle()
     CB_color_cycle += ['darkgreen']
     color_d = dict(zip(params2plot, CB_color_cycle))
-    # --- plot up vs. lat
+    # --- Plot up vs. lat
     fig, ax = plt.subplots()
-    # loop by param to plot
+    # Loop by param to plot
     for param in params2plot:
         # Set color for param
         color = color_d[param]
@@ -977,11 +995,11 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
             var2plot = '{} - median'.format(param)
         else:
             var2plot = '{} - mean'.format(param)
-        # get X
+        # Get X
         X = df[var2plot].index.values
-        # plot as line
+        # Plot as line
         plt.plot(X, df[var2plot].values, color=color, label=param)
-        # plot up quartiles/std as shaded regions too
+        # Plot up quartiles/std as shaded regions too
         if shade_std:
             # Use the std from the ensemble members for the ensemble
             if (param == 'RFR(Ensemble)'):
@@ -993,8 +1011,8 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
                 # Now plot plot this as +/- the average
                 low = df[var2plot].values - df[std_var].values
                 high = df[var2plot].values + df[std_var].values
-                # use the 75th percentile of the monthly average std
-                # of the ensemble members
+                # Use the 75th percentile of the monthly average std
+                # Of the ensemble members
 #                 std_var = 'Ensemble_Monthly_std - 75%'
 #                 low = df[var2plot].values - df[std_var].values
 #                 high = df[var2plot].values + df[std_var].values
@@ -1008,19 +1026,19 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
             high = df['{} - 75%'.format(param)].values
         ax.fill_between(X, low, high, alpha=0.2, color=color)
 
-    # highlight coastal obs
+    # Highlight coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == True, :]
     X = tmp_df['Latitude'].values
-    Y = tmp_df['Iodide'].values
+    Y = tmp_df[target].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='none', s=3,
                 label='Coastal obs.')
-    # non-coastal obs
+    # Non-coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == False, :]
     X = tmp_df['Latitude'].values
-    Y = tmp_df['Iodide'].values
+    Y = tmp_df[target].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='k', s=3,
                 label='Non-coastal obs.')
-    # limit plot y axis
+    # Limit plot y axis
     plt.ylim(-20, 420)
     plt.ylabel('[I$^{-}_{aq}$] (nM)')
     plt.xlabel('Latitude ($^{\\rm o}$N)')
@@ -1044,34 +1062,36 @@ def plot_predicted_iodide_vs_lat_figure_ENSEMBLE(dpi=320, extr_str='',
 # ---------------------------------------------------------------------------
 # ---------- Functions to analyse/test models for Oi! paper --------------
 # ---------------------------------------------------------------------------
-def check_seasonalitity_of_iodide_predcitions(show_plot=False):
+def check_seasonality_of_iodide_predictions(show_plot=False,
+                                            target='Iodide'):
     """
     Compare the seasonality of obs. and parameterised values
     """
     # --- Set local variables
-    rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
-                     u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
-                     'RFR(Ensemble)': 'RFR(Ensemble)',
-                     u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
-                     }
+    rename_titles = {
+    u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
+    u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
+    'RFR(Ensemble)': 'RFR(Ensemble)',
+    u'Chance2014_Multivariate': 'Chance et al. (2014) (Multi)',
+    }
     CB_color_cycle = AC.get_CB_color_cycle()
     colors_dict = dict(zip(rename_titles.keys(),  CB_color_cycle))
 
     # - Get dataset where there is more than a 2 months of data at the same loc
     df = get_processed_df_obs_mod()  # NOTE this df contains values >400nM
     # Exclude data with values above 400 nM
-#    df = df.loc[ df['Iodide'].values < 400, : ]
+#    df = df.loc[ df[target].values < 400, : ]
     # Exclude outliers
-    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
-    # get metadata
+    df = df.loc[df[target] <= utils.get_outlier_value(df=df, var2use=target),:]
+    # Get metadata
     md_df = get_iodide_obs_metadata()
     datasets = md_df[u'Data_Key']
-    # loop datasets and find ones with multiple obs.
+    # Loop datasets and find ones with multiple obs.
     N = []
     ds_seas = []
     MonthVar = 'Month (Orig.)'
     for ds in datasets:
-        # get obs for dataset
+        # Get obs for dataset
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         # save the N value
         N += [ds_tmp.shape[0]]
@@ -1095,19 +1115,19 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     plt.setp(plt.gca(), frame_on=False, xticks=(), yticks=())
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
-    # now loop and plot up vs. new parameterisation
+    # Now loop and plot up vs. new parameterisation
     for ds in ds_seas:
-        # get location/data on obs.
+        # Get location/data on obs.
         md_df_tmp = md_df.loc[md_df[u'Data_Key'] == ds]
         Source = md_df_tmp['Source'].values[0].strip()
         Loc = md_df_tmp['Location'].values[0].strip()
         Cruise = md_df_tmp['Cruise'].values[0].strip()
-        # get obs for dataset
+        # Get obs for dataset
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         ds_tmp.sort_values(by=MonthVar)
-        # plot up against months
-        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values, label='Obs',
-                    color='k')
+        # Plot up against months
+        plt.scatter(ds_tmp[MonthVar].values, ds_tmp[target].values,
+                    label='Obs', color='k')
         # Add values for en
         var2plot = ['RFR(Ensemble)']
         for var in var2plot:
@@ -1139,18 +1159,19 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     plt.setp(plt.gca(), frame_on=False, xticks=(), yticks=())
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
-    # now loop and plot up vs. all parameterisations parameterisation
+    # Now loop and plot up vs. all parameterisations parameterisation
     for ds in ds_seas:
-        # get location/data on obs.
+        # Get location/data on obs.
         md_df_tmp = md_df.loc[md_df[u'Data_Key'] == ds]
         Source = md_df_tmp['Source'].values[0].strip()
         Loc = md_df_tmp['Location'].values[0].strip()
         Cruise = md_df_tmp['Cruise'].values[0].strip()
-        # get obs for dataset
+        # Get obs for dataset
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         ds_tmp.sort_values(by=MonthVar)
-        # plot up against months
-        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values, label='Obs',
+        # Plot up against months
+        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp[target].values,
+                    label='Obs',
                     color='k')
         # Add values for en
         var2plot = [
@@ -1186,19 +1207,19 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
 
-    # now loop and plot up vs. all parameterisations parameterisation
+    # Now loop and plot up vs. all parameterisations parameterisation
     for ds in ds_seas:
-        # get location/data on obs.
+        # Get location/data on obs.
         md_df_tmp = md_df.loc[md_df[u'Data_Key'] == ds]
         Source = md_df_tmp['Source'].values[0].strip()
         Loc = md_df_tmp['Location'].values[0].strip()
         Cruise = md_df_tmp['Cruise'].values[0].strip()
-        # get obs for dataset
+        # Get obs for dataset
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         ds_tmp.sort_values(by=MonthVar)
-        # plot up against months
-        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values, label='Obs',
-                    color='k')
+        # Plot up against months
+        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp[target].values,
+                    label='Obs', color='k')
         # Add values for en
         var2plot = [
             u'Chance2014_STTxx2_I', u'MacDonald2014_iodide'
@@ -1233,19 +1254,19 @@ def check_seasonalitity_of_iodide_predcitions(show_plot=False):
     AC.plot2pdfmulti(pdff, savetitle, dpi=dpi)
     plt.close()
 
-    # now loop and plot up vs. all parameterisations parameterisation
+    # Now loop and plot up vs. all parameterisations parameterisation
     for ds in ds_seas:
-        # get location/data on obs.
+        # Get location/data on obs.
         md_df_tmp = md_df.loc[md_df[u'Data_Key'] == ds]
         Source = md_df_tmp['Source'].values[0].strip()
         Loc = md_df_tmp['Location'].values[0].strip()
         Cruise = md_df_tmp['Cruise'].values[0].strip()
-        # get obs for dataset
+        # Get obs for dataset
         ds_tmp = df.loc[df[u'Data_Key'] == ds]
         ds_tmp.sort_values(by=MonthVar)
-        # plot up against months
-        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp['Iodide'].values, label='Obs',
-                    color='k')
+        # Plot up against months
+        plt.scatter(ds_tmp[MonthVar].values,  ds_tmp[target].values,
+                    label='Obs', color='k')
         # Add values for en
         var2plot = [
             u'Chance2014_Multivariate'
@@ -1286,7 +1307,7 @@ def test_model_sensitiivty2training_test_split(models2compare=None,
     """
     Driver to test/training set sensitivity for a set of models
     """
-    # list of models to test?
+    # List of models to test?
     if isinstance(models2compare, type(None)):
         models2compare = ['RFR(TEMP+DEPTH+SAL)']
     # Get the unprocessed obs and variables as a DataFrame
@@ -1304,7 +1325,7 @@ def test_model_sensitiivty2training_test_split(models2compare=None,
         # Run the analysis
         df = run_tests_on_testing_dataset_split(model_name=model_name,
                                                 model=model, df=df,
-                                                training_features=training_features)
+                                           training_features=training_features)
 
 
 def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
@@ -1340,7 +1361,7 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
         topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
 
     # - Get data at observation points
-    # add lines extract data from files...
+    # Add lines extract data from files...
 #	filename = 'Oi_prj_models_built_stats_on_models_at_obs_points.csv'
 #	folder ='../'
 #	dfP = pd.read_csv( folder + filename )
@@ -1352,18 +1373,18 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     # Get stats on model tuns runs
     dfP = get_stats_on_models(RFR_dict=RFR_dict, df=df,
                               verbose=False)
-    # only consider topmodels
+    # Only consider topmodels
     dfP = dfP.T[topmodels].T
 
     # -  Get data at spatial points
-    # add lines extract data from files...
+    # Add lines extract data from files...
 
     # just use outputted file for now.
     filename = 'Oi_prj_annual_stats_global_ocean_0.125x0.125.csv'
     folder = '../'
     dfG = pd.read_csv(folder + filename)
     dfG.index = dfG['Unnamed: 0'].values
-    # only consider topmodels
+    # Only consider topmodels
     dfG = dfG.T[topmodels].T
 
     # - Set summary stats and print to a txt file
@@ -1371,45 +1392,45 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
     a = open(file2save.format(res, extr_str), 'w')
     # -  Calculate model selection error spatially
     print('---- Model choice affect spatially /n', file=a)
-    # get stats
+    # Get stats
     var2use = u'mean (weighted)'
     min_ = dfG[var2use].min()
     max_ = dfG[var2use].max()
     mean_ = dfG[var2use].mean()
     range_ = max_ - min_
-    # print out the range
+    # Print out the range
     ptr_str = 'Model choice stats: min={:.5g}, max={:.5g} (range={:.5g})'
     print(ptr_str.format(min_, max_, range_), file=a)
-    # print out the error
+    # Print out the error
     ptr_str = 'Model choice affect on mean: {:.5g}-{:.5g} %'
     print(ptr_str.format(range_/max_*100, range_/min_*100), file=a)
 
     # - Calculate model selection error at observational points
     print('---- Model choice affect at point locations (mean) \n', file=a)
-    # get stats
+    # Get stats
     var2use = u'mean'
     min_ = dfP[var2use].min()
     max_ = dfP[var2use].max()
     mean_ = dfP[var2use].mean()
     range_ = max_ - min_
-    # print out the range
+    # Print out the range
     ptr_str = 'Model choice stats: min={:.5g}, max={:.5g} (range={:.5g})'
     print(ptr_str.format(min_, max_, range_), file=a)
-    # print out the error
+    # Print out the error
     ptr_str = 'Model choice affect on mean: {:.5g}-{:.5g} %'
     print(ptr_str.format(range_/max_*100, range_/min_*100), file=a)
     # -  Now calculate for RMSE
     print('---- Model choice affect at point locations (mean) \n', file=a)
-    # get stats
+    # Get stats
     var2use = 'RMSE (Test set (strat. 20%))'
     min_ = dfP[var2use].min()
     max_ = dfP[var2use].max()
     mean_ = dfP[var2use].mean()
     range_ = max_ - min_
-    # print out the range
+    # Print out the range
     ptr_str = 'Model choice stats: min={:.5g}, max={:.5g} (range={:.5g})'
     print(ptr_str.format(min_, max_, range_), file=a)
-    # print out the error
+    # Print out the error
     ptr_str = 'Model choice affect on mean: {:.5g}-{:.5g} %'
     print(ptr_str.format(range_/max_*100, range_/min_*100), file=a)
     # close the file
@@ -1417,9 +1438,11 @@ def analyse_model_selection_error_in_ensemble_members(RFR_dict=None,
 
 
 def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
-                                              rebuild_models=False, remake_NetCDFs=False,
+                                              rebuild_models=False,
+                                              remake_NetCDFs=False,
                                               res='0.125x0.125',
-                                              rm_Skagerrak_data=False, topmodels=None):
+                                              rm_Skagerrak_data=False,
+                                              topmodels=None):
     """
     Analyse the variation in spatial prediction on a per model basis
 
@@ -1454,17 +1477,19 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     features_used_dict = RFR_dict['features_used_dict']
     # Get the names of the ensemble members (topten models )
     if isinstance(topmodels, type(None)):
-        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
+        topmodels = get_top_models(RFR_dict=RFR_dict,
+                                   vars2exclude=['DOC', 'Prod'], n=10)
     # --- build 20 variable models for the ensemble memberse
     if rebuild_models:
         for model_name in topmodels:
-            # get the training features for a given model
+            # Get the training features for a given model
             features_used = features_used_dict[model_name]
             features_used = features_used.split('+')
             # Now build 20 separate initiations of the model
             build_the_same_model_mulitple_times(model_name=model_name,
-                                                features_used=features_used, df=df,
-                                                rm_Skagerrak_data=rm_Skagerrak_data
+                                                features_used=features_used,
+                                                df=df,
+                                            rm_Skagerrak_data=rm_Skagerrak_data
                                                 )
 
     # - Predict the surface concentrations for each of members' repeat builds
@@ -1494,10 +1519,10 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     dfG.T.to_csv(save_str.format(extr_str))
 
     # - Get the data for variance in the prediction of members (point-for-point)
-    # get predictions for repeat builds of ensemble members.
+    # Get predictions for repeat builds of ensemble members.
     dfs = {}
     for model_name in topmodels:
-        # get the training features for a given model
+        # Get the training features for a given model
         features_used = features_used_dict[model_name]
         features_used = features_used.split('+')
         # Now build 20 separate initiations of the model
@@ -1533,10 +1558,10 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         min_ = min(df_tmp['min'])
         max_ = max(df_tmp['max'])
         range_ = max_ - min_
-        # print range for test_
+        # Print range for test_
         ptr_str = "range : {:.5g} ({:.5g}-{:.5g})"
         print(ptr_str.format(range_, min_, max_), file=a)
-        # average value and range of this
+        # Average value and range of this
         var2use = 'mean (weighted)'
         stats_on_var = df_tmp[var2use].describe()
         mean_ = stats_on_var['mean']
@@ -1556,26 +1581,26 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     dfA['mean4model'] = [means4models[i] for i in topmodels]
     dfA['min_mean4model'] = [lowest_means[i] for i in topmodels]
     dfA['max_mean4model'] = [highest_means[i] for i in topmodels]
-    # add percent errors
+    # Add percent errors
     MerrPCmax = 'max % err. (mean)'
     dfA[MerrPCmax] = dfA['mean range'] / dfA['min_mean4model'] * 100
     MerrPCmin = 'min % err. (mean)'
     dfA[MerrPCmin] = dfA['mean range'] / dfA['max_mean4model'] * 100
-    # use names for the index
+    # Use names for the index
     dfA.index = topmodels
     # save processed data
     save_str = 'Oi_prj_RAW_stats_on_ENSEMBLE_predictions_globally{}{}'
     dfA.to_csv(save_str.format(extr_str, '_PROCESSED', '.csv'))
-    # print output to screen
+    # Print output to screen
     ptr_str = 'The avg. range in ensemble members is {:.5g} ({:.5g} - {:.5g} )'
     mean_ = dfA['mean range'].mean()
     min_ = dfA['mean range'].min()
     max_ = dfA['mean range'].max()
-    # print the maximum range
+    # Print the maximum range
     print(ptr_str.format(mean_, min_, max_), file=a)
     ptr_str = 'The max. range in ensemble is: {:.5g} '
     print(ptr_str.format(max_-min_), file=a)
-    # print range in all ensemble members rebuilds (20*10)
+    # Print range in all ensemble members rebuilds (20*10)
     mean_ = dfG[var2use].mean()
     min_ = dfG[var2use].min()
     max_ = dfG[var2use].max()
@@ -1614,10 +1639,10 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         min_ = min(df_tmp['min'])
         max_ = max(df_tmp['max'])
         range_ = max_ - min_
-        # print range for test_
+        # Print range for test_
         ptr_str = "range : {:.5g} ({:.5g}-{:.5g})"
         print(ptr_str.format(range_, min_, max_), file=a)
-        # average value and range of this
+        # Average value and range of this
         mean_ = df_tmp['mean'].mean()
         min_mean_ = min(df_tmp['mean'])
         max_mean_ = max(df_tmp['mean'])
@@ -1625,7 +1650,7 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
         ranges4models[model_] = range_
         ptr_str = "Avg. value of mean: {:.5g} ({:.5g} - {:.5g}, range={:.5g})"
         print(ptr_str.format(mean_, min_mean_, max_mean_, range_), file=a)
-        # now print the RMSE and range of
+        # Now print the RMSE and range of
         RMSE_ = df_tmp['RMSE'].mean()
         min_RMSE_ = df_tmp['RMSE'].min()
         max_RMSE_ = df_tmp['RMSE'].max()
@@ -1654,17 +1679,17 @@ def analyse_dataset_error_in_ensemble_members(RFR_dict=None,
     dfPbP['RMSE range'] = [RMSEranges4models[i] for i in topmodels]
     dfPbP['min_RMSE4model'] = [lowest_RMSE_[i] for i in topmodels]
     dfPbP['max_RMSE4model'] = [highest_RMSE_[i] for i in topmodels]
-    # add percent errors
+    # Add percent errors
     MerrPCmax = 'max % err. (mean)'
     dfPbP[MerrPCmax] = dfPbP['mean range'] / dfPbP['min_mean4model'] * 100
     MerrPCmin = 'min % err. (mean)'
     dfPbP[MerrPCmin] = dfPbP['mean range'] / dfPbP['max_mean4model'] * 100
-    # add percent errors
+    # Add percent errors
     RerrPCmax = 'max % err. (RMSE)'
     dfPbP[RerrPCmax] = dfPbP['RMSE range'] / dfPbP['min_RMSE4model'] * 100
     RerrPCmin = 'min % err. (RMSE)'
     dfPbP[RerrPCmin] = dfPbP['RMSE range'] / dfPbP['max_RMSE4model'] * 100
-    # update the index
+    # Update the index
     dfPbP.index = topmodels
     # save processed data
     save_str = 'Oi_prj_RAW_stats_on_ENSEMBLE_predictions_at_obs_locs{}{}'
@@ -1791,11 +1816,11 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
     rename_titles = {u'Chance2014_STTxx2_I': 'Chance et al. (2014)',
                      u'MacDonald2014_iodide': 'MacDonald et al. (2014)',
                      'RFR(Ensemble)': 'RFR(Ensemble)', }
-    # units
+    # Units
     units = 'nM'
     # iodide in aq
     Iaq = '[I$^{-}_{aq}$]'
-    # also compare existing parameters
+    # Also compare existing parameters
     params = [u'Chance2014_STTxx2_I', u'MacDonald2014_iodide', ]
     # set location for alt_text
     f_size = 10
@@ -1816,10 +1841,10 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
     dsplits = [
         'Entire', 'Withheld', 'Withheld coastal', 'Withheld non-coastal'
     ]
-    # assign colors
+    # Assign colors
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(dsplits, CB_color_cycle))
-    # params to plot
+    # Params to plot
     params2plot = ['RFR(Ensemble)'] + params
     # Intialise figure and axis
     fig, axs = plt.subplots(1, 3, sharex=True, sharey=True, dpi=dpi, \
@@ -1838,25 +1863,25 @@ def plot_ODR_window_plot(RFR_dict=None, show_plot=False, df=None,
         ax.text(0.5, 1.05, rename_titles[param], horizontalalignment='center',
                 verticalalignment='center', transform=ax.transAxes)
 #        ax = fig.add_subplot(1, 3, n_param+1 )
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         ax.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data by dataset split
         for nsplit, split in enumerate(dsplits):
             #
             df = dfs[split].copy()
-            # get X
-            X = df['Iodide'].values
-            # get Y
+            # Get X
+            X = df[target].values
+            # Get Y
             Y = df[param].values
-            # get N
+            # Get N
             N = float(df.shape[0])
-            # get RMSE
+            # Get RMSE
             RMSE = np.sqrt(((Y-X)**2).mean())
             # Plot up just the entire and testset data
             if split in ('Entire', 'Withheld'):
                 ax.scatter(X, Y, color=color_d[split], s=3, facecolor='none')
-            # add ODR line
+            # Add ODR line
             xvalues, Y_ODR = AC.get_linear_ODR(x=X, y=Y, xvalues=x_121,
                                                return_model=False, maxit=10000)
 
@@ -1930,7 +1955,7 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
     df = RFR_dict['df']
     features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
-    # get stats on models in RFR_dict
+    # Get stats on models in RFR_dict
 #    stats = get_stats_on_models( RFR_dict=RFR_dict, verbose=False )
 
     # - Evaluate model using various approaches
@@ -1952,11 +1977,11 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
         #    'RFR(TEMP+DEPTH+SAL)',
         'RFR(Ensemble)',
     ]
-    # units
+    # Units
     units = 'nM'
     # iodide in aq
     Iaq = '[I$^{-}_{aq}$]'
-    # also compare existing parameters
+    # Also compare existing parameters
     params = [u'Chance2014_STTxx2_I', u'MacDonald2014_iodide', ]
     # set location for alt_text
     f_size = 10
@@ -1978,32 +2003,32 @@ def analyse_X_Y_correlations_ODR(RFR_dict=None, show_plot=False,
     dsplits = [
         'Entire', 'Withheld', 'Coastal (withheld)', 'Non-coastal (withheld)'
     ]
-    # assign colors
+    # Assign colors
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(dsplits, CB_color_cycle))
     # Loop by param and compare against whole dataset
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         #
         # Plot up data by dataset split
         for nsplit, split in enumerate(dsplits):
             df = dfs[split].copy()
-            # get X
-            X = df['Iodide'].values
-            # get Y
+            # Get X
+            X = df[target].values
+            # Get Y
             Y = df[param].values
-            # get N
+            # Get N
             N = float('{:.3g}'.format(df.shape[0]))
-            # get RMSE
+            # Get RMSE
             RMSE = np.sqrt(((Y-X)**2).mean())
             # Plot up just the entire and testset data
             if split in ('Entire', 'Withheld'):
                 plt.scatter(X, Y, color=color_d[split], s=3, facecolor='none')
-            # add ODR line
+            # Add ODR line
             xvalues, Y_ODR = AC.get_linear_ODR(x=X, y=Y, xvalues=x_121,
                                                return_model=False,
                                                maxit=10000)
@@ -2056,7 +2081,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     df = RFR_dict['df']
     features_used_dict = RFR_dict['features_used_dict']
     models_dict = RFR_dict['models_dict']
-    # get stats on models in RFR_dict
+    # Get stats on models in RFR_dict
     stats = get_stats_on_models(RFR_dict=RFR_dict, verbose=False)
 
     # - Evaluate model using various approaches
@@ -2066,7 +2091,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     # - Evaluate point for point
     savetitle = 'Oi_prj_point_for_point_comparison_obs_vs_model'
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
-    # plot up X vs. Y for all points
+    # Plot up X vs. Y for all points
 
     # models to compare
     models2compare = [
@@ -2075,7 +2100,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         #    'RFR(TEMP+SAL+NO3)',
         #    'RFR(TEMP+DEPTH+SAL)',
     ]
-    # also compare existing parameters
+    # Also compare existing parameters
     params = [u'Chance2014_STTxx2_I', u'MacDonald2014_iodide', ]
     # set location for alt_text
     alt_text_x = 0.1
@@ -2087,7 +2112,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data
@@ -2114,7 +2139,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data
@@ -2142,7 +2167,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data
@@ -2170,7 +2195,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, x_121, alpha=0.5, color='k', ls='--')
         # Plot up data
@@ -2192,15 +2217,15 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
         plt.close()
 
     # - Now look at residuals
-    # get residual
+    # Get residual
     for param in models2compare + params:
-        df[param+'-residual'] = df[param] - df['Iodide']
+        df[param+'-residual'] = df[param] - df[target]
 
     # Loop by param and compare against whole dataset ( as residuals )
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, [0]*len(x_121), alpha=0.5, color='k', ls='--')
         # Plot up data
@@ -2227,7 +2252,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, [0]*len(x_121), alpha=0.5, color='k', ls='--')
         # Plot up data
@@ -2255,7 +2280,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, [0]*len(x_121), alpha=0.5, color='k', ls='--')
         # Plot up data
@@ -2283,7 +2308,7 @@ def analyse_X_Y_correlations(RFR_dict=None, show_plot=False,
     for param in models2compare + params:
         # Intialise figure and axis
         fig, ax = plt.subplots()
-        # add a 1:1 line
+        # Add a 1:1 line
         x_121 = np.arange(-50, 500)
         plt.plot(x_121, [0]*len(x_121), alpha=0.5, color='k', ls='--')
         # Plot up data
@@ -2361,7 +2386,7 @@ def plt_X_vs_Y_for_regions(df=None, params2plot=[], LatVar='lat', LonVar='lon',
     # Use an all data for now
     dfs['all'] = df.copy()
     regions += ['all']
-    # loop and plot by region
+    # Loop and plot by region
     for region in regions:
         print(region)
         df = dfs[region]
@@ -2426,7 +2451,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
     # write out by dataset and by param
     dataset_stats = {}
     for dataset in datasets:
-        # print header
+        # Print header
         ptr_str = " ----- For dataset split '{}' ----- "
         print(ptr_str.format(dataset))
         # Get data
@@ -2434,7 +2459,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
         # Loop by param, print values and save overalls
         param_stats = {}
         for param in params2plot:
-            # get stats on dataset biases
+            # Get stats on dataset biases
             stats = df[param].describe().to_dict()
             #  Now print these
             pstr2 = '{:<25} - mean={mean:.2f}, median={50%:.2f} '
@@ -2452,7 +2477,7 @@ def calculate_biases_in_predictions(testset='Test set (strat. 20%)',
     for dataset in datasets:
         # Get stats
         stats = dataset_stats[dataset]
-        # header for dataset
+        # Header for dataset
         pstr3 = ' --- for dataset: {:<25}'
         print(pstr3.format(dataset))
 
@@ -2526,13 +2551,13 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
         'RFR(TEMP+SAL+NO3)',
         'RFR(TEMP+DEPTH+SAL)',
     ]
-    # params
+    # Params
     params = [u'Chance2014_STTxx2_I', u'MacDonald2014_iodide', ]
     params2plot = models2compare + params
     # setup color dictionary
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(params2plot, CB_color_cycle))
-    # plotting variables
+    # Plotting variables
     axlabel = '[I$^{-}_{aq}$] (nM)'
     # set a PDF to save data to
     savetitle = 'Oi_prj_point_for_point_comparison_PDF'
@@ -2591,7 +2616,7 @@ def plot_up_CDF_and_PDF_of_obs_and_predictions(show_plot=False,
             plt.close()
 
         # - Plot up PDF plots for the residual dataset
-        # get observations
+        # Get observations
         obs_arr = df[target].values
         fig, ax = plt.subplots()
         # Loop and plot model values
@@ -2681,7 +2706,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
     datasets = dfs.keys()
     # models2compare
     models2compare = ['RFR(Ensemble)']
-    # params
+    # Params
     params = [u'Chance2014_STTxx2_I', u'MacDonald2014_iodide', ]
     params2plot = models2compare + params
     # titles to rename plots with
@@ -2691,9 +2716,9 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
     # setup color dictionary
     CB_color_cycle = AC.get_CB_color_cycle()
     color_d = dict(zip(params2plot, CB_color_cycle))
-    # plotting variables
+    # Plotting variables
     axlabel = '[I$^{-}_{aq}$] (nM)'
-    # limit of PDF plots of acutal data?
+    # Limit of PDF plots of acutal data?
     xlim_iodide = -50
     xlim_iodide = 0
     # set a PDF to save data to
@@ -2733,7 +2758,7 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
         # - Plot up PDF plots for the residual dataset
         # set Axis for abosulte PDF
         ax2 = fig.add_subplot(3, 2, [2, 4, 6][n_dataset])
-        # get observations
+        # Get observations
         obs_arr = df[target].values
         # Loop and plot model values
         for param in params2plot:
@@ -2752,9 +2777,13 @@ def plot_up_PDF_of_obs_and_predictions_WINDOW(show_plot=False,
     plt.savefig(savetitle)
 
 
-def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodide',
-                                       stats=None, show_plot=False, save2png=True,
+def plot_monthly_predicted_iodide_diff(ds=None,
+                                       res='0.125x0.125', dpi=640,
+                                       target='Iodide',
+                                       stats=None, show_plot=False,
+                                       save2png=True,
                                        skipna=True, fillcontinents=True,
+                                       var2plot = 'Ensemble_Monthly_mean',
                                        rm_non_water_boxes=True):
     """
     Plot up a window plot of predicted iodide
@@ -2777,28 +2806,27 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodid
     """
     import seaborn as sns
     sns.reset_orig()
-    # get predicted target data
-    filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
-    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
-    ds = xr.open_dataset(folder + filename)
-    # use center points if plotting 0.125x0.125
+    # Get predicted target data
+    if isinstance(ds, type(None)):
+        filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
+        folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
+        ds = xr.open_dataset(folder + filename)
+    # Use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
         centre = True
     else:
         centre = False
-    # --- Now plot up by month
-    var2plot = 'Ensemble_Monthly_mean'
+    # - Now plot up by month
     if rm_non_water_boxes:
         ds = utils.add_LWI2array(ds=ds, res=res, var2template=var2plot)
         # set non water boxes to np.NaN
         ds[var2plot] = ds[var2plot].where(ds['IS_WATER'] == True)
-    #
+    # Average over time
     avg_arr = ds[var2plot].mean(dim='time', skipna=skipna)
-#    var2plot = 'RFR(TEMP+SWrad+NO3+MLD+SAL)'
     units = '%'
     cb_max = 240
     fig = plt.figure(dpi=dpi)
-    # loop by month and plot
+    # Loop by month and plot
     extend = 'neither'
     range = []
     for n_month, month in enumerate(ds.time):
@@ -2833,11 +2861,11 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodid
         ax = fig.add_subplot(4, 3, n_month+1)
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                fig=fig, ax=ax, xlabel=xlabel, ylabel=ylabel,
                                title_x=title_x, window=True, f_size=f_size)
-    # Adjust figure
-    # Adjust plot aesthetics
+    # Adjust figure plot aesthetics
     bottom = 0.05
     left = 0.05
     hspace = 0.075
@@ -2851,9 +2879,11 @@ def plot_monthly_predicted_iodide_diff(res='0.125x0.125', dpi=640, target='iodid
     plt.close()
 
 
-def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
+def plot_monthly_predicted_iodide(ds=None,
+                                  res='0.125x0.125', dpi=640, target='Iodide',
                                   stats=None, show_plot=False, save2png=True,
                                   fillcontinents=True, rm_Skagerrak_data=False,
+                                  var2plot = 'Ensemble_Monthly_mean',
                                   rm_non_water_boxes=True, debug=False):
     """
     Plot up a window plot of predicted iodide
@@ -2881,19 +2911,19 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
         extr_str = '_No_Skagerrak'
     else:
         extr_str = ''
-    filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
-    folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
-    ds = xr.open_dataset(folder + filename)
-    # use center points if plotting 0.125x0.125
+    if isinstance(ds, type(None)):
+        filename = 'Oi_prj_predicted_{}_{}{}.nc'.format(target, res, extr_str)
+        data_root = utils.get_file_locations('data_root')
+        folder = '{}/{}/outputs/'.format(data_root, target)
+        ds = xr.open_dataset(folder + filename)
+    # Use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
         centre = True
     else:
         centre = False
 
-    # --- Now plot up by month
-    var2plot = 'Ensemble_Monthly_mean'
-#    var2plot = 'RFR(TEMP+SWrad+NO3+MLD+SAL)'
-    # only select boxes where that are fully water (seasonal)
+    # Now plot up by month
+    # Only select boxes where that are fully water (seasonal)
     if rm_non_water_boxes:
         ds = utils.add_LWI2array(ds=ds, res=res, var2template=var2plot)
         # set non water boxes to np.NaN
@@ -2901,7 +2931,7 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
     units = 'nM'
     cb_max = 240
     fig = plt.figure(dpi=dpi)
-    # loop by month and plot
+    # Loop by month and plot
     for n_month, month in enumerate(ds.time):
         # Select data
         ds_tmp = ds.sel(time=month)
@@ -2923,7 +2953,8 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
         ax = fig.add_subplot(4, 3, n_month+1)
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                fig=fig, ax=ax, xlabel=xlabel, ylabel=ylabel,
                                title_x=title_x, window=True, f_size=f_size)
     # Adjust plot aesthetics
@@ -2933,7 +2964,8 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
     wspace = 0.05
     fig.subplots_adjust(bottom=bottom, left=left, hspace=hspace, wspace=wspace)
     # Save to png
-    savetitle = 'Oi_prj_seasonal_predicted_iodide_{}_{}'.format(res, extr_str)
+    savetitle_str = 'Oi_prj_seasonal_predicted_{}_{}_{}'
+    savetitle = savetitle_str.format(target, res, extr_str)
     savetitle = AC.rm_spaces_and_chars_from_str(savetitle)
     if save2png:
         plt.savefig(savetitle+'.png', dpi=dpi)
@@ -2941,9 +2973,10 @@ def plot_monthly_predicted_iodide(res='0.125x0.125', dpi=640, target='iodide',
 
 
 def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
-                                                 target='iodide',
+                                                 target='Iodide',
                                                  stats=None, show_plot=False,
-                                                 save2png=True, fillcontinents=True):
+                                                 save2png=True,
+                                                 fillcontinents=True):
     """
     Plot up predictions from existing parameters spatially
 
@@ -2967,7 +3000,7 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
     filename = 'Oi_prj_predicted_{}_{}.nc'.format(target, res)
     folder = utils.get_file_locations('data_root') + '/Iodide/outputs/'
     ds = xr.open_dataset(folder + filename)
-    # use center points if plotting 0.125x0.125
+    # Use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
         centre = True
     else:
@@ -2982,11 +3015,11 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
     # Setup plot
     fig = plt.figure(dpi=dpi, figsize=(6.0, 5.5))
     f_size = 15
-    # as a mean
+    # As a mean
     for n_var, var_ in enumerate(vars2plot):
         # Get the axis
         ax = fig.add_subplot(2, 1, n_var+1)
-        # get the annual average
+        # Get the annual average
         arr = ds[var_].mean(dim='time').values
         # Plot up
         title = titles[var_]
@@ -2998,12 +3031,15 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
             xlabel = True
         # Now plot
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
-                               extend=extend, res=res, show=False, title=title, fig=fig,
+                               extend=extend, res=res, show=False, title=title,
+                               fig=fig,
                                ax=ax,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
-                               title_x=.2, title_y=1.02, window=True, xlabel=xlabel,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
+                               title_x=.2, title_y=1.02, window=True,
+                               xlabel=xlabel,
                                f_size=f_size)
-        # add A/B label
+        # Add A/B label
         ax.annotate(['(A)', '(B)'][n_var], xy=(0.025, 1.02),
                     textcoords='axes fraction', fontsize=f_size)
     # Adjust plot aesthetics
@@ -3020,10 +3056,13 @@ def plot_update_existing_params_spatially_window(res='0.125x0.125', dpi=320,
 
 
 def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
-                                           stats=None, show_plot=False, save2png=True,
-                                           fillcontinents=True, target='iodide',
+                                           stats=None, show_plot=False,
+                                           save2png=True,
+                                           fillcontinents=True,
+                                           target='Iodide',
                                            rm_Skagerrak_data=False,
-                                           rm_non_water_boxes=True, skipna=True,
+                                           rm_non_water_boxes=True,
+                                           skipna=True,
                                            verbose=True, debug=False):
     """
     Plot up the ensemble average and uncertainty (std. dev.) spatially
@@ -3060,7 +3099,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     savetitle = 'Oi_prj_spatial_avg_and_std_ensemble_models_{}_{}'
     savetitle = savetitle.format(res, extr_str)
     pdff = AC.plot2pdfmulti(title=savetitle, open=True, dpi=dpi)
-    # use center points if plotting 0.125x0.125
+    # Use center points if plotting 0.125x0.125
     if res == '0.125x0.125':
         centre = True
     else:
@@ -3077,7 +3116,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     units = '[I$^{-}_{(aq)}$], (nM)'
     cb_max = 240
     f_size = 20
-    # as a mean
+    # As a mean
     for var in vars2plot:
         arr = ds[var].mean(dim='time', skipna=skipna).values
         # Plot up
@@ -3086,7 +3125,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3104,7 +3144,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     vars2plot = ['Ensemble_Monthly_std']
     units = 'nM'
     cb_max = 50.
-    # as a mean
+    # As a mean
     for var in vars2plot:
         arr = ds[var].mean(dim='time', skipna=skipna).values
         # Plot up
@@ -3113,7 +3153,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3131,7 +3172,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     vars2plot = ['Ensemble_Monthly_std']
     units = 'nM'
     cb_max = 30.
-    # as a mean
+    # As a mean
     for var in vars2plot:
         arr = ds[var].mean(dim='time', skipna=skipna).values
         # Plot up
@@ -3140,7 +3181,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3158,7 +3200,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     vars2plot = ['Ensemble_Monthly_std']
     units = 'nM'
     cb_max = 25.
-    # as a mean
+    # As a mean
     for var in vars2plot:
         arr = ds[var].mean(dim='time', skipna=skipna).values
         # Plot up
@@ -3167,7 +3209,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3186,7 +3229,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     REFvar = 'Ensemble_Monthly_mean'
     units = '%'
     cb_max = 50.
-    # as a mean
+    # As a mean
     for var in vars2plot:
         arr = ds[var].mean(dim='time', skipna=skipna).values
         arr2 = ds[REFvar].mean(dim='time', skipna=skipna).values
@@ -3197,7 +3240,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3216,7 +3260,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     REFvar = 'Ensemble_Monthly_mean'
     units = '%'
     cb_max = 30.
-    # as a mean
+    # As a mean
     for var in vars2plot:
         arr = ds[var].mean(dim='time', skipna=skipna).values
         arr2 = ds[REFvar].mean(dim='time', skipna=skipna).values
@@ -3227,7 +3271,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3245,7 +3290,7 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
     vars2plot = ['Ensemble_Monthly_std']
     REFvar = 'Ensemble_Monthly_mean'
     cb_max = 25.
-    # as a mean
+    # As a mean
     for var in vars2plot:
         arr = ds[var].mean(dim='time', skipna=skipna).values
         arr2 = ds[REFvar].mean(dim='time', skipna=skipna).values
@@ -3256,7 +3301,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
         extend = 'max'
         AC.plot_spatial_figure(arr, fixcb=fixcb, nticks=nticks,
                                extend=extend, res=res, show=False, title=title,
-                               fillcontinents=fillcontinents, centre=centre, units=units,
+                               fillcontinents=fillcontinents, centre=centre,
+                               units=units,
                                f_size=f_size)
 #        AC.map_plot( arr, res=res )
         # Beautify the plot/figure
@@ -3277,7 +3323,8 @@ def plot_up_ensemble_avg_and_std_spatially(res='0.125x0.125', dpi=320,
 def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
                                         show_plot=False, save2png=True,
                                         fillcontinents=True,
-                                        window=False, f_size=20, RFR_dict=None):
+                                        window=False, f_size=20,
+                                        RFR_dict=None):
     """
     Plot up the spatial changes between models
 
@@ -3299,7 +3346,7 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
     # Get dictionary of shared data if not provided
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models_iodide()
-    # get XR Dataset of data
+    # Get XR Dataset of data
     filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
     folder = utils.get_file_locations('data_root')+'/data/'
     ds = xr.open_dataset(folder + filename)
@@ -3314,13 +3361,13 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
     # variables to plot?
     vars2plot = get_features_used_by_model(RFR_dict=RFR_dict)
     # --- Now plot up concentrations spatially
-    # as a mean
+    # As a mean
     for var in vars2plot:
         if ('time' in ds[var].coords):
             arr = ds[var].mean(dim='time').values
         else:
             arr = ds[var].values
-        # adjust temperature to celcuis
+        # Adjust temperature to celcuis
         if (var == u'WOA_TEMP_K'):
             arr = arr - 273.15
         # special treatment for depth
@@ -3363,14 +3410,14 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
             plt.savefig(png_filename, dpi=dpi, bbox_inches='tight')
         plt.close()
 
-        # as fraction of mean
+        # As fraction of mean
     for var in vars2plot:
 
         if ('time' in ds[var].coords):
             arr = ds[var].mean(dim='time').values
         else:
             arr = ds[var].values
-            # adjust temperature to celcuis
+            # Adjust temperature to celcuis
         if (var == u'WOA_TEMP_K'):
             arr = arr - 273.15
             # special treatment for depth
@@ -3413,7 +3460,8 @@ def plot_up_input_ancillaries_spatially(res='4x5', dpi=320,
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
 
-def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodide',
+def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320,
+                                                target='Iodide',
                                                 show_plot=False, save2png=True,
                                                 fillcontinents=True,
                                                 window=False, f_size=20):
@@ -3446,7 +3494,7 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodi
         centre = True
     else:
         centre = False
-    # plot settings
+    # Plot settings
     units = '[I$^{-}_{(aq)}$], (nM)'
     # variables to plot?
 #    vars2plot = ds.data_vars
@@ -3454,7 +3502,7 @@ def plot_up_spatial_changes_in_predicted_values(res='4x5', dpi=320, target='iodi
         'Chance2014_STTxx2_I', 'MacDonald2014_iodide', 'Ensemble_Monthly_mean'
     ]
     # --- Now plot up concentrations spatially
-    # as a mean
+    # As a mean
     for var in vars2plot:
         arr = ds[var].mean(dim='time').values
         # Plot up
@@ -3498,7 +3546,7 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
         filename = file_dict[param]
 #        print( param, filename )
         ds = xr.open_dataset(folder+filename)
-        ds = ds['iodide'].mean(dim='time')
+        ds = ds[target].mean(dim='time')
         # mask for ocean
         MASK = AC.ocean_unmasked()
         arr = np.ma.array(ds.values, mask=MASK[..., 0])
@@ -3508,53 +3556,12 @@ def calculate_average_predicted_surface_conc(target='Iodide'):
         print(param, value)
 
 
-
-# def get_hexbin_plot(x=None, y=None, xlabel=None, ylabel=None, log=False,
-#                     title=None, add_ODR_trendline2plot=True):
-#     """
-#     Plot up a hexbin comparison with marginals
-#
-#     Parameters
-#     -------
-#
-#     Returns
-#     -------
-#
-#     Notes
-#     -----
-#     """
-#     # detail: http://seaborn.pydata.org/examples/hexbin_marginals.html
-#     import numpy as np
-#     import seaborn as sns
-#     # Setup regression plot
-#     sns.set(style="ticks")
-#     g = sns.jointplot(x, y, kind="hex",
-#                       # set bins to log to increase contrast.
-#                       #            bins='log' , \
-#                       #        stat_func=kendalltau,
-#                       color="#4CB391")
-#     # Set X and Y ranges to be equal?
-#     x0, x1 = g.ax_joint.get_xlim()
-#     y0, y1 = g.ax_joint.get_ylim()
-#     print('ranges of data:', x0, x1, y0, y1)
-#     # Or just add a 1:1 line?
-#     lims = [max(x0, y0), min(x1, y1)]
-#     g.ax_joint.plot(lims, lims, ':k')
-#     if all((not isinstance(xlabel, type(None)),
-#             (not isinstance(ylabel, type(None))))):
-#         g.set_axis_labels(xlabel, ylabel)
-#     # Add ODR best fit line
-#     if add_ODR_trendline2plot:
-#         plot_ODR_linear(X=x, Y=y, ax=g.ax_joint)
-#     if not isinstance(title, type(None)):
-#         g.fig.suptitle(title)
-#     return g
-
-
 def get_ensemble_predicted_iodide(df=None,
                                   RFR_dict=None, topmodels=None, stats=None,
-                                  rm_Skagerrak_data=False, use_vals_from_NetCDF=False,
-                                  var2use='RFR(Ensemble)', verbose=True, debug=False):
+                                  rm_Skagerrak_data=False,
+                                  use_vals_from_NetCDF=False,
+                                  var2use='RFR(Ensemble)', verbose=True,
+                                  debug=False):
     """
     Get predicted iodide from literature parametersations
 
@@ -3580,12 +3587,13 @@ def get_ensemble_predicted_iodide(df=None,
             RFR_dict = build_or_get_models_iodide(
                 rm_Skagerrak_data=rm_Skagerrak_data
             )
-        # get stats on models in RFR_dict
+        # Get stats on models in RFR_dict
         if isinstance(stats, type(None)):
             stats = get_stats_on_models(RFR_dict=RFR_dict,
                                         verbose=False)
-        # get list of the top models to use
-        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'])
+        # Get list of the top models to use
+        topmodels = get_top_models(RFR_dict=RFR_dict,
+                                   vars2exclude=['DOC', 'Prod'])
 
     # Add the ensemble to the dataframe
     use_vals_from_NetCDF = False  # Use the values from the spatial prediction
@@ -3637,7 +3645,7 @@ def get_ensemble_predicted_iodide(df=None,
             for nDK_ID, DK_ID in enumerate(Data_Key_IDs):
                 # Get predicted value
                 val = df_tmp.loc[df_tmp['Data_Key_ID'] == DK_ID, var2use][0]
-                # print out diagnostic
+                # Print out diagnostic
                 pstr = "Adding {} prediction for {:<20} of:  {:.2f} ({:.2f})"
                 pcent = float(nDK_ID) / len(Data_Key_IDs) * 100.
                 if debug:
@@ -3647,23 +3655,24 @@ def get_ensemble_predicted_iodide(df=None,
     return df
 
 
-def plot_difference2_input_PDF_on_update_of_var(res='4x5'):
-    """
-    Set coordinates to use for plotting data spatially
-    """
-    # Use appropriate plotting settings for resolution
-    if res == '0.125x0.125':
-        centre = True
-    else:
-        centre = False
+# def plot_difference2_input_PDF_on_update_of_var(res='4x5'):
+#     """
+#     Set coordinates to use for plotting data spatially
+#     """
+#     # Use appropriate plotting settings for resolution
+#     if res == '0.125x0.125':
+#         centre = True
+#     else:
+#         centre = False
+#     pass
 
-    pass
 
-
-def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=None,
+def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None,
+                                                         stats=None,
                                                          res='4x5', dpi=320,
-                                                         perturb_by_mutiple=False,
-                                                         save_str='', show_plot=False):
+                                                      perturb_by_mutiple=False,
+                                                         save_str='',
+                                                         show_plot=False):
     """
     Graphically plot the sensitivity of iodide in input variables
 
@@ -3702,7 +3711,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=No
     var2test = get_features_used_by_model(RFR_dict=RFR_dict,
                                           models_list=topmodels)
 #	var2test =  ['WOA_Nitrate']  # for testing just change nitrate
-    # perturb vars (e.g. by  by -/+ 10, 20, 30 % )
+    # Perturb vars (e.g. by  by -/+ 10, 20, 30 % )
 #	perturb_by_mutiple = False
     perturb_by_mutiple = True
 #	perturb2use = [ 0.7, 0.8, 0.9, 1.1, 1.2, 1.3 ]
@@ -3714,7 +3723,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=No
 #	perturb2use = [ 1, 2, 3, 4 ]
     print(var2test)
     for var in var2test:
-        # add perturbations
+        # Add perturbations
         for perturb in perturb2use:
             ds_tmp = ds.copy()
             if perturb_by_mutiple:
@@ -3731,24 +3740,26 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=No
 #    keys2add = [i for i in dss.keys() if i not in dssI.keys()]
     keys2add = dss.keys()
     for key_ in keys2add:
-        # predict the values for the locations
+        # Predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
-                                                        dsA=dss[key_], RFR_dict=RFR_dict,
+                                                        dsA=dss[key_],
+                                                        RFR_dict=RFR_dict,
                                                        use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels)
-        # add ensemble to ds
+        # Add ensemble to ds
         ds_tmp = add_ensemble_avg_std_to_dataset(ds=ds_tmp,
-                                                 RFR_dict=RFR_dict, topmodels=topmodels,
+                                                 RFR_dict=RFR_dict,
+                                                 topmodels=topmodels,
                                                  res=res,
                                                  save2NetCDF=False)
-        # add LWI and surface area to array
+        # Add LWI and surface area to array
         ds_tmp = utils.add_LWI2array(ds=ds_tmp, res=res,
                                var2template='Chance2014_STTxx2_I')
         # save to dict
         dssI[key_] = ds_tmp
 
-    # --- plot these up
+    # --- Plot these up
     # setup a PDF
     savetitle = 'Oi_prj_sensitivity_to_perturbation_{}{}'
     savetitle = savetitle.format(res, save_str)
@@ -3758,12 +3769,12 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=No
 #    vars2plot = dssI.keys()
 #    del vars2plot[vars2plot.index(var_) ]
 #    vars2plot = [var_] + list( sorted(vars2plot) )
-    # loop and plot
+    # Loop and plot
     for key_ in var2test:
         print('plotting: {}'.format(key_))
         # set a single axis to use.
         fig, ax = plt.subplots()
-        # plot the base values as a shadow
+        # Plot the base values as a shadow
         vars2plot = ['BASE']
         var2plot = vars2plot[0]
         ds = dssI[var2plot]
@@ -3782,7 +3793,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=No
         ax.autoscale()
         # Loop the perturbations
         vars2plot = [i for i in dssI.keys() if key_ in i]
-        # get perturbations
+        # Get perturbations
         if perturb_by_mutiple:
             p2plot = [i.split('(x')[-1][:-1] for i in vars2plot]
         else:
@@ -3808,7 +3819,7 @@ def mk_PDFs_to_show_the_sensitivty_input_vars_65N_and_up(RFR_dict=None, stats=No
             # select iodide to plot and only above 65N
             arr[:, (ds['lat'] <= 65), :] = np.NaN
             df = pd.DataFrame(arr.flatten()).dropna()
-            # now plot non-NaNs
+            # Now plot non-NaNs
             sns.distplot(df, ax=ax, label=var_, color=color, hist=False)
         # Make sure the values are correctly scaled
         ax.autoscale()
@@ -3836,13 +3847,14 @@ def plot_spatial_area4core_decisions(res='4x5'):
         # Get value and std for variable
         value = d[var]['value']
         std = d[var]['std']
-        # plot up threshold
+        # Plot up threshold
         misc.plot_threshold_plus_SD_spatially(var=var, value=value, std=std,
                                          res=res)
 
 
 def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
-                                           target='Iodide', verbose=True, debug=False):
+                                           target='Iodide', verbose=True,
+                                           debug=False):
     """
     Explore the sensitivity of the prediction to data denial
 
@@ -3868,9 +3880,10 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     # Get the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models_iodide()
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
+    topmodels = get_top_models(RFR_dict=RFR_dict,
+                               vars2exclude=['DOC', 'Prod'], n=10)
     topmodels = list(set(topmodels))
-    # other local settings?
+    # Other local settings?
     plt_option_tired_but_didnt_help = False
     plt_option_tried_but_only_slightly_helped = False
     plt_excluded_obs_locations = False
@@ -3907,7 +3920,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 #     df[key_varname] =  False
 #     df.loc[ test_set.index,key_varname ] = True
 #     df.loc[ train_set.index, key_varname ] = False
-#     # print the size of the input set
+#     # Print the size of the input set
 #     N = float(df.shape[0])
 #     Nvals[ VarName ] = N
 #     prt_str =  "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -3941,17 +3954,18 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     df2plot = dfA.drop(df.index).copy()
     df.index = np.arange(df.shape[0])
     # Reset the training/withhel data split
+    features_used = df.columns.tolist()
     returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                               rand_20_80=False,
                                               rand_strat=True,
-                                              features_used=df.columns.tolist(),
+                                              features_used=features_used,
                                               )
     train_set, test_set, test_set_targets = returned_vars
     key_varname = 'Test set ({})'.format('strat. 20%')
     df[key_varname] = False
     df.loc[test_set.index, key_varname] = True
     df.loc[train_set.index, key_varname] = False
-    # print the size of the input set
+    # Print the size of the input set
     N = float(df.shape[0])
     Nvals[VarName] = N
     prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -3980,7 +3994,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
     # - No outliers or skaggerak
     VarName = 'No outliers \or Skagerrak'
-    bool1 = dfA['Iodide'] > utils.get_outlier_value(df=dfA, var2use=target)
+    bool1 = dfA[target] > utils.get_outlier_value(df=dfA, var2use=target)
     bool2 = dfA['Data_Key'].values == 'Truesdale_2003_I'
     index2drop = dfA.loc[bool1 | bool2, :].index
     df = dfA.drop(index2drop)
@@ -3988,17 +4002,18 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     df2plot = dfA.drop(df.index).copy()
     df.index = np.arange(df.shape[0])
     # Reset the training/withhel data split
+    features_used = df.columns.tolist()
     returned_vars = mk_iodide_test_train_sets(df=df.copy(),
                                               rand_20_80=False,
                                               rand_strat=True,
-                                              features_used=df.columns.tolist(),
+                                              features_used=features_used,
                                               )
     train_set, test_set, test_set_targets = returned_vars
     key_varname = 'Test set ({})'.format('strat. 20%')
     df[key_varname] = False
     df.loc[test_set.index, key_varname] = True
     df.loc[train_set.index, key_varname] = False
-    # print the size of the input set
+    # Print the size of the input set
     N = float(df.shape[0])
     Nvals[VarName] = N
     prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4029,7 +4044,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     if plt_option_tried_but_only_slightly_helped:
         #                 - no where obs where low temperature and coastal (NH)
         #                 VarName = '{} '.format( Iaq ) +'<98$^{th}$'
-        #                 bool1 = dfA['Iodide'] > np.percentile( df['Iodide'].values, 98 )
+        #                 bool1 = dfA[target] > np.percentile( df[target].values, 98 )
         #                 index2drop = dfA.loc[ bool1, : ].index
         #                 df = dfA.drop( index2drop )
         #                 reset index of updated DataFrame (and save out the rm'd data prior)
@@ -4072,7 +4087,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         #
         #                 - no where obs where low temperature and coastal (NH)
         #                 VarName = '{}  + \n No Skaggerak'.format( Iaq ) +'<98$^{th}$'
-        #                 bool1 = dfA['Iodide'] > np.percentile( df['Iodide'].values, 98 )
+        #                 bool1 = dfA[target] > np.percentile( df[target].values, 98 )
         #                 bool2 = dfA['Data_Key'].values == 'Truesdale_2003_I'
         #                 index2drop = dfA.loc[ bool1 | bool2, : ].index
         #                 df = dfA.drop( index2drop )
@@ -4142,7 +4157,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4186,7 +4201,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4216,7 +4231,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4250,7 +4265,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4303,7 +4318,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4357,7 +4372,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4401,7 +4416,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4434,7 +4449,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4464,7 +4479,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4493,7 +4508,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4526,7 +4541,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4558,7 +4573,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4588,7 +4603,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4620,7 +4635,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4652,7 +4667,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4682,7 +4697,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4715,7 +4730,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
         df[key_varname] = False
         df.loc[test_set.index, key_varname] = True
         df.loc[train_set.index, key_varname] = False
-        # print the size of the input set
+        # Print the size of the input set
         N = float(df.shape[0])
         Nvals[VarName] = N
         prt_str = "N={:.0f} ({:.2f} % of total) for '{}'"
@@ -4763,7 +4778,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
 
     # Clean memory
     gc.collect()
-    # --- plot these up
+    # --- Plot these up
     # setup a PDF
     savetitle = 'Oi_prj_test_impact_changing_input_features_Arctic_DATA_DENIAL_{}'
     savetitle += '_JUST_SKAGERAK_earth0'
@@ -4774,7 +4789,7 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
     vars2plot = dssI.keys()
     del vars2plot[vars2plot.index(var_)]
     vars2plot = [var_] + list(sorted(vars2plot))
-    # loop and plot
+    # Loop and plot
     for n_key_, key_ in enumerate(vars2plot):
         # Print status to screen
         prt_str = "Plotting for {} @ {} and mk'ing Dataset object ({:.2f}%) - {}"
@@ -4784,9 +4799,12 @@ def explore_sensitivity_of_65N2data_denial(res='4x5', RFR_dict=None, dpi=320,
             print(prt_str.format(key_, res, Pcent, Tnow))
         # Plot up as a latitudeinal plot
         plot_predicted_iodide_vs_lat_figure_ENSEMBLE(ds=dssI[key_].copy(),
-                                                     RFR_dict=RFR_dict, res=res,
-                                                     show_plot=False, close_plot=False,
-                                                     save2png=False, topmodels=topmodels,
+                                                     RFR_dict=RFR_dict,
+                                                     res=res,
+                                                     show_plot=False,
+                                                     close_plot=False,
+                                                     save2png=False,
+                                                     topmodels=topmodels,
                                                      )
         plt_str = "Obs.+Params. vs Lat for '{}' (N={}, {:.2f}% of dataset)"
         plt.title(plt_str.format(key_, Nvals[key_], Nvals[key_]/NA*100))
@@ -4811,7 +4829,8 @@ def explore_sensitivity_of_65N(res='4x5'):
     # Get the models
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models_iodide()
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
+    topmodels = get_top_models(RFR_dict=RFR_dict,
+                               vars2exclude=['DOC', 'Prod'], n=10)
 
     # set up a dictionary for different dataset splits
     dss = {}
@@ -5091,13 +5110,13 @@ def explore_sensitivity_of_65N(res='4x5'):
     dssI = {}
     keys2add = [i for i in dss.keys() if i not in dssI.keys()]
     for key_ in keys2add:
-        # predict the values for the locations
+        # Predict the values for the locations
         ds_tmp = mk_iodide_predictions_from_ancillaries(None,
                                                         dsA=dss[key_], RFR_dict=RFR_dict,
                                                        use_updated_predictor_NetCDF=False,
                                                         save2NetCDF=False,
                                                         topmodels=topmodels)
-        # add ensemble to ds
+        # Add ensemble to ds
         ds_tmp = add_ensemble_avg_std_to_dataset(ds=ds_tmp,
                                                  RFR_dict=RFR_dict, topmodels=topmodels,
                                                  res=res,
@@ -5105,7 +5124,7 @@ def explore_sensitivity_of_65N(res='4x5'):
         # save to dict
         dssI[key_] = ds_tmp
 
-    # --- plot these up
+    # --- Plot these up
     # setup a PDF
     savetitle = 'Oi_prj_test_impact_changing_input_features_Arctic_{}'
     savetitle = savetitle.format(res)
@@ -5115,13 +5134,16 @@ def explore_sensitivity_of_65N(res='4x5'):
     vars2plot = dssI.keys()
     del vars2plot[vars2plot.index(var_)]
     vars2plot = [var_] + list(sorted(vars2plot))
-    # loop and plot
+    # Loop and plot
     for key_ in vars2plot:
-        # plot up as a latitudeinal plot
+        # Plot up as a latitudeinal plot
         plot_predicted_iodide_vs_lat_figure_ENSEMBLE(ds=dssI[key_].copy(),
-                                                     RFR_dict=RFR_dict, res=res,
-                                                     show_plot=False, close_plot=False,
-                                                     save2png=False, topmodels=topmodels,
+                                                     RFR_dict=RFR_dict,
+                                                     res=res,
+                                                     show_plot=False,
+                                                     close_plot=False,
+                                                     save2png=False,
+                                                     topmodels=topmodels,
                                                      )
         plt.title("Obs.+Params. vs Lat for '{}'".format(key_))
         # Save to PDF and close plot
@@ -5130,14 +5152,15 @@ def explore_sensitivity_of_65N(res='4x5'):
     # Save entire pdf
     AC.plot2pdfmulti(pdff, savetitle, close=True, dpi=dpi)
 
-    # plot up up each splits prediction
+    # Plot up up each splits prediction
     # (also plot the reference case for comparison)
 
 
 def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
                                      plot_avg_as_median=False, RFR_dict=None,
-                                     res='0.125x0.125', target='iodide',
-                                     show_plot=False, close_plot=True, save2png=False,
+                                     res='0.125x0.125', target='Iodide',
+                                     show_plot=False, close_plot=True,
+                                     save2png=False,
                                      folder=None, ds=None, topmodels=None):
     """
     Plot a figure of iodide vs laitude - showing all ensemble members
@@ -5175,15 +5198,16 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
         df = get_spatial_predictions_0125x0125_by_lat(ds=ds)
     else:
         df = get_stats_on_spatial_predictions_4x5_2x25_by_lat(res=res, ds=ds)
-    # params to pot
+    # Params to pot
     if isinstance(topmodels, type(None)):
-        topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=['DOC', 'Prod'], n=10)
+        topmodels = get_top_models(RFR_dict=RFR_dict,
+                                   vars2exclude=['DOC', 'Prod'], n=10)
     params2plot = topmodels
-    # assign colors
+    # Assign colors
     CB_color_cycle = AC.get_CB_color_cycle()
     CB_color_cycle += ['darkgreen']
     color_d = dict(zip(params2plot, CB_color_cycle))
-    # - plot up vs. lat
+    # - Plot up vs. lat
     fig, ax = plt.subplots()
     for param in params2plot:
         # Set color for param
@@ -5193,28 +5217,28 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
             var2plot = '{} - median'.format(param)
         else:
             var2plot = '{} - mean'.format(param)
-        # get X
+        # Get X
         X = df[var2plot].index.values
-        # plot as line
+        # Plot as line
         plt.plot(X, df[var2plot].values, color=color, label=param)
-        # plot up quartiles tooo
+        # Plot up quartiles tooo
         low = df['{} - 25%'.format(param)].values
         high = df['{} - 75%'.format(param)].values
         ax.fill_between(X, low, high, alpha=0.2, color=color)
 
-    # highlight coastal obs
+    # Highlight coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == True, :]
     X = tmp_df['Latitude'].values
-    Y = tmp_df['Iodide'].values
+    Y = tmp_df[target].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='none', s=3,
                 label='Coastal obs.')
-    # non-coastal obs
+    # Non-coastal obs
     tmp_df = df_obs.loc[df_obs['Coastal'] == False, :]
     X = tmp_df['Latitude'].values
-    Y = tmp_df['Iodide'].values
+    Y = tmp_df[target].values
     plt.scatter(X, Y, color='k', marker='D', facecolor='k', s=3,
                 label='Non-coastal obs.')
-    # limit plot y axis
+    # Limit plot y axis
     plt.ylim(-20, 420)
     plt.ylabel('[I$^{-}_{aq}$] (nM)')
     plt.xlabel('Latitude ($^{\\rm o}$N)')
@@ -5230,7 +5254,8 @@ def plot_predicted_iodide_PDF4region(dpi=320, extr_str='',
 
 
 def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
-                                           use_avg_at_lat=True, res='0.125x0.125',
+                                           use_avg_at_lat=True,
+                                           res='0.125x0.125',
                                            var2set=None,
                                            only_consider_water_boxes=True,
                                            fixed_value2use=None,
@@ -5253,15 +5278,15 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
     (xr.Dataset)
     """
     print(var2set)
-    # local variables
+    # Local variables
     folder = utils.get_file_locations('data_root')+'/data/'
     # Get existing file
     if isinstance(ds, type(None)):
         filename = 'Oi_prj_feature_variables_{}.nc'.format(res)
         ds = xr.open_dataset(folder + filename)
-    # get the average value at lat
+    # Get the average value at lat
     avg = ds[var2set].sel(lat=lat_above2set, method='nearest')
-    # get index of lat to set values from
+    # Get index of lat to set values from
     idx = AC.find_nearest(avg['lat'].values, ds['lat'].values)
     # Setup a bool for values above or equal to lat
     bool_ = avg['lat'].values <= ds['lat'].values
@@ -5279,7 +5304,7 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
             avg = np.ma.array([avg]*12)
     # Only consider the ware boxes
     if only_consider_water_boxes:
-        # add LWI to array
+        # Add LWI to array
         if res == '0.125x0.125':
             folderLWI = utils.get_file_locations('AC_tools')
             folderLWI += '/data/LM/TEMP_NASA_Nature_run/'
@@ -5294,7 +5319,7 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
         # Set land/ice values to NaN
         for n_month in range(12):
             avg[n_month, ~bool_water[n_month]] = np.NaN
-    # get the average over lon
+    # Get the average over lon
     avg = np.nanmean(avg, axis=-1)
     pstr = '>={}N = monthly avg. @ lat (avg={:.2f},min={:.2f},max={:.2f})'
     print(pstr.format(lat_above2set, avg.mean(), avg.min(), avg.max()))
@@ -5307,14 +5332,14 @@ def set_values_at_of_var_above_X_lat_2_avg(lat_above2set=65, ds=None,
             # Updated array of values
             arr = np.zeros(values[month, bool_, :].shape)
             arr[:] = avg[month]
-            # now replace values
+            # Now replace values
             values[month, bool_, :] = arr
             del arr
     else:
         # Updated array of values
         arr = np.zeros(values[bool_, :].shape)
         arr[:] = np.nanmean(avg)
-        # now replace values
+        # Now replace values
         values[bool_, :] = arr
     ds[var2set].values = values
     # Update the history attribute to record the update.
@@ -5363,30 +5388,32 @@ def do_analysis_processing_linked_to_depth_variable():
     from plotting_and_analysis import get_ensemble_predicted_iodide
     # Get the base topmodels
     vars2exclude = ['DOC', 'Prod', ]
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
+    topmodels = get_top_models(RFR_dict=RFR_dict,
+                               vars2exclude=vars2exclude, n=10 )
     topmodels_BASE = topmodels.copy()
 
-    # add the ensemble to the dataframe and over write this as the dictionary
+    # Add the ensemble to the dataframe and over write this as the dictionary
     var2use='RFR(Ensemble)'
 #     df = RFR_dict['df']
 #     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
 #                                        var2use=var2use)
 #     RFR_dict['df'] =  df
-#     # now get the stats
+#     # Now get the stats
 #     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, inc_ensemble=True)
 #
 #     # - Now do the same thing, but calculate the prediction with depth
 #     var2use = 'RFR(Ensemble_nDepth)'
     # Get topmodels without
     vars2exclude = ['DOC', 'Prod', 'DEPTH']
-    topmodels = get_top_models(RFR_dict=RFR_dict, vars2exclude=vars2exclude, n=10 )
+    topmodels = get_top_models(RFR_dict=RFR_dict,
+                               vars2exclude=vars2exclude, n=10 )
     topmodels_DEPTH = topmodels.copy()
     # Now calculate the ensemble prediction
 #     df = RFR_dict['df']
 #     df = get_ensemble_predicted_iodide(df=df, RFR_dict=RFR_dict, topmodels=topmodels,
 #                                        var2use=var2use)
 #     RFR_dict['df'] =  df
-#     # now get the stats
+#     # Now get the stats
 #     mk_table_of_point_for_point_performance(RFR_dict=RFR_dict, df=df, inc_ensemble=True,
 #                                             var2use=var2use)
 
@@ -5433,15 +5460,17 @@ def do_analysis_processing_linked_to_depth_variable():
     ds.to_netcdf('Oi_temp_iodide_annual.nc')
 
 
-def plot_spatial_figures_for_ML_paper_with_cartopy():
+def plot_spatial_figures_for_ML_paper_with_cartopy(target='Iodide'):
     """
     Plot up all the spatial figures for the ML paper with cartopy
     """
     # Add LWI to NEtCDF
     res ='0.125x0.125'
-    ds = utils.add_LWI2array(ds=ds, res=res, var2template='Ensemble_Monthly_mean')
+    ds = utils.add_LWI2array(ds=ds, res=res,
+                             var2template='Ensemble_Monthly_mean')
     vars2mask = [
-    'Ensemble_Monthly_mean_nDepth', 'Ensemble_Monthly_mean', 'Ensemble_Monthly_std',
+    'Ensemble_Monthly_mean_nDepth', 'Ensemble_Monthly_mean',
+    'Ensemble_Monthly_std',
     'Chance2014_STTxx2_I', 'MacDonald2014_iodide',
     ]
     for var2mask in vars2mask:
@@ -5452,7 +5481,6 @@ def plot_spatial_figures_for_ML_paper_with_cartopy():
     ds.to_netcdf('Oi_temp_iodide.nc')
     # Variables for plotting
     ds = xr.open_dataset('Oi_temp_iodide.nc')
-    target = 'Iodide'
     dpi = 720
     projection = ccrs.PlateCarree()
     vmax = 240
@@ -5508,12 +5536,12 @@ def plot_spatial_figures_for_ML_paper_with_cartopy():
     if isinstance(RFR_dict, type(None)):
         RFR_dict = build_or_get_models()
     df = RFR_dict['df']
-    df = df.loc[df['Iodide'] <= utils.get_outlier_value(df=df, var2use='Iodide'), :]
+    df = df.loc[df[target] <= utils.get_outlier_value(df=df, var2use=target),:]
     s = 15
     edgecolor = 'k'
     x = df[u'Longitude'].values
     y = df[u'Latitude'].values
-    z = df['Iodide'].values
+    z = df[target].values
     ax.scatter(x, y, c=z, s=s, cmap=cmap, norm=norm, edgecolor=edgecolor,
                transform=projection, zorder=100, linewidth=0.05)
     # Now save
@@ -5588,10 +5616,12 @@ def plot_spatial_figures_for_ML_paper_with_cartopy():
     plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.05)
 
 
-def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodide',
+def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None,
+                                              target='Iodide',
                                               months=None,
-                                              var2extract='Ensemble_Monthly_mean',
-                                              rm_Skagerrak_data=False, verbose=True,
+                                           var2extract='Ensemble_Monthly_mean',
+                                              rm_Skagerrak_data=False,
+                                              verbose=True,
                                               debug=False):
     """
     Wrapper for extract4nearest_points_in_ds for iodide
@@ -5619,8 +5649,10 @@ def extract_4_nearest_points_in_iodide_NetCDF(lons=None, lats=None, target='iodi
         filename = filename.format('')
     ds = xr.open_dataset(folder + filename)
     # Now extract the dataset
-    extracted_vars = utils.extract4nearest_points_in_ds(ds=ds, lons=lons, lats=lats,
+    extracted_vars = utils.extract4nearest_points_in_ds(ds=ds, lons=lons,
+                                                        lats=lats,
                                                         months=months,
-                                                        var2extract=var2extract,
-                                                        verbose=verbose, debug=debug)
+                                                       var2extract=var2extract,
+                                                        verbose=verbose,
+                                                        debug=debug)
     return extracted_vars

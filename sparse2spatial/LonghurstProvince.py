@@ -11,14 +11,15 @@ import AC_tools as AC
 # s2s specific imports
 import sparse2spatial.utils as utils
 
+
 def add_longhurst_raster_array_and_LWI_core_NetCDFs(target='Iodide'):
     """
     Driver to add Longhurst Provinces fields to spatial NetCDF files
     """
     Filenames = [
-        'Oi_prj_predicted_{}_0.125x0.125_No_Skagerrak',
-        'Oi_prj_feature_variables_0.125x0.125',
-        'Oi_prj_predicted_{}_0.125x0.125',
+        's2s_predicted_{}_0.125x0.125_No_Skagerrak',
+        's2s_feature_variables_0.125x0.125',
+        's2s_predicted_{}_0.125x0.125',
     ]
     folder = '/work/home/ts551/data/iodide/'
     for name in Filenames:
@@ -104,10 +105,12 @@ def add_LonghurstProvince2NetCDF(ds=None, res='4x5', LatVar='lat', LonVar='lon',
     df[LatVar] = lats
     df[LonVar] = lons
     # Add a single variable for the coordinate
+
     def f(x):
         return (x[LonVar], x[LatVar])
     df[CoordVar] = df.apply(f, axis=1)
     # map the calculation of provinces
+
     def GetProv(x):
         return Get_LonghurstProvince4coord(x[CoordVar], provinces=provinces,
                                            num2prov=Rnum2prov, tree=tree, verbose=False)
@@ -140,10 +143,12 @@ def add_LonghurstProvince2table(df, LatVar='Latitude', LonVar='Longitude'):
     # - Work with the provinces
     # Add a single variable for the coordinate
     CoordVar = 'Coord'
+
     def f(x):
         return (x[LonVar], x[LatVar])
     df[CoordVar] = df.apply(f, axis=1)
     # map the calculation of provinces
+
     def GetProv(x):
         return Get_LonghurstProvince4coord(x[CoordVar], provinces=provinces,
                                            num2prov=Rnum2prov, tree=tree, verbose=False)

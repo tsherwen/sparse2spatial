@@ -22,7 +22,7 @@ import sparse2spatial.utils as utils
 from sparse2spatial.RFRbuild import mk_test_train_sets
 import sparse2spatial.RFRbuild as build
 import sparse2spatial.RFRanalysis as analysis
-import sparse2spatial.plotting as plotting
+import sparse2spatial.plotting as s2splotting
 #import sparse2spatial.RFRanalysis as analysis
 from sparse2spatial.RFRbuild import build_or_get_models
 
@@ -47,7 +47,7 @@ def main():
     # - build models with the observations
     RFR_dict = build_or_get_models_CHBr3(rebuild=False, target=target)
     # Get stats ont these models
-    stats = analysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
+    stats = RFRanalysis.get_core_stats_on_current_models(RFR_dict=RFR_dict,
                                                       target=target, verbose=True,
                                                       debug=True)
     # Get the top ten models
@@ -71,10 +71,44 @@ def main():
 
     # --- Plot up the performance of the models
     df = RFR_dict['df']
+    # Add ensemble prediction
+    df = add_ensemble_prediction2df(df=df, target=target)
     # Plot performance of models
-    analysis.plt_stats_by_model(stats=stats, df=df, target=target )
+    RFRanalysis.plt_stats_by_model(stats=stats, df=df, target=target )
     # Plot up also without derivative variables
-    analysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+    RFRanalysis.plt_stats_by_model_DERIV(stats=stats, df=df, target=target )
+
+    # --- Save out the field in kg/m3 for use in models
+    version = 'v0_0_0'
+    folder = '/users/ts551/scratch/data/s2s/{}/outputs/'.format(target)
+    filename = 'Oi_prj_predicted_{}_0.125x0.125_{}'.format(target, version)
+    ds = xr.open_dataset( folder + filename+'.nc' )
+    # Convert to kg/m3
+    RMM = 252.73
+    new_var = 'Ensemble_Monthly_mean_kg_m3'
+    ds = add_converted_field_pM_2_kg_m3(ds=ds, var2use='Ensemble_Monthly_mean',
+                                        target=target, RMM=RMM,
+                                        new_var=new_var)
+    # Save with just the kg/m3 field to a NetCDF file
+    ds = ds[[new_var]]
+    ds = ds.rename(name_dict={new_var:'Ensemble_Monthly_mean'})
+    ds.to_netcdf( folder + filename+'{}.nc'.format('_kg_m3') )
+
+    # - Plot comparisons against observations
+    # Plot up an orthogonal distance regression (ODR) plot
+    ylim = (0, 20)
+    xlim = (0, 20)
+#    xlim, ylim =  None, None
+    params = ['RFR(Ensemble)']
+    s2splotting.plot_ODR_window_plot(df=df, params=params, units='pM', target=target,
+                                     ylim=ylim, xlim=xlim)
+
+    # Plot up a PDF of concs and bias
+    ylim = (0, 20)
+    s2splotting.plot_up_PDF_of_obs_and_predictions_WINDOW(df=df, params=params,
+                                                          units='pM',
+                                                          target=target,
+                                                          xlim=xlim)
 
 
 def build_or_get_models_CHBr3(target='CHBr3',
@@ -149,9 +183,9 @@ def plt_X_vs_Y_for_regions(RFR_dict=None, df=None, params2plot=[], LatVar='lat',
 #        extr_str=region+' (withheld)'
 #        extr_str=region
         # Now plot
-        plotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
-                                             obs_var=obs_var,
-                                             extr_str=extr_str)
+        s2splotting.plt_X_vs_Y_for_obs_v_params(df=df, params2plot=params2plot,
+                                                obs_var=obs_var,
+                                                extr_str=extr_str)
 
 
 
